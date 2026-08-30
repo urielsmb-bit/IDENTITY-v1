@@ -1595,3 +1595,12 @@
     transition-duration:.01ms !important;
   }
 }
+
+
+/* Los botones de 1 a 10, con el dedo.
+   Diez a 44 px necesitan 485 y solo hay 308, pero la fila ya lleva
+   `flex-wrap`, asi que caen a dos lineas en vez de encogerse. Dos
+   filas comodas valen mas que una fila imposible de acertar. */
+@media (pointer: coarse) {
+  .pf-vote button{ min-width:44px; min-height:44px; flex:0 0 auto; }
+}
