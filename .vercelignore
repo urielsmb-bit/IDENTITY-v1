@@ -1,0 +1,41 @@
+# ---- secretos -------------------------------------------------
+# CRITICO. Esto es un despliegue estatico: Vercel sirve TODO archivo
+# que no se excluya aqui. Un .env en la raiz seria descargable en
+# https://tudominio/.env por cualquiera. No existe ninguno hoy; esto
+# es para que nunca llegue a existir uno servido.
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.json
+credentials.json
+service-account*.json
+
+# ---- ficheros de configuracion del repositorio ----------------
+# No hacen falta en tiempo de ejecucion y dicen que estas ocultando.
+.gitignore
+.vercelignore
+.git
+.github
+
+# ---- herramientas de desarrollo -------------------------------
+serve.py
+pruebas-backend.html
+__pycache__/
+*.tmp
+*.bak
+*.log
+
+# ---- el SQL y las funciones van a Supabase, no aqui -----------
+supabase/
+
+# ---- documentacion interna ------------------------------------
+*.md
+
+# ...menos los tres legales: la vista /terminos los lee de aqui,
+# para que no haya dos copias del mismo texto separandose.
+!IDENTITY_TERMINOS.md
+!IDENTITY_PRIVACIDAD.md
+!IDENTITY_COPYRIGHT.md

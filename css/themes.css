@@ -1,0 +1,288 @@
+/* ============================================================
+   IDENTITY — temas de perfil
+   Cada tema redefine el mismo contrato de tokens. profile.css
+   sólo consume tokens, así que un tema nuevo no toca estructura.
+
+   CONTRATO
+     --p-bg / --p-bg2   fondo del lienzo
+     --p-surface        superficie de tarjetas
+     --p-surface-2      superficie de chips / links
+     --p-text --p-dim   tinta
+     --p-primary        color de marca del usuario
+     --p-accent         color secundario
+     --p-line           borde
+     --p-radius         curvatura base
+     --p-fd / --p-fb    fuente display / cuerpo
+     --p-glow           halo aplicado a avatar y botones
+     --p-shadow         sombra de tarjeta
+     --p-chip-r         curvatura de chips
+   ============================================================ */
+
+.pf{
+  /* valores por defecto = tema "dark" */
+  --p-bg:#0C0E12;      --p-bg2:#14171D;
+  --p-surface:rgba(255,255,255,.045);
+  --p-surface-2:rgba(255,255,255,.07);
+  --p-text:#ECEFF3;    --p-dim:#939BA6;
+  --p-primary:#6E8BFF; --p-accent:#9AA6FF;
+  --p-line:rgba(255,255,255,.11);
+  --p-radius:24px;     --p-chip-r:12px;
+  --p-fd:"Inter",system-ui,sans-serif;
+  --p-fb:"Inter",system-ui,sans-serif;
+  --p-fm:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  --p-glow:0 0 34px -6px var(--p-primary);
+  --p-shadow:0 34px 90px -40px rgba(0,0,0,.9);
+  --p-uppercase:none;
+  --p-track:-.02em;
+}
+
+/* ---------- 01 · CYBERPUNK -------------------------------- */
+.pf[data-theme="cyberpunk"]{
+  --p-bg:#05070E;      --p-bg2:#0A1226;
+  --p-surface:rgba(0,229,255,.05);
+  --p-surface-2:rgba(0,229,255,.10);
+  --p-text:#E6FBFF;    --p-dim:#6E93A6;
+  --p-primary:#00E5FF; --p-accent:#FF2E88;
+  --p-line:rgba(0,229,255,.30);
+  --p-radius:2px;      --p-chip-r:2px;
+  --p-fd:"Chakra Petch",system-ui,sans-serif;
+  --p-fb:"Chakra Petch",system-ui,sans-serif;
+  --p-glow:0 0 30px -2px #00E5FF, 0 0 60px -18px #FF2E88;
+  --p-uppercase:uppercase;
+  --p-track:.02em;
+}
+.pf[data-theme="cyberpunk"] .pf-card::before{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(115deg,transparent 44%,rgba(0,229,255,.10) 50%,transparent 56%);
+  animation:cybSweep 4.5s linear infinite;
+}
+@keyframes cybSweep{ from{transform:translateX(-60%)} to{transform:translateX(60%)} }
+
+/* ---------- 02 · MINIMAL (claro a propósito) --------------- */
+.pf[data-theme="minimal"]{
+  --p-bg:#F4F3EF;      --p-bg2:#EAE8E2;
+  --p-surface:rgba(0,0,0,.028);
+  --p-surface-2:rgba(0,0,0,.05);
+  --p-text:#14140F;    --p-dim:#6B6A62;
+  --p-primary:#14140F; --p-accent:#8A8779;
+  --p-line:rgba(0,0,0,.13);
+  --p-radius:4px;      --p-chip-r:3px;
+  --p-fd:"Inter",system-ui,sans-serif;
+  --p-fb:"Inter",system-ui,sans-serif;
+  --p-glow:none;
+  --p-shadow:0 20px 60px -44px rgba(0,0,0,.5);
+  --p-track:-.035em;
+}
+
+/* ---------- 03 · ANIME ------------------------------------ */
+.pf[data-theme="anime"]{
+  --p-bg:#1A1024;      --p-bg2:#3A1F49;
+  --p-surface:rgba(255,255,255,.075);
+  --p-surface-2:rgba(255,182,224,.16);
+  --p-text:#FFF3FA;    --p-dim:#C9A9D6;
+  --p-primary:#FF9ED2; --p-accent:#8FD7FF;
+  --p-line:rgba(255,182,224,.28);
+  --p-radius:26px;     --p-chip-r:100px;
+  --p-glow:0 0 42px -8px #FF9ED2;
+  --p-shadow:0 40px 100px -46px rgba(255,158,210,.5);
+}
+
+/* ---------- 04 · GAMING ----------------------------------- */
+.pf[data-theme="gaming"]{
+  --p-bg:#08090B;      --p-bg2:#111418;
+  --p-surface:rgba(255,255,255,.04);
+  --p-surface-2:rgba(216,255,71,.10);
+  --p-text:#F2F5F7;    --p-dim:#8B939C;
+  --p-primary:#D8FF47; --p-accent:#FF5C33;
+  --p-line:rgba(216,255,71,.22);
+  --p-radius:6px;      --p-chip-r:5px;
+  --p-fd:"Chakra Petch",system-ui,sans-serif;
+  --p-fb:"Inter",system-ui,sans-serif;
+  --p-glow:0 0 32px -8px #D8FF47;
+  --p-uppercase:uppercase;
+  --p-track:.01em;
+}
+
+/* ---------- 05 · GLASS ------------------------------------ */
+.pf[data-theme="glass"]{
+  --p-bg:#0E1621;      --p-bg2:#1D3A52;
+  --p-surface:rgba(255,255,255,.09);
+  --p-surface-2:rgba(255,255,255,.14);
+  --p-text:#FFFFFF;    --p-dim:#B6C6D4;
+  --p-primary:#9FE0FF; --p-accent:#FFFFFF;
+  --p-line:rgba(255,255,255,.22);
+  --p-radius:22px;     --p-chip-r:16px;
+  --p-glow:0 0 40px -12px rgba(255,255,255,.7);
+  --p-shadow:0 40px 90px -40px rgba(0,0,0,.75);
+}
+.pf[data-theme="glass"] .pf-card,
+.pf[data-theme="glass"] .pf-panel{
+  backdrop-filter:blur(26px) saturate(150%);
+  -webkit-backdrop-filter:blur(26px) saturate(150%);
+}
+
+/* ---------- 06 · NEON ------------------------------------- */
+.pf[data-theme="neon"]{
+  --p-bg:#000000;      --p-bg2:#0B0014;
+  --p-surface:rgba(255,0,140,.06);
+  --p-surface-2:rgba(255,0,140,.12);
+  --p-text:#FFFFFF;    --p-dim:#9A7FA8;
+  --p-primary:#FF2D95; --p-accent:#22E7FF;
+  --p-line:rgba(255,45,149,.42);
+  --p-radius:14px;     --p-chip-r:100px;
+  --p-glow:0 0 26px #FF2D95, 0 0 70px -14px #22E7FF;
+  --p-shadow:0 0 90px -30px rgba(255,45,149,.7);
+}
+.pf[data-theme="neon"] .pf-name{ text-shadow:0 0 20px rgba(255,45,149,.75); }
+
+/* ---------- 07 · LUXURY ----------------------------------- */
+.pf[data-theme="luxury"]{
+  --p-bg:#0A0908;      --p-bg2:#16130D;
+  --p-surface:rgba(212,175,110,.045);
+  --p-surface-2:rgba(212,175,110,.10);
+  --p-text:#F2EBDD;    --p-dim:#9A8E77;
+  --p-primary:#D4AF6E; --p-accent:#F2EBDD;
+  --p-line:rgba(212,175,110,.26);
+  --p-radius:0px;      --p-chip-r:0px;
+  --p-fd:"Playfair Display",Georgia,serif;
+  --p-fb:"Inter",system-ui,sans-serif;
+  --p-glow:0 0 44px -14px #D4AF6E;
+  --p-shadow:0 40px 110px -50px rgba(212,175,110,.4);
+  --p-track:-.01em;
+}
+
+/* ---------- 08 · DARK  (default, ya definido en .pf) ------ */
+
+/* ---------- 09 · RETRO ------------------------------------ */
+.pf[data-theme="retro"]{
+  --p-bg:#F0E3C8;      --p-bg2:#E2CDA4;
+  --p-surface:rgba(107,58,26,.07);
+  --p-surface-2:rgba(196,84,26,.14);
+  --p-text:#2E1B0E;    --p-dim:#7A5637;
+  --p-primary:#C4541A; --p-accent:#2E6B5E;
+  --p-line:rgba(46,27,14,.24);
+  --p-radius:8px;      --p-chip-r:6px;
+  --p-fd:"Playfair Display",Georgia,serif;
+  --p-fb:"Inter",system-ui,sans-serif;
+  --p-glow:none;
+  --p-shadow:6px 6px 0 rgba(46,27,14,.20);
+}
+
+/* ---------- 10 · HACKER ----------------------------------- */
+.pf[data-theme="hacker"]{
+  --p-bg:#000300;      --p-bg2:#001A06;
+  --p-surface:rgba(0,255,102,.045);
+  --p-surface-2:rgba(0,255,102,.11);
+  --p-text:#00FF66;    --p-dim:#0A9C43;
+  --p-primary:#00FF66; --p-accent:#B6FF00;
+  --p-line:rgba(0,255,102,.32);
+  --p-radius:0px;      --p-chip-r:0px;
+  --p-fd:"VT323",ui-monospace,monospace;
+  --p-fb:"VT323",ui-monospace,monospace;
+  --p-fm:"VT323",ui-monospace,monospace;
+  --p-glow:0 0 24px -2px #00FF66;
+  --p-shadow:none;
+  --p-track:0em;
+}
+.pf[data-theme="hacker"]{ font-size:19px; }
+.pf[data-theme="hacker"] .pf-card{ border-style:dashed; }
+
+/* ---------- 11 · WINDOWS 98 -------------------------------- */
+.pf[data-theme="win98"]{
+  --p-bg:#008080;      --p-bg2:#0A6E6E;
+  --p-surface:#C0C0C0;
+  --p-surface-2:#D8D8D8;
+  --p-text:#000000;    --p-dim:#404040;
+  --p-primary:#000080; --p-accent:#000080;
+  --p-line:#808080;
+  --p-radius:0px;      --p-chip-r:0px;
+  --p-fd:"Press Start 2P","Courier New",monospace;
+  --p-fb:"Inter",Tahoma,sans-serif;
+  --p-glow:none;
+  --p-shadow:none;
+  --p-track:0em;
+}
+.pf[data-theme="win98"] .pf-card,
+.pf[data-theme="win98"] .pf-panel,
+.pf[data-theme="win98"] .pf-link{
+  box-shadow:inset -2px -2px 0 #000, inset 2px 2px 0 #FFF,
+             inset -3px -3px 0 #808080, inset 3px 3px 0 #DFDFDF;
+  border:0;
+}
+.pf[data-theme="win98"] .pf-name{ font-size:clamp(18px,3vw,26px); }
+.pf[data-theme="win98"] .pf-link:active{
+  box-shadow:inset 2px 2px 0 #000, inset -2px -2px 0 #FFF,
+             inset 3px 3px 0 #808080, inset -3px -3px 0 #DFDFDF;
+}
+
+/* ---------- 12 · GTA / VICE -------------------------------- */
+.pf[data-theme="gta"]{
+  --p-bg:#0B0316;      --p-bg2:#3A0B4E;
+  --p-surface:rgba(255,255,255,.05);
+  --p-surface-2:rgba(255,45,149,.14);
+  --p-text:#FFF0FA;    --p-dim:#B489C9;
+  --p-primary:#FF2D95; --p-accent:#FFB13D;
+  --p-line:rgba(255,177,61,.32);
+  --p-radius:10px;     --p-chip-r:8px;
+  --p-fd:"Chakra Petch",system-ui,sans-serif;
+  --p-fb:"Inter",system-ui,sans-serif;
+  --p-glow:0 0 38px -8px #FF2D95;
+  --p-uppercase:uppercase;
+  --p-track:.01em;
+}
+.pf[data-theme="gta"] .pf-name{
+  background:linear-gradient(180deg,#FFB13D 0%,#FF2D95 78%);
+  -webkit-background-clip:text; background-clip:text;
+  color:transparent;
+  font-style:italic;
+}
+
+/* ---------- 13 · MINECRAFT --------------------------------- */
+.pf[data-theme="minecraft"]{
+  --p-bg:#3B2B1B;      --p-bg2:#6B4A2A;
+  --p-surface:#7C5A34;
+  --p-surface-2:#8C6A3E;
+  --p-text:#F6F2E7;    --p-dim:#CDBB9B;
+  --p-primary:#68B44A; --p-accent:#B8E986;
+  --p-line:#4A3520;
+  --p-radius:0px;      --p-chip-r:0px;
+  --p-fd:"Press Start 2P","Courier New",monospace;
+  --p-fb:"Inter",system-ui,sans-serif;
+  --p-glow:none;
+  --p-shadow:5px 5px 0 rgba(0,0,0,.45);
+  --p-track:0em;
+}
+.pf[data-theme="minecraft"] .pf-name{ font-size:clamp(16px,3vw,24px); line-height:1.5; }
+.pf[data-theme="minecraft"] .pf-card,
+.pf[data-theme="minecraft"] .pf-link{ image-rendering:pixelated; border-width:3px; }
+
+/* ---------- 14 · DISCORD ----------------------------------- */
+.pf[data-theme="discord"]{
+  --p-bg:#1E1F22;      --p-bg2:#2B2D31;
+  --p-surface:#313338;
+  --p-surface-2:#383A40;
+  --p-text:#F2F3F5;    --p-dim:#B5BAC1;
+  --p-primary:#5865F2; --p-accent:#57F287;
+  --p-line:rgba(255,255,255,.07);
+  --p-radius:16px;     --p-chip-r:10px;
+  --p-glow:0 0 30px -12px #5865F2;
+  --p-shadow:0 8px 24px rgba(0,0,0,.5);
+  --p-track:-.01em;
+}
+
+/* ---------- utilidades de tema ----------------------------- */
+/* el editor previsualiza temas con estas muestras */
+.sw-cyberpunk{ background:linear-gradient(135deg,#05070E,#00E5FF 55%,#FF2E88); }
+.sw-minimal  { background:linear-gradient(135deg,#F4F3EF,#C9C6BC); }
+.sw-anime    { background:linear-gradient(135deg,#3A1F49,#FF9ED2 60%,#8FD7FF); }
+.sw-gaming   { background:linear-gradient(135deg,#08090B,#D8FF47 70%,#FF5C33); }
+.sw-glass    { background:linear-gradient(135deg,#1D3A52,#9FE0FF); }
+.sw-neon     { background:linear-gradient(135deg,#000,#FF2D95 55%,#22E7FF); }
+.sw-luxury   { background:linear-gradient(135deg,#0A0908,#D4AF6E); }
+.sw-dark     { background:linear-gradient(135deg,#0C0E12,#6E8BFF); }
+.sw-retro    { background:linear-gradient(135deg,#F0E3C8,#C4541A); }
+.sw-hacker   { background:linear-gradient(135deg,#000300,#00FF66); }
+.sw-win98    { background:linear-gradient(135deg,#008080,#C0C0C0); }
+.sw-gta      { background:linear-gradient(135deg,#3A0B4E,#FF2D95 55%,#FFB13D); }
+.sw-minecraft{ background:linear-gradient(135deg,#6B4A2A,#68B44A); }
+.sw-discord  { background:linear-gradient(135deg,#1E1F22,#5865F2); }
