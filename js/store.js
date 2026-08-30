@@ -473,9 +473,26 @@
     _respaldar: function () {
       if (!espejo.activo()) return;
       var enDisco = util.read(K_PROFILES, {});
+      var mio = store.mineName();
       Object.keys(espejo.mapa).forEach(function (u) {
         var p = espejo.mapa[u];
-        if (p && p._sucio) enDisco[u] = p;
+        if (!p) { delete enDisco[u]; return; }
+        /* Se guardan dos cosas, y por razones distintas:
+
+             lo SIN CONFIRMAR  para no perder trabajo si el envio
+                               falla o se cierra la pestaña.
+             EL PROPIO         aunque este confirmado, como copia
+                               local del perfil.
+
+           Lo segundo faltaba y se noto enseguida: al confirmar el
+           servidor, esta funcion BORRABA el perfil del disco. Al
+           recargar, el espejo arrancaba vacio y el editor pintaba
+           un perfil en blanco mientras esperaba a la nube. Y editar
+           ese blanco lo habria subido encima del bueno.
+
+           Lo que no se guarda son las miniaturas de Descubrir, que
+           es lo que llenaba la cuota con perfiles ajenos. */
+        if (p._sucio || (mio && u === mio && !p._parcial)) enDisco[u] = p;
         else if (enDisco[u]) delete enDisco[u];
       });
       if (!util.write(K_PROFILES, enDisco)) {
@@ -575,7 +592,21 @@
       /* Este SI necesita sesion: sin ella no hay "mio" que traer,
          solo el borrador que ya esta en este navegador. */
       if (!espejo.puedeEmpujar()) return Promise.resolve(store.mine());
-      return ID.backend.cargarMio().then(function (p) {
+      return ID.backend.cargarMio().catch(function (e) {
+        /* Que no se pueda traer el perfil propio NO puede ser mudo.
+           El router pinta igual si esto falla -y hace bien-, pero
+           entonces el editor enseña un perfil en blanco. Sin aviso,
+           quien lo vea creera que ha perdido su perfil, y si empieza
+           a escribir encima puede acabar subiendo ese blanco.
+
+           Se avisa y se sigue con la copia local, que es justo para
+           esto para lo que se guarda. */
+        espejo.avisar('error', {
+          message: 'No se pudo traer tu perfil (' + (e && e.message || 'error') +
+            '). Se muestra la copia de este navegador.'
+        });
+        return null;
+      }).then(function (p) {
         if (p) {
           var quedo = espejo.recibir(p);
           util.write(K_MINE, quedo.username);
