@@ -243,6 +243,28 @@
       if (!p || !p.username) return p;
       var previo = espejo.mapa[p.username];
 
+      /* ---- el candado necesita llave ---------------------------
+         Proteger lo que no ha llegado al servidor solo tiene sentido
+         mientras ESTE dispositivo pueda hacer que llegue. Sin sesion
+         no puede: ese borrador no va a convertirse nunca en el
+         perfil publicado, y mientras tanto estaba impidiendo ver la
+         version real.
+
+         Sintoma que lo destapo: un cambio hecho en el ordenador se
+         veia alli y no en el movil. No era la cache -las cabeceras
+         son `no-cache` y Supabase responde DYNAMIC-: era una copia
+         local marcada como pendiente en un dispositivo sin sesion,
+         resembrada en cada arranque y negandose a que la pisaran.
+         Un candado del que yo mismo me habia llevado la llave.
+
+         Con sesion, lo de aqui manda: se puede subir, y se sube.
+         Sin sesion, manda el servidor: es la unica version que
+         existe de verdad.
+         --------------------------------------------------------- */
+      if (previo && previo._sucio && !espejo.puedeEmpujar()) {
+        return (espejo.mapa[p.username] = p);
+      }
+
       if (previo && previo._sucio) {
         /* Si ademas la copia remota es mas nueva, hay un choque de
            verdad: alguien edito en otro sitio. Se avisa, pero NO se
@@ -456,7 +478,18 @@
         if (p && p._sucio) enDisco[u] = p;
         else if (enDisco[u]) delete enDisco[u];
       });
-      if (!util.write(K_PROFILES, enDisco)) store.ultimoError = util.ultimoError;
+      if (!util.write(K_PROFILES, enDisco)) {
+        store.ultimoError = util.ultimoError;
+        /* Que el respaldo en disco falle es serio y era invisible.
+           Pasa de verdad: la cuota llena, o la navegacion privada de
+           Safari, donde `localStorage` lanza excepcion al escribir.
+           Si no se dice, la persona cree que su trabajo esta a salvo
+           en dos sitios cuando no esta en ninguno: ni arriba, si el
+           envio falla, ni abajo. */
+        espejo.avisar('error', util.ultimoError || {
+          message: 'No se pudo guardar una copia en este navegador.'
+        });
+      }
     },
 
     /* guarda sin pasar por evaluateBadges ni tocar el usuario activo.
@@ -509,6 +542,35 @@
 
     /* El perfil de la sesion abierta. Ademas apunta cual es el mio,
        para que store.mine() siga funcionando sin cambios. */
+    /* ============================================================
+       LO PENDIENTE SE REINTENTA SOLO
+       ============================================================
+       Sin esto, un perfil sin confirmar se queda esperando a que la
+       persona vuelva a guardar A MANO. Y como `sembrar()` lo
+       recupera de localStorage en cada arranque, y sin confirmar no
+       se deja pisar por la nube, la copia rancia se resembraba una y
+       otra vez y ganaba siempre. Quedaba atrapada: ni subia ni se
+       dejaba reemplazar.
+
+       Proteger lo que no ha llegado al servidor solo vale si ademas
+       se INTENTA que llegue. Si no, no es proteccion, es un limbo.
+       ============================================================ */
+    reintentarPendientes: function () {
+      if (!espejo.puedeEmpujar()) return 0;
+      var mio = store.mineName();
+      var n = 0;
+      Object.keys(espejo.mapa).forEach(function (u) {
+        var p = espejo.mapa[u];
+        /* Solo el propio. Los demas no son nuestros para escribir, y
+           la RLS los rechazaria de todas formas. */
+        if (!p || !p._sucio || p._parcial) return;
+        if (mio && u !== mio) return;
+        n++;
+        espejo.empujar(p);
+      });
+      return n;
+    },
+
     hidratarMio: function () {
       /* Este SI necesita sesion: sin ella no hay "mio" que traer,
          solo el borrador que ya esta en este navegador. */
@@ -517,6 +579,10 @@
         if (p) {
           var quedo = espejo.recibir(p);
           util.write(K_MINE, quedo.username);
+          /* Si lo que quedo es lo de aqui —porque tenia cambios sin
+             confirmar— se intenta subirlo ahora, no la proxima vez
+             que alguien pulse guardar. */
+          if (quedo._sucio) store.reintentarPendientes();
           return quedo;
         }
         /* Hay sesion pero todavia no hay perfil en la nube. Si esta

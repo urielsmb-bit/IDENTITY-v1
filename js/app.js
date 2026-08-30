@@ -645,6 +645,13 @@
     if (ID.backend && ID.backend.hay()) {
       ID.backend.alCambiarSesion(function () {
         pintarSesion();
+        /* Al entrar puede haber trabajo hecho sin sesion esperando a
+           subir. Antes se quedaba esperando a que la persona pulsara
+           guardar otra vez, sin ninguna señal de que hiciera falta. */
+        if (ID.store && ID.store.reintentarPendientes) {
+          var n = ID.store.reintentarPendientes();
+          if (n) app.toast('Subiendo los cambios que quedaron pendientes…');
+        }
       });
     }
 
