@@ -12,7 +12,7 @@
 
 .pf{
   position:relative;
-  min-height:100vh;
+  min-height:100vh;min-height:100dvh;
   background:var(--p-bg);
   color:var(--p-text);
   font-family:var(--u-font, var(--p-fb));
@@ -121,7 +121,7 @@
    ============================================================ */
 .pf-hero{
   position:relative;
-  min-height:100vh;
+  min-height:100vh;min-height:100dvh;
   display:grid;
   align-items:center;
   padding:clamp(72px,10vh,120px) clamp(16px,5vw,48px) clamp(56px,8vh,96px);
@@ -865,13 +865,21 @@
   font-family:var(--p-fm); font-size:10px;
   color:var(--p-dim);
   pointer-events:none;             /* no tapa lo que haya debajo... */
-  /* Un degradado, no una barra: en un fondo con foto o video una
-     franja opaca se ve como un recorte. Asi el texto se lee sin
-     dibujar un borde. */
-  background:linear-gradient(to top,
-    color-mix(in srgb, var(--p-bg) 78%, transparent),
-    transparent);
-  text-shadow:0 1px 3px color-mix(in srgb, var(--p-bg) 90%, transparent);
+  /* SIN FONDO. Ni degradado ni barra.
+     Aqui habia un degradado para que el texto se leyera sobre una
+     foto o un video. En un movil el pie se sube 64px para esquivar
+     los botones flotantes (mas abajo), y el degradado subia con el:
+     el resultado era una franja difuminada flotando a media altura,
+     sin tocar ningun borde. Se leia como un fallo de dibujado,
+     porque lo parecia.
+
+     La legibilidad la sostiene la sombra, que es lo que de verdad
+     hacia el trabajo: sigue el contorno de cada letra en vez de
+     pintar un rectangulo sobre la imagen que el usuario eligio. */
+  text-shadow:
+    0 1px 2px color-mix(in srgb, var(--p-bg) 92%, transparent),
+    0 0 6px color-mix(in srgb, var(--p-bg) 78%, transparent),
+    0 0 14px color-mix(in srgb, var(--p-bg) 60%, transparent);
 }
 .pf-foot > *{ pointer-events:auto; }   /* ...pero el enlace si se pulsa */
 .pf-foot a{
@@ -1523,4 +1531,67 @@
 @media (max-width:420px){
   .pf-music__viz{ display:none; }
   .pf-music[data-style="card"] .pf-music__meta{ flex-basis:100%; }
+}
+
+
+/* ============================================================
+   EL PERFIL EN UN MOVIL DE VERDAD
+   ============================================================ */
+
+/* ---- lo fijo, fuera de la muesca y de la barra de inicio ---- */
+.pf-foot{
+  padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));
+  padding-left:max(120px, env(safe-area-inset-left, 0px));
+  padding-right:max(120px, env(safe-area-inset-right, 0px));
+}
+.pf-actions{
+  right:calc(16px + env(safe-area-inset-right, 0px));
+  bottom:calc(16px + env(safe-area-inset-bottom, 0px));
+}
+.pf-sound{
+  left:calc(16px + env(safe-area-inset-left, 0px));
+  top:calc(16px + env(safe-area-inset-top, 0px));
+}
+
+/* ---- objetivos tactiles de 44 px ----------------------------
+   Medido a 375 px de ancho: los iconos de redes eran 38x38 y los
+   botones flotantes 42x42. El minimo comodo con un dedo son 44.
+
+   Se amplia el AREA DE TOQUE, no el icono: un pseudoelemento
+   invisible que sobresale lo justo. Agrandar el icono habria
+   cambiado el diseno que ya esta elegido, y el problema no era que
+   se vieran pequenos sino que se fallaba al tocarlos.
+   ------------------------------------------------------------ */
+.pf-social, .pf-fab, .pf-sound{ position:relative; }
+.pf-social::after, .pf-fab::after, .pf-sound::after{
+  content:'';
+  position:absolute;
+  top:50%; left:50%;
+  width:max(100%, 44px); height:max(100%, 44px);
+  transform:translate(-50%,-50%);
+}
+
+/* El enlace del pie tenia 16 px de alto: imposible de acertar. */
+.pf-foot a{
+  display:inline-flex; align-items:center;
+  min-height:44px; padding-inline:4px;
+}
+
+/* ---- sin hover no hay estados de hover ----------------------
+   En una pantalla tactil `:hover` se queda PEGADO despues de tocar:
+   el elemento se queda agrandado hasta que tocas otra cosa. Se
+   limitan los efectos a los punteros que de verdad pueden pasar por
+   encima. */
+@media (hover: none) {
+  .pf-social:hover, .pf-fab:hover{ transform:none; }
+}
+
+/* ---- respetar a quien pidio menos movimiento --------------- */
+@media (prefers-reduced-motion: reduce) {
+  .pf-bg video{ animation:none; }
+  .pf *, .pf *::before, .pf *::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+  }
 }

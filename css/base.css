@@ -78,7 +78,7 @@ html{
 
 body{
   margin:0;
-  min-height:100vh;
+  min-height:100vh;min-height:100dvh;
   background:var(--bg-primary);
   color:var(--text-primary);
   font-family:var(--font);
@@ -257,7 +257,7 @@ h1,h2,h3,h4{ margin:0; font-weight:600; letter-spacing:-.03em; line-height:1.1; 
 .toast.toast--warn{ border-color:var(--dnd); color:#FFD9DA; }
 
 /* ---- entrada de página ------------------------------------- */
-.view{ padding-top:var(--nav-h); min-height:100vh; }
+.view{ padding-top:var(--nav-h); min-height:100vh;min-height:100dvh; }
 
 .rise{ animation:rise var(--transition-large) both; }
 @keyframes rise{
@@ -284,3 +284,64 @@ h1,h2,h3,h4{ margin:0; font-weight:600; letter-spacing:-.03em; line-height:1.1; 
   border-radius:0 0 var(--radius-sm) 0; font-weight:600;
 }
 .skip:focus{ left:0; }
+
+
+/* ============================================================
+   LA MUESCA Y LA BARRA DE INICIO
+   ============================================================
+   `index.html` pide `viewport-fit=cover`, o sea que la pagina se
+   dibuja DEBAJO de la muesca y de la barra inferior del iPhone. Eso
+   es lo que se quiere para un fondo a pantalla completa... pero no
+   habia ni un `env(safe-area-inset-*)` compensando, asi que el texto
+   del pie quedaba pegado al borde y bajo la barra de inicio.
+
+   La barra de navegacion crece con la muesca en vez de meterse
+   debajo. Se hace subiendo `--nav-h`, no tocando `.nav`: hay quince
+   `calc(100dvh - var(--nav-h))` repartidos por la hoja, y todos
+   siguen cuadrando solos.
+   ============================================================ */
+@supports (padding: env(safe-area-inset-top)) {
+  :root { --nav-h: calc(60px + env(safe-area-inset-top)); }
+}
+
+.toast{
+  bottom:calc(24px + env(safe-area-inset-bottom, 0px));
+  max-width:calc(100vw - 32px);
+}
+
+/* ---- el gesto de "atras" de iOS -----------------------------
+   Un desplazamiento horizontal accidental en una pagina que no lo
+   necesita se siente como un fallo. Ninguna vista de IDENTITY
+   requiere desplazamiento lateral del documento: el que aparezca es
+   un error de maquetacion, y asi se nota en vez de deslizarse.
+   ------------------------------------------------------------ */
+html, body{ overflow-x:clip; }
+
+
+/* ============================================================
+   QUE NADA EMPUJE MAS ANCHO QUE LA PANTALLA
+   ============================================================
+   Medido a 320 px: la portada sacaba 49 elementos fuera. La causa
+   no era ninguno de los 49 — era uno solo, arriba del todo.
+
+   En Grid y en Flex, un hijo NO se encoge por debajo de su
+   `min-content` salvo que se le diga. Un `1fr` es en realidad
+   `minmax(auto,1fr)`, y ese `auto` es el suelo. El campo de la
+   portada («identity.gg/» + el input + «Crear») mide unos 394 px
+   juntos, asi que la columna se plantaba en 394 y arrastraba consigo
+   el titulo, el parrafo y el resto.
+
+   Los `<input>` traen ademas su propio ancho por defecto (el
+   atributo `size`, unos 20 caracteres), que actua igual.
+
+   Esto NO se arregla con media queries: no es cuestion de a partir
+   de que ancho, sino de que el suelo existe a cualquier ancho.
+   ============================================================ */
+input, select, textarea, button{ min-width:0; }
+
+/* Palabras muy largas —una URL, un nombre de usuario sin espacios—
+   no pueden ensanchar su contenedor: se parten. */
+.view, .pf{ overflow-wrap:anywhere; }
+
+/* Ni las imagenes ni los videos pasan de su hueco. */
+img, video, canvas, svg, iframe{ max-width:100%; }

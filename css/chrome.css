@@ -61,16 +61,16 @@
 .hero{
   position:relative;
   display:grid;
-  grid-template-columns:1fr minmax(380px,468px);
+  grid-template-columns:minmax(0,1fr) minmax(380px,468px);
   align-items:center;
   gap:clamp(32px,5vw,72px);
   max-width:var(--maxw);
   margin-inline:auto;
   padding:clamp(48px,7vw,88px) var(--pad) clamp(48px,6vw,72px);
-  min-height:calc(100vh - var(--nav-h));
+  min-height:calc(100vh - var(--nav-h));min-height:calc(100dvh - var(--nav-h));
 }
 @media (max-width:960px){
-  .hero{ grid-template-columns:1fr; min-height:0; padding-top:var(--s6); }
+  .hero{ grid-template-columns:minmax(0,1fr); min-height:0; padding-top:var(--s6); }
 }
 
 /* halo tenue detrás del perfil demo: profundidad, no decoración */
@@ -138,7 +138,7 @@
 
 .demo__frame{
   position:relative;
-  height:clamp(460px,62vh,560px);
+  height:clamp(460px,62vh,560px);height:clamp(460px,62dvh,560px);
   border:1px solid var(--border-strong);
   border-radius:var(--radius-xl);
   overflow:hidden;
@@ -359,7 +359,7 @@ body.is-dashboard .nav{ border-bottom-color:var(--border); }
    ============================================================ */
 .cargando{
   display:flex; align-items:center; justify-content:center; gap:12px;
-  min-height:56vh; color:var(--p-dim, #8b939c);
+  min-height:56vh;min-height:56dvh; color:var(--p-dim, #8b939c);
   font-size:14px; letter-spacing:.02em;
 }
 .cargando__giro{
@@ -376,3 +376,11 @@ body.is-dashboard .nav{ border-bottom-color:var(--border); }
 /* la sesion en la barra: solo separacion, el boton ya trae lo suyo */
 .nav__sesion{ display:inline-flex; }
 .nav__sesion:empty{ display:none; }
+
+
+/* ---- la barra bajo la muesca -------------------------------- */
+.nav{
+  padding-top:env(safe-area-inset-top, 0px);
+  padding-left:max(clamp(16px,3vw,28px), env(safe-area-inset-left, 0px));
+  padding-right:max(clamp(16px,3vw,28px), env(safe-area-inset-right, 0px));
+}

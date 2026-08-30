@@ -9,7 +9,7 @@
 .dash{
   display:grid;
   grid-template-columns:200px 380px minmax(0,1fr);
-  min-height:calc(100vh - var(--nav-h));
+  min-height:calc(100vh - var(--nav-h));min-height:calc(100dvh - var(--nav-h));
 }
 @media (max-width:1560px){ .dash{ grid-template-columns:194px 348px minmax(0,1fr); } }
 @media (max-width:1320px){ .dash{ grid-template-columns:184px 320px minmax(0,1fr); } }
@@ -45,7 +45,7 @@
 /* ---- barra lateral ------------------------------------------ */
 .dash__side{
   position:sticky; top:var(--nav-h);
-  height:calc(100vh - var(--nav-h));
+  height:calc(100vh - var(--nav-h));height:calc(100dvh - var(--nav-h));
   border-right:1px solid var(--border);
   padding:var(--s5) var(--s3);
   display:flex; flex-direction:column;
@@ -99,7 +99,7 @@
      internas se adaptan a SU ancho, no al del navegador */
   container-type:inline-size;
   container-name:ctrl;
-  max-height:calc(100vh - var(--nav-h));
+  max-height:calc(100vh - var(--nav-h));max-height:calc(100dvh - var(--nav-h));
   overflow-y:auto;
 }
 @media (max-width:860px){
@@ -393,7 +393,7 @@
 /* ---- vista previa ---------------------------------------------------- */
 .dash__prev{
   position:sticky; top:var(--nav-h);
-  height:calc(100vh - var(--nav-h));
+  height:calc(100vh - var(--nav-h));height:calc(100dvh - var(--nav-h));
   background:
     radial-gradient(60% 50% at 50% 0%, rgba(255,255,255,.03), transparent 70%),
     var(--bg-secondary);
@@ -973,11 +973,11 @@
 .ob{
   display:grid;
   grid-template-columns:minmax(0,1fr) minmax(320px,420px);
-  min-height:calc(100vh - var(--nav-h));
+  min-height:calc(100vh - var(--nav-h));min-height:calc(100dvh - var(--nav-h));
 }
 @media (max-width:940px){
   .ob{ grid-template-columns:1fr; }
-  .ob__stage{ order:-1; height:44vh; border-left:0; border-bottom:1px solid var(--border); }
+  .ob__stage{ order:-1; height:44vh;height:44dvh; border-left:0; border-bottom:1px solid var(--border); }
 }
 
 .ob__panel{
@@ -1104,7 +1104,7 @@
   padding:var(--s4);
   display:flex;
   position:sticky; top:var(--nav-h);
-  height:calc(100vh - var(--nav-h));
+  height:calc(100vh - var(--nav-h));height:calc(100dvh - var(--nav-h));
 }
 .ob__frame{
   flex:1;
@@ -1252,7 +1252,7 @@
   .dash__main{ max-height:none; overflow:visible; border-right:0; }
   .dash__prev{ display:none; }
   .dash.show-prev .dash__prev{
-    display:flex; position:static; height:74vh;
+    display:flex; position:static; height:74vh;height:74dvh;
   }
 }
 
