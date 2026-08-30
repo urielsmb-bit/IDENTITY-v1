@@ -221,6 +221,49 @@
       });
     },
 
+    /* ============================================================
+       LA UNICA PUERTA POR LA QUE ENTRA LO QUE BAJA DE LA NUBE
+       ============================================================
+       Antes cada hidratacion hacia `espejo.mapa[u] = p` a pelo, y
+       eso destruia el trabajo sin guardar.
+
+       Reproducido: se edita el nombre, `save()` devuelve true y
+       `ultimoError` es null; se abre el perfil —que hidrata— y el
+       cambio ha desaparecido. El usuario ve que guardo bien y luego
+       ve que no. No hay nada peor que eso.
+
+       La regla es una sola: LO QUE EL SERVIDOR NO HA CONFIRMADO
+       TODAVIA NO SE PISA. Un perfil marcado `_sucio` tiene cambios
+       que el servidor aun no ha aceptado —porque no hay sesion, o
+       porque el envio fallo, o porque sigue en vuelo—, y esos
+       cambios valen mas que una copia remota: lo que se acaba de
+       escribir es lo que la persona tiene en la cabeza.
+       ============================================================ */
+    recibir: function (p) {
+      if (!p || !p.username) return p;
+      var previo = espejo.mapa[p.username];
+
+      if (previo && previo._sucio) {
+        /* Si ademas la copia remota es mas nueva, hay un choque de
+           verdad: alguien edito en otro sitio. Se avisa, pero NO se
+           resuelve pisando: lo local se queda y el proximo envio
+           mandara. Perder lo que alguien acaba de escribir para
+           quedarte con lo que escribio en otro dispositivo hace
+           media hora no es resolver un conflicto, es elegir mal. */
+        if (p._actualizado && previo._actualizado &&
+            new Date(p._actualizado) > new Date(previo._actualizado)) {
+          espejo.avisar('conflicto', {
+            username: p.username,
+            message: 'Este perfil cambio en otro sitio. Se conserva lo de aqui.'
+          });
+        }
+        return previo;
+      }
+
+      espejo.mapa[p.username] = p;
+      return p;
+    },
+
     avisar: function (estado, error) {
       espejo.oyentes.forEach(function (fn) {
         try { fn(estado, error); } catch (e) { /* un oyente roto no para el resto */ }
@@ -244,6 +287,11 @@
           if (actual) {
             actual._id = guardado._id;
             actual._actualizado = guardado._actualizado;
+            /* Confirmado por el servidor: ya se puede dejar pisar.
+               Solo aqui se limpia la marca. Si el envio falla, sigue
+               sucio y la copia local aguanta. */
+            delete actual._sucio;
+            store._respaldar();
           }
         }
         espejo.enVuelo--;
@@ -345,6 +393,9 @@
       var loc = store.local();
       p.v = VERSION;
       p.badges = store.evaluateBadges(p);
+      /* Sucio hasta que el servidor diga lo contrario. Mientras lo
+         este, ninguna hidratacion puede pisarlo. */
+      p._sucio = true;
       loc[p.username] = p;
       if (!store._escribir(loc, p)) return false;
       return true;
@@ -358,6 +409,13 @@
       if (espejo.activo()) {
         espejo.mapa = loc;
         if (espejo.puedeEmpujar()) {
+          /* Respaldo en disco ANTES de enviar, no despues.
+             Aqui solo se escribia en el espejo, que vive en memoria,
+             y se enviaba a la red sin esperar respuesta. Si la
+             pestana se cerraba o la red fallaba en ese hueco, el
+             trabajo no estaba en ningun sitio: ni arriba, porque no
+             llego, ni abajo, porque nadie lo escribio. */
+          store._respaldar();
           if (perfilAEnviar) espejo.empujar(perfilAEnviar);
           return true;
         }
@@ -375,6 +433,21 @@
         return false;
       }
       return true;
+    },
+
+    /* Copia en disco de lo que el servidor todavia no ha aceptado.
+       Solo eso: guardar el espejo entero meteria en localStorage las
+       miniaturas de Descubrir y llenaria la cuota con perfiles
+       ajenos. Cuando el servidor confirma, la entrada se retira. */
+    _respaldar: function () {
+      if (!espejo.activo()) return;
+      var enDisco = util.read(K_PROFILES, {});
+      Object.keys(espejo.mapa).forEach(function (u) {
+        var p = espejo.mapa[u];
+        if (p && p._sucio) enDisco[u] = p;
+        else if (enDisco[u]) delete enDisco[u];
+      });
+      if (!util.write(K_PROFILES, enDisco)) store.ultimoError = util.ultimoError;
     },
 
     /* guarda sin pasar por evaluateBadges ni tocar el usuario activo.
@@ -421,8 +494,7 @@
       if (!espejo.activo()) return Promise.resolve(store.get(username));
       espejo.sembrar();
       return ID.backend.cargarPerfil(username).then(function (p) {
-        if (p) espejo.mapa[p.username] = p;
-        return p;
+        return p ? espejo.recibir(p) : p;
       });
     },
 
@@ -434,9 +506,9 @@
       if (!espejo.puedeEmpujar()) return Promise.resolve(store.mine());
       return ID.backend.cargarMio().then(function (p) {
         if (p) {
-          espejo.mapa[p.username] = p;
-          util.write(K_MINE, p.username);
-          return p;
+          var quedo = espejo.recibir(p);
+          util.write(K_MINE, quedo.username);
+          return quedo;
         }
         /* Hay sesion pero todavia no hay perfil en la nube. Si esta
            persona venia trabajando sin cuenta, su borrador esta en

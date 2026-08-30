@@ -356,7 +356,7 @@
       /* Las marcas internas (_id, _actualizado) las pone el
          backend, no el perfil: se conservan aparte y nunca se
          validan como contenido. */
-      ['_id', '_actualizado', '_parcial'].forEach(function (k) {
+      ['_id', '_actualizado', '_parcial', '_sucio'].forEach(function (k) {
         if (p[k] != null) out[k] = p[k];
       });
 

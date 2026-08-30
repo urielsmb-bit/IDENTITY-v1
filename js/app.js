@@ -648,6 +648,39 @@
       });
     }
 
+    /* ============================================================
+       DECIR LA VERDAD SOBRE SI SE GUARDO
+       ============================================================
+       `store.alSincronizar` existia desde el principio y NADIE lo
+       escuchaba: los avisos de 'error' se emitian al vacio. Por eso
+       un guardado podia fallar y la aplicacion se quedaba tan
+       tranquila; peor aun, el editor decia que habia publicado.
+
+       Solo se habla cuando hay algo que decir. Un aviso en cada
+       autoguardado seria ruido —el editor guarda solo cada pocos
+       segundos— y el ruido se aprende a ignorar, que es justo lo
+       que no queremos el dia que el mensaje importe.
+       ============================================================ */
+    if (ID.store && ID.store.alSincronizar) {
+      var avisado = 0;
+      ID.store.alSincronizar(function (estado, dato) {
+        if (estado === 'error') {
+          /* Como mucho uno cada diez segundos: si se cae la red, el
+             editor reintentaria en cada tecla y taparia la pantalla
+             de avisos identicos. */
+          var ahora = Date.now();
+          if (ahora - avisado < 10000) return;
+          avisado = ahora;
+          app.toast('No se pudo guardar en tu cuenta' +
+            ((dato && dato.message) ? ' (' + dato.message + ')' : '') +
+            '. Tus cambios siguen aqui y se reintentan al guardar otra vez.', true);
+        } else if (estado === 'conflicto') {
+          app.toast((dato && dato.message) ||
+            'Este perfil cambio en otro sitio. Se conserva lo de aqui.', true);
+        }
+      });
+    }
+
     ID.router.start();
   });
 })();
