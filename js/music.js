@@ -370,6 +370,36 @@
         });
     },
 
+    /* ============================================================
+       DECIR QUE PASA, NO EL NUMERO
+       ============================================================
+       "Spotify respondió 403" no le sirve a nadie: ni al que lo ve
+       ni al que tiene que arreglarlo. Cada codigo tiene una causa
+       distinta y casi siempre una accion concreta detras.
+
+       El 403 es el interesante. Con los permisos correctos -y aqui
+       lo estan: /me/playlists necesita playlist-read-private, que
+       es justo lo que se pide- un 403 significa casi siempre que la
+       aplicacion de Spotify sigue en MODO DESARROLLO. En ese modo
+       Spotify solo la deja usar a las cuentas añadidas a mano en el
+       panel, hasta 25. El login funciona, y todas las llamadas al
+       API responden 403.
+
+       Se distingue por eso: 401 es "tu sesion caduco" -y se
+       reintenta sola-, 403 es "esta cuenta no esta autorizada".
+       ============================================================ */
+    explicar: function (codigo) {
+      if (codigo === 403) {
+        return 'Spotify no autoriza a esta cuenta. Suele ser porque la ' +
+          'aplicacion esta en modo desarrollo y solo funciona con las cuentas ' +
+          'añadidas a mano en el panel de Spotify.';
+      }
+      if (codigo === 429) return 'Spotify esta limitando las peticiones. Espera un poco.';
+      if (codigo === 404) return 'Spotify no encontro eso.';
+      if (codigo >= 500) return 'Spotify esta fallando ahora mismo. No es cosa tuya.';
+      return 'Spotify respondio ' + codigo + '.';
+    },
+
     /* se llama al cargar la página: si volvemos con ?code, canjea */
     volver: function () {
       var q = new URLSearchParams(location.search);
@@ -434,7 +464,7 @@
         return fetch(API + ruta, { headers: { Authorization: 'Bearer ' + tok } })
           .then(function (r) {
             if (r.status === 401) throw new Error('401');
-            if (!r.ok) throw new Error('Spotify respondió ' + r.status);
+            if (!r.ok) throw new Error(sp.explicar(r.status));
             return r.json();
           });
       };
