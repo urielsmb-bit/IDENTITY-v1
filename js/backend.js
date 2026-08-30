@@ -416,27 +416,74 @@
     });
   };
 
-  /* Guardar comprueba que nadie haya tocado el perfil desde que lo
-     cargamos. Sin esto, dos pestañas abiertas se pisan la una a la
-     otra sin decir nada, y el usuario pierde trabajo sin entender
-     por qué. */
+  /* ============================================================
+     GUARDAR, CON BLOQUEO OPTIMISTA Y CON SALIDA
+     ============================================================
+     La escritura solo se aplica si la marca de tiempo sigue siendo
+     la que traiamos. Sin eso, dos pestañas abiertas se pisan sin
+     decir nada.
+
+     Pero un bloqueo sin salida no protege: atrapa. Antes, si la
+     marca local se quedaba rancia el guardado se rechazaba, y como
+     una copia con cambios sin confirmar ya no se refresca al
+     hidratar —eso es a proposito, es lo que impide perder trabajo—
+     la marca no volvia a ponerse al dia NUNCA. Resultado: el
+     perfil quedaba imposible de guardar para siempre. Un candado
+     puesto para no perder trabajo acababa impidiendo guardarlo.
+
+     Asi que cuando el rechazo llega, se mira por que:
+
+       la fila no existe  -> error de verdad, se dice y se para.
+       la fila existe     -> la marca estaba rancia. Se reintenta
+                             UNA vez con la del servidor.
+
+     Ese reintento hace que gane lo que hay en el editor. Es una
+     decision, no un descuido: quien esta escribiendo ahora ve lo
+     que va a guardar, y lo que se desplaza es un cambio anterior
+     hecho en otro sitio que esa persona ya no tiene delante.
+     Perder lo que alguien acaba de escribir es peor. Pero no pasa
+     en silencio: vuelve marcado y la interfaz lo cuenta.
+     ============================================================ */
   back.guardarPerfil = function (p) {
     if (!db) return Promise.reject(new Error('sin backend'));
     if (!p._id) return back.crearPerfil(p);
-    var fila = aFila(p);
-    var q = db.from('perfiles').update(fila).eq('id', p._id);
-    if (p._actualizado) q = q.eq('actualizado', p._actualizado);
-    return q.select('id,username,apariencia,estado,creado,actualizado')
-      .maybeSingle()
-      .then(function (r) {
-        if (r.error) throw traducir(r.error);
-        if (!r.data) {
-          var e = new Error('Este perfil se edito en otro sitio mientras tanto.');
-          e.code = 'conflicto';
-          throw e;
-        }
-        return aPerfil(r.data);
-      });
+
+    function escribir(marca) {
+      var q = db.from('perfiles').update(aFila(p)).eq('id', p._id);
+      if (marca) q = q.eq('actualizado', marca);
+      return q.select('id,username,apariencia,estado,creado,actualizado')
+        .maybeSingle()
+        .then(function (r) {
+          if (r.error) throw traducir(r.error);
+          return r.data ? aPerfil(r.data) : null;   /* null = 0 filas */
+        });
+    }
+
+    return escribir(p._actualizado).then(function (guardado) {
+      if (guardado) return guardado;
+
+      /* Cero filas. Puede ser la marca rancia, o que la fila no sea
+         nuestra: hay que distinguirlo antes de insistir. */
+      return db.from('perfiles').select('actualizado').eq('id', p._id)
+        .maybeSingle()
+        .then(function (r) {
+          if (r.error) throw traducir(r.error);
+          if (!r.data) {
+            var e = new Error('Este perfil ya no esta en tu cuenta.');
+            e.code = 'sin-fila';
+            throw e;
+          }
+          return escribir(r.data.actualizado).then(function (g2) {
+            if (!g2) {
+              var e2 = new Error('No se pudo guardar: el perfil cambia mas rapido de lo que se puede escribir.');
+              e2.code = 'conflicto';
+              throw e2;
+            }
+            g2._desplazo = true;   /* para que la interfaz lo cuente */
+            return g2;
+          });
+        });
+    });
   };
 
   back.borrarPerfil = function (id) {

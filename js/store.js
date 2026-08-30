@@ -293,6 +293,15 @@
             delete actual._sucio;
             store._respaldar();
           }
+          /* El servidor acepto, pero hubo que pasar por encima de un
+             cambio hecho en otro sitio. Se guarda lo de aqui —que es
+             lo que la persona tiene delante— y se dice. */
+          if (guardado._desplazo) {
+            espejo.avisar('desplazado', {
+              username: guardado.username,
+              message: 'Guardado. Habia un cambio hecho en otro sitio y se ha sustituido por lo de aqui.'
+            });
+          }
         }
         espejo.enVuelo--;
         espejo.avisar(espejo.enVuelo ? 'enviando' : 'guardado');

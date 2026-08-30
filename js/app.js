@@ -674,6 +674,8 @@
           app.toast('No se pudo guardar en tu cuenta' +
             ((dato && dato.message) ? ' (' + dato.message + ')' : '') +
             '. Tus cambios siguen aqui y se reintentan al guardar otra vez.', true);
+        } else if (estado === 'desplazado') {
+          app.toast((dato && dato.message) || 'Guardado.');
         } else if (estado === 'conflicto') {
           app.toast((dato && dato.message) ||
             'Este perfil cambio en otro sitio. Se conserva lo de aqui.', true);
