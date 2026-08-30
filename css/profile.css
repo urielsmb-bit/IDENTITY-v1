@@ -1604,3 +1604,47 @@
 @media (pointer: coarse) {
   .pf-vote button{ min-width:44px; min-height:44px; flex:0 0 auto; }
 }
+
+
+/* ============================================================
+   EL AVATAR, CUADRADO EN TODAS PARTES
+   ============================================================
+   Sintoma: circulo correcto en Android, ovalo estirado en iPhone.
+   Medido en el perfil real:
+
+     ancho  34.7px   <- correcto, es --b-w:15% del usuario
+     alto   34.7px   en Chrome
+     alto   ~85px    en Safari (la proporcion de la imagen)
+
+   `.pf-avatar` cuadra con `aspect-ratio:1`. Safari no lo aplica
+   cuando el ancho viene en PORCENTAJE y el elemento es hijo de un
+   contenedor flex en columna: el alto se lo acaba dictando la
+   imagen de dentro. Como el avatar de esta persona es vertical,
+   salia un ovalo.
+
+   La solucion no depende de `aspect-ratio`: un pseudoelemento con
+   `padding-top:100%`. Ese porcentaje se resuelve SIEMPRE contra el
+   ancho del bloque contenedor, en todos los navegadores y desde
+   hace quince años. El pseudoelemento fija la altura de la celda y
+   la imagen se estira a esa celda.
+
+   Se conserva `aspect-ratio` arriba: donde funciona, hace lo mismo
+   y no estorba.
+   ============================================================ */
+.pf-avatar{
+  display:grid;
+  place-items:center;
+}
+.pf-avatar::before{
+  content:'';
+  grid-area:1 / 1;
+  width:100%;
+  padding-top:100%;        /* el % se mide contra el ANCHO: cuadrado */
+  pointer-events:none;
+}
+.pf-avatar > *{
+  grid-area:1 / 1;         /* misma celda que el espaciador */
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
