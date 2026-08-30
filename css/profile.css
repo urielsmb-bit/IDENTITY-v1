@@ -1648,3 +1648,26 @@
   height:100%;
   object-fit:cover;
 }
+
+
+/* ---- reproductor incrustado (Spotify, YouTube) --------------
+   Alto fijo porque el iframe no puede decirnos cuanto mide desde
+   otro origen. 152px es la altura compacta del reproductor de
+   Spotify; una lista pide mas y por eso se distingue. */
+.pf-embed{
+  width:100%;
+  max-width:min(420px, 100%);
+  margin-inline:auto;
+  border-radius:var(--p-chip-r, 12px);
+  overflow:hidden;
+  background:var(--p-surface-2);
+  line-height:0;                    /* sin el hueco que deja un iframe en linea */
+}
+.pf-embed iframe{
+  display:block;
+  width:100%;
+  height:152px;
+  border:0;
+}
+.pf-embed[data-tipo="playlist"] iframe,
+.pf-embed[data-tipo="album"] iframe{ height:352px; }

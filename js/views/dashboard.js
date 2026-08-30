@@ -754,7 +754,17 @@
           'pantalla de entrada.</div>';
 
     } else if (fuente === 'spotify') {
-      cuerpo = '<div id="spBox"></div>';
+      cuerpo =
+        field('Enlace de Spotify', 'cancion, album o lista',
+          '<input class="inp" id="spLink" placeholder="https://open.spotify.com/track/...">') +
+        '<div class="blk__d" style="margin-top:10px">Pegalo y ya esta: <b>no hace falta ' +
+          'conectar la cuenta</b>. Se incrusta el reproductor de Spotify, y a quien tenga ' +
+          'Premium con la sesion abierta le suena la cancion entera.</div>' +
+        '<div class="blk__sub">O conecta tu cuenta de Spotify</div>' +
+        '<div class="blk__d" style="margin:-6px 0 10px">Sirve para buscar entre tus listas ' +
+          'sin salir de aqui. Spotify solo lo permite a cinco cuentas por aplicacion, asi ' +
+          'que si da error usa el enlace de arriba.</div>' +
+        '<div id="spBox"></div>';
 
     } else {
       cuerpo =
@@ -1695,6 +1705,43 @@
   /* ---- música: YouTube y Spotify ---------------------------------- */
   function bindMusica(mount) {
     var main = mount.querySelector('#dashMain');
+
+    /* --- Spotify pegando un enlace, SIN conectar cuenta ---------
+       Mismo gesto que YouTube: se pega y ya. El API de Spotify solo
+       admite cinco cuentas en modo desarrollo y salir de ahi pide
+       empresa registrada y 250.000 usuarios al mes, asi que la
+       conexion no puede ser el camino principal para nadie. */
+    var spl = main.querySelector('#spLink');
+    if (spl) {
+      var tsp = 0;
+      spl.addEventListener('input', function () {
+        clearTimeout(tsp);
+        tsp = setTimeout(function () {
+          var info = ID.music.spotify.deEnlace(spl.value.trim());
+          if (!info) return;
+
+          var t = { src: 'spotify', embed: info.embed, url: info.publico,
+                    title: 'Spotify', artist: '', cover: '' };
+
+          /* oEmbed de Spotify es publico y no pide clave: da titulo y
+             caratula. Si falla, se guarda igual — el reproductor
+             incrustado enseña el titulo por su cuenta. */
+          ID.music.spotify.datosDeEnlace(info)
+            .then(function (d) {
+              if (d) { t.title = d.title || t.title; t.cover = d.cover || ''; }
+            })
+            .then(function () {
+              pistas(state.p).push(t);
+              sincronizarAudio(state.p);
+              state.p.audio.src = 'spotify';
+              spl.value = '';
+              touch(mount, 'estructura');
+              paintSection(mount);
+              ID.app.toast('Anadida: ' + t.title);
+            });
+        }, 420);
+      });
+    }
 
     /* --- YouTube --- */
     var yt = main.querySelector('#ytUrl');

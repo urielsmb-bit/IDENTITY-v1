@@ -106,6 +106,27 @@
     return '';
   }
 
+  /* Direccion de un reproductor incrustado.
+     NO vale `medio()` aqui: eso admite cualquier https, y esto
+     acaba dentro de un <iframe>. Un iframe ajeno puede intentar
+     navegar la pagina de arriba, abrir dialogos o hacerse pasar por
+     la interfaz. Lista blanca estricta: solo los reproductores que
+     la CSP ya permite, y solo con la forma exacta que tienen.
+
+     Lo que no encaje devuelve cadena vacia y no llega a guardarse. */
+  var INCRUSTABLES = [
+    /^https:\/\/open\.spotify\.com\/embed\/(track|album|playlist|artist|episode|show)\/[A-Za-z0-9]{16,32}(\?[\w=&%-]{0,80})?$/,
+    /^https:\/\/www\.youtube(-nocookie)?\.com\/embed\/[A-Za-z0-9_-]{6,20}(\?[\w=&%-]{0,80})?$/
+  ];
+  function incrustable(v) {
+    var t = String(v == null ? '' : v).trim();
+    if (!t) return '';
+    for (var i = 0; i < INCRUSTABLES.length; i++) {
+      if (INCRUSTABLES[i].test(t)) return t;
+    }
+    return '';
+  }
+
   /* ---- el esquema ---------------------------------------------
      Lo que no aparece aquí NO sobrevive. Añadir un campo al perfil
      obliga a añadirlo aquí, y eso es exactamente lo que se busca:
@@ -291,6 +312,7 @@
     numero: num,
     color: color,
     medio: medio,
+    incrustable: incrustable,
     deLista: deLista,
 
     /* Devuelve un objeto NUEVO con solo lo permitido. Nunca falla:
@@ -329,6 +351,26 @@
       if (p.audio && typeof p.audio === 'object') {
         out.audio = {
           provider: txt(p.audio.provider, 24),
+
+          /* Estos seis se perdian al guardar, y con ellos la fuente
+             elegida en el editor: volvia a "Manual" en cada recarga.
+             Las canciones si sobrevivian -viven en `tracks`- asi que
+             el fallo se notaba solo al reabrir el editor, que es
+             donde menos se mira.
+
+             Es la regla de este archivo mordiendo un caso que se me
+             paso: lo que no aparece aqui NO sobrevive, y eso vale
+             tambien para lo que uno olvida poner. */
+          src: deLista(p.audio.src, ['manual', 'youtube', 'spotify'], 'manual'),
+          title: txt(p.audio.title, TOPE.corto),
+          artist: txt(p.audio.artist, TOPE.corto),
+          /* La portada admite un emoji o una direccion: se prueba
+             como medio y, si no lo es, se guarda como texto corto. */
+          cover: medio(p.audio.cover) || txt(p.audio.cover, 8),
+          /* Un identificador de YouTube, no una direccion: es lo que
+             se mete luego en la URL del reproductor. */
+          yt: String(p.audio.yt || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 20),
+          ytUrl: medio(p.audio.ytUrl),
           tracks: Array.isArray(p.audio.tracks)
             ? p.audio.tracks.slice(0, 30).map(function (t) {
                 if (!t || typeof t !== 'object') return null;
@@ -337,7 +379,8 @@
                   artist: txt(t.artist, TOPE.corto),
                   length: txt(t.length, 12),
                   cover: medio(t.cover),
-                  src: medio(t.src)
+                  src: medio(t.src),
+                  embed: incrustable(t.embed)
                 };
               }).filter(Boolean)
             : []

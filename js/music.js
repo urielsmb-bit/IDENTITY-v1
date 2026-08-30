@@ -371,6 +371,67 @@
     },
 
     /* ============================================================
+       PEGAR UN ENLACE, SIN CONECTAR NADA
+       ============================================================
+       El API de Spotify no sirve para un producto abierto: en modo
+       desarrollo admite CINCO cuentas, y salir de ahi exige empresa
+       registrada y 250.000 usuarios activos al mes. Comprobado en
+       su documentacion, no supuesto.
+
+       El reproductor incrustado no pide nada de eso: ni token, ni
+       cuota, ni aprobacion. Y a quien tenga Premium con la sesion
+       abierta le suena la cancion ENTERA, no los 30 segundos de
+       `preview_url` -que ademas Spotify ya marca como deprecado-.
+
+       Esto NO sustituye a la conexion por API: se suma. Quien ya la
+       tenga funcionando la conserva.
+       ============================================================ */
+
+    /* De cualquier forma de enlace de Spotify a su reproductor.
+       Hay mas variantes de las que parece:
+         open.spotify.com/track/ID
+         open.spotify.com/track/ID?si=...        (enlace de compartir)
+         open.spotify.com/intl-es/track/ID       (con idioma dentro)
+         spotify:track:ID                        (URI de la app)
+       Devuelve null si no reconoce nada. */
+    deEnlace: function (texto) {
+      var t = String(texto || '').trim();
+      if (!t) return null;
+      var TIPOS = 'track|album|playlist|artist|episode|show';
+
+      /* la URI de la aplicacion */
+      var m = t.match(new RegExp('^spotify:(' + TIPOS + '):([A-Za-z0-9]{16,32})$'));
+      if (!m) {
+        /* la direccion web, con o sin segmento de idioma */
+        m = t.match(new RegExp(
+          '^https?://open\.spotify\.com/(?:intl-[a-z]{2}/)?(' + TIPOS + ')/([A-Za-z0-9]{16,32})'
+        ));
+      }
+      if (!m) return null;
+      return {
+        tipo: m[1],
+        id: m[2],
+        embed: 'https://open.spotify.com/embed/' + m[1] + '/' + m[2],
+        publico: 'https://open.spotify.com/' + m[1] + '/' + m[2]
+      };
+    },
+
+    /* Titulo y caratula sin autenticacion: oEmbed es publico.
+       Si falla no pasa nada -se guarda el enlace igual y el
+       reproductor incrustado enseña el titulo por su cuenta-, asi
+       que nunca rechaza. */
+    datosDeEnlace: function (info) {
+      if (!info) return Promise.resolve(null);
+      return fetch('https://open.spotify.com/oembed?url=' + encodeURIComponent(info.publico))
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (!d) return null;
+          return { title: d.title || '', cover: d.thumbnail_url || '' };
+        })
+        .catch(function () { return null; });
+    },
+
+    /* ============================================================
        DECIR QUE PASA, NO EL NUMERO
        ============================================================
        "Spotify respondió 403" no le sirve a nadie: ni al que lo ve

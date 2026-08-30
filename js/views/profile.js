@@ -80,11 +80,13 @@
   function pistasDe(p) {
     var a = p.audio || {};
     if (a.tracks && a.tracks.length) return a.tracks;
-    if (!a.title) return [];
+    /* `embed` cuenta como pista aunque no haya titulo: el
+       reproductor incrustado enseña el suyo. */
+    if (!a.title && !a.embed) return [];
     return [{
       title: a.title, artist: a.artist, cover: a.cover,
       src: a.src || 'manual', yt: a.yt, preview: a.preview,
-      url: a.url, length: a.length
+      url: a.url, length: a.length, embed: a.embed
     }];
   }
 
@@ -240,6 +242,42 @@
     var pistas = pistasDe(p);
     if (!pistas.length) return '';
     var t = pistas[0];
+
+    /* ---- reproductor incrustado ------------------------------
+       Cuando la pista trae un `embed` se pinta el reproductor del
+       propio servicio en vez del nuestro. Es lo unico que funciona
+       para todo el mundo: el API de Spotify solo admite CINCO
+       cuentas en modo desarrollo, y salir de ahi exige empresa
+       registrada y 250.000 usuarios al mes. Ademas `preview_url`
+       -lo que hacia sonar el reproductor propio- esta deprecado.
+       Con el incrustado, a quien tenga Premium le suena la cancion
+       entera y no treinta segundos.
+
+       La direccion se vuelve a validar AQUI aunque ya se validara
+       al guardar. Esto acaba dentro de un <iframe>, y un iframe
+       ajeno puede intentar navegar la pagina de arriba o hacerse
+       pasar por la interfaz. Validar dos veces cuesta una linea;
+       fiarse del almacen cuesta un incidente.
+
+       El sandbox NO lleva allow-top-navigation a proposito: el
+       reproductor puede sonar y abrir Spotify en otra pestaña, pero
+       no puede llevarse la pagina de quien visita el perfil. */
+    if (t.embed) {
+      var seguro = (ID.validar && ID.validar.incrustable)
+        ? ID.validar.incrustable(t.embed) : '';
+      if (seguro) {
+        var tipo = (seguro.match(/\/embed\/(\w+)\//) || [])[1] || 'track';
+        return '<div class="pf-embed" data-tipo="' + esc(tipo) +
+          '" data-style="' + esc(p.musicStyle) + '">' +
+          '<iframe src="' + esc(seguro) + '"' +
+            ' title="' + esc(t.title || 'Reproductor de musica') + '"' +
+            ' loading="lazy" frameborder="0"' +
+            ' allow="encrypted-media; clipboard-write; picture-in-picture"' +
+            ' referrerpolicy="strict-origin-when-cross-origin"' +
+            ' sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation"' +
+            '></iframe></div>';
+      }
+    }
     var cover = t.cover || '\u266a';
     var esUrl = /^(https?:|data:)/i.test(String(cover));
 
