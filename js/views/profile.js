@@ -972,43 +972,52 @@
         }
       })();
 
-      /* ---- la pastilla de musica se abre al tocarla -------------
-         El iframe se crea AQUI, no al pintar: asi un perfil que
-         nadie toca no descarga el reproductor de Spotify, y el
-         diseño de quien hizo el perfil manda mientras nadie pida
-         musica.
+      /* ---- la musica arranca con el gesto de entrada ------------
+         Como una historia: se toca para entrar y la cancion empieza.
+         Antes hacia falta un segundo toque en la pastilla, y ese
+         segundo toque sobra: quien ya toco para entrar ya dijo que
+         si.
 
-         El sandbox no lleva `allow-top-navigation` a proposito: el
-         reproductor puede sonar y abrir Spotify en otra pestaña,
-         pero no puede llevarse la pagina de quien visita el perfil. */
+         Tiene que ser un gesto REAL del usuario. Los navegadores no
+         dejan arrancar sonido solos, y por eso el iframe se crea
+         DENTRO del manejador del clic y no en un temporizador
+         posterior: fuera del gesto, el navegador lo bloquea.
+
+         La pastilla sigue respondiendo al toque para parar y volver
+         a empezar. */
       var pastilla = container.querySelector('.pf-insta');
-      if (pastilla) {
-        var boton = pastilla.querySelector('.pf-insta__pill');
+      var abrirMusica = function () {
+        if (!pastilla || pastilla.classList.contains('is-open')) return;
         var hueco = pastilla.querySelector('.pf-insta__player');
-        if (boton && hueco) {
-          boton.addEventListener('click', function () {
-            if (pastilla.classList.contains('is-open')) {
-              /* segundo toque: se recoge y se para, quitando el marco */
-              hueco.innerHTML = '';
-              hueco.hidden = true;
-              pastilla.classList.remove('is-open');
-              return;
-            }
-            var url = (ID.validar && ID.validar.incrustable)
-              ? ID.validar.incrustable(pastilla.dataset.embed || '') : '';
-            if (!url) return;
-            var f = document.createElement('iframe');
-            f.src = url + (url.indexOf('?') < 0 ? '?' : '&') + 'autoplay=1';
-            f.title = boton.getAttribute('aria-label') || 'Reproductor';
-            f.loading = 'lazy';
-            f.setAttribute('frameborder', '0');
-            f.setAttribute('allow', 'autoplay; encrypted-media; clipboard-write; picture-in-picture');
-            f.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
-            f.setAttribute('sandbox',
-              'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation');
-            hueco.appendChild(f);
-            hueco.hidden = false;
-            pastilla.classList.add('is-open');
+        var url = (ID.validar && ID.validar.incrustable)
+          ? ID.validar.incrustable(pastilla.dataset.embed || '') : '';
+        if (!hueco || !url) return;
+        var f = document.createElement('iframe');
+        f.src = url + (url.indexOf('?') < 0 ? '?' : '&') + 'autoplay=1';
+        f.title = 'Reproductor de musica';
+        f.setAttribute('frameborder', '0');
+        f.setAttribute('allow', 'autoplay; encrypted-media; clipboard-write; picture-in-picture');
+        f.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+        /* sin allow-top-navigation: puede sonar y abrir Spotify en
+           otra pestaña, pero no llevarse la pagina de quien mira */
+        f.setAttribute('sandbox',
+          'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation');
+        hueco.appendChild(f);
+        hueco.hidden = false;
+        pastilla.classList.add('is-open');
+      };
+      var cerrarMusica = function () {
+        if (!pastilla) return;
+        var hueco = pastilla.querySelector('.pf-insta__player');
+        if (hueco) { hueco.innerHTML = ''; hueco.hidden = true; }
+        pastilla.classList.remove('is-open');
+      };
+      if (pastilla) {
+        var botonPastilla = pastilla.querySelector('.pf-insta__pill');
+        if (botonPastilla) {
+          botonPastilla.addEventListener('click', function () {
+            if (pastilla.classList.contains('is-open')) cerrarMusica();
+            else abrirMusica();
           });
         }
       }
@@ -1022,6 +1031,7 @@
           var mm = container.querySelector('#pfMusic');
           if (mm && mm._mando) mm._mando.play();
           arrancarFondo();
+          abrirMusica();      /* la cancion empieza con el mismo toque */
         };
         gate.addEventListener('click', abrir);
         gate.addEventListener('keydown', function (e) {
