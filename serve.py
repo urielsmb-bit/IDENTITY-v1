@@ -17,6 +17,7 @@ Uso:
 """
 
 import sys
+import io
 import os
 import posixpath
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -31,6 +32,34 @@ RUTAS_APP = {
 }
 
 
+def _csp_de_vercel():
+    """La CSP sale de vercel.json, no de una copia aqui.
+
+    Dos cadenas separadas se van despegando y entonces las pruebas
+    dejan de probar lo que se despliega, que es la peor forma de
+    fallar: parece verde y no lo esta.
+
+    En local se manda APLICADA aunque en vercel.json siga en
+    Report-Only. Es a proposito: un Report-Only local no rompe nada
+    y por tanto no ensena nada. Si algo se va a caer al apretar la
+    CSP, que se caiga en este servidor y no en produccion.
+    """
+    try:
+        import json
+        with io.open(os.path.join(RAIZ, 'vercel.json'), encoding='utf-8') as f:
+            d = json.load(f)
+        for h in d.get('headers', []):
+            for k in h.get('headers', []):
+                if 'Content-Security-Policy' in k['key']:
+                    return k['value']
+    except Exception as e:
+        print('  aviso: no pude leer la CSP de vercel.json (%s)' % e)
+    return None
+
+
+CSP = _csp_de_vercel()
+
+
 class Handler(SimpleHTTPRequestHandler):
 
     def __init__(self, *args, **kwargs):
@@ -41,6 +70,8 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
         self.send_header('Pragma', 'no-cache')
         self.send_header('Expires', '0')
+        if CSP:
+            self.send_header('Content-Security-Policy', CSP)
         super().end_headers()
 
     def translate_path(self, path):

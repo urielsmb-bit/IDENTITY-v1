@@ -56,8 +56,20 @@
 <!-- supabase-js en UMD: un solo archivo, sin paso de compilacion,
      y deja window.supabase para los <script> clasicos de siempre.
      Si no carga (sin red, o sin configurar), IDENTITY sigue
-     funcionando en modo local: backend.js lo detecta y se aparta. -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+     funcionando en modo local: backend.js lo detecta y se aparta.
+
+     ALOJADO AQUI, Y CON VERSION FIJA, A PROPOSITO.
+     Antes se pedia a un CDN con la etiqueta `@2`, que no es una
+     version: es "lo ultimo de la rama 2", resuelto en cada visita.
+     O sea que una publicacion nueva de supabase-js se ejecutaba en
+     esta pagina sin que nadie lo decidiera, con acceso total al DOM
+     y con la sesion en localStorage al alcance. Y la CSP lo
+     autorizaba en voz alta: `script-src ... cdn.jsdelivr.net` no
+     permite un archivo, permite el CDN entero.
+     Con el archivo aqui, `script-src 'self'` significa algo, la
+     version solo cambia cuando tu la cambias, y la pagina sigue en
+     pie aunque el CDN se caiga. -->
+<script src="js/vendor/supabase-2.112.4.js"></script>
 
 <script src="js/config.js"></script>
 <script src="js/nets.js"></script>
