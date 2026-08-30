@@ -870,7 +870,58 @@
         ]);
       }
 
-      /* puerta de entrada: además desbloquea el audio */
+      /* ---- el video de fondo, cuando el navegador se niega ------
+         Lleva `autoplay muted loop playsinline`, que es lo que iOS
+         exige. Aun asi hay casos en que NO arranca solo:
+
+           - Modo de bajo consumo del iPhone: desactiva el arranque
+             automatico, y no hay atributo que lo evite.
+           - Ajuste por sitio de Safari: "Reproduccion automatica:
+             nunca".
+           - Politicas de ahorro de datos en Android.
+
+         El sintoma es feo porque no parece un fallo: se ve el primer
+         fotograma congelado, sin ningun control, y quien mira piensa
+         que el fondo es una foto.
+
+         Un gesto del usuario levanta todas esas restricciones. Y
+         este perfil ya pide uno para entrar, asi que no hay que
+         inventarse un boton: se aprovecha ese toque.
+         --------------------------------------------------------- */
+      var arrancarFondo = function () {
+        var v = container.querySelector('.pf-bg video');
+        if (!v || !v.paused) return;
+        var pr = v.play();
+        /* si vuelve a negarse no hay nada mas que hacer, pero una
+           promesa rechazada sin capturar ensucia la consola de quien
+           visita el perfil */
+        if (pr && pr.catch) pr.catch(function () {});
+      };
+
+      /* Sin puerta de entrada no hay gesto garantizado, asi que se
+         espera al primero que llegue. `once` para no dejar oyentes
+         colgando, y en captura para que cuente aunque algo detenga
+         la propagacion por el camino. */
+      (function () {
+        var v = container.querySelector('.pf-bg video');
+        if (!v) return;
+        var alPrimerGesto = function () {
+          arrancarFondo();
+          ['pointerdown', 'touchstart', 'keydown'].forEach(function (ev) {
+            document.removeEventListener(ev, alPrimerGesto, true);
+          });
+        };
+        var pr = v.play();
+        if (pr && pr.catch) {
+          pr.catch(function () {
+            ['pointerdown', 'touchstart', 'keydown'].forEach(function (ev) {
+              document.addEventListener(ev, alPrimerGesto, true);
+            });
+          });
+        }
+      })();
+
+      /* puerta de entrada: además desbloquea el audio y el video */
       var gate = container.querySelector('#pfGate');
       if (gate) {
         var abrir = function () {
@@ -878,6 +929,7 @@
           setTimeout(function () { if (gate.parentNode) gate.remove(); }, 600);
           var mm = container.querySelector('#pfMusic');
           if (mm && mm._mando) mm._mando.play();
+          arrancarFondo();
         };
         gate.addEventListener('click', abrir);
         gate.addEventListener('keydown', function (e) {

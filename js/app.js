@@ -380,15 +380,21 @@
 
     _video: function (f, cb) {
       app._inspeccionarVideo(f).then(function (info) {
+        /* AVISO, no rechazo. Medido: un video en hvc1 se reproduce
+           en Safari y tambien en Chrome cuando el equipo trae
+           decodificacion por hardware, que hoy es casi todos. Donde
+           falla de verdad es en Firefox y en equipos antiguos.
+           Bloquearlo habria impedido subir un video que funciona
+           para la mayoria — el detector estaba calibrado a partir de
+           una suposicion, no de una medida. */
         if (info && !info.compatible) {
           var nombres = info.codecs.map(function (c) {
             return app.CODECS_CONOCIDOS[c] || c;
           }).join(' y ');
-          app.toast('Ese video esta en ' + nombres + ', y la mayoria de ' +
-            'navegadores no saben reproducirlo: se veria en tu movil y en ' +
-            'negro para casi todo el mundo. Conviertelo a H.264 (MP4) y ' +
-            'vuelve a subirlo.', true);
-          return;
+          app.toast('Aviso: ese video esta en ' + nombres + '. Se ve en la ' +
+            'mayoria de moviles y ordenadores, pero en Firefox y en equipos ' +
+            'antiguos puede salir en negro. Si quieres que lo vea todo el ' +
+            'mundo, conviertelo a H.264.');
         }
         if (info && !info.faststart) {
           app.toast('Aviso: este video hay que descargarlo entero antes de ' +
