@@ -543,6 +543,12 @@
        Cambiar de perfil dentro de la pagina ya estaba cubierto:
        `destruir()` va registrado en ID.fx y el router lo llama al
        salir de la vista. Por eso solo suena el perfil que miras. */
+    /* Se prepara mientras la persona mira la pantalla de entrada,
+       para que el toque sea inmediato. No suena: solo deja la API
+       cargada y el reproductor creado. Medido antes de esto: el
+       script de YouTube ni siquiera se pedia hasta el toque. */
+    if (mando.precalentar) mando.precalentar();
+
     var sonabaAlIrse = false;
     var alCambiarVisibilidad = function () {
       if (document.visibilityState === 'hidden') {

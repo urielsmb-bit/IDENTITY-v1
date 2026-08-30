@@ -3,6 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<!-- El saludo de red con YouTube (DNS + TLS) se hace por adelantado,
+     mientras se pinta el perfil, en vez de al pedir el reproductor.
+     `preconnect` abre la conexion; `dns-prefetch` es el respaldo para
+     los navegadores que no lo soportan. Son dos lineas y quitan un
+     par de viajes de ida y vuelta del camino critico. -->
+<link rel="preconnect" href="https://www.youtube.com" crossorigin>
+<link rel="preconnect" href="https://i.ytimg.com" crossorigin>
+<link rel="dns-prefetch" href="https://www.youtube.com">
+<link rel="dns-prefetch" href="https://i.ytimg.com">
 <title>IDENTITY — Tu identidad, en línea.</title>
 <meta name="description" content="Crea un perfil que se sienta como tú. Temas, efectos, badges y estadísticas.">
 <meta name="theme-color" content="#050505">

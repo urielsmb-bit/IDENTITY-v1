@@ -230,6 +230,30 @@
       if (arrancar) au.play().catch(function () { avisarEstado(false); });
     }
 
+    /* ============================================================
+       PRECALENTAR
+       ============================================================
+       Medido en el sitio en vivo: el bloque de musica se pinta a los
+       0 ms, pero el script de YouTube NO se pedia en nueve segundos.
+       Toda la cadena -bajar el script, esperar la API, crear el
+       reproductor, esperar su onReady- ocurria DESPUES del toque, y
+       por eso la cancion tardaba en arrancar.
+
+       Ahora se prepara mientras la persona mira la pantalla de
+       entrada. No suena: `arrancar` va en false, y el reproductor de
+       YouTube se crea con autoplay:0. Solo deja todo listo para que
+       el toque sea inmediato.
+
+       No se precalienta si no hay nada que precalentar: un perfil
+       sin musica no descarga nada de YouTube.
+       ============================================================ */
+    function precalentar() {
+      if (muerto) return;
+      var m = motor();
+      if (m === 'yt') asegurarYT(false);
+      else if (m === 'au') asegurarAudio(false);
+    }
+
     function tiempo() {
       var m = motor();
       if (m === 'yt' && yt) return yt.tiempo();
@@ -297,6 +321,7 @@
       indice: function () { return i; },
       pistas: function () { return pistas; },
       duracion: duracion,
+      precalentar: precalentar,
       destruir: function () {
         muerto = true;
         pararLatido();
