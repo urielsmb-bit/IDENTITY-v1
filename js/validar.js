@@ -379,7 +379,19 @@
                   artist: txt(t.artist, TOPE.corto),
                   length: txt(t.length, 12),
                   cover: medio(t.cover),
-                  src: medio(t.src),
+                  /* `src` aqui NO es una direccion: es de donde sale
+                     la pista (manual | youtube | spotify). Pasaba por
+                     medio(), que solo deja pasar cosas con esquema, asi
+                     que 'youtube' se convertia en cadena vacia y la
+                     pista perdia su origen. */
+                  src: deLista(t.src, ['manual', 'youtube', 'spotify'], 'manual'),
+                  /* El identificador del video. Sin el, tipoDe() no
+                     reconoce la pista como de YouTube y no se carga
+                     nunca su reproductor: la cancion no sonaba y no
+                     habia ningun error que lo dijera. */
+                  yt: String(t.yt || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 20),
+                  preview: medio(t.preview),
+                  url: medio(t.url),
                   embed: incrustable(t.embed)
                 };
               }).filter(Boolean)

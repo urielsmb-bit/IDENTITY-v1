@@ -986,28 +986,66 @@
          La pastilla sigue respondiendo al toque para parar y volver
          a empezar. */
       var pastilla = container.querySelector('.pf-insta');
+      var ctlSpotify = null;
       var abrirMusica = function () {
         if (!pastilla || pastilla.classList.contains('is-open')) return;
         var hueco = pastilla.querySelector('.pf-insta__player');
         var url = (ID.validar && ID.validar.incrustable)
           ? ID.validar.incrustable(pastilla.dataset.embed || '') : '';
         if (!hueco || !url) return;
+
+        pastilla.classList.add('is-open');
+        hueco.hidden = false;
+
+        var uri = ID.music.spotify.uriDeEmbed(url);
+        if (uri) {
+          /* Con la API de Spotify SI se puede darle a reproducir. El
+             `autoplay=1` de la direccion lo ignoran a proposito. */
+          ID.music.spotify.cargarApi().then(function (API) {
+            if (!pastilla.classList.contains('is-open')) return;   /* lo cerraron mientras cargaba */
+            hueco.innerHTML = '';
+            var caja = document.createElement('div');
+            hueco.appendChild(caja);
+            API.createController(caja, {
+              uri: uri, width: '100%',
+              height: /playlist|album/.test(url) ? 352 : 152
+            }, function (ctl) {
+              ctlSpotify = ctl;
+              ctl.play();
+            });
+          }).catch(function () {
+            /* Sin la API queda el marco de siempre: se vera el
+               reproductor y habra que darle al play a mano. Peor,
+               pero mucho mejor que no tener musica. */
+            marcoSimple(hueco, url);
+          });
+          return;
+        }
+
+        marcoSimple(hueco, url);
+      };
+
+      /* El marco de toda la vida, para lo que no es Spotify y como
+         red si su API no carga. */
+      function marcoSimple(hueco, url) {
+        hueco.innerHTML = '';
         var f = document.createElement('iframe');
         f.src = url + (url.indexOf('?') < 0 ? '?' : '&') + 'autoplay=1';
         f.title = 'Reproductor de musica';
         f.setAttribute('frameborder', '0');
         f.setAttribute('allow', 'autoplay; encrypted-media; clipboard-write; picture-in-picture');
         f.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
-        /* sin allow-top-navigation: puede sonar y abrir Spotify en
-           otra pestaña, pero no llevarse la pagina de quien mira */
         f.setAttribute('sandbox',
           'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation');
         hueco.appendChild(f);
-        hueco.hidden = false;
-        pastilla.classList.add('is-open');
-      };
+      }
+
       var cerrarMusica = function () {
         if (!pastilla) return;
+        if (ctlSpotify) {
+          try { ctlSpotify.destroy(); } catch (e) { /* ya no estaba */ }
+          ctlSpotify = null;
+        }
         var hueco = pastilla.querySelector('.pf-insta__player');
         if (hueco) { hueco.innerHTML = ''; hueco.hidden = true; }
         pastilla.classList.remove('is-open');

@@ -371,6 +371,56 @@
     },
 
     /* ============================================================
+       DARLE A REPRODUCIR DESDE NUESTRO CODIGO
+       ============================================================
+       El reproductor incrustado ignora `autoplay=1`: Spotify lo
+       decide asi y no hay parametro que lo cambie. Comprobado.
+
+       Lo unico que si puede arrancarlo es su API de iframe, que
+       expone un `play()`. A cambio hay que cargar un script suyo,
+       o sea abrir `script-src` a open.spotify.com.
+
+       Es un coste real y conviene verlo de frente: en la Fase 11
+       se quito `cdn.jsdelivr.net` justamente para no dejar correr
+       codigo de terceros. La diferencia es que aquel era un CDN de
+       paquetes -cualquiera publica ahi- y este es el dominio de la
+       propia aplicacion de Spotify. Para abusar de esto haria falta
+       comprometer a Spotify.
+
+       Se carga UNA vez y solo cuando alguien pide musica: un perfil
+       sin canciones no descarga nada de esto.
+       ============================================================ */
+    _api: null,
+    cargarApi: function () {
+      if (sp._api) return sp._api;
+      sp._api = new Promise(function (ok, mal) {
+        if (window.SpotifyIframeApi) return ok(window.SpotifyIframeApi);
+        var t = setTimeout(function () {
+          mal(new Error('El reproductor de Spotify no cargo'));
+        }, 8000);
+        window.onSpotifyIframeApiReady = function (API) {
+          clearTimeout(t);
+          window.SpotifyIframeApi = API;
+          ok(API);
+        };
+        var e = document.createElement('script');
+        e.src = 'https://open.spotify.com/embed/iframe-api/v1';
+        e.async = true;
+        e.onerror = function () { clearTimeout(t); mal(new Error('No se pudo cargar el reproductor')); };
+        document.head.appendChild(e);
+      });
+      /* si falla, que el proximo intento vuelva a probar */
+      sp._api.catch(function () { sp._api = null; });
+      return sp._api;
+    },
+
+    /* De la direccion incrustada al identificador que pide la API. */
+    uriDeEmbed: function (url) {
+      var m = String(url || '').match(/\/embed\/(\w+)\/([A-Za-z0-9]+)/);
+      return m ? 'spotify:' + m[1] + ':' + m[2] : null;
+    },
+
+    /* ============================================================
        PEGAR UN ENLACE, SIN CONECTAR NADA
        ============================================================
        El API de Spotify no sirve para un producto abierto: en modo
