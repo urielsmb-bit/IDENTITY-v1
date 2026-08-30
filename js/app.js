@@ -297,7 +297,108 @@
        como lo subio el usuario. Solo se comprueba que quepa de
        verdad, con el espacio real del dispositivo, no con un numero
        inventado. */
+    /* ---- de que esta hecho el video ---------------------------
+       El sintoma que motivo esto: un video se subia bien, se
+       guardaba bien y se servia bien... y no se veia en otro
+       dispositivo. No era la red ni los permisos: era H.265.
+
+       Los moviles y los Mac graban en HEVC (`hvc1`) dentro de un
+       contenedor QuickTime. Eso lo reproduce Safari, pero Chrome
+       solo con soporte por hardware y Firefox practicamente no. El
+       archivo LLEGA; el navegador no sabe decodificarlo.
+
+       Y lo peor no era el fallo, era el mensaje: la aplicacion
+       decia "ya se ve desde cualquier sitio". Prometia algo que no
+       podia cumplir, asi que quien lo subia no tenia forma de
+       enterarse hasta que alguien se lo dijera.
+
+       Se mira la caja `moov` y no el archivo entero: los cuatro
+       bytes del codec pueden aparecer por azar dentro de los datos
+       de video, y un falso positivo aqui rechaza un video que si
+       funcionaba.
+       ---------------------------------------------------------- */
+    CODECS_QUE_VEN_TODOS: ['avc1', 'avc3', 'vp09', 'vp08', 'av01'],
+    CODECS_CONOCIDOS: {
+      hvc1: 'H.265 (HEVC)', hev1: 'H.265 (HEVC)',
+      ap4h: 'ProRes', apcn: 'ProRes', apch: 'ProRes', apcs: 'ProRes',
+      mp4v: 'MPEG-4 parte 2', avc1: 'H.264', avc3: 'H.264',
+      vp09: 'VP9', vp08: 'VP8', av01: 'AV1'
+    },
+
+    _inspeccionarVideo: function (f) {
+      return new Promise(function (resolver) {
+        var fr = new FileReader();
+        fr.onerror = function () { resolver(null); };   /* sin datos, no se opina */
+        fr.onload = function () {
+          try {
+            var b = new Uint8Array(fr.result);
+            var dv = new DataView(fr.result);
+            var leer4 = function (o) {
+              return String.fromCharCode(b[o], b[o + 1], b[o + 2], b[o + 3]);
+            };
+
+            /* recorrer las cajas de nivel superior */
+            var off = 0, marca = '', moov = null, orden = [];
+            while (off + 8 <= b.length) {
+              var sz = dv.getUint32(off);
+              var tipo = leer4(off + 4);
+              if (sz === 1) {
+                if (off + 16 > b.length) break;
+                /* tamanos de 64 bits: la parte alta es 0 en la practica */
+                sz = dv.getUint32(off + 8) * 4294967296 + dv.getUint32(off + 12);
+              }
+              if (sz < 8 || off + sz > b.length) break;
+              orden.push(tipo);
+              if (tipo === 'ftyp' && off + 12 <= b.length) marca = leer4(off + 8);
+              if (tipo === 'moov') moov = { desde: off, hasta: off + sz };
+              off += sz;
+            }
+            if (!moov) return resolver(null);
+
+            /* buscar el codec SOLO dentro de moov */
+            var codecs = [], vistos = {};
+            for (var i = moov.desde; i < moov.hasta - 4; i++) {
+              var c = leer4(i);
+              if (app.CODECS_CONOCIDOS[c] && !vistos[c]) { vistos[c] = 1; codecs.push(c); }
+            }
+            var iMoov = orden.indexOf('moov'), iMdat = orden.indexOf('mdat');
+            resolver({
+              marca: marca,
+              codecs: codecs,
+              /* sin ningun codec reconocido no se bloquea: puede ser
+                 un contenedor que no sabemos leer y si funcione */
+              compatible: !codecs.length || codecs.some(function (c) {
+                return app.CODECS_QUE_VEN_TODOS.indexOf(c) >= 0;
+              }),
+              faststart: !(iMoov >= 0 && iMdat >= 0 && iMoov > iMdat)
+            });
+          } catch (e) { resolver(null); }
+        };
+        fr.readAsArrayBuffer(f);
+      });
+    },
+
     _video: function (f, cb) {
+      app._inspeccionarVideo(f).then(function (info) {
+        if (info && !info.compatible) {
+          var nombres = info.codecs.map(function (c) {
+            return app.CODECS_CONOCIDOS[c] || c;
+          }).join(' y ');
+          app.toast('Ese video esta en ' + nombres + ', y la mayoria de ' +
+            'navegadores no saben reproducirlo: se veria en tu movil y en ' +
+            'negro para casi todo el mundo. Conviertelo a H.264 (MP4) y ' +
+            'vuelve a subirlo.', true);
+          return;
+        }
+        if (info && !info.faststart) {
+          app.toast('Aviso: este video hay que descargarlo entero antes de ' +
+            'que empiece. Tarda en aparecer con conexiones lentas.');
+        }
+        app._videoSigue(f, cb);
+      });
+    },
+
+    _videoSigue: function (f, cb) {
       var mbArchivo = f.size / 1048576;
 
       /* sin IndexedDB no hay milagro: se vuelve al data URI y a su
