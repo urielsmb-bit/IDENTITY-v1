@@ -378,6 +378,153 @@
       });
     },
 
+    /* ============================================================
+       CONVERTIR EL VIDEO A ALGO QUE VEA TODO EL MUNDO
+       ============================================================
+       El caso que lo motivo, medido: un video grabado con iPhone
+       -QuickTime con H.265- se veia en el propio iPhone y en un PC
+       moderno, y salia NEGRO en un Android de 2018. El archivo
+       llegaba entero; el aparato no sabia decodificarlo.
+
+       Decirle a alguien "convierte tu video a H.264" es pasarle un
+       problema que no es suyo. Asi que lo hace la pagina.
+
+       Como, sin librerias ni paso de compilacion: el navegador
+       reproduce el original, cada fotograma se pinta en un <canvas>
+       y `MediaRecorder` graba de ahi en H.264. Se re-codifica en
+       tiempo real, asi que un video de seis segundos tarda seis.
+
+       Dos limites que hay que decir en voz alta:
+
+         · Hace falta que ESTE navegador sepa leer el original. Si
+           tampoco puede, no hay conversion posible aqui y se dice.
+         · `captureStream()` de un canvas no lleva audio. Para un
+           fondo -que va en silencio y en bucle- da igual, y por eso
+           esto solo se usa para el fondo.
+       ============================================================ */
+    SALIDAS_VIDEO: ['video/mp4;codecs=avc1', 'video/mp4;codecs=h264', 'video/mp4'],
+
+    _puedeConvertirVideo: function () {
+      if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) return null;
+      for (var i = 0; i < app.SALIDAS_VIDEO.length; i++) {
+        if (MediaRecorder.isTypeSupported(app.SALIDAS_VIDEO[i])) return app.SALIDAS_VIDEO[i];
+      }
+      return null;
+    },
+
+    _convertirVideo: function (f, alProgreso) {
+      return new Promise(function (resolver, rechazar) {
+        var tipo = app._puedeConvertirVideo();
+        if (!tipo) {
+          return rechazar(new Error('Este navegador no sabe crear MP4 en H.264. ' +
+            'Abre IDENTITY en Chrome o Edge para convertirlo, o sube un MP4 ya convertido.'));
+        }
+
+        var url = URL.createObjectURL(f);
+        var v = document.createElement('video');
+        v.src = url; v.muted = true; v.playsInline = true; v.preload = 'auto';
+        /* En el documento y con tamaño real, aunque sea de 2px: hay
+           navegadores que no decodifican un video suelto o con
+           `display:none`. Fuera de pantalla, no oculto. */
+        v.style.cssText = 'position:fixed;left:-10000px;top:0;width:2px;height:2px;opacity:.01;pointer-events:none';
+        document.body.appendChild(v);
+
+        var acabado = false;
+        var limpiar = function () {
+          try { v.pause(); } catch (e) {}
+          try { v.remove(); } catch (e) {}
+          try { URL.revokeObjectURL(url); } catch (e) {}
+        };
+        var fallar = function (msg) {
+          if (acabado) return;
+          acabado = true; limpiar(); rechazar(new Error(msg));
+        };
+
+        v.onerror = function () {
+          fallar('Este navegador no puede leer ese video, asi que tampoco ' +
+            'puede convertirlo. Prueba desde un ordenador, o conviertelo antes de subirlo.');
+        };
+
+        v.onloadeddata = function () {
+          if (acabado) return;
+          if (!v.videoWidth || !v.videoHeight) {
+            return fallar('No se pudo decodificar el video en este dispositivo.');
+          }
+
+          /* 1280 en el lado largo: suficiente para un fondo a
+             pantalla completa y bastante mas ligero que 4K. */
+          var lienzo = document.createElement('canvas');
+          var esc = Math.min(1, 1280 / Math.max(v.videoWidth, v.videoHeight));
+          lienzo.width  = Math.max(2, Math.round(v.videoWidth  * esc / 2) * 2);
+          lienzo.height = Math.max(2, Math.round(v.videoHeight * esc / 2) * 2);
+          var ctx = lienzo.getContext('2d');
+
+          var trozos = [];
+          var mr;
+          try {
+            mr = new MediaRecorder(lienzo.captureStream(30), {
+              mimeType: tipo, videoBitsPerSecond: 2500000
+            });
+          } catch (e) { return fallar('No se pudo iniciar la conversion: ' + e.message); }
+
+          mr.ondataavailable = function (e) { if (e.data && e.data.size) trozos.push(e.data); };
+          mr.onerror = function () { fallar('La conversion fallo a mitad.'); };
+          mr.onstop = function () {
+            if (acabado) return;
+            acabado = true; limpiar();
+            var blob = new Blob(trozos, { type: 'video/mp4' });
+            if (blob.size < 1024) {
+              return rechazar(new Error('La conversion no produjo nada. ' +
+                'Suele pasar si la pestaña queda en segundo plano: dejala visible e intentalo otra vez.'));
+            }
+            resolver(blob);
+          };
+
+          var pintados = 0;
+          var pintar = function () {
+            if (acabado || v.paused || v.ended) return;
+            if (v.readyState >= 2) { ctx.drawImage(v, 0, 0, lienzo.width, lienzo.height); pintados++; }
+            if (alProgreso && v.duration) alProgreso(Math.min(1, v.currentTime / v.duration));
+          };
+
+          /* `requestVideoFrameCallback` va por fotograma decodificado
+             y es lo correcto aqui. Donde no exista, rAF. */
+          var bucle;
+          if (v.requestVideoFrameCallback) {
+            bucle = function () { pintar(); if (!acabado && !v.ended) v.requestVideoFrameCallback(bucle); };
+          } else {
+            bucle = function () { pintar(); if (!acabado && !v.ended) requestAnimationFrame(bucle); };
+          }
+
+          /* Si en cuatro segundos no ha avanzado ni un fotograma, no
+             va a avanzar: casi siempre es la pestaña en segundo
+             plano, donde el navegador para el video. Mejor decirlo
+             que dejar una barra de progreso quieta para siempre. */
+          var vigilante = setTimeout(function () {
+            if (!acabado && pintados < 2) {
+              try { mr.stop(); } catch (e) {}
+              fallar('La conversion no arranco. Deja esta pestaña visible ' +
+                'mientras convierte y vuelve a intentarlo.');
+            }
+          }, 4000);
+
+          var terminar = function () {
+            clearTimeout(vigilante);
+            setTimeout(function () { try { mr.stop(); } catch (e) {} }, 250);
+          };
+          v.onended = terminar;
+          /* red de seguridad: nunca mas de dos minutos */
+          setTimeout(function () { if (!acabado) terminar(); }, 120000);
+
+          mr.start(250);
+          v.play().then(bucle).catch(function () {
+            clearTimeout(vigilante);
+            fallar('El navegador no dejo reproducir el video para convertirlo.');
+          });
+        };
+      });
+    },
+
     _video: function (f, cb) {
       app._inspeccionarVideo(f).then(function (info) {
         /* AVISO, no rechazo. Medido: un video en hvc1 se reproduce
@@ -387,14 +534,39 @@
            Bloquearlo habria impedido subir un video que funciona
            para la mayoria — el detector estaba calibrado a partir de
            una suposicion, no de una medida. */
+        var nombres = (info && info.codecs || []).map(function (c) {
+          return app.CODECS_CONOCIDOS[c] || c;
+        }).join(' y ');
+
+        /* Si el codec no lo ve todo el mundo se convierte AQUI, en
+           vez de mandar a la persona a buscarse un programa. Decirle
+           "conviertelo a H.264" es pasarle un problema que no es
+           suyo. */
+        if (info && !info.compatible && app._puedeConvertirVideo()) {
+          app.toast('Ese video esta en ' + nombres + ' y muchos moviles no lo ' +
+            'reproducen. Convirtiendolo a H.264… deja esta pestaña visible.');
+          var ultimo = -1;
+          return app._convertirVideo(f, function (p) {
+            var pct = Math.round(p * 100);
+            if (pct >= ultimo + 20) { ultimo = pct; app.toast('Convirtiendo… ' + pct + '%'); }
+          }).then(function (nuevo) {
+            app.toast('Convertido · ' + (f.size/1048576).toFixed(1) + ' MB → ' +
+              (nuevo.size/1048576).toFixed(1) + ' MB · ahora se ve en cualquier dispositivo');
+            app._videoSigue(nuevo, cb);
+          }).catch(function (e) {
+            /* Sin conversion se sigue con el original: quedarse sin
+               fondo es peor que un fondo que algunos no veran. */
+            app.toast(e.message, true);
+            app.toast('Se sube el original. Se vera en la mayoria de ' +
+              'dispositivos, pero no en todos.');
+            app._videoSigue(f, cb);
+          });
+        }
+
         if (info && !info.compatible) {
-          var nombres = info.codecs.map(function (c) {
-            return app.CODECS_CONOCIDOS[c] || c;
-          }).join(' y ');
-          app.toast('Aviso: ese video esta en ' + nombres + '. Se ve en la ' +
-            'mayoria de moviles y ordenadores, pero en Firefox y en equipos ' +
-            'antiguos puede salir en negro. Si quieres que lo vea todo el ' +
-            'mundo, conviertelo a H.264.');
+          app.toast('Aviso: ese video esta en ' + nombres + ' y este navegador ' +
+            'no puede convertirlo. En Firefox y en equipos antiguos puede salir ' +
+            'en negro. Subelo desde Chrome o Edge y se convertira solo.');
         }
         if (info && !info.faststart) {
           app.toast('Aviso: este video hay que descargarlo entero antes de ' +
