@@ -1,5 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "echo \"sitio estatico: no hay nada que compilar\"",
+  "outputDirectory": ".",
   "rewrites": [
     {
       "source": "/(.*)",
