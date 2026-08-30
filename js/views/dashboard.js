@@ -41,6 +41,7 @@
     hist: [], hi: -1, guardando: 0, autoTimer: 0, histTimer: 0, okTimer: 0,
     saveError: null,     /* ultimo fallo de guardado, si lo hubo */
     ro: null, onResize: null, textoTimer: 0,
+    mount: null,         /* para poder volcar lo pendiente al salir */
     sel: null            /* bloque seleccionado al hacer click en el preview */
   };
 
@@ -107,7 +108,37 @@
     return '';
   }
 
+  /* ============================================================
+     GUARDAR AHORA, QUE NOS VAMOS
+     ============================================================
+     El autoguardado espera 900 ms para no escribir en cada tecla.
+     Es lo correcto mientras la pagina siga ahi, pero deja una
+     ventana: quien recarga justo despues de un cambio lo pierde, y
+     desde fuera eso se ve como "el editor no guarda lo que hago".
+
+     Asi que cuando la pagina se va, se guarda YA en vez de esperar
+     al temporizador.
+
+     `pagehide` y `visibilitychange`, no `beforeunload`: en moviles
+     -y sobre todo en iOS- `beforeunload` no se dispara de forma
+     fiable al cambiar de app o cerrar la pestaña. `visibilitychange`
+     ademas cubre el caso de irse a otra aplicacion sin cerrar nada,
+     que en un telefono es lo normal.
+     ============================================================ */
+  function volcarPendiente() {
+    if (!state.mount || !state.p || !state.p.username) return;
+    if (!state.dirty && !state.autoTimer) return;   /* nada que volcar */
+    clearTimeout(state.autoTimer);
+    state.autoTimer = 0;
+    autoguardar(state.mount, true);
+  }
+
+  function alOcultarse() {
+    if (document.visibilityState === 'hidden') volcarPendiente();
+  }
+
   function autoguardar(mount, inmediato) {
+    state.mount = mount;
     if (!state.p.username) {
       marcarEstado(mount, 'Elige un nombre de usuario', 'warn');
       return;
@@ -2521,6 +2552,8 @@
       clearTimeout(state.histTimer);
       clearTimeout(state.okTimer);
       window.removeEventListener('beforeunload', guardiaSalida);
+      window.removeEventListener('pagehide', volcarPendiente);
+      document.removeEventListener('visibilitychange', alOcultarse);
     },
 
     route: function (mount, params) {
@@ -2543,6 +2576,8 @@
 
       state.p = ID.store.mine();
       window.addEventListener('beforeunload', guardiaSalida);
+      window.addEventListener('pagehide', volcarPendiente);
+      document.addEventListener('visibilitychange', alOcultarse);
       prepararMedios(mount);
       /* el orden de bloques se materializa la primera vez que se edita */
       if (!state.p.blockOrder || !state.p.blockOrder.length) {
