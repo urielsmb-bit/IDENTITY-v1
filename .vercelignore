@@ -21,7 +21,7 @@ service-account*.json
 .github
 
 # ---- herramientas de desarrollo -------------------------------
-serve.py
+herramientas/
 pruebas-backend.html
 __pycache__/
 *.tmp

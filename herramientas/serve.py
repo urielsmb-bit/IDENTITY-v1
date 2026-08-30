@@ -23,7 +23,17 @@ import posixpath
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, unquote
 
-RAIZ = os.path.dirname(os.path.abspath(__file__))
+# La raiz es la carpeta de ARRIBA, no la de este archivo.
+#
+# Este servidor vivia en la raiz del proyecto. Tuvo que mudarse aqui
+# porque Vercel decide que clase de proyecto es mirando la raiz del
+# repositorio: al ver un .py suelto lo tomaba por un proyecto de
+# Python, buscaba un app.py o un index.py, no lo encontraba y fallaba
+# la compilacion entera con "No python entrypoint found".
+#
+# Que .vercelignore excluyera serve.py no bastaba: esa lista decide
+# que se DESPLIEGA, no que se DETECTA. La deteccion pasa antes.
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # rutas que sirve la app en el cliente: todas devuelven index.html
 RUTAS_APP = {
