@@ -1650,24 +1650,76 @@
 }
 
 
-/* ---- reproductor incrustado (Spotify, YouTube) --------------
-   Alto fijo porque el iframe no puede decirnos cuanto mide desde
-   otro origen. 152px es la altura compacta del reproductor de
-   Spotify; una lista pide mas y por eso se distingue. */
-.pf-embed{
-  width:100%;
-  max-width:min(420px, 100%);
-  margin-inline:auto;
-  border-radius:var(--p-chip-r, 12px);
+/* ============================================================
+   PASTILLA DE MUSICA  ·  como la pegatina de una historia
+   ============================================================
+   Compacta y superpuesta, no un bloque. La caratula redonda, el
+   titulo, y las barras moviendose al lado. Al tocarla se despliega
+   el reproductor de Spotify debajo.
+   ============================================================ */
+.pf-insta{ width:100%; display:flex; flex-direction:column; align-items:center; gap:10px; }
+
+.pf-insta__pill{
+  display:inline-flex; align-items:center; gap:10px;
+  max-width:min(320px, 100%);
+  padding:7px 14px 7px 7px;
+  border:1px solid var(--p-line);
+  border-radius:100px;                    /* pastilla, no tarjeta */
+  background:color-mix(in srgb, var(--p-surface-2) 82%, transparent);
+  -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+  color:var(--p-text);
+  font-family:var(--u-font, var(--p-fb));
+  cursor:pointer; text-align:left;
+  transition:transform var(--transition-fast), border-color var(--transition-fast);
+}
+.pf-insta__pill:hover{ border-color:var(--p-primary); }
+@media (hover:hover){ .pf-insta__pill:hover{ transform:translateY(-1px); } }
+
+.pf-insta__cover{
+  width:34px; height:34px; flex:none;
+  border-radius:50%;                      /* redonda, como Instagram */
   overflow:hidden;
-  background:var(--p-surface-2);
-  line-height:0;                    /* sin el hueco que deja un iframe en linea */
+  display:grid; place-items:center;
+  background:var(--p-surface-3, var(--p-surface-2));
+  font-size:15px; color:var(--p-primary);
 }
-.pf-embed iframe{
-  display:block;
-  width:100%;
-  height:152px;
-  border:0;
+.pf-insta__cover img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+.pf-insta__meta{ display:flex; flex-direction:column; min-width:0; line-height:1.25; }
+.pf-insta__t{
+  font-size:12.5px; font-weight:600;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
-.pf-embed[data-tipo="playlist"] iframe,
-.pf-embed[data-tipo="album"] iframe{ height:352px; }
+.pf-insta__a{
+  font-size:11px; color:var(--p-dim);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+/* las barras: quietas en reposo, bailando cuando suena */
+.pf-insta__viz{ display:flex; align-items:flex-end; gap:2.5px; height:18px; flex:none; margin-left:2px; }
+.pf-insta__viz i{
+  width:3px; height:4px; border-radius:2px;
+  background:var(--p-primary);
+}
+.pf-insta.is-open .pf-insta__viz i{
+  animation:viz 1s var(--ease, ease) infinite alternate;
+}
+.pf-insta.is-open .pf-insta__viz i:nth-child(2){ animation-delay:.14s }
+.pf-insta.is-open .pf-insta__viz i:nth-child(3){ animation-delay:.28s }
+.pf-insta.is-open .pf-insta__viz i:nth-child(4){ animation-delay:.42s }
+.pf-insta.is-open .pf-insta__viz i:nth-child(5){ animation-delay:.56s }
+
+/* el reproductor de Spotify, solo cuando se pide */
+.pf-insta__player{
+  width:100%; max-width:min(420px, 100%);
+  border-radius:var(--p-chip-r, 12px);
+  overflow:hidden; line-height:0;
+}
+.pf-insta__player iframe{ display:block; width:100%; height:152px; border:0; }
+.pf-insta[data-tipo="playlist"] .pf-insta__player iframe,
+.pf-insta[data-tipo="album"] .pf-insta__player iframe{ height:352px; }
+
+/* quien pidio menos movimiento no ve las barras bailar */
+@media (prefers-reduced-motion: reduce){
+  .pf-insta.is-open .pf-insta__viz i{ animation:none; height:12px; }
+}

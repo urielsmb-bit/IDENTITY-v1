@@ -243,41 +243,54 @@
     if (!pistas.length) return '';
     var t = pistas[0];
 
-    /* ---- reproductor incrustado ------------------------------
-       Cuando la pista trae un `embed` se pinta el reproductor del
-       propio servicio en vez del nuestro. Es lo unico que funciona
-       para todo el mundo: el API de Spotify solo admite CINCO
-       cuentas en modo desarrollo, y salir de ahi exige empresa
-       registrada y 250.000 usuarios al mes. Ademas `preview_url`
-       -lo que hacia sonar el reproductor propio- esta deprecado.
-       Con el incrustado, a quien tenga Premium le suena la cancion
-       entera y no treinta segundos.
+    /* ---- pastilla de musica, estilo Instagram -----------------
+       Lo que se ve en reposo es NUESTRO: caratula redonda, titulo,
+       artista y las barras animadas. El mismo gesto que la pegatina
+       de musica de una historia.
 
-       La direccion se vuelve a validar AQUI aunque ya se validara
-       al guardar. Esto acaba dentro de un <iframe>, y un iframe
-       ajeno puede intentar navegar la pagina de arriba o hacerse
-       pasar por la interfaz. Validar dos veces cuesta una linea;
-       fiarse del almacen cuesta un incidente.
+       El reproductor de Spotify no se puede maquillar -viene de
+       otro origen y su interfaz es suya-, asi que no se enseña
+       hasta que hace falta: al tocar la pastilla se despliega y
+       suena. Antes ocupaba un bloque grande que rompia el diseno
+       del perfil.
 
-       El sandbox NO lleva allow-top-navigation a proposito: el
-       reproductor puede sonar y abrir Spotify en otra pestaña, pero
-       no puede llevarse la pagina de quien visita el perfil. */
+       De paso, el iframe no se carga hasta que alguien lo pide: un
+       perfil que nadie toca no descarga el reproductor de Spotify.
+
+       La direccion se valida OTRA VEZ aqui aunque ya se validara al
+       guardar. Acaba en un iframe, y un iframe ajeno puede intentar
+       navegar la pagina de arriba. Validar dos veces cuesta una
+       linea; fiarse del almacen cuesta un incidente. */
     if (t.embed) {
       var seguro = (ID.validar && ID.validar.incrustable)
         ? ID.validar.incrustable(t.embed) : '';
       if (seguro) {
-        var tipo = (seguro.match(/\/embed\/(\w+)\//) || [])[1] || 'track';
-        return '<div class="pf-embed" data-tipo="' + esc(tipo) +
-          '" data-style="' + esc(p.musicStyle) + '">' +
-          '<iframe src="' + esc(seguro) + '"' +
-            ' title="' + esc(t.title || 'Reproductor de musica') + '"' +
-            ' loading="lazy" frameborder="0"' +
-            ' allow="encrypted-media; clipboard-write; picture-in-picture"' +
-            ' referrerpolicy="strict-origin-when-cross-origin"' +
-            ' sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation"' +
-            '></iframe></div>';
+        var tipo = (seguro.match(/embed\/(\w+)\//) || [])[1] || 'track';
+        var tapa = t.cover || '';
+        var esImg = /^https?:/i.test(String(tapa));
+        return '<div class="pf-insta" data-tipo="' + esc(tipo) +
+          '" data-style="' + esc(p.musicStyle) + '" data-embed="' + esc(seguro) + '">' +
+
+          '<button class="pf-insta__pill" type="button" ' +
+            'aria-label="Reproducir ' + esc(t.title || 'la cancion') + '">' +
+            '<span class="pf-insta__cover">' +
+              (esImg
+                ? '<img src="' + esc(ID.util.safeMedia(tapa)) + '" alt="" loading="lazy">'
+                : '♪') +
+            '</span>' +
+            '<span class="pf-insta__meta">' +
+              '<span class="pf-insta__t">' + esc(t.title || 'Musica') + '</span>' +
+              (t.artist ? '<span class="pf-insta__a">' + esc(t.artist) + '</span>' : '') +
+            '</span>' +
+            '<span class="pf-insta__viz" aria-hidden="true">' +
+              '<i></i><i></i><i></i><i></i><i></i></span>' +
+          '</button>' +
+
+          '<div class="pf-insta__player" hidden></div>' +
+        '</div>';
       }
     }
+
     var cover = t.cover || '\u266a';
     var esUrl = /^(https?:|data:)/i.test(String(cover));
 
@@ -958,6 +971,47 @@
           });
         }
       })();
+
+      /* ---- la pastilla de musica se abre al tocarla -------------
+         El iframe se crea AQUI, no al pintar: asi un perfil que
+         nadie toca no descarga el reproductor de Spotify, y el
+         diseño de quien hizo el perfil manda mientras nadie pida
+         musica.
+
+         El sandbox no lleva `allow-top-navigation` a proposito: el
+         reproductor puede sonar y abrir Spotify en otra pestaña,
+         pero no puede llevarse la pagina de quien visita el perfil. */
+      var pastilla = container.querySelector('.pf-insta');
+      if (pastilla) {
+        var boton = pastilla.querySelector('.pf-insta__pill');
+        var hueco = pastilla.querySelector('.pf-insta__player');
+        if (boton && hueco) {
+          boton.addEventListener('click', function () {
+            if (pastilla.classList.contains('is-open')) {
+              /* segundo toque: se recoge y se para, quitando el marco */
+              hueco.innerHTML = '';
+              hueco.hidden = true;
+              pastilla.classList.remove('is-open');
+              return;
+            }
+            var url = (ID.validar && ID.validar.incrustable)
+              ? ID.validar.incrustable(pastilla.dataset.embed || '') : '';
+            if (!url) return;
+            var f = document.createElement('iframe');
+            f.src = url + (url.indexOf('?') < 0 ? '?' : '&') + 'autoplay=1';
+            f.title = boton.getAttribute('aria-label') || 'Reproductor';
+            f.loading = 'lazy';
+            f.setAttribute('frameborder', '0');
+            f.setAttribute('allow', 'autoplay; encrypted-media; clipboard-write; picture-in-picture');
+            f.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+            f.setAttribute('sandbox',
+              'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation');
+            hueco.appendChild(f);
+            hueco.hidden = false;
+            pastilla.classList.add('is-open');
+          });
+        }
+      }
 
       /* puerta de entrada: además desbloquea el audio y el video */
       var gate = container.querySelector('#pfGate');
