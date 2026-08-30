@@ -525,7 +525,43 @@
     });
 
     if (!mando) return;
-    ID.fx.register(function () { mando.destruir(); });
+    /* ============================================================
+       LA MUSICA SE CALLA CUANDO TE VAS
+       ============================================================
+       Sin esto, el reproductor sigue sonando aunque la pestaña pase
+       a segundo plano: te vas a Google y la cancion te persigue. Es
+       de las cosas que hacen cerrar una pagina para siempre.
+
+       `visibilitychange` y no `blur`: en un movil, irse a otra
+       aplicacion no dispara blur pero si cambia la visibilidad. Y
+       `pagehide` para cuando la pestaña se cierra de verdad.
+
+       Se pausa, no se para: si vuelves y estaba sonando, sigue donde
+       lo dejaste. Si estaba en pausa, se queda en pausa — volver a
+       una pestaña no es pedir musica.
+
+       Cambiar de perfil dentro de la pagina ya estaba cubierto:
+       `destruir()` va registrado en ID.fx y el router lo llama al
+       salir de la vista. Por eso solo suena el perfil que miras. */
+    var sonabaAlIrse = false;
+    var alCambiarVisibilidad = function () {
+      if (document.visibilityState === 'hidden') {
+        sonabaAlIrse = !mus.classList.contains('is-paused');
+        if (sonabaAlIrse) mando.pause();
+      } else if (sonabaAlIrse) {
+        mando.play();
+        sonabaAlIrse = false;
+      }
+    };
+    var alCerrar = function () { mando.pause(); };
+    document.addEventListener('visibilitychange', alCambiarVisibilidad);
+    window.addEventListener('pagehide', alCerrar);
+
+    ID.fx.register(function () {
+      document.removeEventListener('visibilitychange', alCambiarVisibilidad);
+      window.removeEventListener('pagehide', alCerrar);
+      mando.destruir();
+    });
     mus._mando = mando;
 
     btn.addEventListener('click', function () { mando.alternar(); });
@@ -1051,6 +1087,22 @@
         pastilla.classList.remove('is-open');
       };
       if (pastilla) {
+        /* El reproductor de Spotify viene de otro origen: no se le
+           puede decir "pausa" desde aqui. Quitar el marco es la
+           unica forma de callarlo, asi que al irse se cierra entero.
+           Al volver hay que darle otra vez, y es lo honesto: no
+           podemos prometer que siga donde estaba. */
+        var callarSpotify = function () {
+          if (document.visibilityState === 'hidden') cerrarMusica();
+        };
+        document.addEventListener('visibilitychange', callarSpotify);
+        window.addEventListener('pagehide', cerrarMusica);
+        ID.fx.register(function () {
+          document.removeEventListener('visibilitychange', callarSpotify);
+          window.removeEventListener('pagehide', cerrarMusica);
+          cerrarMusica();
+        });
+
         var botonPastilla = pastilla.querySelector('.pf-insta__pill');
         if (botonPastilla) {
           botonPastilla.addEventListener('click', function () {
