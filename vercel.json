@@ -3,6 +3,13 @@
   "framework": null,
   "buildCommand": "echo \"sitio estatico: no hay nada que compilar\"",
   "outputDirectory": ".",
+  "redirects": [
+    {
+      "source": "/vercel.json",
+      "destination": "/",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",
