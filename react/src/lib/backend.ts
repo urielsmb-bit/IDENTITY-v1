@@ -354,17 +354,34 @@ export async function insigniasDe(username: string) {
 
   let id = '';
   let metricas = vacio;
-  try {
-    const { data } = await client.from('descubrir')
+
+  const leerDe = async (vista: string) => {
+    const { data, error } = await client.from(vista)
       .select('id,vistas,nota,num_notas')
       .eq('username', username)
       .maybeSingle();
-    if (data) {
-      id = String(data.id ?? '');
+    if (error) throw error;
+    return data;
+  };
+
+  try {
+    /* De `perfiles_publicos` y no de `descubrir`: desde 0008, `descubrir`
+       deja fuera a quien apaga «Perfil publico», y leer de ahi le habria
+       quitado tambien las insignias de visitas y de notas. Salir del
+       buscador y perder lo que has ganado son dos cosas distintas. */
+    let fila;
+    try {
+      fila = await leerDe('perfiles_publicos');
+    } catch {
+      // Sin la migracion 0008 esa vista todavia no trae cifras.
+      fila = await leerDe('descubrir');
+    }
+    if (fila) {
+      id = String(fila.id ?? '');
       metricas = {
-        vistas: Number(data.vistas) || 0,
-        nota: data.nota == null ? null : Number(data.nota),
-        numNotas: Number(data.num_notas) || 0,
+        vistas: Number(fila.vistas) || 0,
+        nota: fila.nota == null ? null : Number(fila.nota),
+        numNotas: Number(fila.num_notas) || 0,
         concedidas: [],
       };
     }
