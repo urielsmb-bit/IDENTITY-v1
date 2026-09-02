@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { Profile, AudioTrack, BlockStyle } from '@/types';
 import { NETS } from '@/data/nets';
-import { getBadge, resolveBadges } from '@/data/badges';
+import { getBadge } from '@/data/badges';
+import { insigniasGanadas } from '@/lib/insignias';
 import { FONTS, EASING_CSS } from '@/data/themes';
 import { useParticles } from '@/hooks/useParticles';
 import { useTilt } from '@/hooks/useTilt';
@@ -14,6 +15,14 @@ import { esVimeo, urlFondoVimeo } from '@/lib/vimeo';
 
 interface ProfileViewProps {
   profile: Profile;
+  /**
+   * Las insignias ya resueltas, de quien las haya pedido al servidor.
+   *
+   * Sin esto se calculan aqui con lo que trae el propio perfil, que alcanza
+   * para las de antiguedad pero no para las que concede el equipo. Nunca se
+   * leen de `profile.badges`: ese campo lo escribia su dueno.
+   */
+  insignias?: string[];
   preview?: boolean;
   onVote?: (score: number) => void;
   myVote?: number | null;
@@ -60,6 +69,7 @@ const sw = (v: unknown) => (v ? 'on' : 'off');
 
 export function ProfileView({
   profile: p,
+  insignias: insigniasDadas,
   preview = false,
   onVote,
   myVote,
@@ -263,9 +273,21 @@ export function ProfileView({
     : 0;
 
 
-  // Traduce los ids heredados del catálogo viejo y descarta los que ya no
-  // existen, para no pintar huecos donde antes había una insignia.
-  const insignias = resolveBadges(p.badges);
+  /* Las insignias se calculan, no se leen del perfil.
+     Antes salian de `p.badges`, que es parte de lo que escribe su dueno: por
+     eso cualquiera podia ponerse «Staff». Ahora salen de cifras del servidor
+     —antiguedad, visitas, notas— y de lo que el equipo haya concedido. */
+  const insignias = useMemo(
+    () =>
+      insigniasDadas ??
+      insigniasGanadas({
+        creado: p.joined,
+        vistas: p.views,
+        nota: p.nota,
+        numNotas: p.numNotas,
+      }),
+    [insigniasDadas, p.joined, p.views, p.nota, p.numNotas],
+  );
 
   // ── Estilo y visibilidad por bloque ──────────────────────
   // `blocksOff` guarda lo oculto, no lo visible: así un bloque nuevo

@@ -30,25 +30,13 @@ import { SubirFondo } from '@/components/dashboard/SubirFondo';
 import { AjustesCuenta } from '@/components/dashboard/AjustesCuenta';
 import { Guia } from '@/components/dashboard/Guia';
 import { useGuia } from '@/hooks/useGuia';
-import { BADGES, resolveBadges, type BadgeRarity } from '@/data/badges';
+import { PanelInsignias } from '@/components/dashboard/PanelInsignias';
 import { BLOQUES, BLOQUE_POR_ID, type DefBloque, BLOQUES_APAGADOS_POR_DEFECTO } from '@/data/bloques';
 import { safeMedia } from '@/lib/utils';
 import * as backend from '@/lib/backend';
 import { hasBackend } from '@/lib/supabase';
 import type { Profile, BlockPos, SocialLink } from '@/types';
 
-/** Las legendarias arriba: son las que uno quiere encontrar primero. */
-const ORDEN_RAREZA: Record<BadgeRarity, number> = { legendary: 0, rare: 1, common: 2 };
-const COLOR_RAREZA: Record<BadgeRarity, string> = {
-  legendary: '#F5A524',
-  rare: '#A855F7',
-  common: '#7A8CA6',
-};
-const NOMBRE_RAREZA: Record<BadgeRarity, string> = {
-  legendary: 'Legendaria',
-  rare: 'Rara',
-  common: 'Común',
-};
 
 /** 2.354 no le dice nada a nadie; 21:9 sí. Se busca el nombre conocido más
  *  cercano y, si no hay ninguno, se enseña el número. */
@@ -68,9 +56,6 @@ function proporcionVimeo(r: number): string {
 function esImagen(v: string): boolean {
   return v.startsWith('data:') || v.startsWith('http');
 }
-
-/** Cuántas insignias caben de verdad en el perfil (ProfileView corta ahí). */
-const MAX_VISIBLES = 8;
 
 /**
  * Toma una foto de dónde está cada bloque ahora mismo y la convierte en
@@ -292,7 +277,6 @@ function createBlankProfile(username = 'usuario'): Profile {
     live: [],
     fields: [],
     tags: ['developer'],
-    badges: [],
     blocksOff: [...BLOQUES_APAGADOS_POR_DEFECTO],
     blockOrder: [],
     canvasH: null,
@@ -547,17 +531,6 @@ export default function DashboardPage() {
       update({ socials: lista });
     },
     [profile?.socials, update],
-  );
-
-  /** Insignias del perfil ya traducidas al catálogo actual. */
-  const activas = useMemo(() => resolveBadges(profile?.badges), [profile?.badges]);
-
-  const badgesOrdenadas = useMemo(
-    () =>
-      Object.entries(BADGES).sort(
-        (a, b) => ORDEN_RAREZA[a[1].rare] - ORDEN_RAREZA[b[1].rare],
-      ),
-    [],
   );
 
   const formatoActual: 'normal' | 'split' | 'minimal' =
@@ -1430,58 +1403,7 @@ export default function DashboardPage() {
         )}
 
         {/* SECTION: Badges */}
-        {section === 'badges' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-              <h2 style={{ fontSize: '1.4rem' }}>Insignias</h2>
-              <p className="t-meta" style={{ fontSize: '0.85rem', marginTop: '4px' }}>
-                {activas.length === 0
-                  ? 'Ninguna activa todavía.'
-                  : `${activas.length} ${activas.length === 1 ? 'activa' : 'activas'}`}
-                {activas.length > MAX_VISIBLES &&
-                  ` · en el perfil solo se ven las ${MAX_VISIBLES} primeras`}
-              </p>
-            </div>
-
-            <div className="bgrid" data-guia="insignias">
-              {badgesOrdenadas.map(([bId, b]) => {
-                const puesta = activas.includes(bId);
-                return (
-                  <button
-                    key={bId}
-                    type="button"
-                    className={`bcard${puesta ? ' is-on' : ''}`}
-                    style={{ '--rare': COLOR_RAREZA[b.rare] } as React.CSSProperties}
-                    title={`${NOMBRE_RAREZA[b.rare]} · ${b.how}`}
-                    aria-pressed={puesta}
-                    onClick={() => {
-                      // Se reescribe la lista ya normalizada: así los ids del
-                      // catálogo viejo se limpian en cuanto se toca la sección.
-                      update({
-                        badges: puesta
-                          ? activas.filter((x) => x !== bId)
-                          : [...activas, bId],
-                      });
-                    }}
-                  >
-                    <span
-                      className="bcard__i"
-                      aria-hidden="true"
-                      dangerouslySetInnerHTML={{ __html: b.icon }}
-                    />
-                    <span className="bcard__c">
-                      <span className="bcard__n">
-                        <span>{b.label}</span>
-                        <i className="bcard__r" aria-label={NOMBRE_RAREZA[b.rare]} />
-                      </span>
-                      <span className="bcard__d">{b.how}</span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {section === 'badges' && <PanelInsignias profile={profile} />}
 
         {/* SECTION: Settings */}
         {section === 'settings' && (

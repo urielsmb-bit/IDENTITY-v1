@@ -232,6 +232,9 @@ export interface Profile {
   xpMax: number;
   views: number;
   likes: number;
+  /** Nota media. La calcula el servidor; no se guarda en el perfil. */
+  nota?: number | null;
+  numNotas?: number;
 
   /** Color de relleno de la superficie. Vacío = el del tema */
   sColor: string;
@@ -302,7 +305,6 @@ export interface Profile {
   live: LiveItem[];
   fields: FieldItem[];
   tags: string[];
-  badges: string[];
 
   /* block maps */
   pos: Record<string, BlockPos>;

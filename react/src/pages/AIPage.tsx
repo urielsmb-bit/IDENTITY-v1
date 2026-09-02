@@ -204,7 +204,6 @@ export default function AIPage() {
       live: [],
       fields: [],
       tags: [],
-      badges: ['star'],
       blocksOff: [...BLOQUES_APAGADOS_POR_DEFECTO],
       blockOrder: [],
       canvasH: null,

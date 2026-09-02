@@ -103,7 +103,6 @@ const FORMAS: Record<string, any> = {
   live: { title: TOPE.corto, url: TOPE.url, kind: 24 },
   fields: { label: TOPE.corto, value: TOPE.medio, icon: 24 },
   tags: null,
-  badges: null,
   blocksOff: null,
   blockOrder: null
 };
@@ -275,6 +274,13 @@ function esquema(ID: any) {
     xpMax: (v: any) => numero(v, 1, 1e9, 100),
     views: (v: any) => numero(v, 0, 1e9, 0),
     likes: (v: any) => numero(v, 0, 1e9, 0),
+    /* Las calcula el servidor y llegan pegadas al perfil. Se dejan pasar
+       porque de ellas salen las insignias de visitas y valoraciones; si el
+       normalizador las tira, esas insignias se quedan a cero para siempre. */
+    numNotas: (v: any) => numero(v, 0, 1e9, 0),
+    /* Nula mientras no la haya votado nadie: 0 y «sin votos» no son lo
+       mismo, y la insignia Aclamado pide una media minima. */
+    nota: (v: any) => numOnulo(v, 0, 5),
     
     sBorderOn: bool,
     avBorder: bool, avGlow: bool, monoIcons: bool, bgFixed: bool,

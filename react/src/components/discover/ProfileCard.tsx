@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { Profile } from '@/types';
-import { getBadge, resolveBadges } from '@/data/badges';
+import { getBadge } from '@/data/badges';
+import { insigniasGanadas } from '@/lib/insignias';
 import { safeMedia, num } from '@/lib/utils';
 
 interface ProfileCardProps {
@@ -25,7 +26,15 @@ function hexA(hex: string | undefined, a: number) {
 
 export function ProfileCard({ profile: p }: ProfileCardProps) {
   const tint = hexA(p.accent, 0.18);
-  const badges = resolveBadges(p.badges).slice(0, 3);
+  /* Las filas de `descubrir` traen visitas y notas, asi que aqui se
+     calculan igual que en el perfil. Lo que no traen es lo que concede el
+     equipo: en la tarjeta pequena se puede vivir sin ello. */
+  const badges = insigniasGanadas({
+    creado: p.joined,
+    vistas: p.views,
+    nota: p.nota,
+    numNotas: p.numNotas,
+  }).slice(0, 3);
 
   return (
     <Link

@@ -4,6 +4,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { useProfileStore, getMyVote, setMyVote } from '@/stores/profileStore';
 import { ProfileView } from '@/components/profile/ProfileView';
 import * as backend from '@/lib/backend';
+import { insigniasGanadas } from '@/lib/insignias';
 import { hasBackend } from '@/lib/supabase';
 
 export default function ProfilePage() {
@@ -11,6 +12,10 @@ export default function ProfilePage() {
   const cleanUsername = username?.toLowerCase().trim();
   const { profile, isLoading } = useProfile(cleanUsername);
   const [vote, setVote] = useState<number | null>(null);
+  /* Las insignias no vienen con el perfil: viven en otra vista y en
+     otra tabla. Se piden aparte para que un fallo suyo no impida que
+     el perfil se pinte. */
+  const [insignias, setInsignias] = useState<string[] | undefined>(undefined);
 
   useEffect(() => {
     if (!cleanUsername) return;
@@ -20,6 +25,20 @@ export default function ProfilePage() {
     }
     const v = getMyVote(cleanUsername);
     setVote(v);
+
+    if (hasBackend()) {
+      let vivo = true;
+      backend
+        .insigniasDe(cleanUsername)
+        .then((d) => {
+          if (vivo) setInsignias(insigniasGanadas(d));
+        })
+        .catch(() => {});
+      return () => {
+        vivo = false;
+      };
+    }
+    return;
   }, [cleanUsername]);
 
   const handleVote = async (score: number) => {
@@ -62,6 +81,7 @@ export default function ProfilePage() {
   return (
     <ProfileView
       profile={profile}
+      insignias={insignias}
       onVote={handleVote}
       myVote={vote}
     />

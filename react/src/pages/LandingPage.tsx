@@ -134,7 +134,6 @@ const INITIAL_DEMO: Profile = {
   live: [],
   fields: [],
   tags: ['developer', 'design'],
-  badges: ['staff', 'verified', 'premium'],
   blocksOff: [...BLOQUES_APAGADOS_POR_DEFECTO],
   blockOrder: [],
   canvasH: null,

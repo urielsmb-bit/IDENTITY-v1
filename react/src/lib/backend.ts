@@ -339,6 +339,61 @@ export async function descubrir(opciones: OpcionesDescubrir = {}) {
   });
 }
 
+/**
+ * Lo que hace falta para decidir las insignias de un perfil.
+ *
+ * Va aparte de `cargarPerfil` a proposito: las metricas viven en otra vista
+ * y las concesiones en otra tabla, y ninguna de las dos debe poder impedir
+ * que el perfil se pinte. Si algo de esto falla, se devuelven ceros y el
+ * perfil sale sin insignias, que es mejor que no salir.
+ */
+export async function insigniasDe(username: string) {
+  const vacio = { vistas: 0, nota: null as number | null, numNotas: 0, concedidas: [] as string[] };
+  if (!supabase) return vacio;
+  const client = supabase;
+
+  let id = '';
+  let metricas = vacio;
+  try {
+    const { data } = await client.from('descubrir')
+      .select('id,vistas,nota,num_notas')
+      .eq('username', username)
+      .maybeSingle();
+    if (data) {
+      id = String(data.id ?? '');
+      metricas = {
+        vistas: Number(data.vistas) || 0,
+        nota: data.nota == null ? null : Number(data.nota),
+        numNotas: Number(data.num_notas) || 0,
+        concedidas: [],
+      };
+    }
+  } catch {
+    /* sin metricas: las insignias por meta saldran sin ganar */
+  }
+
+  if (!id) return metricas;
+
+  try {
+    const { data, error } = await client.from('insignias_de_perfil')
+      .select('insignia')
+      .eq('perfil_id', id);
+    // 42P01 = la vista todavia no existe. Es el estado normal hasta que se
+    // aplique 0007_insignias.sql: no es un error que ensenar a nadie, y
+    // mientras tanto solo faltan las concedidas a mano y «verificado».
+    // Las de antiguedad, visitas y notas se calculan igual.
+    if (!error && data) {
+      metricas.concedidas = data
+        .map((f: any) => String(f.insignia))
+        .filter(Boolean);
+    }
+  } catch {
+    /* idem */
+  }
+
+  return metricas;
+}
+
 export async function contarVista(username: string) {
   if (!supabase) return;
   try {

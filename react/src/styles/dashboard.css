@@ -2299,3 +2299,74 @@
 /* Apagado no brilla: el resplandor ES la señal de que esta encendido. */
 .blist__it.is-off .blist__ico{ color:var(--text-faint); }
 .blist__it.is-off .blist__ico svg{ filter:none; }
+
+/* ---- Insignias: de sólo lectura -------------------------------
+   Ya no hay nada que pulsar, así que la tarjeta deja de comportarse
+   como un botón. Lo que gana a cambio es la barra de progreso, que
+   es lo que convierte una pegatina en un objetivo. */
+
+.ins{ display:flex; flex-direction:column; gap:16px; }
+.ins__sub{
+  margin:4px 0 0;
+  color:var(--text-muted);
+  font-size:.85rem;
+}
+.ins__pie{
+  margin:0;
+  color:var(--text-faint);
+  font-size:.78rem;
+  line-height:1.55;
+  max-width:60ch;
+}
+
+.bcard--fija{ cursor:default; }
+.bcard--fija:hover{ border-color:var(--border); }
+
+/* La caja crece hacia abajo con la barra: sin esto, el icono se
+   quedaba centrado sobre un texto de tres alturas distintas. */
+.bcard--fija{ align-items:start; }
+.bcard--fija .bcard__i{ margin-top:2px; }
+
+.ins__prog{ display:block; margin-top:6px; }
+.ins__barra{
+  display:block;
+  height:3px;
+  border-radius:2px;
+  background:var(--surface-3);
+  overflow:hidden;
+}
+.ins__barra i{
+  display:block;
+  height:100%;
+  border-radius:2px;
+  background:var(--rare);
+  /* Sin transición al montar; sólo cuando el número llega del servidor. */
+  transition:width .5s var(--ease-out);
+}
+.ins__falta{
+  display:block;
+  margin-top:5px;
+  font-style:normal;
+  font-size:11px;
+  color:var(--text-muted);
+}
+
+.ins__cerrada,
+.ins__hecha{
+  display:block;
+  margin-top:6px;
+  font-size:10.5px;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+.ins__cerrada{ color:var(--text-faint); }
+.ins__hecha{ color:var(--rare); font-weight:600; }
+
+/* Sin conseguir, la tarjeta se aparta un paso: el color es el premio. */
+.bcard--fija:not(.is-on){ background:transparent; }
+.bcard--fija:not(.is-on) .bcard__n{ color:var(--text-secondary); }
+.bcard--fija:not(.is-on) .bcard__r{ opacity:.45; }
+
+@media (prefers-reduced-motion: reduce){
+  .ins__barra i{ transition:none; }
+}

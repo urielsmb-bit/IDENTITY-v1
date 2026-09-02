@@ -11,7 +11,8 @@ import {
   SOCIAL_STYLES,
 } from '@/data/themes';
 import { NETS } from '@/data/nets';
-import { getBadge, resolveBadges } from '@/data/badges';
+import { getBadge } from '@/data/badges';
+import { insigniasGanadas } from '@/lib/insignias';
 import { safeUrl } from '@/lib/utils';
 import { idYouTube } from '@/lib/music';
 import { Campo, ColorRGB, Deslizador, Interruptor, Pastillas } from './Controles';
@@ -100,11 +101,20 @@ function MuestraRedes({ profile }: { profile: Profile }) {
 }
 
 function MuestraInsignias({ profile }: { profile: Profile }) {
-  const insignias = resolveBadges(profile.badges);
+  /* El mismo calculo que el perfil publico. Antes esta muestra leia
+     `profile.badges`, y por eso ensenaba las que uno se habia puesto a si
+     mismo aunque el perfil ya no las pintara: dos verdades distintas para
+     la misma cosa. */
+  const insignias = insigniasGanadas({
+    creado: profile.joined,
+    vistas: profile.views,
+    nota: profile.nota,
+    numNotas: profile.numNotas,
+  });
   if (insignias.length === 0) {
     return (
       <p className="muestra__vacio">
-        Todavía no tienes insignias. Elígelas en «Badges».
+        Todavía ninguna. Mira en «Badges» cuáles tienes a tiro.
       </p>
     );
   }
