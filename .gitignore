@@ -1,0 +1,60 @@
+# ---- secretos -------------------------------------------------
+# Va PRIMERO y a proposito. Hoy no existe ningun .env, y este es el
+# momento de impedirlo: una vez que un secreto entra en un commit,
+# borrarlo del archivo no lo saca del historial. Se considera
+# comprometido y hay que rotarlo.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.json
+credentials.json
+service-account*.json
+
+# ---- basura del sistema ---------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- temporales y herramientas --------------------------------
+*.tmp
+*.bak
+*.orig
+*.log
+.vercel/
+.supabase/
+__pycache__/
+node_modules/
+
+.vercel
+.env*
+
+# ---- documentacion interna ------------------------------------
+# Enumeran lo que TODAVIA no esta protegido: riesgos sin cerrar,
+# deuda tecnica, lo que falta por construir. En un repositorio
+# publico eso es una lista de por donde probar, sobre un sitio que
+# va a estar en vivo. Se quedan en el disco, fuera del repositorio.
+#
+# NO se anaden aqui los tres documentos legales: la vista /terminos
+# los lee en tiempo de ejecucion, asi que si no viajan al repositorio
+# no llegan a Vercel y esa pagina se rompe.
+IDENTITY_SEGURIDAD.md
+IDENTITY_TECH_DEBT.md
+IDENTITY_NEXT.md
+IDENTITY_ROADMAP.md
+DESPLIEGUE_VERCEL.md
+pruebas-backend.html
+
+# ---- estado local de la CLI de Supabase -----------------------
+# El enlace con el proyecto y la version de la CLI. Es de esta
+# maquina, no del proyecto.
+supabase/.temp/
+
+# ---- compilado --------------------------------------------------
+# Sale de `npm run build` en cada despliegue. Guardarlo solo genera
+# conflictos en cada rama por un fichero que nadie edita a mano.
+react/dist/
+dist/

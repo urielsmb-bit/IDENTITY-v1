@@ -1,0 +1,199 @@
+/* ============================================================
+   FUENTES PROPIAS
+   Generado desde los .ttf/.otf de la carpeta de fuentes: cada una
+   recortada al latin (incluidos acentos y ñ) y convertida a woff2.
+
+   `font-display:swap` y NADA de precarga a proposito: el navegador
+   solo descarga una familia cuando un perfil la usa de verdad. El
+   megabyte largo que suman entre todas no lo paga ningun visitante:
+   se paga la que ese perfil haya elegido, y ya.
+   ============================================================ */
+@font-face{
+  font-family:'Harley';
+  src:url('/fuentes/asmelinaharley.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Bastliga';
+  src:url('/fuentes/bastliga-one.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Bloodrops';
+  src:url('/fuentes/bloodrops-personal-use.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Chiikawa';
+  src:url('/fuentes/chiikawaenglish.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Emo Script';
+  src:url('/fuentes/coertschriftromaans-vxvy.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Creamy Chicken';
+  src:url('/fuentes/creamy-chicken.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Death Note';
+  src:url('/fuentes/death-note.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Video Med';
+  src:url('/fuentes/fonnts-com-video-med.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Gothic War';
+  src:url('/fuentes/gothic-war.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Harry P';
+  src:url('/fuentes/harryp.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Hoshiko';
+  src:url('/fuentes/hoshiko-satsuki.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Last Christmas';
+  src:url('/fuentes/lastchristmas-personal-use-only.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Mitchel';
+  src:url('/fuentes/mitchell-demo.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Moms Typewriter';
+  src:url('/fuentes/mom-stypewriter-400.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'New Rocker';
+  src:url('/fuentes/newrocker-regular.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Cheeky Rabbit';
+  src:url('/fuentes/not-a-rat-wallah.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Playpen Sans';
+  src:url('/fuentes/playpensans-bold.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Pricedown';
+  src:url('/fuentes/pricedown-bl.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Ritual';
+  src:url('/fuentes/ritual-of-the-witch.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Simbiot';
+  src:url('/fuentes/simbiot-personal-use-regular.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Singsong';
+  src:url('/fuentes/singsong.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Smile Delight';
+  src:url('/fuentes/smile-delight-demo-font.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Swordskull';
+  src:url('/fuentes/swordskull-personal-use.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Rum Is Gone';
+  src:url('/fuentes/therumisgone-wy1ng.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Trash Rush';
+  src:url('/fuentes/trash-rush.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Vampire Zone';
+  src:url('/fuentes/vampire-zone.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}
+@font-face{
+  font-family:'Zoombieland';
+  src:url('/fuentes/zoombieland-yzego.woff2') format('woff2');
+  font-weight:400 700;
+  font-style:normal;
+  font-display:swap;
+}

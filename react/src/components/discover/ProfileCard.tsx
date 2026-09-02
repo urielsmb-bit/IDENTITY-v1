@@ -1,0 +1,85 @@
+import { Link } from 'react-router-dom';
+import type { Profile } from '@/types';
+import { getBadge, resolveBadges } from '@/data/badges';
+import { safeMedia, num } from '@/lib/utils';
+
+interface ProfileCardProps {
+  profile: Profile;
+}
+
+function hexA(hex: string | undefined, a: number) {
+  const clean = String(hex || '#FFFFFF').replace('#', '');
+  const full =
+    clean.length === 3
+      ? (clean[0] ?? '') +
+        (clean[0] ?? '') +
+        (clean[1] ?? '') +
+        (clean[1] ?? '') +
+        (clean[2] ?? '') +
+        (clean[2] ?? '')
+      : clean;
+  const n = parseInt(full, 16);
+  if (isNaN(n)) return `rgba(255,255,255,${a})`;
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+
+export function ProfileCard({ profile: p }: ProfileCardProps) {
+  const tint = hexA(p.accent, 0.18);
+  const badges = resolveBadges(p.badges).slice(0, 3);
+
+  return (
+    <Link
+      className="pcard"
+      to={`/u/${p.username}`}
+      style={
+        {
+          '--pc-tint': tint,
+          '--pc-ring': p.accent || 'transparent',
+        } as React.CSSProperties
+      }
+    >
+      <span className="pcard__av">
+        {p.avatarUrl ? (
+          <img src={safeMedia(p.avatarUrl)} alt="" loading="lazy" />
+        ) : (
+          <span aria-hidden="true">
+            {p.emoji || (p.name || '?').charAt(0).toUpperCase()}
+          </span>
+        )}
+      </span>
+
+      <span className="pcard__name">
+        {p.name || p.username}
+        {p.verified && (
+          <i className="pcard__v" title="Verificado">
+            ✔
+          </i>
+        )}
+      </span>
+
+      <span className="pcard__at">@{p.username}</span>
+
+      {p.title && <span className="pcard__role">{p.title}</span>}
+
+      {badges.length > 0 && (
+        <span className="pcard__bd">
+          {badges.map((bId) => {
+            const b = getBadge(bId);
+            return b ? (
+              <span
+                key={bId}
+                title={b.label}
+                dangerouslySetInnerHTML={{ __html: b.icon }}
+              />
+            ) : null;
+          })}
+        </span>
+      )}
+
+      <span className="pcard__foot">
+        <span className="pcard__views">{num(p.views || 0)} visitas</span>
+        <span>Nv {p.level || 1}</span>
+      </span>
+    </Link>
+  );
+}

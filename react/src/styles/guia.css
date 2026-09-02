@@ -1,0 +1,160 @@
+/* ==========================================================
+   IDENTITY · guía por secciones
+   ==========================================================
+   Una tarjeta pequeña, pegada al control del que habla. Nunca
+   dos a la vez, nunca una capa que tape la pantalla: se puede
+   seguir usando el editor con la pista puesta, que es lo que
+   distingue un consejo de un peaje.
+   ========================================================== */
+
+.guia{
+  position:fixed;
+  z-index:60;
+  width:min(300px, calc(100vw - 24px));
+  padding:12px 13px 11px;
+  border:1px solid var(--accent);
+  border-radius:var(--radius-md);
+  background:var(--surface-2);
+  box-shadow:var(--shadow-lg), 0 0 0 4px color-mix(in srgb, var(--accent) 12%, transparent);
+  animation:guiaEntra .28s var(--ease-out) both;
+}
+
+@keyframes guiaEntra{
+  from{ opacity:0; transform:translateY(-6px) scale(.97); }
+  to  { opacity:1; transform:none; }
+}
+.guia--arriba{ animation-name:guiaEntraArriba; }
+@keyframes guiaEntraArriba{
+  from{ opacity:0; transform:translateY(6px) scale(.97); }
+  to  { opacity:1; transform:none; }
+}
+
+/* La flecha. Dos cuadrados girados: el de atrás hace de borde. */
+.guia::before,
+.guia::after{
+  content:'';
+  position:absolute;
+  left:var(--flecha, 24px);
+  width:10px; height:10px;
+  transform:translateX(-50%) rotate(45deg);
+}
+.guia::before{ background:var(--accent); }
+.guia::after{ background:var(--surface-2); }
+
+.guia:not(.guia--arriba)::before{ top:-6px; }
+.guia:not(.guia--arriba)::after{ top:-4px; }
+.guia--arriba::before{ bottom:-6px; }
+.guia--arriba::after{ bottom:-4px; }
+
+/* ---------- contenido ---------- */
+
+.guia__cab{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:6px;
+}
+
+.guia__punto{
+  width:7px; height:7px;
+  flex:none;
+  border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent);
+  animation:guiaLatido 2.2s ease-out infinite;
+}
+@keyframes guiaLatido{
+  0%  { box-shadow:0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); }
+  70% { box-shadow:0 0 0 7px transparent; }
+  100%{ box-shadow:0 0 0 0 transparent; }
+}
+
+.guia__t{
+  margin:0;
+  flex:1;
+  font-size:.88rem;
+  font-weight:650;
+  letter-spacing:-.01em;
+  line-height:1.3;
+}
+
+.guia__x{
+  flex:none;
+  display:grid;
+  place-items:center;
+  width:22px; height:22px;
+  padding:0;
+  border:0;
+  border-radius:var(--radius-sm);
+  background:transparent;
+  color:var(--text-faint);
+  cursor:pointer;
+  transition:color var(--transition-fast), background var(--transition-fast);
+}
+.guia__x svg{ width:13px; height:13px; }
+.guia__x:hover{ color:var(--text-primary); background:var(--surface-3); }
+
+.guia__d{
+  margin:0;
+  color:var(--text-secondary);
+  font-size:.8rem;
+  line-height:1.55;
+}
+
+.guia__pie{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:11px;
+}
+
+.guia__cuenta{
+  color:var(--text-faint);
+  font-size:.72rem;
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- el control del que se habla ---------- */
+
+/* Un anillo, no un foco recortado sobre una capa negra: el editor se sigue
+   usando con la pista abierta, así que nada puede quedar tapado. */
+.guia-foco{
+  position:relative;
+  border-radius:var(--radius-md);
+  box-shadow:0 0 0 2px var(--accent),
+             0 0 0 6px color-mix(in srgb, var(--accent) 16%, transparent);
+  animation:guiaFoco .4s var(--ease-out) both;
+}
+@keyframes guiaFoco{
+  from{ box-shadow:0 0 0 2px transparent, 0 0 0 14px transparent; }
+}
+
+/* ---------- teclado y preferencias ---------- */
+
+.guia__x:focus-visible,
+.guia__pie .btn:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .guia,
+  .guia-foco{ animation:none; }
+  .guia__punto{ animation:none; }
+}
+
+/* ---------- el botón de reiniciar, en Ajustes ---------- */
+
+.acc__guia{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:.82rem;
+  color:var(--text-muted);
+}
+
+/* Pegada al borde porque no cabía en ningún lado: sin flecha, que apuntaría
+   a un sitio que no es. */
+.guia--pegada::before,
+.guia--pegada::after{ display:none; }

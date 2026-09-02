@@ -1,0 +1,50 @@
+# ---- secretos -------------------------------------------------
+# CRITICO. Esto es un despliegue estatico: Vercel sirve TODO archivo
+# que no se excluya aqui. Un .env en la raiz seria descargable en
+# https://tudominio/.env por cualquiera. No existe ninguno hoy; esto
+# es para que nunca llegue a existir uno servido.
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.json
+credentials.json
+service-account*.json
+
+# ---- ficheros de configuracion del repositorio ----------------
+# No hacen falta en tiempo de ejecucion y dicen que estas ocultando.
+.gitignore
+.vercelignore
+.git
+.github
+
+# ---- herramientas de desarrollo -------------------------------
+herramientas/
+pruebas-backend.html
+__pycache__/
+*.tmp
+*.bak
+*.log
+
+# ---- el SQL y las funciones van a Supabase, no aqui -----------
+supabase/
+
+# ---- documentacion interna ------------------------------------
+*.md
+
+# ...menos los tres legales: la vista /terminos los lee de aqui,
+# para que no haya dos copias del mismo texto separandose.
+!IDENTITY_TERMINOS.md
+!IDENTITY_PRIVACIDAD.md
+!IDENTITY_COPYRIGHT.md
+
+# ---- la migracion a React, todavia no desplegada ---------------
+# CRITICO que este aqui desde el primer commit: un package.json en
+# el arbol puede hacer que Vercel decida solo que clase de proyecto
+# es. Ya paso con serve.py -lo tomo por un proyecto Python y la
+# compilacion entera fallo-, y esa vez .vercelignore no basto porque
+# la deteccion ocurre ANTES. Con el proyecto en una carpeta excluida
+# y `framework: null` en vercel.json, no hay por donde.
+app/
