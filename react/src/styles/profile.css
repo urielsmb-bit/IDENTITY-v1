@@ -1126,20 +1126,22 @@
 /* ============================================================
    RESPONSIVE — el móvil recorta coste visual, nunca legibilidad
    ============================================================ */
+/* En pantalla estrecha el perfil NO se recoloca: se encoge entero.
+   Aqui vivian seis reglas que hacian justo lo contrario —soltar el ancho de
+   diseño, encoger el avatar a 40vw, forzar al centro las alineaciones
+   laterales— y se escribieron antes de que existiera el escalado. Ahora
+   sobran, y peor: peleaban con el. El diseño de alguien no cambia porque la
+   pantalla sea mas pequeña.
+
+   Se quedan solo las dos que no son de composicion: el brillo, que es un
+   efecto de raton y en tactil no existe, y medio desenfoque, que es coste
+   de pintado. */
 @media (max-width:640px){
-  .pf-stack{ max-width:100%; }
-  .pf-hero{ padding-top:84px; }
   .pf-card__sheen{ display:none; }
   .pf-veil{ backdrop-filter:blur(calc(var(--p-blur,0px) * .5)); }
+  /* El panel de valoracion NO es la tarjeta: es una seccion aparte, en el
+     flujo normal de la pagina, y ahi si tiene sentido reajustar. */
   .pf-rate__row{ grid-template-columns:74px 1fr 30px; }
-  .pf-avatar{ width:min(var(--u-av,112px), 40vw); }
-  /* las alineaciones laterales dejan líneas huérfanas en móvil */
-  .pf[data-align="left"] .pf-hero,
-  .pf[data-align="right"] .pf-hero{ justify-items:center; }
-  .pf[data-align="left"] .pf-stack,
-  .pf[data-align="right"] .pf-stack{ text-align:center; align-items:center; }
-  .pf[data-align="left"],
-  .pf[data-align="right"]{ --u-just:center; }
 }
 
 @media (prefers-reduced-motion:reduce){
@@ -2258,12 +2260,15 @@
    el avatar, y eso el CSS no lo sabe hacer. Un float sí. */
 .pf:not([data-layout="free"])[data-avpos="side"] .pf-stack{
   display:block;
+  /* `--u-ancho` manda tambien aqui: esta regla tiene mas especificidad que
+     las de `data-width` y sin nombrarlo devolvia la tarjeta al ancho del
+     hueco, que es cuando el avatar se sube encima del nombre. */
+  width:var(--u-ancho, 100%);
   /* Dos columnas necesitan ancho: en los 460px de la tarjeta vertical el
      texto se envuelve y deja de leerse como una banda. Se acota a 720px
      porque pasada esa medida la línea se vuelve incómoda de leer. Aquí el
      ancho lo manda el formato, no el control de "Ancho de la superficie". */
-  width:100%;
-  max-width:min(100%, 720px);
+  max-width:var(--u-ancho, min(100%, 720px));
 }
 /* Sin flex ya no hay `gap`: la separación la ponen los márgenes. */
 .pf[data-avpos="side"] .pf-stack > *{ margin-bottom:var(--u-gap, 16px); }
@@ -2302,13 +2307,10 @@
    Si se ha fijado un tamaño a mano, ese manda. */
 .pf[data-avpos="side"] .pf-name{ font-size:var(--u-name, clamp(22px, 3.2vw, 34px)); }
 
-@media (max-width:520px){
-  /* En móvil no cabe: vuelve a la columna de siempre. */
-  .pf[data-avpos="side"] .pf-stack{ display:flex; flex-direction:column; }
-  .pf[data-avpos="side"] .pf-stack > *{ margin-bottom:0; }
-  .pf[data-avpos="side"] .pf-avatar{ float:none; margin-right:0; align-self:center; }
-  .pf[data-avpos="side"] .pf-stack > .pf-idblock{ width:100%; }
-}
+/* Aqui estaba lo mas visible de todo: por debajo de 520px, «nombre al lado»
+   volvia a ser «nombre debajo». El avatar saltaba encima del nombre y era,
+   literalmente, otra composicion. Se va por lo mismo: la tarjeta se encoge
+   entera y el avatar sigue donde su dueño lo puso. */
 
 /* Fondo en vídeo alojado en Vimeo. El reproductor mantiene 16:9, así que
    para cubrir la pantalla se agranda al mayor de los dos lados y se centra:
