@@ -200,17 +200,21 @@
 .band__head p{ margin:6px 0 0; color:var(--text-secondary); font-size:var(--t3); max-width:52ch; }
 
 /* carrusel horizontal de perfiles reales */
+/* Era un carril horizontal de anchos fijos de 232px. Con muchas tarjetas
+   esta bien; con las cuatro que hay hoy dejaba un cuarto de la fila vacio
+   a la derecha y parecia que faltaba algo, no que hubiera cuatro.
+
+   Ahora es una rejilla que reparte el ancho: cuatro tarjetas llenan la
+   fila, y cuando haya doce bajan a la siguiente en vez de esconderse
+   detras de un desplazamiento lateral que en un raton no se ve. En
+   pantallas estrechas el `auto-fit` las apila solo. */
 .rail{
-  display:flex; gap:var(--s3);
-  overflow-x:auto;
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(212px, 1fr));
+  gap:var(--s3);
   padding-bottom:var(--s3);
-  scroll-snap-type:x mandatory;
-  scrollbar-width:none;
-  margin-inline:calc(var(--pad) * -1);
-  padding-inline:var(--pad);
 }
-.rail::-webkit-scrollbar{ display:none; }
-.rail > *{ scroll-snap-align:start; flex:none; width:232px; }
+.rail > *{ min-width:0; }
 
 /* ---- perfil del día ------------------------------------------ */
 .potd{

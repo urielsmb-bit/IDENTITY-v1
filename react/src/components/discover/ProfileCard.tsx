@@ -37,8 +37,18 @@ export function ProfileCard({ profile: p }: ProfileCardProps) {
   }).slice(0, 3);
 
   return (
+    /* Lleva `pf` y el `data-theme` de su dueño a proposito. La seccion se
+       llama «Gente que ya lo hizo» y promete enseñar lo que ha hecho la
+       gente, pero todas las tarjetas salian iguales salvo un tinte
+       flojisimo: no se veia que nadie hubiera diseñado nada, que era lo
+       unico que habia que ver.
+
+       Con la clase y el atributo, los colores de la tarjeta salen de la
+       misma hoja que el perfil de verdad. Nada que copiar y nada que se
+       quede viejo: si alguien cambia de tema, su tarjeta cambia sola. */
     <Link
-      className="pcard"
+      className="pf pcard"
+      data-theme={p.theme || 'dark'}
       to={`/u/${p.username}`}
       style={
         {
