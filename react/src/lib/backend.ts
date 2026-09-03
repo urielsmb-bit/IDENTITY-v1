@@ -574,6 +574,39 @@ export async function usosDeMisPlantillas() {
   };
 }
 
+export interface Cifras {
+  perfiles: number;
+  visitas: number;
+  plantillas: number;
+  usosPlantillas: number;
+  nuevosSemana: number;
+}
+
+/**
+ * Las cifras de la portada.
+ *
+ * Salen de la vista `cifras_publicas`, o sea de la base, no del codigo.
+ * Una cifra escrita a mano nace vieja —y aqui ya paso: la portada decia
+ * «24.5K visitas» porque alguien habia puesto 24500 de punto de partida—.
+ *
+ * Si falla, se devuelven ceros y la portada no enseña ninguna: no
+ * enseñar un dato es honesto, inventarlo no.
+ */
+export async function cifrasPublicas(): Promise<Cifras> {
+  const cero: Cifras = { perfiles: 0, visitas: 0, plantillas: 0, usosPlantillas: 0, nuevosSemana: 0 };
+  if (!supabase) return cero;
+  const { data, error } = await supabase.from('cifras_publicas').select('*').maybeSingle();
+  if (error || !data) return cero;
+  const d = data as Record<string, unknown>;
+  return {
+    perfiles: Number(d.perfiles) || 0,
+    visitas: Number(d.visitas) || 0,
+    plantillas: Number(d.plantillas) || 0,
+    usosPlantillas: Number(d.usos_plantillas) || 0,
+    nuevosSemana: Number(d.nuevos_semana) || 0,
+  };
+}
+
 export async function contarVista(username: string) {
   if (!supabase) return;
   try {
