@@ -74,18 +74,30 @@
   padding:clamp(48px,7vw,88px) var(--pad) clamp(48px,6vw,72px);
   min-height:calc(100vh - var(--nav-h));min-height:calc(100dvh - var(--nav-h));
 }
+
 @media (max-width:960px){
   .hero{ grid-template-columns:minmax(0,1fr); min-height:0; padding-top:var(--s6); }
 }
 
-/* halo tenue detrás del perfil demo: profundidad, no decoración */
+/* Halo tenue detras del perfil demo: profundidad, no decoracion.
+   Estaba al 5.5% y la portada seguia leyendose como un agujero negro:
+   con el fondo plano de lado a lado el ojo no tiene con que medir la
+   distancia y todo queda al mismo plano. Sube a 8.5% y se ensancha.
+
+   Sigue sin verse mirandolo —si se nota, esta mal—: lo unico que hace es
+   que el centro pese mas que los bordes. Blanco, no un color: aqui se
+   quiere luz, no tinte.
+
+   (Aqui llegue a escribir un SEGUNDO `.hero::before` sin ver que este ya
+   existia. Perdia contra el por orden y encima sobraba: es mas facil
+   añadir una capa que mirar si ya la habia.) */
 .hero::before{
   content:"";
   position:absolute;
-  right:-6%; top:8%;
-  width:52%; height:72%;
-  background:radial-gradient(closest-side, rgba(255,255,255,.055), transparent 72%);
-  filter:blur(40px);
+  right:-10%; top:2%;
+  width:64%; height:84%;
+  background:radial-gradient(closest-side, rgba(255,255,255,.085), transparent 74%);
+  filter:blur(48px);
   pointer-events:none;
 }
 .hero > *{ position:relative; }
@@ -471,10 +483,15 @@ body.is-dashboard .nav{ border-bottom-color:var(--border); }
 }
 /* Los vecinos no se pueden pulsar: son decorado, y si recibieran el clic
    el visitante acabaría en un perfil que ni siquiera estaba mirando. */
+/* Los vecinos, mas lejos. El desenfoque es lo que de verdad lo dice: la
+   opacidad y el tamaño se pueden leer como «mas pequeño», pero algo
+   desenfocado solo puede estar a otra distancia. Es poco —dos pixeles y
+   medio— porque con mas se convierte en un efecto y se deja de ver el
+   perfil, que es lo que hay que enseñar. */
 .carr__slot:not(.is-activo){
   pointer-events:none;
-  opacity:.45;
-  filter:saturate(.7);
+  opacity:.42;
+  filter:saturate(.65) brightness(.78) blur(2.5px);
   z-index:1;
   box-shadow:var(--shadow);
 }
@@ -483,7 +500,36 @@ body.is-dashboard .nav{ border-bottom-color:var(--border); }
 .carr__slot.is-activo{
   z-index:2;
   transform:none;
-  box-shadow:var(--shadow-lg);
+  /* Ademas de la sombra, un cerco claro muy debil: es la luz de la
+     escena dando en el canto de la tarjeta que esta delante. */
+  box-shadow:var(--shadow-lg), 0 0 0 1px rgba(255,255,255,.09);
+}
+
+/* La luz que lleva cada tarjeta encima.
+   Va DENTRO de cada una y no en la escena, asi que viaja con ella: al
+   entrar al centro se enciende y al salir se apaga, con la misma
+   duracion que el movimiento. Eso es lo que hace que parezca que pasan
+   por debajo de un foco en vez de que cambie el decorado.
+   Blanco al 9% y desde arriba, como cae la luz. */
+.carr__slot::after{
+  content:"";
+  position:absolute; inset:0;
+  pointer-events:none;
+  border-radius:inherit;
+  background:radial-gradient(115% 70% at 50% -8%, rgba(255,255,255,.09), transparent 62%);
+  opacity:0;
+  transition:opacity .55s var(--ease-out);
+}
+.carr__slot.is-activo::after{ opacity:1; }
+
+/* Y el halo de la escena: la luz que la tarjeta de delante derrama sobre
+   el fondo. Detras de todo y sin tocar los clics. */
+.carr__pista::before{
+  content:"";
+  position:absolute; inset:0;
+  pointer-events:none;
+  z-index:0;
+  background:radial-gradient(42% 46% at 50% 48%, rgba(255,255,255,.06), transparent 70%);
 }
 
 .carr__pie{
