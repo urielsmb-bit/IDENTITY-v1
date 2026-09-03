@@ -28,6 +28,7 @@ import { useVimeo } from '@/hooks/useVimeo';
 import { SubirFondo } from '@/components/dashboard/SubirFondo';
 import { AjustesCuenta } from '@/components/dashboard/AjustesCuenta';
 import { Guia } from '@/components/dashboard/Guia';
+import { Frontera } from '@/components/layout/Frontera';
 import { useGuia } from '@/hooks/useGuia';
 import { PanelInsignias } from '@/components/dashboard/PanelInsignias';
 import { DIBUJOS } from '@/components/dashboard/dibujos';
@@ -625,6 +626,11 @@ export default function DashboardPage() {
       <main
         className="dashboard__editor"
       >
+        {/* Una frontera por columna, y no una para las dos: si revienta un
+            control del editor no tiene por que llevarse la vista previa por
+            delante, ni al reves. `reintentarCon` la seccion hace que el
+            fallo se cure solo al cambiar de seccion. */}
+        <Frontera donde="el editor" reintentarCon={section}>
         {/* SECTION: Overview / Identidad */}
         {section === 'overview' && (
           <div className="dash__seccion">
@@ -1395,6 +1401,7 @@ export default function DashboardPage() {
             reiniciarGuia={guia.reiniciar}
           />
         )}
+        </Frontera>
       </main>
 
       {/* Live Preview Column */}
@@ -1467,6 +1474,7 @@ export default function DashboardPage() {
               transition: 'width 0.3s ease',
             }}
           >
+            <Frontera donde="la vista previa" reintentarCon={profile.username}>
             {profile.layoutMode === 'free' ? (
               <LienzoBloques
                 profile={profile}
@@ -1484,6 +1492,7 @@ export default function DashboardPage() {
             ) : (
               <ProfileView profile={profile} preview={true} />
             )}
+            </Frontera>
           </div>
         </div>
       </aside>

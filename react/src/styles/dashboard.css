@@ -2384,3 +2384,28 @@
 @media (prefers-reduced-motion: reduce){
   .ins__barra i{ transition:none; }
 }
+
+/* ---- Frontera de error ----------------------------------------
+   Se ve poco y se lee rapido: quien llega aqui ya tiene un problema,
+   no necesita que ademas grite. */
+.frontera{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  flex-wrap:wrap;
+  margin:16px;
+  padding:16px 18px;
+  border:1px solid rgba(248,81,73,.34);
+  border-radius:var(--radius-md);
+  background:rgba(248,81,73,.06);
+}
+.frontera > svg{ width:22px; height:22px; flex:none; color:#f85149; margin-top:1px; }
+.frontera > div{ flex:1 1 220px; min-width:0; }
+.frontera__t{ margin:0; font-weight:600; font-size:.93rem; }
+.frontera__d{
+  margin:5px 0 0;
+  color:var(--text-muted);
+  font-size:.83rem;
+  line-height:1.5;
+}
+.frontera__acc{ display:flex; gap:8px; flex:none; }

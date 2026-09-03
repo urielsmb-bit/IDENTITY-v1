@@ -95,10 +95,36 @@ export function incrustable(v: any): string {
   return '';
 }
 
+/**
+ * Una dirección a la que se puede mandar a alguien.
+ *
+ * `safeUrl` ya hace de portero al pintar, y hoy TODOS los `href` pasan por
+ * él, así que esto no tapa ningún agujero abierto. Lo que hace es que una
+ * dirección con `javascript:` no llegue siquiera a guardarse: no viaja al
+ * servidor, no sale en el JSON que alguien se exporta, y el día que se añada
+ * una vista nueva y se olvide `safeUrl`, no habrá nada malo que pintar.
+ */
+export function enlace(v: any): string {
+  const s = texto(v, TOPE.url).trim();
+  if (!s) return '';
+  // Se juzga sobre una copia sin espacios: partir el esquema con un salto
+  // de línea o un tabulador es el truco de siempre para colarse por un
+  // `startsWith`. Lo que se devuelve es el original.
+  const desnudo = s.replace(/\s+/g, '').toLowerCase();
+  if (/^(javascript|data|vbscript|file):/.test(desnudo)) return '';
+  // Relativa dentro del sitio. `//otro.com` NO: es absoluta disfrazada.
+  if (/^\/(?!\/)/.test(s)) return s;
+  if (/^(https?|mailto|tel):/.test(desnudo)) return s;
+  // Sin esquema —«ejemplo.com/x»— se deja pasar: `safeUrl` le pone https al
+  // pintarla, y eso es lo que la gente escribe.
+  if (/^[\w.-]+\.[a-z]{2,}([/?#].*)?$/i.test(s)) return s;
+  return '';
+}
+
 const FORMAS: Record<string, any> = {
-  socials: { net: 24, url: TOPE.url, label: TOPE.corto, icon: 24 },
-  links: { title: TOPE.corto, url: TOPE.url, desc: TOPE.medio, icon: 24 },
-  projects: { title: TOPE.corto, desc: TOPE.medio, url: TOPE.url, tag: 24, img: 'medio' },
+  socials: { net: 24, url: 'url', label: TOPE.corto, icon: 24 },
+  links: { title: TOPE.corto, url: 'url', desc: TOPE.medio, icon: 24 },
+  projects: { title: TOPE.corto, desc: TOPE.medio, url: 'url', tag: 24, img: 'medio' },
   gallery: { url: 'medio', alt: TOPE.corto, caption: TOPE.medio },
   tags: null,
   blocksOff: null,
@@ -113,7 +139,12 @@ function limpiarColeccion(clave: string, lista: any[]): any[] {
     if (!it || typeof it !== 'object') return null;
     const salida: any = {};
     Object.keys(forma).forEach(k => {
-      salida[k] = forma[k] === 'medio' ? medio(it[k]) : texto(it[k], forma[k]);
+      salida[k] =
+        forma[k] === 'medio'
+          ? medio(it[k])
+          : forma[k] === 'url'
+            ? enlace(it[k])
+            : texto(it[k], forma[k]);
     });
     return salida;
   }).filter(x => x !== null && (typeof x !== 'string' || x.length > 0));
