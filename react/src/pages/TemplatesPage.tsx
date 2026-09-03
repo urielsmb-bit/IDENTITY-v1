@@ -1,282 +1,166 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { THEMES } from '@/data/themes';
 import { useProfileStore } from '@/stores/profileStore';
 import { useToast } from '@/hooks/useToast';
-import type { Profile } from '@/types';
+import { hasBackend } from '@/lib/supabase';
+import * as backend from '@/lib/backend';
+import { aplicarPlantilla } from '@/lib/plantilla';
+import { num } from '@/lib/utils';
 
-const TEMPLATE_PREVIEWS: Record<string, Partial<Profile>> = {
-  cyberpunk: {
-    theme: 'cyberpunk',
-    accent: '#22D3EE',
-    surface: 'glass',
-    particles: 'matrix',
-    avatarFx: 'glitch',
-    font: 'space',
-    fontDisplay: 'display',
-    layoutMode: 'stack',
-  },
-  gaming: {
-    theme: 'gaming',
-    accent: '#ED4245',
-    surface: 'solid',
-    particles: 'embers',
-    avatarFx: 'pulse',
-    font: 'chakra',
-    fontDisplay: 'display',
-    layoutMode: 'stack',
-  },
-  anime: {
-    theme: 'anime',
-    accent: '#EC4899',
-    surface: 'glass',
-    particles: 'bubbles',
-    avatarFx: 'ring',
-    font: 'inter',
-    fontDisplay: 'inter',
-    layoutMode: 'stack',
-  },
-  minimal: {
-    theme: 'minimal',
-    accent: '#FFFFFF',
-    surface: 'none',
-    particles: 'none',
-    avatarFx: 'none',
-    font: 'inter',
-    fontDisplay: 'inter',
-    layoutMode: 'stack',
-  },
-  luxury: {
-    theme: 'luxury',
-    accent: '#D4AF6E',
-    surface: 'glass',
-    particles: 'none',
-    avatarFx: 'none',
-    font: 'serif',
-    fontDisplay: 'serif',
-    layoutMode: 'stack',
-  },
-  retro: {
-    theme: 'retro',
-    accent: '#F97316',
-    surface: 'solid',
-    particles: 'none',
-    avatarFx: 'none',
-    font: 'pixel',
-    fontDisplay: 'pixel',
-    layoutMode: 'stack',
-  },
-  hacker: {
-    theme: 'hacker',
-    accent: '#3BA55D',
-    surface: 'solid',
-    particles: 'matrix',
-    avatarFx: 'glitch',
-    font: 'mono',
-    fontDisplay: 'mono',
-    layoutMode: 'stack',
-  },
-  win98: {
-    theme: 'win98',
-    accent: '#008080',
-    surface: 'solid',
-    particles: 'none',
-    avatarFx: 'none',
-    font: 'pixel',
-    fontDisplay: 'pixel',
-    layoutMode: 'stack',
-  },
-  gta: {
-    theme: 'gta',
-    accent: '#FF007F',
-    surface: 'glass',
-    particles: 'embers',
-    avatarFx: 'pulse',
-    font: 'chakra',
-    fontDisplay: 'display',
-    layoutMode: 'stack',
-  },
-  minecraft: {
-    theme: 'minecraft',
-    accent: '#68B44A',
-    surface: 'solid',
-    particles: 'snow',
-    avatarFx: 'none',
-    font: 'pixel',
-    fontDisplay: 'pixel',
-    layoutMode: 'stack',
-  },
-  glass: {
-    theme: 'glass',
-    accent: '#A855F7',
-    surface: 'glass',
-    particles: 'stars',
-    avatarFx: 'ring',
-    font: 'manrope',
-    fontDisplay: 'display',
-    layoutMode: 'stack',
-  },
-  neon: {
-    theme: 'neon',
-    accent: '#00FFCC',
-    surface: 'glow',
-    particles: 'stars',
-    avatarFx: 'ring',
-    font: 'space',
-    fontDisplay: 'display',
-    layoutMode: 'stack',
-  },
-  dark: {
-    theme: 'dark',
-    accent: '#8A2BE2',
-    surface: 'solid',
-    particles: 'stars',
-    avatarFx: 'none',
-    font: 'inter',
-    fontDisplay: 'inter',
-    layoutMode: 'stack',
-  },
-  discord: {
-    theme: 'discord',
-    accent: '#5865F2',
-    surface: 'solid',
-    particles: 'none',
-    avatarFx: 'none',
-    font: 'inter',
-    fontDisplay: 'inter',
-    layoutMode: 'stack',
-  },
-};
-
+/**
+ * Plantillas.
+ *
+ * Antes esta pagina tenia catorce plantillas escritas a mano en el codigo,
+ * con un emoji de paleta haciendo de previa. Ahora las publica la gente,
+ * mandan las mas usadas, y si no hay ninguna se dice —que es mejor que
+ * rellenar con inventos, y ademas es una invitacion: el hueco pide que
+ * alguien lo llene—.
+ *
+ * La miniatura no es un dibujo: lleva la clase `pf` y el `data-theme` de
+ * verdad, asi que los colores salen de la misma hoja que el perfil.
+ */
 export default function TemplatesPage() {
-  const [activeTab, setActiveTab] = useState<'all' | 'favs'>('all');
-  const [favorites, setFavorites] = useState<string[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const toggleFavorite = (id: string) => {
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+  const [lista, setLista] = useState<backend.PlantillaPublica[] | null>(null);
+  const [error, setError] = useState('');
+  const [publicando, setPublicando] = useState(false);
+  const [nombre, setNombre] = useState('');
+
+  const cargar = useCallback(async () => {
+    if (!hasBackend()) { setLista([]); return; }
+    try {
+      setLista(await backend.listarPlantillas());
+      setError('');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudieron cargar');
+      setLista([]);
+    }
+  }, []);
+
+  useEffect(() => { void cargar(); }, [cargar]);
+
+  const usar = async (p: backend.PlantillaPublica) => {
+    const mio = useProfileStore.getState().mine();
+    if (!mio) {
+      toast('Crea tu perfil primero');
+      navigate('/dashboard');
+      return;
+    }
+    useProfileStore.getState().save(aplicarPlantilla(mio, p.ajustes));
+    /* El contador se suma sin esperar: que falle no puede impedirte usarla.
+       Y se sube en el momento a la lista para que el numero no se quede
+       viejo delante de quien acaba de pulsar. */
+    void backend.usarPlantilla(p.id);
+    setLista((l) => l?.map((x) => (x.id === p.id ? { ...x, usos: x.usos + 1 } : x)) ?? l);
+    toast(`Plantilla «${p.nombre}» aplicada`);
+    navigate('/dashboard');
   };
 
-  const handleApplyTemplate = (themeId: string) => {
-    const tpl = TEMPLATE_PREVIEWS[themeId];
-    if (!tpl) return;
-
-    const mine = useProfileStore.getState().mine();
-    if (mine) {
-      useProfileStore.getState().save({
-        ...mine,
-        ...tpl,
-      });
-      toast(`¡Plantilla ${themeId} aplicada a tu perfil!`);
-      navigate('/dashboard');
-    } else {
-      toast('Crea un perfil primero en el panel');
-      navigate('/dashboard');
+  const publicar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const mio = useProfileStore.getState().mine();
+    if (!mio) { toast('Crea tu perfil primero'); navigate('/dashboard'); return; }
+    setPublicando(true);
+    try {
+      await backend.publicarPlantilla(nombre, mio);
+      setNombre('');
+      toast('Publicada. Ya puede usarla cualquiera.');
+      await cargar();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'No se pudo publicar');
+    } finally {
+      setPublicando(false);
     }
   };
 
-  const displayedThemes = THEMES.filter((t) => {
-    if (activeTab === 'favs') return favorites.includes(t.id);
-    return true;
-  });
+  const borrar = async (p: backend.PlantillaPublica) => {
+    try {
+      await backend.borrarPlantilla(p.id);
+      setLista((l) => l?.filter((x) => x.id !== p.id) ?? l);
+      toast('Plantilla retirada');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'No se pudo borrar');
+    }
+  };
 
   return (
-    <div className="templates-page wrap" style={{ paddingTop: '40px', paddingBottom: '80px' }}>
-      <header style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: 'var(--tf-page)', marginBottom: '8px' }}>Plantillas de Diseño</h1>
-        <p className="t-meta" style={{ fontSize: 'var(--t4)' }}>
-          Elige un estilo base prediseñado y aplícalo a tu perfil con un solo clic.
+    <div className="wrap tpl">
+      <header className="tpl__enc">
+        <h1 className="t-h1">Plantillas</h1>
+        <p className="tpl__sub">
+          El aspecto de perfiles reales, publicado por quien lo hizo. Se copia
+          el diseño —colores, tipografía, colocación—, nunca su contenido.
         </p>
-
-        <div style={{ marginTop: '20px', display: 'flex', gap: '8px' }}>
-          <button
-            type="button"
-            className={`btn btn--sm ${activeTab === 'all' ? 'btn--primary' : 'btn--quiet'}`}
-            onClick={() => setActiveTab('all')}
-          >
-            Todas ({THEMES.length})
-          </button>
-          <button
-            type="button"
-            className={`btn btn--sm ${activeTab === 'favs' ? 'btn--primary' : 'btn--quiet'}`}
-            onClick={() => setActiveTab('favs')}
-          >
-            Favoritas ({favorites.length})
-          </button>
-        </div>
       </header>
 
-      {/* Grid of Templates */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
-        {displayedThemes.map((t) => {
-          const isFav = favorites.includes(t.id);
-          const tpl = TEMPLATE_PREVIEWS[t.id];
+      {/* Publicar la mía. Va arriba: si no hay ninguna, es lo unico que
+          se puede hacer aqui, y esconderlo abajo seria raro. */}
+      {hasBackend() && (
+        <form className="tpl__pub" onSubmit={publicar}>
+          <input
+            className="inp"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            placeholder="Nombre de tu plantilla"
+            maxLength={40}
+            aria-label="Nombre de tu plantilla"
+          />
+          <button className="btn btn--primary" disabled={publicando || nombre.trim().length < 2}>
+            {publicando ? 'Publicando…' : 'Publicar la mía'}
+          </button>
+        </form>
+      )}
 
-          return (
-            <div
-              key={t.id}
-              className="panel"
-              style={{
-                padding: '24px',
-                borderRadius: '16px',
-                background: 'var(--card-bg, rgba(255,255,255,0.03))',
-                border: '1px solid var(--border, rgba(255,255,255,0.08))',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h3 style={{ fontSize: 'var(--t5)', margin: 0 }}>{t.name}</h3>
-                  <button
-                    type="button"
-                    style={{ background: 'none', border: 'none', fontSize: 'var(--t4)', cursor: 'pointer' }}
-                    onClick={() => toggleFavorite(t.id)}
-                    title={isFav ? 'Quitar de favoritos' : 'Guardar en favoritos'}
-                  >
-                    {isFav ? '❤️' : '🤍'}
-                  </button>
-                </div>
+      {error && <p className="tpl__err" role="alert">{error}</p>}
 
-                <div className="pf tpl__mini" data-theme={tpl?.theme || t.id} aria-hidden="true">
-                  {/* Antes aqui habia un emoji de paleta sobre un degradado:
-                      un dibujo de una previa, no una previa. No enseñaba
-                      NADA de la plantilla, que es justo lo unico que se
-                      viene a ver a esta pagina.
+      {lista === null && <p className="tpl__vacio">Cargando…</p>}
 
-                      Esto no es un dibujo: lleva la clase `pf` y el mismo
-                      `data-theme` que el perfil de verdad, asi que los
-                      colores que salen son los que te vas a llevar,
-                      sacados de la misma hoja. Si algun dia se cambia la
-                      paleta de un tema, esta miniatura cambia sola. */}
-                  <span className="tpl__mini-av" />
-                  <span className="tpl__mini-l tpl__mini-l--a" />
-                  <span className="tpl__mini-l tpl__mini-l--b" />
-                </div>
+      {/* El hueco solo se enseña cuando de verdad no hay ninguna. Si la
+          carga fallo, decirlo Y decir «aun no hay» a la vez seria mentir
+          sobre lo que sabemos: no lo sabemos. */}
+      {lista !== null && lista.length === 0 && !error && (
+        <div className="tpl__vacio">
+          <p className="tpl__vacio-t">Aún no hay plantillas publicadas</p>
+          <p>Crea la tuya: diseña tu perfil y publícalo aquí para que otros lo usen.</p>
+          <button className="btn btn--primary" onClick={() => navigate('/dashboard')}>
+            Diseñar mi perfil
+          </button>
+        </div>
+      )}
 
-                <div style={{ fontSize: 'var(--t3)', marginBottom: '20px' }}>
-                  <div className="t-meta">Acento: <span style={{ color: tpl?.accent, fontWeight: 700 }}>{tpl?.accent}</span></div>
-                  <div className="t-meta">Superficie: <strong>{tpl?.surface}</strong></div>
-                  <div className="t-meta">Partículas: <strong>{tpl?.particles}</strong></div>
-                </div>
+      {lista !== null && lista.length > 0 && (
+        <div className="tpl__rej">
+          {lista.map((p) => (
+            <article className="tpl__card" key={p.id}>
+              <div className="tpl__card-h">
+                <h2 className="tpl__nom">{p.nombre}</h2>
+                <span className="tpl__usos">
+                  {p.usos === 0 ? 'sin usar' : `${num(p.usos)} ${p.usos === 1 ? 'uso' : 'usos'}`}
+                </span>
               </div>
 
-              <button
-                type="button"
-                className="btn btn--primary"
-                style={{ width: '100%' }}
-                onClick={() => handleApplyTemplate(t.id)}
-              >
-                Usar plantilla
-              </button>
-            </div>
-          );
-        })}
-      </div>
+              <div className="pf tpl__mini" data-theme={p.ajustes.theme || 'dark'} aria-hidden="true">
+                <span className="tpl__mini-av" />
+                <span className="tpl__mini-l tpl__mini-l--a" />
+                <span className="tpl__mini-l tpl__mini-l--b" />
+              </div>
+
+              <div className="tpl__pie">
+                <button className="btn btn--primary btn--sm" onClick={() => void usar(p)}>
+                  Usar plantilla
+                </button>
+                {p.mia && (
+                  <button className="btn btn--quiet btn--sm" onClick={() => void borrar(p)}>
+                    Retirar
+                  </button>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

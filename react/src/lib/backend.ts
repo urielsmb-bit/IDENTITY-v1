@@ -2,6 +2,8 @@ import { supabase, hasBackend } from './supabase';
 import { CONFIG } from '@/config';
 import { normalizarPerfil } from './normalizar';
 import type { Session, User, Provider } from '@supabase/supabase-js';
+import { extraerPlantilla, type AjustesPlantilla } from './plantilla';
+import type { Profile } from '@/types';
 
 // ---- State ----
 let sesionViva: Session | null = null;
@@ -674,4 +676,79 @@ export function traducir(e: any): Error {
   (err as any).code = c;
   (err as any).original = m;
   return err;
+}
+
+// ---- Plantillas publicadas por la gente ----
+
+export interface PlantillaPublica {
+  id: string;
+  nombre: string;
+  ajustes: AjustesPlantilla;
+  usos: number;
+  creado: string;
+  mia: boolean;
+}
+
+/** Las publicadas, las mas usadas primero. */
+export async function listarPlantillas(): Promise<PlantillaPublica[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('plantillas')
+    .select('id, nombre, ajustes, usos, creado, dueno')
+    .eq('estado', 'activa')
+    .order('usos', { ascending: false })
+    .order('creado', { ascending: false })
+    .limit(60);
+  if (error) throw traducir(error);
+
+  const u = await usuario().catch(() => null);
+  return (data ?? []).map((f) => ({
+    id: String(f.id),
+    nombre: String(f.nombre ?? ''),
+    /* Esta fila la escribio otra persona: se filtra antes de que toque
+       nada, no al aplicarla. */
+    ajustes: extraerPlantilla((f.ajustes ?? {}) as Partial<Profile>),
+    usos: Number(f.usos ?? 0),
+    creado: String(f.creado ?? ''),
+    mia: !!u && f.dueno === u.id,
+  }));
+}
+
+/** Publica el aspecto del perfil que se le pase. Nunca su contenido. */
+export async function publicarPlantilla(nombre: string, perfil: Partial<Profile>) {
+  if (!supabase) throw new Error('sin backend');
+  const u = await usuario();
+  if (!u) throw new Error('Hay que entrar en la cuenta para publicar una plantilla');
+
+  const limpio = nombre.trim().slice(0, 40);
+  if (limpio.length < 2) throw new Error('Ponle un nombre de al menos dos letras');
+
+  /* El filtro se hace aqui y no en la pagina: asi da igual desde donde se
+     llame, nunca sale del navegador nada que no sea aspecto. */
+  const ajustes = extraerPlantilla(perfil);
+
+  const { error } = await supabase
+    .from('plantillas')
+    .insert({ dueno: u.id, nombre: limpio, ajustes });
+  if (error) throw traducir(error);
+  return true;
+}
+
+/** Suma un uso. Va por RPC porque el contador no lo escribe el navegador. */
+export async function usarPlantilla(id: string) {
+  if (!supabase || !id) return false;
+  try {
+    await supabase.rpc('usar_plantilla', { p_id: id });
+    return true;
+  } catch {
+    /* Que no se pueda contar no es motivo para no dejarte usarla. */
+    return false;
+  }
+}
+
+export async function borrarPlantilla(id: string) {
+  if (!supabase) throw new Error('sin backend');
+  const { error } = await supabase.from('plantillas').delete().eq('id', id);
+  if (error) throw traducir(error);
+  return true;
 }

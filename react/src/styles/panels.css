@@ -951,6 +951,55 @@ canvas.chart{ width:100%; display:block; }
   .ana__grafico{ height:220px; }
 }
 
+/* ---- plantillas publicadas -------------------------------------------- */
+.tpl{ padding-block:var(--s7) var(--s9); }
+.tpl__enc{ margin-bottom:var(--s5); }
+.tpl__sub{ margin:var(--s2) 0 0; max-width:58ch; color:var(--text-muted); font-size:var(--t3); }
+
+/* Publicar va arriba porque cuando no hay ninguna es lo unico que se
+   puede hacer en esta pagina. */
+.tpl__pub{ display:flex; gap:var(--s2); margin-bottom:var(--s6); max-width:520px; }
+.tpl__pub .inp{ flex:1; min-width:0; }
+.tpl__err{ color:var(--dnd); font-size:var(--t2); }
+
+.tpl__vacio{
+  padding:var(--s8) var(--s5);
+  text-align:center;
+  border:1px dashed var(--border-strong);
+  border-radius:var(--radius-lg);
+  color:var(--text-muted);
+  font-size:var(--t3);
+}
+.tpl__vacio-t{ margin:0 0 var(--s2); color:var(--text-primary); font-size:var(--t4); font-weight:600; }
+.tpl__vacio .btn{ margin-top:var(--s4); }
+
+.tpl__rej{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));
+  gap:var(--s4);
+}
+.tpl__card{
+  padding:var(--s4);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  background:var(--surface);
+}
+.tpl__card-h{ display:flex; align-items:baseline; justify-content:space-between; gap:var(--s2); }
+.tpl__nom{
+  margin:0; font-size:var(--t3); font-weight:600;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+/* El numero de usos es un dato, no un adorno: mono y de ancho fijo, como
+   el resto de cifras del producto. */
+.tpl__usos{
+  flex:none;
+  font-family:var(--font-mono); font-size:var(--t1);
+  font-variant-numeric:tabular-nums;
+  color:var(--text-muted);
+}
+.tpl__pie{ display:flex; gap:var(--s2); }
+.tpl__pie .btn{ flex:1; }
+
 /* ---- miniatura de plantilla -------------------------------------------
    Lleva la clase `pf` para heredar la paleta real del tema —las variables
    `--p-*` estan declaradas en `.pf[data-theme=...]`, y duplicarlas aqui
