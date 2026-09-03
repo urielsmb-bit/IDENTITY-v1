@@ -2505,3 +2505,12 @@
   line-height:1.5;
 }
 .frontera__acc{ display:flex; gap:8px; flex:none; }
+
+/* ---- publicar el diseño como plantilla ------------------------------- */
+.pubp__d{
+  margin:0 0 var(--s3);
+  font-size:var(--t2); line-height:1.55;
+  color:var(--text-muted);
+}
+.pubp__f{ display:flex; flex-direction:column; gap:var(--s3); }
+.pubp__acc{ display:flex; gap:var(--s2); }

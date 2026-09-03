@@ -31,6 +31,7 @@ import { Guia } from '@/components/dashboard/Guia';
 import { Frontera } from '@/components/layout/Frontera';
 import { useGuia } from '@/hooks/useGuia';
 import { PanelInsignias } from '@/components/dashboard/PanelInsignias';
+import { PublicarPlantilla } from '@/components/dashboard/PublicarPlantilla';
 import { DIBUJOS } from '@/components/dashboard/dibujos';
 import { BLOQUES, BLOQUE_POR_ID, type DefBloque, BLOQUES_APAGADOS_POR_DEFECTO } from '@/data/bloques';
 import { safeMedia } from '@/lib/utils';
@@ -1146,6 +1147,13 @@ export default function DashboardPage() {
                 </Campo>
               )}
             </section>
+
+            {/* Publicar la plantilla se hacia SOLO en la pagina de
+                plantillas, y ahi no llega nadie con el diseño recien
+                terminado: se termina aqui. El sitio donde acabas de
+                decidir como se ve tu perfil es el sitio donde tiene
+                sentido ofrecerte compartirlo. */}
+            <PublicarPlantilla profile={profile} />
           </div>
         )}
 
