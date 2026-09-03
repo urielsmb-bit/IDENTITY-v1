@@ -4,6 +4,7 @@ import { prepararImagen } from '@/lib/imagen';
 import { safeMedia } from '@/lib/utils';
 import * as backend from '@/lib/backend';
 import { hasBackend } from '@/lib/supabase';
+import { CONFIG } from '@/config';
 
 export interface FondoSubido {
   tipo: 'image' | 'video';
@@ -23,6 +24,33 @@ interface SubirFondoProps {
 }
 
 type Fase = 'quieto' | 'imagen' | 'subiendo' | 'procesando';
+
+/** Lo que aguanta el cubo por archivo. Lo fija la migracion 0006. */
+const MAX_CUBO_MB = 8;
+
+/**
+ * El ancho partido por el alto, leidos del propio archivo.
+ *
+ * Hace falta para que el fondo encuadre bien. Por Vimeo lo dice Vimeo al
+ * terminar de transcodificar; aqui lo dice el navegador en cuanto lee la
+ * cabecera, sin descargar el video entero.
+ */
+function medirVideo(archivo: File): Promise<number> {
+  return new Promise((listo) => {
+    const url = URL.createObjectURL(archivo);
+    const v = document.createElement('video');
+    const acabar = (r: number) => {
+      URL.revokeObjectURL(url);
+      listo(r);
+    };
+    v.preload = 'metadata';
+    v.onloadedmetadata = () =>
+      acabar(v.videoHeight ? v.videoWidth / v.videoHeight : 16 / 9);
+    // Si el navegador no sabe leerlo, 16:9 es la apuesta menos mala.
+    v.onerror = () => acabar(16 / 9);
+    v.src = url;
+  });
+}
 
 /**
  * Traduce el fallo a algo accionable.
@@ -112,6 +140,41 @@ export function SubirFondo({ titulo, previa, onSubido, onQuitar, guia }: SubirFo
       }
       if (!hasBackend() || !backend.haySesion()) {
         setError('Hay que entrar en la cuenta para subir un vídeo.');
+        return;
+      }
+
+      /* Sin Vimeo configurado, el video va al mismo sitio que las imagenes.
+         El cubo ya acepta mp4 y webm; lo unico que cambia es el tope, que
+         es mucho mas bajo. Se dice el tope EN MB de verdad y lo que pesa el
+         archivo, para que se sepa cuanto hay que recortar. */
+      if (!CONFIG.VIMEO) {
+        const mb = archivo.size / (1024 * 1024);
+        if (mb > MAX_CUBO_MB) {
+          setError(
+            `Ese vídeo pesa ${mb.toFixed(1)} MB y el tope es ${MAX_CUBO_MB} MB. ` +
+              'Recórtalo a unos segundos o bájale la calidad: un fondo es un bucle corto.',
+          );
+          if (entradaRef.current) entradaRef.current.value = '';
+          return;
+        }
+        if (!hasBackend() || !backend.haySesion()) {
+          setError('Hay que entrar en la cuenta para subir un vídeo.');
+          if (entradaRef.current) entradaRef.current.value = '';
+          return;
+        }
+        setFase('subiendo');
+        try {
+          const ratio = await medirVideo(archivo);
+          const ext = (archivo.name.split('.').pop() || 'mp4').toLowerCase();
+          const url = await backend.subirMedio(archivo, 'fondo', ext);
+          onSubido({ tipo: 'video', url, ratio });
+          setNota(`Subido · ${mb.toFixed(1)} MB`);
+        } catch (e) {
+          setError(explicar(e));
+        } finally {
+          setFase('quieto');
+          if (entradaRef.current) entradaRef.current.value = '';
+        }
         return;
       }
 
@@ -224,7 +287,10 @@ export function SubirFondo({ titulo, previa, onSubido, onQuitar, guia }: SubirFo
           <span className="drop__err" role="alert">{error}</span>
         ) : (
           <span className="drop__nota">
-            {nota || `Foto o vídeo · vídeo hasta ${MAX_VIDEO_MB} MB`}
+            {/* El tope que se anuncia tiene que ser el que se va a aplicar:
+                cambia segun a donde vaya el video. */}
+            {nota ||
+              `Foto o vídeo · vídeo hasta ${CONFIG.VIMEO ? MAX_VIDEO_MB : MAX_CUBO_MB} MB`}
           </span>
         )}
         {fase === 'subiendo' && (

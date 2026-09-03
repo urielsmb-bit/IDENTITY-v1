@@ -31,6 +31,18 @@ export const CONFIG = {
    */
   FN_VISTAS: env.VITE_FN_VISTAS ?? '',
 
+  /**
+   * Vimeo, encendido o no.
+   *
+   * Subir a Vimeo necesita tres cosas que no dependen del codigo: una cuenta
+   * con permiso de subida por API, un token en la funcion de borde y esa
+   * funcion desplegada. Mientras falte cualquiera de las tres, los videos
+   * van a Supabase Storage, que funciona sin nada de eso.
+   *
+   * Se enciende poniendo VITE_VIMEO con cualquier valor.
+   */
+  VIMEO: (env.VITE_VIMEO ?? '') !== '',
+
   /** Cubo de Storage. Se crea en Storage → New bucket. */
   BUCKET_MEDIA: env.VITE_BUCKET_MEDIA ?? 'media',
 
