@@ -1479,6 +1479,7 @@ export default function DashboardPage() {
               <LienzoBloques
                 profile={profile}
                 update={update}
+                vista={viewport}
                 seleccionado={bloqueAbierto?.id ?? null}
                 onAbrirBloque={(id) => {
                   const def = BLOQUE_POR_ID[id];

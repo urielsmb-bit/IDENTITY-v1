@@ -32,6 +32,8 @@ interface LienzoBloquesProps {
   /** Se llama al pulsar una pieza sin arrastrarla */
   onAbrirBloque: (id: string) => void;
   seleccionado?: string | null;
+  /** Vista previa activa. Solo sirve para remedir cuando cambia. */
+  vista?: string;
   children: React.ReactNode;
 }
 
@@ -54,6 +56,7 @@ export function LienzoBloques({
   update,
   onAbrirBloque,
   seleccionado,
+  vista,
   children,
 }: LienzoBloquesProps) {
   const contRef = useRef<HTMLDivElement>(null);
@@ -89,18 +92,68 @@ export function LienzoBloques({
     );
   }, []);
 
+  /* `vista` no se usa para nada mas que esto: obligar a remedir.
+     Al cambiar entre Escritorio, Tablet y Movil el editor le pone 24px de
+     relleno al marco, y el lienzo entero se DESPLAZA sin cambiar de tamaño.
+     Un ResizeObserver no ve un movimiento, y el elemento que cambia no es
+     ninguno de los que se observan, asi que las cajas se quedaban
+     desplazadas exactamente esos 24px. Recibir la vista es la señal
+     directa: si cambia, se vuelve a medir. */
   useLayoutEffect(() => {
     medir();
-  }, [medir, profile]);
+    /* Y otra vez cuando el marco ha terminado de moverse. El editor anima
+       el cambio de vista previa, asi que la medida sincrona coge la
+       posicion de SALIDA de la transicion, no la de llegada: las cajas
+       quedaban desplazadas exactamente lo que dura ese movimiento. */
+    const t = window.setTimeout(medir, 420);
+    return () => window.clearTimeout(t);
+  }, [medir, profile, vista]);
 
   useEffect(() => {
     const cont = contRef.current;
     if (!cont) return;
+
     const ro = new ResizeObserver(medir);
     ro.observe(cont);
+    /* El envoltorio de escala tambien: al escalar se le pone una altura, y
+       eso si es un cambio de tamaño que el observador ve. */
+    const env = cont.querySelector('.pf-escala');
+    if (env) ro.observe(env);
+
+    /* Y la columna de la vista previa. Al cambiar entre Escritorio, Tablet y
+       Movil el lienzo se MUEVE sin cambiar de tamaño —lo recoloca el marco
+       de alrededor—, y un ResizeObserver no ve un cambio de posicion: solo
+       de tamaño. Las cajas se quedaban desplazadas lo mismo todas, que es la
+       firma de este fallo. */
+    const columna = cont.closest('.dashboard__preview');
+    if (columna) ro.observe(columna);
+
+    /* Y un observador de atributos sobre la raiz del perfil.
+       `getBoundingClientRect` ya cuenta la escala, asi que las cajas
+       saldrian bien... si se midieran DESPUES de aplicarla. El problema era
+       el momento: ProfileView pone `--u-escala` en el `style` de `.pf` al
+       montar y otra vez cuando llegan las fuentes, y nada de eso cambia el
+       tamaño de `cont` ni del perfil —una transformacion no altera la caja
+       de maquetacion, asi que un ResizeObserver no se entera—. Las cajas se
+       quedaban con las coordenadas de antes de escalar y aparecian
+       separadas de su bloque. */
+    const raiz = cont.querySelector('.pf');
+    const mo = new MutationObserver(medir);
+    if (raiz) mo.observe(raiz, { attributes: true, attributeFilter: ['style'] });
+    /* La columna cambia de clase o de estilo al elegir otra vista previa; es
+       la señal mas fiable de que hay que remedir. */
+    if (columna) mo.observe(columna, { attributes: true, attributeFilter: ['style', 'class'] });
+
+    /* Cualquier transicion que acabe dentro de la columna es motivo para
+       remedir: es el momento exacto en que las cosas dejan de moverse. */
+    const alAcabar = () => medir();
+    columna?.addEventListener('transitionend', alAcabar);
+
     window.addEventListener('resize', medir);
     return () => {
       ro.disconnect();
+      mo.disconnect();
+      columna?.removeEventListener('transitionend', alAcabar);
       window.removeEventListener('resize', medir);
     };
   }, [medir]);
