@@ -79,19 +79,47 @@ describe('extraerPlantilla · el fondo', () => {
     expect(s.bgType).toBe('gradient');
   });
 
-  it('NO se lleva la imagen de nadie', () => {
+  it('NO se lleva la imagen de nadie, y NO dice nada del fondo', () => {
     const s = extraerPlantilla({
       bgType: 'image',
       bgValue: 'https://x.supabase.co/storage/v1/object/public/media/uid/fondo.png',
     } as Partial<Profile>);
-    expect(s.bgType).toBe('none');
-    expect(s.bgValue).toBe('');
+    expect(s).not.toHaveProperty('bgType');
+    expect(s).not.toHaveProperty('bgValue');
   });
 
-  it('NO se lleva el video de nadie', () => {
+  it('NO se lleva el video de nadie, y NO dice nada del fondo', () => {
     const s = extraerPlantilla({ bgType: 'video', bgValue: 'https://vimeo.com/1' } as Partial<Profile>);
+    expect(s).not.toHaveProperty('bgType');
+    expect(s).not.toHaveProperty('bgValue');
+  });
+
+  it('«sin fondo» elegido a proposito SI viaja', () => {
+    const s = extraerPlantilla({ bgType: 'none', bgValue: '' } as Partial<Profile>);
     expect(s.bgType).toBe('none');
-    expect(s.bgValue).toBe('');
+  });
+});
+
+describe('aplicarPlantilla · el fondo de quien la usa', () => {
+  const conVideo = {
+    username: 'yo', theme: 'minimal',
+    bgType: 'video', bgValue: 'https://vimeo.com/999',
+  } as unknown as Profile;
+
+  it('una plantilla cuyo autor tenia foto NO me borra mi video', () => {
+    const dePlantilla = extraerPlantilla({
+      theme: 'gaming', bgType: 'image', bgValue: 'https://x/suyo.png',
+    } as Partial<Profile>);
+    const r = aplicarPlantilla(conVideo, dePlantilla);
+    expect(r.theme).toBe('gaming');
+    expect(r.bgType).toBe('video');
+    expect(r.bgValue).toBe('https://vimeo.com/999');
+  });
+
+  it('pero si su autor eligio «sin fondo», eso si manda', () => {
+    const dePlantilla = extraerPlantilla({ theme: 'gaming', bgType: 'none' } as Partial<Profile>);
+    const r = aplicarPlantilla(conVideo, dePlantilla);
+    expect(r.bgType).toBe('none');
   });
 });
 

@@ -66,12 +66,20 @@ export function extraerPlantilla(p: Partial<Profile>): AjustesPlantilla {
   if (tipo && (FONDOS_QUE_VIAJAN as readonly string[]).includes(tipo)) {
     out.bgType = tipo;
     out.bgValue = tipo === 'none' ? '' : (p.bgValue ?? '');
-  } else if (tipo) {
-    /* Tenia foto o video: la plantilla se lleva el resto del diseño y el
-       fondo se queda en nada, en vez de llevarse un enlace ajeno. */
-    out.bgType = 'none';
-    out.bgValue = '';
   }
+  /* Y si tenia foto o video, la plantilla NO DICE NADA del fondo: ni el
+     campo aparece.
+
+     Antes decia `bgType:'none'`, y eso hacia dos cosas mal a la vez. Una,
+     al aplicarla le BORRABA el fondo a quien la usaba: ponias una
+     plantilla y perdias tu video sin que nadie te avisara. Y dos, mentia
+     sobre el diseño: «sin fondo» era una decision de su autor, no lo que
+     habia pasado. Lo que habia pasado es que no podiamos llevarnos su
+     archivo.
+     
+     Callando el campo, las dos cosas quedan bien: un autor que de verdad
+     eligio «sin fondo» lo dice —eso SI viaja, esta en la lista de
+     arriba— y uno que tenia una foto no toca el fondo de nadie. */
 
   return out as AjustesPlantilla;
 }
