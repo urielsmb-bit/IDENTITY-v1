@@ -28,6 +28,26 @@ interface ProfileViewProps {
   myVote?: number | null;
 }
 
+/* ---- Limites del escalado del perfil ----------------------
+   El perfil se encoge y se agranda entero para encajar en la pantalla, en
+   vez de recolocarse. Estos son los frenos de los dos extremos.
+
+   Por abajo: 0.42 es donde un cuerpo de 16px queda en ~7px. Menos que eso
+   ya no se lee, y es preferible que la pagina se desplace a que el perfil
+   sea ilegible.
+
+   Por arriba: 1.6 aprovecha un monitor grande sin que la tarjeta se
+   convierta en un cartel. Las imagenes tienen margen —los avatares se
+   suben a 512px— asi que a esta escala no se ven blandas.
+
+   `ANCHO_FULL` es el tope que su propia regla CSS le da al modo «todo el
+   ancho»; se repite aqui porque el calculo necesita un numero y esa regla
+   no lo expone en ninguna variable. */
+const ESCALA_MIN = 0.42;
+const ESCALA_MAX = 1.6;
+const ANCHO_FULL = 1100;
+const ANCHO_POR_DEFECTO = 460;
+
 function fontStack(id: string) {
   const f = FONTS.find((x) => x.id === id);
   return f ? f.stack : '';
@@ -330,95 +350,165 @@ export function ProfileView({
     const hueco = envoltura?.parentElement;     // .pf-hero
     if (!pila || !envoltura || !hueco) return;
 
-    let rafId = 0;
+    /* Lo ultimo que se aplico. Es lo que corta el bucle: fijar el ancho y la
+       escala cambia el tamaño de la pila, el observador lo ve y vuelve a
+       llamar aqui; en esa segunda vuelta sale lo mismo y se para. Sin esto
+       haria falta un `requestAnimationFrame` para romperlo, y ese no
+       dispara en una pestaña oculta: un perfil abierto en segundo plano se
+       quedaba con la escala de la primera medida para siempre. */
+    let ultima = '';
+
     const medir = () => {
-      rafId = 0;
       const raiz = rootRef.current;
       if (!raiz) return;
 
-      /* Cuanto sitio hay de verdad: `clientWidth` incluye el relleno del
-         heroe, y ese relleno no es sitio para la tarjeta. */
+      /* ---- 1 · cuanto sitio hay de verdad --------------------
+         `clientWidth/Height` incluyen el relleno del heroe, y el relleno no
+         es sitio para la tarjeta: es el aire que la separa del borde. */
       const eh = getComputedStyle(hueco);
-      const disponible =
+      const anchoLibre =
         hueco.clientWidth -
         (parseFloat(eh.paddingLeft) || 0) -
         (parseFloat(eh.paddingRight) || 0);
-      if (disponible <= 0) return;
+      /* El alto util NO es el del heroe: el heroe tiene `min-height` y crece
+         con su contenido, asi que preguntarle cuanto mide es preguntarle a
+         la tarjeta por si misma. Manda el menor entre lo que mide el hueco
+         y lo que de verdad se ve —la ventana—: dentro de un contenedor
+         pequeño, como la vista previa del editor, gana el hueco; en una
+         pagina entera, gana la ventana. Sin esto, un telefono en horizontal
+         encajaba de ancho y se salia por abajo. */
+      /* El menor de los dos. `innerHeight` es la ventana; `visualViewport`
+         es lo que de verdad se ve, y encoge cuando sube el teclado del
+         movil. Fiarse solo del segundo no vale: hay entornos donde no
+         acompaña al tamaño de la ventana. */
+      const alturaVisible = Math.min(
+        window.innerHeight || Infinity,
+        window.visualViewport?.height || Infinity,
+      );
+      /* Y lo que quede por encima del heroe tampoco es sitio suyo: si
+         empieza a 60px del borde, esos 60 ya no se pueden usar. */
+      const desdeArriba = Math.max(0, hueco.getBoundingClientRect().top);
+      const altoCaja = Math.min(
+        hueco.clientHeight || Infinity,
+        Number.isFinite(alturaVisible) ? alturaVisible - desdeArriba : Infinity,
+      );
+      const altoLibre =
+        (Number.isFinite(altoCaja) ? altoCaja : 0) -
+        (parseFloat(eh.paddingTop) || 0) -
+        (parseFloat(eh.paddingBottom) || 0);
+      if (anchoLibre <= 0) return;
 
-      /* El ancho de DISEÑO, que es lo que hay que conservar.
-         En el lienzo lo dicta la composicion —las piezas colocadas a mano
-         pueden ocupar mas que la tarjeta—; en columna, el ancho maximo
-         declarado. Medir `offsetWidth` en columna no sirve: ya viene
-         encogido por el propio hueco y la division daria siempre uno. */
-      /* El ancho de DISEÑO sale de `--u-width`, la variable que lo declara.
-         Ni `offsetWidth` ni el `max-width` calculado sirven: los dos ya
-         vienen acotados al hueco —el segundo porque en `auto` la regla es
-         `min(--u-width, 100%)`— y la division daria siempre uno.
-
-         `full` se queda fuera a proposito: ese modo pide ocupar lo que
-         haya, o sea que es fluido por decision de su dueño y encogerlo
-         seria desobedecerle. */
+      /* ---- 2 · el ancho de DISEÑO ---------------------------
+         Sale de `--u-width`, la variable que lo declara. Ni `offsetWidth`
+         ni el `max-width` calculado sirven: los dos vienen ya acotados al
+         hueco, asi que la division daria siempre uno. `full` no declara
+         uno propio —pide ocupar lo que haya— pero tiene un tope de 1100 en
+         su regla, y ese es su diseño. */
       const modo = raiz.getAttribute('data-width') || 'fixed';
-      const disenio =
+      const anchoDisenio =
         modo === 'full'
-          ? 0
-          : parseFloat(getComputedStyle(raiz).getPropertyValue('--u-width')) || 460;
-      if (!disenio) return;
+          ? ANCHO_FULL
+          : parseFloat(getComputedStyle(raiz).getPropertyValue('--u-width')) ||
+            ANCHO_POR_DEFECTO;
+      if (!anchoDisenio) return;
 
-      const escala = Math.min(1, disponible / disenio);
+      /* ---- 3 · fijar el ancho ANTES de medir el alto ---------
+         El alto depende del ancho: con la tarjeta encogida el texto ocupa
+         mas lineas y sale un alto que no es el del diseño. Se fija primero
+         y se mide despues. `offsetHeight` es medida de maquetacion, asi que
+         no le afecta el `transform` que ya pueda haber puesto. */
+      raiz.style.setProperty('--u-ancho', `${Math.round(anchoDisenio)}px`);
+      const altoDisenio = pila.offsetHeight;
 
-      if (escala >= 0.999) {
-        raiz.style.removeProperty('--u-escala');
-        raiz.style.removeProperty('--u-escala-h');
-        raiz.style.removeProperty('--u-ancho');
-        return;
-      }
+      /* ---- 4 · la escala -------------------------------------
+         Manda el eje mas apretado: encajar de ancho y salirse por abajo no
+         es encajar. El alto solo entra en la cuenta si el hueco tiene una
+         altura propia; en un contenedor que crece con su contenido, medirlo
+         seria compararlo consigo mismo.
 
-      /* Se fija el ancho de diseño y se encoge el conjunto. Dejar que la
-         tarjeta se estreche seria recolocar el contenido: el nombre parte
-         por otro sitio, el avatar cambia de fila... o sea, otro diseño. */
-      raiz.style.setProperty('--u-ancho', `${Math.round(disenio)}px`);
+         Los topes existen por los dos extremos: por abajo, para que el
+         perfil no acabe siendo ilegible en un telefono diminuto —si aun asi
+         no cabe de alto, la pagina se desplaza, que es lo normal—; por
+         arriba, para que en un monitor grande crezca pero no se vuelva un
+         cartel de feria. */
+      const porAncho = anchoLibre / anchoDisenio;
+      const porAlto =
+        altoLibre > 0 && altoDisenio > 0 ? altoLibre / altoDisenio : Infinity;
+      const escala = Math.min(
+        ESCALA_MAX,
+        Math.max(ESCALA_MIN, Math.min(porAncho, porAlto)),
+      );
+
+      /* ---- 5 · aplicar, si ha cambiado algo ------------------ */
+      /* El ALTO entra en la firma. Sin el, cuando solo cambiaba el alto
+         —al llegar las fuentes propias, que cambian las metricas del
+         texto— la escala salia igual, la firma tambien, y la compensacion
+         de abajo se quedaba con el alto viejo: la tarjeta bajaba y se
+         salia por el pie. */
+      const firma = `${Math.round(anchoDisenio)}|${Math.round(altoDisenio)}|${escala.toFixed(4)}`;
+      if (firma === ultima) return;
+      ultima = firma;
+
       raiz.style.setProperty('--u-escala', escala.toFixed(4));
 
-      /* Un elemento escalado conserva su caja SIN escalar. Sin estas dos
-         compensaciones quedaria hueco muerto debajo y desbordaria a los
-         lados, y la pagina cogeria scroll horizontal. */
+      /* Un elemento escalado conserva su caja SIN escalar, asi que hay que
+         decirle cuanto ocupa de verdad. Antes esto se hacia con un margen
+         negativo y era una fuente constante de restos: cualquier medida que
+         llegara tarde dejaba el margen viejo y la tarjeta bajaba unos
+         pixeles. Ahora la caja MIDE lo que se ve, y no hay nada que
+         compensar: el centrado sale exacto solo. */
       raiz.style.setProperty(
-        '--u-escala-h',
-        `${-Math.round(pila.offsetHeight * (1 - escala))}px`,
+        '--u-escala-alto',
+        `${Math.round(altoDisenio * escala)}px`,
       );
     };
 
-    const pedir = () => {
-      if (!rafId) rafId = requestAnimationFrame(medir);
-    };
-
     /* La primera medida va DIRECTA, sin esperar al fotograma.
-       `requestAnimationFrame` no dispara en una pestana oculta, asi que
-       abriendo un perfil en segundo plano el escalado no llegaba a
-       aplicarse: se quedaba con el diseño recolocado hasta que algo
-       cambiaba de tamano. En un efecto el diseño ya esta calculado, o sea
-       que medir aqui es correcto. El rAF se reserva para juntar las
+       `requestAnimationFrame` no dispara en una pestaña oculta, asi que un
+       perfil abierto en segundo plano se quedaba sin escalar hasta que algo
+       cambiara de tamaño. En un efecto la maquetacion ya esta calculada, o
+       sea que medir aqui es correcto. El rAF se reserva para juntar las
        medidas seguidas del observador. */
     medir();
 
-    const ro = new ResizeObserver(pedir);
+    /* Y dos remedidas tardias. La maquetacion del primer fotograma no es la
+       definitiva: las fuentes propias llegan despues y cambian las metricas
+       del texto —o sea el alto de diseño—, y algunos entornos aun no han
+       aplicado el tamaño real de la ventana. Repetir sale gratis: la firma
+       descarta la que no cambia nada. */
+    const tarde = window.setTimeout(medir, 300);
+    document.fonts?.ready.then(medir).catch(() => {});
+
+    /* Se vigilan los tres: el hueco cambia con la ventana, la pila cambia
+       cuando su dueño edita el perfil, y el envoltorio cierra el circulo si
+       algun dia se le pone tamaño propio. */
+    /* `resize` de ventana ademas del observador. Deberia sobrar —el
+       observador ve el hueco— pero no en todos los entornos dispara, y
+       quedarse con la escala de la primera medida es peor que medir de mas:
+       la firma de arriba corta las repeticiones que no cambian nada. */
+    window.addEventListener('resize', medir);
+
+    const ro = new ResizeObserver(medir);
     ro.observe(hueco);
     ro.observe(pila);
+    /* La barra del navegador movil aparece y desaparece al desplazarse, y
+       eso cambia el alto util sin disparar un `resize` en algunos
+       navegadores. `visualViewport` si lo cuenta. */
+    const vv = window.visualViewport;
+    vv?.addEventListener('resize', medir);
+    window.addEventListener('orientationchange', medir);
+
     return () => {
       ro.disconnect();
-      if (rafId) cancelAnimationFrame(rafId);
+      window.clearTimeout(tarde);
+      window.removeEventListener('resize', medir);
+      vv?.removeEventListener('resize', medir);
+      window.removeEventListener('orientationchange', medir);
       const r = rootRef.current;
       r?.style.removeProperty('--u-escala');
-      r?.style.removeProperty('--u-escala-h');
+      r?.style.removeProperty('--u-escala-alto');
       r?.style.removeProperty('--u-ancho');
     };
-    /* Ojo con las dependencias: `p.pos` es un objeto que `normalizarPerfil`
-       recrea en CADA render, asi que ponerlo aqui hacia que el efecto se
-       reiniciara sin parar. La limpieza borraba las variables antes de que
-       el `requestAnimationFrame` llegara a medir, y nunca se fijaba nada.
-       No hacen falta: el ResizeObserver ya ve cualquier cambio de tamano
-       que provoquen, que es lo unico que importa aqui. */
   }, [rootRef, cardRef]);
 
   const orden = p.blockOrder ?? [];

@@ -145,9 +145,17 @@
   width:100%;
   display:flex;
   justify-content:center;
+  /* `stretch` es el valor por defecto, y con una altura puesta en el
+     envoltorio estiraba la tarjeta hasta ella: el alto de diseño pasaba a
+     depender del alto calculado a partir del alto de diseño. Con
+     `flex-start` la tarjeta conserva el suyo. */
+  align-items:flex-start;
   transform:scale(var(--u-escala, 1));
   transform-origin:top center;
-  margin-bottom:var(--u-escala-h, 0px);
+  /* La caja mide lo que se ve. Un elemento escalado conserva su caja sin
+     escalar, asi que sin esto sobra o falta sitio debajo; y como se escala
+     desde arriba, con la altura puesta el centrado del heroe sale exacto. */
+  height:var(--u-escala-alto, auto);
 }
 /* La colocacion la decidia `justify-items` del heroe sobre la tarjeta. Ahora
    el hijo del heroe es el envoltorio, asi que la hereda el. */
@@ -159,13 +167,24 @@
 .pf[data-pos="left"]  .pf-escala{ justify-content:flex-start; }
 .pf[data-pos="right"] .pf-escala{ justify-content:flex-end; }
 
+/* El perfil ocupa la pagina entera y NO lleva barra encima —se quito para
+   que la pagina de alguien no llevara nuestro menu—, asi que el hueco que
+   `.view` reserva para ella sobra aqui. `:has()` lo resuelve sin tener que
+   avisar a `.view` desde el enrutador. */
+.view:has(.pf){ padding-top:0; }
+
 .pf-hero{
   position:relative;
   /* Se descuenta la barra: con 100vh el héroe sobresale por abajo justo lo
      que mide la barra, y la tarjeta acaba ese medio-alto por debajo del
      centro óptico de lo que se ve. */
-  min-height:calc(100vh - var(--nav-h, 60px));
-  min-height:calc(100dvh - var(--nav-h, 60px));
+  /* La pantalla entera, sin descontar barra: en un perfil no hay.
+     `.view` le reservaba 60px arriba y la regla de abajo se los quitaba
+     otra vez por si acaso; entre las dos dejaban 60px muertos y la tarjeta
+     empezaba mas abajo de lo que debia. En horizontal eso era la diferencia
+     entre caber y salirse. */
+  min-height:100vh;
+  min-height:100dvh;
   display:grid;
   align-items:center;
   /* Relleno vertical simétrico: con 120px arriba y 96px abajo la tarjeta
@@ -267,7 +286,14 @@
 .pf[data-borde="off"] .pf-stack{ border:0; }
 
 /* relleno sólo cuando SÍ hay caja */
-.pf:not([data-surface="none"]) .pf-stack{ padding:var(--u-pad, clamp(22px,4vw,34px)); }
+/* Ojo con las medidas de dentro de la tarjeta: en `vw` cambian con la
+   ventana, y entonces la composicion cambia aunque la tarjeta no. Se atan
+   al ancho de DISEÑO, que es constante para un perfil dado: asi la tarjeta
+   se ve igual en cualquier pantalla y sigue adaptandose al ancho que su
+   dueño eligio, que es lo unico que debe influir. */
+.pf:not([data-surface="none"]) .pf-stack{
+  padding:var(--u-pad, clamp(22px, calc(var(--u-width, 460px) * 0.074), 34px));
+}
 
 /* La tarjeta tiene UNA sola declaracion de `transform`, y aqui esta.
    Antes habia dos —la inclinacion 3D y la escala del lienzo en pantallas
@@ -373,7 +399,7 @@
      Sin esto una direccion editorial no puede tener un nombre fino
      ni una gaming un nombre en mayusculas: el peso estaba fijo. */
   font-weight:var(--u-nameW, 700);
-  font-size:var(--u-name, clamp(28px,5.6vw,44px));
+  font-size:var(--u-name, clamp(28px, calc(var(--u-width, 460px) * 0.0956), 44px));
   line-height:1.08;
   letter-spacing:var(--p-track);
   text-transform:var(--u-nameCase, var(--p-uppercase, none));
@@ -1181,8 +1207,6 @@
 }
 
 /* ---- cabecera en fila: avatar junto al nombre ---------------- */
-@media (max-width:520px){
-}
 
 /* ---- tipografía fina ----------------------------------------- */
 .pf-name{ letter-spacing:var(--u-lsp, var(--p-track)); }
@@ -1439,14 +1463,6 @@
 /* la rejilla necesita aire para que se note */
 .pf[data-layout="free"][data-width="auto"] .pf-stack{ width:var(--u-ancho, 100%); }
 
-@media (max-width:640px){
-  /* El lienzo libre NO se deshace en movil.
-     Antes aqui se pasaba a una columna y se tiraba la posicion de cada
-     pieza: el perfil que alguien habia colocado a mano salia en el telefono
-     como una lista distinta. Ahora se conserva el diseno tal cual y se
-     ESCALA: misma composicion, mas pequena. El factor lo calcula
-     ProfileView, porque CSS no sabe dividir una longitud entre otra. */
-}
 
 /* ============================================================
    DESBORDES  ·  regla estructural
@@ -1516,35 +1532,20 @@
   container-name:pfbox;
 }
 
+/* Este bloque hacia, dentro del editor y de las plantillas, exactamente lo
+   mismo que las @media hacian en el navegador: soltar el ancho de diseño,
+   encoger el avatar, forzar las alineaciones al centro y —lo peor— rendir
+   el modo libre a una columna. El perfil que alguien coloco a mano salia
+   en la vista previa como una lista distinta.
+
+   Se queda solo lo que NO es la tarjeta: el brillo, que es un efecto de
+   raton; y los margenes de las secciones de abajo, que van en el flujo
+   normal de la pagina y ahi estrechar si tiene sentido. */
 @container pfbox (max-width: 640px){
-  .pf-stack{ max-width:100%; }
-  .pf-hero{ padding-top:56px; padding-inline:16px; }
   .pf-card__sheen{ display:none; }
   .pf-rate__row{ grid-template-columns:74px 1fr 30px; }
-  .pf-avatar{ width:min(var(--u-av,112px), 38cqw); }
-
-  /* las alineaciones laterales dejan líneas huérfanas al estrechar */
-  .pf[data-align="left"] .pf-stack,
-  .pf[data-align="right"] .pf-stack{ text-align:center; align-items:center; }
-  .pf-hero{ justify-items:center; }
-
-  /* el modo libre se rinde: una columna, en el orden del editor */
-  .pf[data-layout="free"] .pf-stack{ display:flex; flex-direction:column; }
-  .pf[data-layout="free"] .pf-stack > *{
-    grid-column:auto !important;
-    justify-self:auto !important;
-    text-align:inherit !important;
-  }
-  /* Aqui tampoco se deshace el lienzo: se escala (ver mas abajo). */
-
   .pf-gallery{ grid-template-columns:repeat(2,1fr); }
   .pf-sec{ padding-inline:16px; }
-}
-
-@container pfbox (max-width: 420px){
-  /* a este ancho un nombre gigante deja de caber: se reduce */
-  .pf-name{ font-size:min(var(--u-name, clamp(28px,5.6vw,44px)), 11cqw); }
-  .pf-stats{ grid-template-columns:1fr; }
 }
 
 /* ---- el nombre debe poder partirse ---------------------------
@@ -1747,10 +1748,9 @@
 .pf-music[data-style="transparent"] .pf-music__nav{ display:grid; }
 .pf-music[data-style="transparent"] .pf-music__ctl{ gap:6px; }
 
-@media (max-width:420px){
-  .pf-music__viz{ display:none; }
-  .pf-music[data-style="card"] .pf-music__meta{ flex-basis:100%; }
-}
+/* Aqui el reproductor escondia su visualizador por debajo de 420px y se
+   recolocaba. Un elemento que desaparece no es el mismo diseño: la tarjeta
+   se encoge entera y el visualizador se encoge con ella. */
 
 
 /* ============================================================
@@ -2305,7 +2305,9 @@
 
 /* El nombre baja de escala: a 5.6vw se comía él solo la columna derecha.
    Si se ha fijado un tamaño a mano, ese manda. */
-.pf[data-avpos="side"] .pf-name{ font-size:var(--u-name, clamp(22px, 3.2vw, 34px)); }
+.pf[data-avpos="side"] .pf-name{
+  font-size:var(--u-name, clamp(22px, calc(var(--u-width, 460px) * 0.074), 34px));
+}
 
 /* Aqui estaba lo mas visible de todo: por debajo de 520px, «nombre al lado»
    volvia a ser «nombre debajo». El avatar saltaba encima del nombre y era,
@@ -2401,7 +2403,7 @@
    que ignoraría el del bloque. Se repite su medida de diseño y se
    multiplica, para que el 100% sea exactamente lo de siempre. */
 .pf .pf-stack > [style*="--b-size"] .pf-name{
-  font-size:calc(var(--u-name, clamp(28px,5.6vw,44px)) * var(--b-size));
+  font-size:calc(var(--u-name, clamp(28px, calc(var(--u-width, 460px) * 0.0956), 44px)) * var(--b-size));
 }
 .pf .pf-stack > [style*="--b-size"] .pf-handle{ font-size:calc(12.5px * var(--b-size)); }
 .pf .pf-stack > [style*="--b-size"] .pf-title{  font-size:calc(14.5px * var(--b-size)); }
@@ -2522,22 +2524,12 @@
    todo escondia que aqui hubo una excepcion. */
 /* Con el lienzo escalado el ancho de la pieza ya no se puede recortar
    al del telefono: se recorta solo el conjunto. */
-@media (max-width:640px){
-  /* La clave: el lienzo MANTIENE su ancho compuesto en vez de encogerse al
-     de la pantalla. Si se encoge, los bloques se recolocan y el texto parte
-     por otro sitio — o sea, otro diseno. Manteniendo el ancho y escalando el
-     conjunto, lo que se ve es lo mismo, mas pequeno. */
-  .pf[data-layout="free"] .pf-stack{
-    width:var(--u-width, 460px);
-    max-width:none;
-    flex:none;
-  }
-  .pf[data-layout="free"] .pf-hero{ padding-inline:0; }
-  /* Su caja SIN escalar es mas ancha que el telefono, y una caja no encoge
-     por estar transformada: sin recortar, aparece scroll horizontal. */
-  .pf[data-layout="free"]{ overflow-x:clip; }
-  .pf[data-layout="free"] .pf-hero{ overflow-x:clip; }
-}
+/* El lienzo mantenia aqui su ancho de diseño solo por debajo de 640px.
+   Ahora lo hace a cualquier tamaño: `--u-ancho` lo fija ProfileView midiendo
+   el hueco real, que es mas exacto que un punto de corte fijo —el mismo
+   telefono en horizontal tiene mas de 640 y seguia haciendo falta— y ademas
+   funciona dentro de un contenedor estrecho aunque la ventana sea ancha,
+   como el carrusel de la portada. */
 
 /* ---- cursor con imagen propia ------------------------------
    El margen negativo lo pone el JS, que es quien sabe el lado. */
