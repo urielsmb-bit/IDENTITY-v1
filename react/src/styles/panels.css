@@ -1297,3 +1297,46 @@ body.probando .view{ padding-top:0; }
 .ana__pltN{ display:flex; flex-direction:column; gap:2px; flex:none; }
 .ana__plt .ana__nota{ flex:1; min-width:180px; margin:0; }
 .ana__plt .btn{ flex:none; margin-left:auto; }
+
+/* ---- de donde te ven --------------------------------------------------
+   Cuatro columnas fijas: bandera, nombre, barra y cifra. Fijas para que
+   las cifras queden alineadas en vertical y se puedan comparar de un
+   vistazo; si la barra creciera con el nombre, cada fila empezaria en un
+   sitio y habria que leerlas una a una. */
+.ana__paises{ padding:var(--s4) var(--s5) var(--s5); }
+.ana__paisL{ list-style:none; margin:0; padding:0; display:grid; gap:9px; }
+.ana__pais{
+  display:grid;
+  grid-template-columns:20px minmax(0,1fr) minmax(60px,2fr) 40px;
+  align-items:center;
+  gap:var(--s3);
+}
+.ana__paisB{ font-size:var(--t3); line-height:1; }
+.ana__paisN{
+  font-size:var(--t2); color:var(--text-secondary);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.ana__paisBar{
+  height:6px; border-radius:100px;
+  background:var(--border);
+  overflow:hidden;
+}
+.ana__paisBar i{
+  display:block; height:100%; border-radius:100px;
+  background:var(--text-secondary);
+}
+.ana__paisC{
+  font-family:var(--font-mono);
+  font-size:var(--t1);
+  font-variant-numeric:tabular-nums;
+  text-align:right;
+  color:var(--text-primary);
+}
+.ana__paisSin{ margin-top:var(--s4); }
+
+@media (max-width:520px){
+  /* En estrecho la barra sobra antes que el nombre: el nombre es el dato
+     y la barra solo lo compara. */
+  .ana__pais{ grid-template-columns:20px minmax(0,1fr) 40px; }
+  .ana__paisBar{ display:none; }
+}

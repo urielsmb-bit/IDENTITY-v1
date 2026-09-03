@@ -461,6 +461,8 @@ export async function analiticasDe(perfilId: string, dias = 30) {
     numNotas: 0,
     porDia: {} as Record<string, number>,
     porHora: new Array(24).fill(0) as number[],
+    porPais: [] as { pais: string; n: number }[],
+    sinPais: 0,
     vuelven: 0,
     ultima: '' as string,
   };
@@ -474,7 +476,7 @@ export async function analiticasDe(perfilId: string, dias = 30) {
       .eq('perfil_id', perfilId)
       .maybeSingle(),
     client.from('vistas')
-      .select('primera,ultima,veces')
+      .select('primera,ultima,veces,pais')
       .eq('perfil_id', perfilId)
       .gte('primera', desde)
       .order('primera', { ascending: false })
@@ -500,6 +502,12 @@ export async function analiticasDe(perfilId: string, dias = 30) {
      enlace. Es la hora del navegador de quien mira, no la del visitante
      —eso no se guarda— y la pagina lo dice en vez de callarselo. */
   const porHora = new Array(24).fill(0) as number[];
+  /* Las visitas anteriores a la migracion 0015 no tienen pais, y no hay
+     forma de saberlo: la IP con la que llegaron no se guardo, que era la
+     intencion. Se cuentan aparte para poder decirlo, en vez de repartir
+     el resto como si fuera el total. */
+  const paises = new Map<string, number>();
+  let sinPais = 0;
   let vuelven = 0;
   let ultima = '';
   for (const f of filas) {
@@ -511,6 +519,10 @@ export async function analiticasDe(perfilId: string, dias = 30) {
 
     if ((Number(f.veces) || 1) > 1) vuelven++;
 
+    const pais = String(f.pais ?? '').trim().toUpperCase();
+    if (/^[A-Z]{2}$/.test(pais)) paises.set(pais, (paises.get(pais) ?? 0) + 1);
+    else sinPais++;
+
     const u = String(f.ultima ?? '');
     if (u > ultima) ultima = u;
   }
@@ -518,6 +530,10 @@ export async function analiticasDe(perfilId: string, dias = 30) {
   const num = Number(m.num_notas) || 0;
   return {
     porHora,
+    porPais: [...paises.entries()]
+      .map(([pais, n]) => ({ pais, n }))
+      .sort((a, b) => b.n - a.n),
+    sinPais,
     vuelven,
     unicas: Number(m.vistas_unicas) || 0,
     totales: Number(m.vistas_totales) || 0,

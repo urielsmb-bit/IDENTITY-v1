@@ -14,6 +14,8 @@ interface Datos {
   numNotas: number;
   porDia: Record<string, number>;
   porHora: number[];
+  porPais: { pais: string; n: number }[];
+  sinPais: number;
   vuelven: number;
   ultima: string;
 }
@@ -25,6 +27,8 @@ const VACIO: Datos = {
   numNotas: 0,
   porDia: {},
   porHora: new Array(24).fill(0),
+  porPais: [],
+  sinPais: 0,
   vuelven: 0,
   ultima: '',
 };
@@ -309,6 +313,24 @@ export default function AnalyticsPage() {
         </div>
       )}
 
+      {/* De donde te ven. Lo que se guarda son DOS LETRAS por visita, y
+          la IP se sigue tirando despues de hashear al visitante: el pais
+          lo pone Cloudflare en una cabecera, asi que no hay que mirar la
+          IP para saberlo ni mandarsela a ningun servicio de nadie. */}
+      {(datos.porPais.length > 0 || datos.sinPais > 0) && (
+        <div className="ana__panel">
+          <div className="ana__panelCab">
+            <h2 className="ana__h2">De dónde te ven</h2>
+            <p className="ana__nota">
+              Sólo el país, nunca la ciudad ni la dirección de nadie. Se
+              empezó a guardar hace poco, así que las visitas de antes no
+              lo tienen.
+            </p>
+          </div>
+          <Paises lista={datos.porPais} sin={datos.sinPais} />
+        </div>
+      )}
+
       {/* Lo unico aqui que no habla de visitas, y por eso vale la pena: una
           visita dice que te vieron, un uso dice que a alguien le gusto tu
           diseño lo bastante como para ponerselo. */}
@@ -342,6 +364,62 @@ export default function AnalyticsPage() {
             </Link>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+/* «CO» -> «Colombia». Lo trae el navegador; una tabla de doscientos
+   paises escrita a mano seria doscientas cosas que mantener y traducir.
+   Si un navegador viejo no lo tiene, se queda el codigo, que se entiende
+   igual. */
+const NOMBRES = (() => {
+  try {
+    return new Intl.DisplayNames(['es'], { type: 'region' });
+  } catch {
+    return null;
+  }
+})();
+
+/* «CO» -> 🇨🇴. Las dos letras corren 127397 posiciones y caen en los
+   indicadores regionales, que el sistema junta en una bandera. No es un
+   adorno de color: es lo que hace que una lista de paises se lea de un
+   vistazo sin leerla. */
+function bandera(cc: string) {
+  return String.fromCodePoint(...[...cc].map((c) => 127397 + c.charCodeAt(0)));
+}
+
+function Paises({ lista, sin }: { lista: { pais: string; n: number }[]; sin: number }) {
+  const tope = Math.max(1, ...lista.map((x) => x.n));
+  return (
+    <div className="ana__paises">
+      {lista.length === 0 ? (
+        <p className="ana__nota" style={{ margin: 0 }}>
+          Todavía no hay ninguna visita con país. Las próximas sí lo tendrán.
+        </p>
+      ) : (
+        <ol className="ana__paisL">
+          {/* Ocho y basta: una lista de cuarenta paises con una visita cada
+              uno no se lee, y los que importan son los de arriba. */}
+          {lista.slice(0, 8).map(({ pais, n }) => (
+            <li className="ana__pais" key={pais}>
+              <span className="ana__paisB" aria-hidden="true">{bandera(pais)}</span>
+              <span className="ana__paisN">{NOMBRES?.of(pais) ?? pais}</span>
+              <span className="ana__paisBar" aria-hidden="true">
+                <i style={{ width: `${Math.max(4, (n / tope) * 100)}%` }} />
+              </span>
+              <span className="ana__paisC">{n}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      {sin > 0 && (
+        <p className="ana__nota ana__paisSin">
+          {sin === 1
+            ? 'Una visita más, de antes de que esto se guardara.'
+            : `${num(sin)} visitas más, de antes de que esto se guardara.`}
+        </p>
       )}
     </div>
   );

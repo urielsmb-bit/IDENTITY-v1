@@ -24,6 +24,25 @@ import { cors, preflight, origenValido, cuerpoEsJson } from '../_compartido/cors
    solo como último recurso. Si un día cambias de proveedor,
    revisa esta función: es el punto donde se decide si el ranking
    se puede comprar o no. */
+/* El pais, de la cabecera que pone la infraestructura.
+
+   `cf-ipcountry` la pone Cloudflare, que ya esta delante —de ahi sale
+   tambien `cf-connecting-ip`— y el cliente NO la puede falsear. Las otras
+   son por si algun dia cambia quien esta delante: con una sola, el dia
+   que cambie el proveedor esto dejaria de saber el pais en silencio, que
+   es como se descubren estas cosas seis meses tarde.
+
+   No se consulta ningun servicio de terceros con la IP: eso seria
+   mandarle la IP de cada visitante a una empresa mas. La cabecera ya
+   viene con la peticion. */
+function paisDe(req: Request): string {
+  for (const nombre of ['cf-ipcountry', 'x-vercel-ip-country', 'x-country-code', 'fly-client-country']) {
+    const v = req.headers.get(nombre);
+    if (v && v.trim()) return v.trim().toUpperCase().slice(0, 2);
+  }
+  return '';
+}
+
 function ipDe(req: Request): string {
   /* En orden de confianza. Las de arriba las pone la infraestructura y
      el cliente no las puede falsear; `x-forwarded-for` si, porque
@@ -109,6 +128,10 @@ Deno.serve(async (req: Request) => {
     p_username: username,
     p_ip: ip,
     p_agente: agente,
+    /* Dos letras. La IP se usa para hashear al visitante y se tira, como
+       hasta ahora: lo que se guarda del sitio de donde entra es esto y
+       nada mas. */
+    p_pais: paisDe(req),
   });
 
   if (error) {
