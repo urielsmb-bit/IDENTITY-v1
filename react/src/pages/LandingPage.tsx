@@ -6,7 +6,7 @@ import { useDiscoverProfiles } from '@/hooks/useProfile';
 import { useToast } from '@/hooks/useToast';
 import { CarruselPerfiles } from '@/components/landing/CarruselPerfiles';
 import { ProfileCard } from '@/components/discover/ProfileCard';
-import { slug, num, safeMedia } from '@/lib/utils';
+import { slug, num } from '@/lib/utils';
 import type { Profile } from '@/types';
 
 const INITIAL_DEMO: Profile = {
@@ -168,7 +168,6 @@ export default function LandingPage() {
       .sort((a, b) => (b.views || 0) - (a.views || 0));
   }, [masVistos, profiles]);
 
-  const top3 = useMemo(() => porVistas.slice(0, 3), [porVistas]);
 
 
   const demoProfile = useMemo<Profile>(() => {
@@ -188,7 +187,13 @@ export default function LandingPage() {
   );
 
   const totalViews = useMemo(() => {
-    return profiles.reduce((acc, p) => acc + (p.views || 0), 24500);
+    /* Empezaba en 24500. Ese numero no salia de ningun sitio: era un
+       relleno para que la portada no dijera una cifra pequeña. O sea que
+       la frase «visitas servidas en total» era mentira, y de las que se
+       comprueban solas —cualquiera suma las visitas de los perfiles
+       visibles y no le cuadra—. Ahora es la suma de verdad, y si no hay
+       nada que contar la linea no se enseña. */
+    return profiles.reduce((acc, p) => acc + (p.views || 0), 0);
   }, [profiles]);
 
   const featuredProfiles = useMemo(() => {
@@ -250,52 +255,23 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          <div className="hero__proof">
-            <div className="hero__faces" aria-hidden="true">
-              <span>⚡</span>
-              <span>🎨</span>
-              <span>🎮</span>
-              <span>💎</span>
-              <span>🚀</span>
+          {/* Si no hay visitas que contar, no se dice ninguna cifra. No
+              enseñar un dato es honesto; inventarlo, no. Los cinco emojis
+              que habia al lado tampoco eran nadie: hacian de caras de
+              gente que no existe. */}
+          {totalViews > 0 && (
+            <div className="hero__proof">
+              <p className="t-meta" style={{ margin: 0 }}>
+                {num(totalViews)} visitas servidas en total
+              </p>
             </div>
-            <p className="t-meta" style={{ margin: 0 }}>
-              {num(totalViews)} visitas servidas en total
-            </p>
-          </div>
+          )}
         </div>
 
         {/* Live Demo with theme / accent switches */}
         <div className="demo rise d2">
           <CarruselPerfiles perfiles={delCarrusel} />
 
-          {/* Donde estaban los selectores de tema y acento: los tres
-              perfiles con más visitas. Enseñar perfiles de gente convence
-              más que enseñar una paleta. */}
-          {top3.length > 0 && (
-            <ol className="top3">
-              {top3.map((t, i) => (
-                <li key={t.username}>
-                  <Link className="top3__it" to={`/u/${t.username}`}>
-                    <span className="top3__n" aria-hidden="true">{i + 1}</span>
-                    <span className="top3__av">
-                      {t.avatarUrl ? (
-                        <img src={safeMedia(t.avatarUrl)} alt="" loading="lazy" />
-                      ) : (
-                        <span aria-hidden="true">
-                          {t.emoji || (t.name || t.username || '?').charAt(0).toUpperCase()}
-                        </span>
-                      )}
-                    </span>
-                    <span className="top3__txt">
-                      <span className="top3__name">{t.name || t.username}</span>
-                      <span className="top3__at">@{t.username}</span>
-                    </span>
-                    <span className="top3__v">{num(t.views || 0)} visitas</span>
-                  </Link>
-                </li>
-              ))}
-            </ol>
-          )}
         </div>
       </section>
 
@@ -315,43 +291,6 @@ export default function LandingPage() {
             <ProfileCard key={p.username || idx} profile={p} />
           ))}
         </div>
-      </section>
-
-      {/* Profile of the Day */}
-      <section className="band wrap">
-        <div className="band__head">
-          <div>
-            <h2 className="t-h2">Perfil del día</h2>
-            <p>
-              Rota cada 24 horas. Aparecer aquí es la forma más rápida de que te
-              vean.
-            </p>
-          </div>
-        </div>
-        <article className="potd">
-          <div className="potd__av">
-            {demoProfile.avatarUrl ? (
-              <img src={safeMedia(demoProfile.avatarUrl)} alt="" />
-            ) : (
-              demoProfile.emoji || '⚡'
-            )}
-          </div>
-          <div>
-            <div className="potd__name">{demoProfile.name}</div>
-            <div className="potd__why">
-              @{demoProfile.username} · {demoProfile.title}
-            </div>
-            <div className="t-meta" style={{ marginTop: '6px' }}>
-              {num(demoProfile.views)} visitas
-            </div>
-          </div>
-          <Link
-            className="btn btn--primary potd__cta"
-            to={`/u/${demoProfile.username}`}
-          >
-            Visitar perfil
-          </Link>
-        </article>
       </section>
 
       {/* Call to action footer banner */}

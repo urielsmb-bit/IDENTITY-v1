@@ -950,3 +950,29 @@ canvas.chart{ width:100%; display:block; }
   .ana__cab{ align-items:flex-start; }
   .ana__grafico{ height:220px; }
 }
+
+/* ---- miniatura de plantilla -------------------------------------------
+   Lleva la clase `pf` para heredar la paleta real del tema —las variables
+   `--p-*` estan declaradas en `.pf[data-theme=...]`, y duplicarlas aqui
+   habria sido tener dos verdades—. Lo que hay que deshacer es lo que `.pf`
+   trae de pagina completa: alto de pantalla y posicionamiento. */
+.tpl__mini{
+  min-height:0;
+  height:104px;
+  margin-bottom:var(--s4);
+  border-radius:var(--radius-md);
+  border:1px solid var(--p-line, var(--border));
+  background:var(--p-bg, var(--surface));
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:7px;
+  overflow:hidden;
+  isolation:auto;
+}
+.tpl__mini-av{
+  width:26px; height:26px; border-radius:50%;
+  background:var(--p-primary, var(--accent));
+  box-shadow:0 0 0 3px var(--p-surface, transparent);
+}
+.tpl__mini-l{ height:5px; border-radius:100px; }
+.tpl__mini-l--a{ width:64px; background:var(--p-text, var(--text-primary)); opacity:.85; }
+.tpl__mini-l--b{ width:40px; background:var(--p-dim, var(--text-muted)); opacity:.7; }

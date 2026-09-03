@@ -44,9 +44,6 @@ export function Navbar() {
         <Link to="/templates" className={isActive('/templates') ? 'on' : ''}>
           Plantillas
         </Link>
-        <Link to="/ai" className={isActive('/ai') ? 'on' : ''}>
-          Generador
-        </Link>
         <Link to="/pricing" className={isActive('/pricing') ? 'on' : ''}>
           Precios
         </Link>

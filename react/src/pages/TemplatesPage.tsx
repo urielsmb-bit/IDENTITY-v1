@@ -242,19 +242,20 @@ export default function TemplatesPage() {
                   </button>
                 </div>
 
-                <div
-                  style={{
-                    height: '100px',
-                    borderRadius: '12px',
-                    marginBottom: '16px',
-                    background: `linear-gradient(135deg, rgba(255,255,255,0.05) 0%, ${tpl?.accent || '#555'}22 100%)`,
-                    border: `1px solid ${tpl?.accent || '#555'}44`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <span style={{ fontSize: 'var(--t6)' }}>🎨</span>
+                <div className="pf tpl__mini" data-theme={tpl?.theme || t.id} aria-hidden="true">
+                  {/* Antes aqui habia un emoji de paleta sobre un degradado:
+                      un dibujo de una previa, no una previa. No enseñaba
+                      NADA de la plantilla, que es justo lo unico que se
+                      viene a ver a esta pagina.
+
+                      Esto no es un dibujo: lleva la clase `pf` y el mismo
+                      `data-theme` que el perfil de verdad, asi que los
+                      colores que salen son los que te vas a llevar,
+                      sacados de la misma hoja. Si algun dia se cambia la
+                      paleta de un tema, esta miniatura cambia sola. */}
+                  <span className="tpl__mini-av" />
+                  <span className="tpl__mini-l tpl__mini-l--a" />
+                  <span className="tpl__mini-l tpl__mini-l--b" />
                 </div>
 
                 <div style={{ fontSize: 'var(--t3)', marginBottom: '20px' }}>

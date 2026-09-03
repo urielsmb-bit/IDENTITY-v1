@@ -14,7 +14,6 @@ const AuthPage = lazy(() => import('./pages/AuthPage'));
 const DiscoverPage = lazy(() => import('./pages/DiscoverPage'));
 const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage'));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
-const AIPage = lazy(() => import('./pages/AIPage'));
 const TemplatesPage = lazy(() => import('./pages/TemplatesPage'));
 const PricingPage = lazy(() => import('./pages/PricingPage'));
 const LegalPage = lazy(() => import('./pages/LegalPage'));
@@ -79,7 +78,6 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/ai" element={<AIPage />} />
             <Route path="/templates" element={<TemplatesPage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/terminos" element={<LegalPage />} />
