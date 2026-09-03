@@ -1,0 +1,2411 @@
+/* ============================================================
+   IDENTITY — panel
+   Dashboard = claridad. Perfil = personalidad.
+   Aquí no hay ni un efecto que no sirva para editar.
+   ============================================================ */
+
+/* El preview manda: es la columna que crece. Los controles se
+   quedan en un carril estrecho y fijo. */
+.dash{
+  display:grid;
+  grid-template-columns:200px 380px minmax(0,1fr);
+  min-height:calc(100vh - var(--nav-h));min-height:calc(100dvh - var(--nav-h));
+}
+@media (max-width:1560px){ .dash{ grid-template-columns:194px 348px minmax(0,1fr); } }
+@media (max-width:1320px){ .dash{ grid-template-columns:184px 320px minmax(0,1fr); } }
+
+/* modo concentrado: se ocultan los controles y el perfil ocupa todo */
+.dash.solo-prev{ grid-template-columns:200px minmax(0,1fr); }
+.dash.solo-prev .dash__main{ display:none; }
+
+@media (max-width:1080px){
+  .dash{ grid-template-columns:184px minmax(0,1fr); }
+  .dash__prev{ display:none; }
+  .dash.show-prev{ grid-template-columns:184px minmax(0,1fr); }
+  .dash.show-prev .dash__main{ display:none; }
+  .dash.show-prev .dash__prev{ display:flex; }
+}
+@media (max-width:860px){
+  .dash,
+  .dash.show-prev,
+  .dash.solo-prev{ grid-template-columns:1fr; }
+  .dash__side{
+    position:static; height:auto;
+    border-right:0; border-bottom:1px solid var(--border);
+  }
+  .dash__nav{
+    flex-direction:row; overflow-x:auto;
+    scrollbar-width:none; padding-bottom:2px;
+  }
+  .dash__nav::-webkit-scrollbar{ display:none; }
+  .dash__nav a{ white-space:nowrap; }
+  .dash__side-foot{ display:none; }
+}
+
+/* ---- barra lateral ------------------------------------------ */
+.dash__side{
+  position:sticky; top:var(--nav-h);
+  height:calc(100vh - var(--nav-h));height:calc(100dvh - var(--nav-h));
+  border-right:1px solid var(--border);
+  padding:var(--s5) var(--s3);
+  display:flex; flex-direction:column;
+  background:var(--bg-secondary);
+}
+.dash__who{
+  display:flex; align-items:center; gap:var(--s3);
+  padding:var(--s2) var(--s3) var(--s4);
+  margin-bottom:var(--s3);
+  border-bottom:1px solid var(--border);
+}
+.dash__who-av{
+  width:34px; height:34px; flex:none;
+  border-radius:var(--radius-sm);
+  display:grid; place-items:center;
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  overflow:hidden; font-size:15px;
+}
+.dash__who-av img{ width:100%; height:100%; object-fit:cover; }
+.dash__who-n{ font-size:13.5px; font-weight:500; }
+.dash__who-u{ font-size:11.5px; color:var(--text-muted); }
+
+.dash__nav{ display:flex; flex-direction:column; gap:1px; }
+.dash__nav a{
+  display:flex; align-items:center; gap:var(--s3);
+  padding:9px var(--s3);
+  border-radius:var(--radius-sm);
+  font-size:13.5px;
+  color:var(--text-secondary);
+  transition:color var(--transition-fast), background var(--transition-fast);
+}
+.dash__nav a:hover{ color:var(--text-primary); background:var(--surface); }
+.dash__nav a.on{ color:var(--text-primary); background:var(--surface-2); font-weight:500; }
+.dash__nav svg{ width:15px; height:15px; flex:none; opacity:.75; }
+.dash__nav a.on svg{ opacity:1; }
+.dash__nav-c{
+  margin-left:auto;
+  font-size:11px; color:var(--text-muted);
+  font-variant-numeric:tabular-nums;
+}
+
+.dash__side-foot{ margin-top:auto; padding-top:var(--s4); }
+
+/* ---- columna central ---------------------------------------- */
+.dash__main{
+  padding:var(--s5) var(--s4) var(--s9);
+  min-width:0;
+  border-right:1px solid var(--border);
+  /* la columna mide lo mismo sea cual sea la ventana: sus rejillas
+     internas se adaptan a SU ancho, no al del navegador */
+  container-type:inline-size;
+  container-name:ctrl;
+  max-height:calc(100vh - var(--nav-h));max-height:calc(100dvh - var(--nav-h));
+  overflow-y:auto;
+}
+@media (max-width:860px){
+  .dash__main{ max-height:none; overflow:visible; border-right:0; }
+}
+.dash__h{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  gap:var(--s4); margin-bottom:var(--s5); flex-wrap:wrap;
+}
+.dash__h h1{ font-size:21px; letter-spacing:-.03em; }
+.dash__h p{ margin:5px 0 0; color:var(--text-secondary); font-size:13px; max-width:52ch; }
+
+/* bloque de ajustes */
+.blk{
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--surface);
+  padding:var(--s4);
+  margin-bottom:var(--s2);
+}
+.blk__t{
+  font-size:14px; font-weight:500;
+  margin-bottom:4px;
+}
+.blk__d{ font-size:12.5px; color:var(--text-muted); margin-bottom:var(--s4); }
+
+/* ---- campos --------------------------------------------------- */
+.f{ margin-bottom:var(--s4); }
+.f:last-child{ margin-bottom:0; }
+.f__l{
+  display:flex; align-items:center; justify-content:space-between; gap:var(--s3);
+  font-size:12.5px; font-weight:500;
+  color:var(--text-secondary);
+  margin-bottom:7px;
+}
+.f__l em{ font-style:normal; color:var(--text-muted); font-weight:400; font-size:11.5px; }
+
+.inp,.sel,.ta{
+  width:100%;
+  padding:10px 12px;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  background:var(--bg-primary);
+  font-size:14px;
+  color:var(--text-primary);
+  outline:none;
+  transition:border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.ta{ line-height:1.55; resize:vertical; min-height:84px; }
+.inp:focus,.sel:focus,.ta:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px var(--accent-soft);
+}
+.inp::placeholder,.ta::placeholder{ color:var(--text-faint); }
+
+.sel{
+  cursor:pointer; appearance:none;
+  padding-right:32px;
+  background-image:
+    linear-gradient(45deg,transparent 50%,var(--text-muted) 50%),
+    linear-gradient(135deg,var(--text-muted) 50%,transparent 50%);
+  background-position:calc(100% - 16px) 52%, calc(100% - 11px) 52%;
+  background-size:5px 5px;
+  background-repeat:no-repeat;
+}
+.sel option{ background:var(--surface-2); color:var(--text-primary); }
+
+.f-row{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s3); }
+@media (max-width:520px){ .f-row{ grid-template-columns:1fr; } }
+
+/* prefijo de usuario */
+.f-pre{
+  display:flex; align-items:center;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  background:var(--bg-primary);
+  overflow:hidden;
+}
+.f-pre:focus-within{ border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+.f-pre span{
+  padding:10px 2px 10px 12px;
+  color:var(--text-muted); font-size:14px; flex:none;
+}
+.f-pre .inp{ border:0; box-shadow:none; padding-left:2px; }
+
+/* ---- selector de tema ------------------------------------------ */
+.themes{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(84px,1fr));
+  gap:var(--s2);
+}
+.th{
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  overflow:hidden;
+  cursor:pointer;
+  background:var(--bg-primary);
+  padding:0;
+  text-align:center;
+  transition:transform var(--transition-fast), border-color var(--transition-fast);
+}
+.th:hover{ transform:translateY(-2px); border-color:var(--border-strong); }
+.th.on{ border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft); }
+.th__pre{ height:44px; }
+.th__n{
+  padding:6px 4px;
+  font-size:11px;
+  color:var(--text-secondary);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.th.on .th__n{ color:var(--text-primary); }
+
+/* ---- opciones tipo segmento -------------------------------------- */
+.opts{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(92px,1fr));
+  gap:6px;
+}
+.opt{
+  padding:9px 10px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--bg-primary);
+  font-size:12.5px;
+  color:var(--text-secondary);
+  cursor:pointer;
+  transition:all var(--transition-fast);
+}
+.opt:hover{ color:var(--text-primary); border-color:var(--border-strong); }
+.opt.on{
+  background:var(--surface-3);
+  color:var(--text-primary);
+  border-color:var(--accent);
+  font-weight:500;
+}
+
+/* ---- interruptores ------------------------------------------------ */
+.sw-row{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:var(--s4); padding:11px 0;
+  border-bottom:1px solid var(--border);
+  font-size:13.5px;
+}
+.sw-row:last-child{ border-bottom:0; padding-bottom:0; }
+.sw-row:first-child{ padding-top:0; }
+.sw-row small{ display:block; color:var(--text-muted); font-size:12px; margin-top:1px; }
+.sw-box{
+  position:relative; width:38px; height:21px; flex:none;
+  border-radius:100px; background:var(--surface-3);
+  border:1px solid var(--border-strong); cursor:pointer;
+  transition:background var(--transition-normal), border-color var(--transition-normal);
+}
+.sw-box::after{
+  content:""; position:absolute; top:2px; left:2px;
+  width:15px; height:15px; border-radius:50%;
+  background:var(--text-muted);
+  transition:transform var(--transition-normal), background var(--transition-normal);
+}
+.sw-box.on{ background:var(--accent); border-color:var(--accent); }
+.sw-box.on::after{ transform:translateX(17px); background:var(--accent-ink); }
+
+/* ---- color -------------------------------------------------------- */
+.colors{ display:flex; flex-wrap:wrap; gap:7px; align-items:center; }
+.col{
+  width:30px; height:30px;
+  border-radius:var(--radius-sm);
+  border:1px solid var(--border-strong);
+  cursor:pointer;
+  transition:transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+.col:hover{ transform:translateY(-2px); }
+.col.on{ box-shadow:0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent); }
+.col-custom{
+  width:30px; height:30px; padding:0;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  background:var(--bg-primary);
+  cursor:pointer;
+}
+.col-custom::-webkit-color-swatch-wrapper{ padding:3px; }
+.col-custom::-webkit-color-swatch{ border:0; border-radius:5px; }
+
+/* ---- rango --------------------------------------------------------- */
+.rng{ display:flex; align-items:center; gap:var(--s3); }
+.rng input[type="range"]{
+  flex:1; height:3px; appearance:none;
+  background:var(--surface-3); border-radius:100px; outline:none; cursor:pointer;
+}
+.rng input[type="range"]::-webkit-slider-thumb{
+  appearance:none; width:14px; height:14px; border-radius:50%;
+  background:var(--text-primary); cursor:pointer;
+  border:0;
+  box-shadow:0 0 0 3px var(--bg-primary);
+}
+.rng input[type="range"]::-moz-range-thumb{
+  width:14px; height:14px; border:0; border-radius:50%; background:var(--text-primary);
+}
+.rng output{
+  width:44px; text-align:right; flex:none;
+  font-size:12.5px; color:var(--text-muted);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---- listas ordenables (enlaces, redes, proyectos) ------------------ */
+.rows{ display:grid; gap:6px; margin-bottom:var(--s3); }
+.row-it{
+  display:grid; grid-template-columns:auto auto 1fr auto auto;
+  align-items:center; gap:var(--s3);
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--bg-primary);
+  transition:border-color var(--transition-fast);
+}
+.row-it:hover{ border-color:var(--border-strong); }
+.row-it__h{
+  color:var(--text-faint); cursor:grab; font-size:13px;
+  background:none; border:0; padding:0 2px;
+}
+.row-it__h:active{ cursor:grabbing; }
+.row-it__ico{ font-size:15px; width:20px; text-align:center; }
+.row-it__b{ min-width:0; }
+.row-it__t{
+  font-size:13.5px; font-weight:500;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.row-it__s{ font-size:11.5px; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.row-it__x{
+  border:0; background:transparent; color:var(--text-faint);
+  cursor:pointer; font-size:16px; line-height:1;
+  padding:4px 6px; border-radius:var(--radius-sm);
+  transition:color var(--transition-fast), background var(--transition-fast);
+}
+.row-it__x:hover{ color:var(--dnd); background:rgba(237,66,69,.12); }
+
+/* duplicar es una accion de construir, no de borrar: no debe
+   ponerse rojo al pasar por encima como la de quitar. */
+.row-it__dup:hover{ color:var(--online); background:rgba(59,165,93,.14); }
+
+/* El nombre de un bloque es un boton: abre sus opciones. La
+   flecha lo dice sin tener que explicarlo. */
+.row-it__abrir{
+  display:flex; align-items:center; gap:8px;
+  flex:1; min-width:0;
+  background:none; border:0; padding:0;
+  color:inherit; font:inherit; text-align:left; cursor:pointer;
+}
+.row-it__go{
+  margin-left:auto; color:var(--text-faint); font-size:17px; line-height:1;
+  transition:transform var(--transition-fast), color var(--transition-fast);
+}
+.row-it__abrir:hover .row-it__go{ transform:translateX(3px); color:var(--text); }
+.row-it__abrir:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; border-radius:6px; }
+/* una copia se lee como lo que es: la misma pieza, otra vez */
+.row-it--copia{ border-left:2px solid var(--border-strong, rgba(255,255,255,.18)); }
+.row-it--copia .row-it__t{ opacity:.86; }
+.row-it.is-drag{ opacity:.4; }
+.row-it.is-over{ border-color:var(--accent); }
+
+.add-form{
+  border:1px dashed var(--border-strong);
+  border-radius:var(--radius-sm);
+  padding:var(--s4);
+  display:grid; gap:var(--s3);
+  background:var(--bg-primary);
+}
+
+/* ---- badges en el panel --------------------------------------------- */
+.bdg-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(172px,1fr));
+  gap:var(--s2);
+}
+.bdg{
+  display:flex; gap:var(--s3); align-items:flex-start;
+  padding:var(--s3) var(--s4);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--bg-primary);
+}
+.bdg.locked{ opacity:.42; }
+.bdg__i{ font-size:17px; flex:none; }
+.bdg__n{ font-size:13px; font-weight:500; }
+.bdg__h{ font-size:11.5px; color:var(--text-muted); line-height:1.4; margin-top:2px; }
+.bdg__s{
+  margin-left:auto; flex:none;
+  font-size:10.5px; color:var(--text-faint);
+}
+.bdg.unlocked .bdg__s{ color:var(--online); }
+
+/* ---- vista previa ---------------------------------------------------- */
+.dash__prev{
+  position:sticky; top:var(--nav-h);
+  height:calc(100vh - var(--nav-h));height:calc(100dvh - var(--nav-h));
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgba(255,255,255,.03), transparent 70%),
+    var(--bg-secondary);
+  padding:var(--s4) var(--s5) var(--s5);
+  display:flex; flex-direction:column; gap:var(--s3);
+  min-width:0;
+}
+.prev__bar{ display:flex; align-items:center; gap:var(--s2); flex:none; }
+.prev__url{
+  flex:1; min-width:0;
+  font-size:11.5px; color:var(--text-muted);
+  background:var(--bg-primary);
+  border:1px solid var(--border);
+  border-radius:100px;
+  padding:6px 12px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.prev__vp{ display:flex; gap:2px; flex:none; }
+.prev__vp button{
+  width:28px; height:26px;
+  border:1px solid var(--border);
+  background:var(--bg-primary);
+  color:var(--text-muted);
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  display:grid; place-items:center;
+  transition:all var(--transition-fast);
+}
+.prev__vp button svg{ width:13px; height:13px; }
+.prev__vp button.on{
+  background:var(--surface-3); color:var(--text-primary); border-color:var(--border-loud);
+}
+.prev__frame{
+  flex:1;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-lg);
+  overflow:hidden;
+  background:#000;
+  position:relative;
+  width:100%;
+  margin-inline:auto;
+  transition:max-width var(--transition-large);
+}
+.prev__frame[data-vp="mobile"]{ max-width:340px; }
+.prev__frame[data-vp="tablet"]{ max-width:100%; }
+.prev__scroll{
+  position:absolute; inset:0;
+  overflow-y:auto;
+  scrollbar-width:none;
+}
+.prev__scroll::-webkit-scrollbar{ display:none; }
+.prev__scroll .pf{ min-height:100%; padding:var(--s6) var(--s4); }
+.prev__scroll .pf-actions{ display:none; }
+
+/* barra de acciones al pie del panel */
+.dash__actions{
+  position:sticky; bottom:0;
+  margin-top:var(--s5);
+  padding:var(--s4) 0;
+  background:linear-gradient(180deg,transparent,var(--bg-primary) 26%);
+  display:flex; gap:var(--s2); flex-wrap:wrap;
+}
+
+/* resumen de métricas en Overview */
+.mini-stats{
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:var(--s2); margin-bottom:var(--s3);
+}
+.mini-stat{
+  padding:var(--s4);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--surface);
+}
+.mini-stat__n{
+  font-size:24px; font-weight:600;
+  letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums;
+}
+.mini-stat__l{ font-size:11.5px; color:var(--text-muted); margin-top:2px; }
+@media (max-width:520px){ .mini-stats{ grid-template-columns:1fr; } }
+
+/* ============================================================
+   SELECTOR DE REDES
+   ~50 servicios: rejilla de iconos en color de marca, con
+   busqueda y filtro por grupo. El nombre se lee en la cabecera
+   al pasar el puntero, para que la rejilla no sea un muro de texto.
+   ============================================================ */
+
+.netpick{
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--bg-primary);
+  padding:var(--s4);
+}
+.netpick__top{
+  display:flex; align-items:center; gap:var(--s3);
+  margin-bottom:var(--s3);
+  flex-wrap:wrap;
+}
+.search--sm{
+  flex:1; min-width:180px;
+  padding:8px var(--s3);
+  background:var(--surface);
+}
+.search--sm input{ font-size:13px; }
+.netpick__name{
+  font-size:12px; color:var(--text-muted);
+  white-space:nowrap;
+  min-width:96px; text-align:right;
+}
+
+.chips--sm{ margin-top:0; margin-bottom:var(--s3); gap:4px; }
+.chips--sm .chip{ padding:5px 11px; font-size:12px; }
+
+.netgrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(46px,1fr));
+  gap:6px;
+}
+.nettile{
+  aspect-ratio:1;
+  display:grid; place-items:center;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--surface);
+  color:var(--brand,var(--text-secondary));
+  cursor:pointer;
+  padding:0;
+  transition:transform var(--transition-fast),
+             border-color var(--transition-fast),
+             background var(--transition-fast);
+}
+.nettile svg{ width:21px; height:21px; }
+.nettile:hover{
+  transform:translateY(-2px);
+  background:var(--surface-2);
+  border-color:color-mix(in srgb, var(--brand,#fff) 45%, transparent);
+}
+.nettile.on{
+  border-color:var(--brand,#fff);
+  background:var(--surface-3);
+  box-shadow:0 0 0 1px var(--brand,#fff) inset;
+}
+.nettile[hidden]{ display:none; }
+
+/* formulario que aparece al elegir una red */
+.netpick__form{
+  margin-top:var(--s4);
+  padding-top:var(--s4);
+  border-top:1px solid var(--border);
+  display:grid; gap:var(--s3);
+  animation:rise 240ms var(--ease-out) both;
+}
+.netpick__head{
+  display:flex; align-items:center; gap:var(--s3);
+  font-size:14px;
+}
+.netpick__ico{
+  width:30px; height:30px; flex:none;
+  display:grid; place-items:center;
+  border-radius:var(--radius-sm);
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  color:var(--brand,var(--text-primary));
+}
+.netpick__ico svg{ width:17px; height:17px; }
+.netpick__head .row-it__x{ margin-left:auto; }
+.netpick__acts{ display:flex; gap:var(--s2); }
+
+/* icono de marca en la lista de redes ya anadidas */
+.row-it__brand{
+  display:grid; place-items:center;
+  width:20px; height:20px;
+}
+.row-it__brand svg{ width:17px; height:17px; }
+
+.sel--mini{
+  width:104px; padding:5px 26px 5px 9px; font-size:12px;
+  background-position:calc(100% - 13px) 52%, calc(100% - 9px) 52%;
+}
+
+/* ============================================================
+   PROGRESO DEL PERFIL
+   ============================================================ */
+.prog{
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  background:var(--surface);
+  padding:var(--s5);
+  margin-bottom:var(--s3);
+}
+.prog__bar{
+  height:6px; border-radius:100px;
+  background:var(--surface-3);
+  overflow:hidden;
+}
+.prog__bar i{
+  display:block; height:100%;
+  border-radius:100px;
+  background:var(--accent);
+  transition:width var(--transition-large);
+}
+.prog--done .prog__bar i{ background:var(--online); }
+.prog__head{
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:var(--s3); margin-top:var(--s3);
+  font-size:14px;
+}
+.prog__head b{ font-weight:500; }
+.prog__head span{
+  font-size:12px; color:var(--text-muted);
+  font-variant-numeric:tabular-nums;
+}
+.prog__items{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(228px,1fr));
+  gap:6px;
+  margin-top:var(--s4);
+}
+.prog__it{
+  display:flex; align-items:center; gap:var(--s3);
+  padding:9px 12px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--bg-primary);
+  color:var(--text-secondary);
+  font-size:13px;
+  text-align:left;
+  cursor:pointer;
+  transition:border-color var(--transition-fast), color var(--transition-fast);
+}
+.prog__it:hover:not(:disabled){ border-color:var(--border-loud); color:var(--text-primary); }
+.prog__it:disabled{ cursor:default; opacity:.55; }
+.prog__mark{
+  width:16px; height:16px; flex:none;
+  border-radius:50%;
+  border:1px solid var(--border-loud);
+  display:grid; place-items:center;
+  font-size:10px;
+}
+.prog__it.ok .prog__mark{
+  background:var(--online); border-color:var(--online); color:#04140A;
+}
+.prog__go{ margin-left:auto; color:var(--text-faint); font-size:16px; line-height:1; }
+
+/* ---- campo de color -------------------------------------------- */
+.col-field{ display:flex; align-items:center; gap:var(--s3); }
+.col-hex{
+  font-family:"JetBrains Mono", ui-monospace, monospace;
+  font-size:11.5px;
+  color:var(--text-muted);
+  flex:1; min-width:0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+
+/* ============================================================
+   SELECTOR DE FUENTE Y PRESETS
+   ============================================================ */
+
+.fonts{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(84px,1fr));
+  gap:6px;
+}
+.fontpick{
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  padding:12px 6px 8px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--bg-primary);
+  cursor:pointer;
+  transition:transform var(--transition-fast), border-color var(--transition-fast);
+}
+.fontpick:hover{ transform:translateY(-2px); border-color:var(--border-strong); }
+.fontpick.on{ border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft); }
+.fontpick__s{
+  font-family:var(--ff, var(--font));
+  font-size:22px; line-height:1.1;
+  color:var(--text-primary);
+}
+.fontpick__n{ font-size:10.5px; color:var(--text-muted); }
+.fontpick.on .fontpick__n{ color:var(--text-primary); }
+
+/* fila de sección: mango + nombre + interruptor */
+.row-it--sec{ grid-template-columns:auto 1fr auto; }
+
+/* ---- controles de posición libre por bloque ------------------ */
+.row-it--free{ grid-template-columns:auto 1fr auto auto; }
+
+.posctl{
+  display:flex; align-items:center; gap:2px;
+  padding:2px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--bg-secondary);
+}
+.posctl button{
+  width:22px; height:22px;
+  display:grid; place-items:center;
+  border:0; border-radius:5px;
+  background:transparent;
+  color:var(--text-muted);
+  font-size:12px; line-height:1;
+  cursor:pointer;
+  transition:background var(--transition-fast), color var(--transition-fast);
+}
+.posctl button:hover{ background:var(--surface-2); color:var(--text-primary); }
+.posctl__v{
+  min-width:30px; text-align:center;
+  font-size:10.5px; font-weight:500;
+  color:var(--text-secondary);
+  font-variant-numeric:tabular-nums;
+  padding-inline:2px;
+}
+@media (max-width:720px){
+  .row-it--free{ grid-template-columns:auto 1fr auto; }
+  .row-it--free .posctl{ grid-column:2/-1; margin-top:6px; justify-self:start; }
+}
+
+/* ---- escenario de la vista previa ---------------------------
+   El perfil se renderiza al ancho REAL del dispositivo elegido y
+   luego se reduce con transform. Sin esto, el marco de ~390px
+   hacía que "escritorio" mostrara en realidad el diseño móvil.
+   ------------------------------------------------------------- */
+.prev__stage{
+  width:var(--stage-w, 1180px);
+  height:var(--stage-h, 800px);
+  transform:translateX(var(--stage-x, 0px)) scale(var(--stage-s, 1));
+  transform-origin:top left;
+  will-change:transform;
+}
+/* el héroe ocupa la altura del dispositivo simulado, no la del
+   escenario: si no, se estiraba a 2000px y quedaba desparramado */
+.prev__stage .pf{ min-height:var(--vp-h, 800px); }
+
+/* Lo mismo que el preventDefault de dragstart, por si el navegador
+   se adelanta: dentro del editor nada se arrastra por su cuenta, el
+   gesto es siempre del bloque. */
+.prev__stage a,
+.prev__stage img{ -webkit-user-drag:none; user-select:none; }
+.prev__stage .pf-hero{
+  min-height:var(--vp-h, 800px);
+  padding-block:clamp(40px,7vh,80px);
+}
+
+/* etiqueta con el tamaño simulado */
+.prev__size{
+  position:absolute; right:8px; bottom:8px;
+  z-index:3;
+  padding:3px 8px;
+  border-radius:100px;
+  background:rgba(5,5,5,.72);
+  border:1px solid var(--border);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  font-size:10px;
+  color:var(--text-muted);
+  font-variant-numeric:tabular-nums;
+  pointer-events:none;
+}
+
+/* el marco ya no cambia de ancho: cambia lo que simula dentro */
+.prev__frame[data-vp="mobile"],
+.prev__frame[data-vp="tablet"],
+.prev__frame[data-vp="desktop"]{ max-width:100%; }
+
+/* ============================================================
+   AUTOGUARDADO, DESHACER Y MODOS
+   ============================================================ */
+.dash__actions{ align-items:center; }
+
+.savestate{
+  font-size:12px;
+  color:var(--text-muted);
+  display:inline-flex; align-items:center; gap:6px;
+  margin-right:auto;
+}
+.savestate::before{
+  content:"";
+  width:6px; height:6px; border-radius:50%;
+  background:var(--text-faint);
+  transition:background var(--transition-normal);
+}
+.savestate.ok::before{ background:var(--online); }
+.savestate.warn{ color:var(--idle); }
+.savestate.warn::before{ background:var(--idle); }
+.savestate.err{ color:var(--dnd); font-weight:600; cursor:help; }
+.savestate.err::before{ background:var(--dnd); }
+
+.undo{ display:flex; gap:4px; }
+.undo .btn{ padding-inline:11px; font-size:15px; line-height:1; }
+.undo .btn:disabled{ opacity:.32; cursor:default; transform:none; }
+
+/* interruptor simple / avanzado */
+.modeswitch{
+  display:flex; gap:2px; padding:3px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--bg-primary);
+}
+.modeswitch button{
+  flex:1; padding:6px 8px;
+  border:0; border-radius:5px;
+  background:transparent;
+  color:var(--text-muted);
+  font-size:12px; cursor:pointer;
+  transition:all var(--transition-fast);
+}
+.modeswitch button:hover{ color:var(--text-primary); }
+.modeswitch button.on{ background:var(--surface-3); color:var(--text-primary); font-weight:500; }
+
+/* ---- opciones avanzadas: progressive disclosure --------------
+   Por defecto solo lo importante. Lo demás vive detrás de un
+   desplegable, no en la pantalla principal. */
+.adv{
+  margin-top:var(--s4);
+  border-top:1px solid var(--border);
+  padding-top:var(--s3);
+}
+.adv summary{
+  cursor:pointer;
+  font-size:12.5px;
+  color:var(--text-muted);
+  list-style:none;
+  display:flex; align-items:center; gap:7px;
+  padding:4px 0;
+  transition:color var(--transition-fast);
+}
+.adv summary::-webkit-details-marker{ display:none; }
+.adv summary::before{
+  content:"+";
+  width:16px; height:16px;
+  display:grid; place-items:center;
+  border:1px solid var(--border-strong);
+  border-radius:4px;
+  font-size:11px; line-height:1;
+}
+.adv[open] summary::before{ content:"\2212"; }
+.adv summary:hover{ color:var(--text-primary); }
+.adv__b{ padding-top:var(--s3); }
+.adv--open .adv__h{
+  font-size:11px; font-weight:500;
+  letter-spacing:.09em; text-transform:uppercase;
+  color:var(--text-faint);
+  margin-bottom:var(--s3);
+}
+
+/* ============================================================
+   PUBLICADO
+   ============================================================ */
+.pubmodal{
+  position:fixed; inset:0;
+  z-index:1100;
+  display:grid; place-items:center;
+  padding:clamp(14px,4vw,40px);
+  background:rgba(3,3,3,.8);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  animation:fade var(--transition-normal) both;
+}
+.pubmodal__box{
+  position:relative;
+  width:min(460px,100%);
+  padding:var(--s7) var(--s6) var(--s6);
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-xl);
+  background:var(--surface);
+  text-align:center;
+  box-shadow:var(--shadow-lg);
+  animation:rise var(--transition-large) both;
+}
+.pubmodal__tick{
+  width:52px; height:52px; margin:0 auto var(--s4);
+  display:grid; place-items:center;
+  border-radius:50%;
+  background:var(--online);
+  color:#04140A;
+  font-size:26px; font-weight:700;
+  animation:tickPop 520ms var(--ease-out) both;
+}
+@keyframes tickPop{ from{ transform:scale(.4); opacity:0 } }
+.pubmodal__box h2{ font-size:22px; letter-spacing:-.03em; }
+.pubmodal__url{
+  margin:var(--s2) 0 var(--s5);
+  font-size:14px;
+  color:var(--text-secondary);
+  font-family:"JetBrains Mono", ui-monospace, monospace;
+}
+.pubmodal__acts{ display:flex; gap:var(--s2); justify-content:center; flex-wrap:wrap; }
+.pubmodal__x{
+  position:absolute; top:12px; right:12px;
+  width:30px; height:30px;
+  border:0; border-radius:50%;
+  background:transparent; color:var(--text-muted);
+  font-size:19px; cursor:pointer;
+}
+.pubmodal__x:hover{ background:var(--surface-2); color:var(--text-primary); }
+
+/* tarjeta de cómo se verá al compartir (Open Graph) */
+.ogcard{
+  display:flex; text-align:left;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--bg-primary);
+  overflow:hidden;
+  margin-bottom:var(--s5);
+}
+.ogcard__thumb{
+  width:132px; flex:none;
+  height:104px;
+  overflow:hidden;
+  border-right:1px solid var(--border);
+  background:#000;
+}
+.ogcard__scale{
+  width:660px; height:520px;
+  transform:scale(.2);
+  transform-origin:top left;
+}
+.ogcard__scale .pf,
+.ogcard__scale .pf-hero{ min-height:520px; }
+.ogcard__b{ padding:var(--s3) var(--s4); min-width:0; align-self:center; }
+.ogcard__t{
+  font-size:13.5px; font-weight:600;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.ogcard__d{
+  font-size:12px; color:var(--text-muted);
+  margin-top:3px;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.ogcard__u{ font-size:11px; color:var(--text-faint); margin-top:6px; }
+
+/* ---- seleccionar bloques desde la vista previa ----------------
+   El usuario toca lo que quiere cambiar en lugar de buscar en qué
+   menú vive. El contorno aparece sólo dentro del editor.
+   --------------------------------------------------------------- */
+.prev__stage [data-block]{
+  position:relative;
+  cursor:pointer;
+  border-radius:6px;
+  outline:1.5px dashed transparent;
+  outline-offset:6px;
+  transition:outline-color var(--transition-fast);
+}
+.prev__stage [data-block]:hover{ outline-color:rgba(255,255,255,.34); }
+.prev__stage [data-block].is-sel{
+  outline:1.5px solid var(--accent);
+  outline-offset:6px;
+}
+.prev__stage [data-block].is-sel::after{
+  content:attr(data-block);
+  position:absolute; left:0; top:-22px;
+  padding:2px 7px;
+  border-radius:5px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  font-family:"Inter", system-ui, sans-serif;
+  font-size:10px; font-weight:600;
+  letter-spacing:0;
+  text-transform:capitalize;
+  pointer-events:none;
+  white-space:nowrap;
+}
+/* dentro del editor nada del perfil debe navegar */
+.prev__stage a{ pointer-events:none; }
+.prev__stage [data-block] a{ pointer-events:none; }
+
+/* ============================================================
+   ASISTENTE DE CREACIÓN
+   Nadie empieza con una página en blanco: el paso 1 ya trae un
+   estilo aplicado y el preview lo demuestra en vivo.
+   ============================================================ */
+.ob{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(320px,420px);
+  min-height:calc(100vh - var(--nav-h));min-height:calc(100dvh - var(--nav-h));
+}
+@media (max-width:940px){
+  .ob{ grid-template-columns:1fr; }
+  .ob__stage{ order:-1; height:44vh;height:44dvh; border-left:0; border-bottom:1px solid var(--border); }
+}
+
+.ob__panel{
+  padding:clamp(24px,4vw,48px) clamp(20px,4vw,56px);
+  display:flex; flex-direction:column;
+  max-width:680px;
+  width:100%;
+  margin-inline:auto;
+}
+.ob__head{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:var(--s3);
+}
+.ob__mark{ font-size:13px; font-weight:600; letter-spacing:.02em; }
+.ob__step{ font-size:12px; color:var(--text-muted); font-variant-numeric:tabular-nums; }
+
+.ob__prog{
+  height:3px; border-radius:100px;
+  background:var(--surface-2); overflow:hidden;
+  margin-bottom:var(--s6);
+}
+.ob__prog i{
+  display:block; height:100%;
+  background:var(--accent);
+  transition:width var(--transition-large);
+}
+
+.ob__body{ flex:1; }
+.ob__t{ font-size:clamp(22px,3vw,30px); letter-spacing:-.035em; }
+.ob__d{ color:var(--text-secondary); font-size:14.5px; margin:var(--s2) 0 var(--s5); }
+.ob__hint{ font-size:12px; color:var(--text-muted); margin:6px 0 0; }
+.ob__hint.good{ color:var(--online); }
+.ob__hint.bad{ color:var(--dnd); }
+
+.ob__foot{
+  display:flex; align-items:center; gap:var(--s2);
+  margin-top:var(--s6); padding-top:var(--s5);
+  border-top:1px solid var(--border);
+}
+.ob__foot #obSkip{ margin-left:auto; }
+
+/* --- paso 1: estilos --- */
+.ob__grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(148px,1fr));
+  gap:var(--s3);
+}
+.obcard{
+  padding:0 0 var(--s3);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  background:var(--surface);
+  overflow:hidden;
+  cursor:pointer;
+  text-align:left;
+  transition:transform var(--transition-normal), border-color var(--transition-fast);
+}
+.obcard:hover{ transform:translateY(-3px); border-color:var(--border-strong); }
+.obcard.on{ border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft); }
+.obcard__pre{ display:block; height:72px; }
+.obcard__n{ display:block; padding:var(--s3) var(--s4) 0; font-size:14px; font-weight:500; }
+.obcard__s{ display:block; padding:2px var(--s4) 0; font-size:12px; color:var(--text-muted); }
+
+/* --- paso 2: colores --- */
+.ob__colors{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(112px,1fr));
+  gap:var(--s2);
+}
+.obcol{
+  display:flex; align-items:center; gap:10px;
+  padding:11px 14px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--surface);
+  color:var(--text-secondary);
+  font-size:13.5px;
+  cursor:pointer;
+  transition:all var(--transition-fast);
+}
+.obcol span{
+  width:20px; height:20px; border-radius:50%;
+  background:var(--c);
+  border:1px solid rgba(255,255,255,.2);
+  flex:none;
+}
+.obcol:hover{ border-color:var(--border-strong); color:var(--text-primary); }
+.obcol.on{ border-color:var(--accent); color:var(--text-primary); box-shadow:0 0 0 2px var(--accent-soft); }
+
+/* --- paso 4: redes --- */
+.ob__nets{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:var(--s2);
+}
+.obnet{
+  display:flex; align-items:center; gap:9px; flex-wrap:wrap;
+  padding:9px 11px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--surface);
+  transition:border-color var(--transition-fast);
+}
+.obnet.on{ border-color:var(--accent); grid-column:1/-1; }
+.obnet__b{
+  width:30px; height:30px; flex:none;
+  display:grid; place-items:center;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--bg-primary);
+  color:var(--brand);
+  cursor:pointer;
+  transition:transform var(--transition-fast);
+}
+.obnet__b:hover{ transform:scale(1.08); }
+.obnet__b svg{ width:17px; height:17px; }
+.obnet__n{ font-size:13px; }
+.obnet__i{ flex:1 1 160px; padding:7px 10px; font-size:13px; }
+
+/* --- escenario del asistente --- */
+.ob__stage{
+  border-left:1px solid var(--border);
+  background:var(--bg-secondary);
+  padding:var(--s4);
+  display:flex;
+  position:sticky; top:var(--nav-h);
+  height:calc(100vh - var(--nav-h));height:calc(100dvh - var(--nav-h));
+}
+.ob__frame{
+  flex:1;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-lg);
+  overflow:hidden;
+  background:#000;
+  position:relative;
+}
+.ob__scroll{
+  position:absolute; inset:0;
+  overflow-y:auto;
+  scrollbar-width:none;
+  container-type:inline-size;
+  container-name:pfbox;
+}
+.ob__scroll::-webkit-scrollbar{ display:none; }
+.ob__scroll .pf,
+.ob__scroll .pf-hero{ min-height:100%; }
+
+/* ============================================================
+   ARRASTRAR BLOQUES SOBRE LA VISTA PREVIA
+   ============================================================ */
+.prev__stage [data-block]{ cursor:grab; touch-action:none; }
+.prev__stage [data-block]:active{ cursor:grabbing; }
+
+.prev__stage [data-block].is-dragging{
+  opacity:.5;
+  outline:1.5px solid var(--accent);
+  outline-offset:6px;
+  cursor:grabbing;
+}
+/* mientras se arrastra, los demás bloques se apartan con suavidad */
+.pf-stack.is-dragmode > [data-block]:not(.is-dragging){
+  transition:transform 180ms cubic-bezier(.22,.61,.36,1);
+}
+.pf-stack.is-dragmode [data-block].is-sel::after{ display:none; }
+
+/* en modo libre se insinúan las 12 columnas para saber dónde cae */
+.pf-stack.is-gridhint{
+  background-image:repeating-linear-gradient(
+    to right,
+    rgba(255,255,255,.07) 0,
+    rgba(255,255,255,.07) 1px,
+    transparent 1px,
+    transparent calc(100% / 12)
+  );
+  background-size:100% 100%;
+}
+
+/* ============================================================
+   COLUMNA DE CONTROLES ESTRECHA
+   Mide ~350px pase lo que pase con la ventana, así que sus
+   rejillas se adaptan a SU ancho con container queries.
+   ============================================================ */
+@container ctrl (max-width: 420px){
+  .f-row{ grid-template-columns:1fr; }
+  .themes{ grid-template-columns:repeat(auto-fill,minmax(66px,1fr)); }
+  .th__pre{ height:36px; }
+  .th__n{ font-size:10px; padding:5px 3px; }
+  .opts{ grid-template-columns:repeat(auto-fill,minmax(78px,1fr)); }
+  .opt{ padding:8px 6px; font-size:11.5px; }
+  .fonts{ grid-template-columns:repeat(auto-fill,minmax(66px,1fr)); }
+  .fontpick{ padding:9px 4px 6px; }
+  .fontpick__s{ font-size:18px; }
+  .fontpick__n{ font-size:9.5px; }
+  .prog__items{ grid-template-columns:1fr; }
+  .bdg-grid{ grid-template-columns:1fr; }
+  .mini-stats{ grid-template-columns:repeat(3,1fr); gap:4px; }
+  .mini-stat{ padding:var(--s3); }
+  .mini-stat__n{ font-size:19px; }
+  .mini-stat__l{ font-size:10.5px; }
+  .netgrid{ grid-template-columns:repeat(auto-fill,minmax(40px,1fr)); }
+  .nettile svg{ width:18px; height:18px; }
+  .colors{ gap:5px; }
+  .col{ width:26px; height:26px; }
+  .col-custom{ width:26px; height:26px; }
+  .row-it--free{ grid-template-columns:auto 1fr auto; }
+  .row-it--free .posctl{ grid-column:1/-1; margin-top:6px; }
+  .sel--mini{ width:88px; }
+  .dash__actions{ gap:5px; }
+  .dash__actions .btn{ padding-inline:12px; font-size:13px; }
+  .savestate{ width:100%; margin-bottom:2px; }
+}
+
+/* ============================================================
+   PREVIEW GRANDE
+   ============================================================ */
+.dash__prev .prev__frame{
+  border-radius:var(--radius-xl);
+  box-shadow:0 40px 90px -60px rgba(0,0,0,.9);
+}
+
+/* botón para esconder los controles y ver el perfil a lo ancho */
+.prev__focus{
+  width:28px; height:26px;
+  display:grid; place-items:center;
+  border:1px solid var(--border);
+  background:var(--bg-primary);
+  color:var(--text-muted);
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  flex:none;
+  transition:all var(--transition-fast);
+}
+.prev__focus svg{ width:13px; height:13px; }
+.prev__focus:hover{ color:var(--text-primary); border-color:var(--border-strong); }
+.dash.solo-prev .prev__focus{
+  background:var(--surface-3); color:var(--text-primary); border-color:var(--border-loud);
+}
+@media (max-width:1080px){ .prev__focus{ display:none; } }
+
+/* ============================================================
+   RESPONSIVE DEL PANEL  (va al final a propósito)
+   La regla base `.dash__prev{display:flex}` aparece más abajo que
+   las media queries de arriba y las anulaba por orden de origen.
+   Estas van al final para que ganen sin inflar la especificidad.
+   ============================================================ */
+
+/* hasta 980px caben tres columnas y el preview sigue mandando */
+@media (max-width:1120px){
+  .dash{ grid-template-columns:172px 292px minmax(0,1fr); }
+  .dash.solo-prev{ grid-template-columns:172px minmax(0,1fr); }
+}
+
+/* por debajo no cabe: controles y preview se alternan */
+@media (max-width:980px){
+  .dash,
+  .dash.solo-prev{ grid-template-columns:172px minmax(0,1fr); }
+  .dash__prev{ display:none; }
+  .dash.show-prev .dash__main{ display:none; }
+  .dash.show-prev .dash__prev{ display:flex; }
+  .prev__focus{ display:none; }
+}
+
+@media (max-width:860px){
+  .dash,
+  .dash.show-prev,
+  .dash.solo-prev{ grid-template-columns:1fr; }
+  .dash__side{
+    position:static; height:auto;
+    border-right:0; border-bottom:1px solid var(--border);
+  }
+  .dash__main{ max-height:none; overflow:visible; border-right:0; }
+  .dash__prev{ display:none; }
+  .dash.show-prev .dash__prev{
+    display:flex; position:static; height:74vh;height:74dvh;
+  }
+}
+
+/* ---- asas para redimensionar con el ratón --------------------- */
+.rsz{
+  position:absolute;
+  top:0; bottom:0;
+  width:12px;
+  cursor:ew-resize;
+  z-index:3;
+  display:grid; place-items:center;
+  touch-action:none;
+}
+.rsz--l{ left:-6px; }
+.rsz--r{ right:-6px; }
+.rsz::before{
+  content:"";
+  width:4px; height:28px;
+  max-height:70%;
+  border-radius:100px;
+  background:var(--accent);
+  box-shadow:0 0 0 2px rgba(5,5,5,.6);
+  transition:height var(--transition-fast);
+}
+.rsz:hover::before{ height:44px; }
+
+.prev__stage [data-block].is-resizing{
+  outline:1.5px solid var(--accent);
+  outline-offset:6px;
+}
+.prev__stage [data-block].is-resizing::after{ content:none; }
+
+/* ---- panel del bloque seleccionado ---------------------------- */
+.blk--sel{
+  border-color:var(--accent);
+  box-shadow:0 0 0 1px var(--accent-soft);
+  background:linear-gradient(180deg,var(--surface-2),var(--surface) 40%);
+}
+.blk__sel{
+  display:flex; align-items:center; gap:9px;
+  margin:-2px 0 var(--s4);
+  font-size:14px;
+}
+.blk__sel b{ font-weight:500; flex:1; min-width:0; }
+.blk__seldot{
+  width:7px; height:7px; border-radius:50%;
+  background:var(--accent); flex:none;
+}
+.blk__sel .row-it__x{ margin-left:2px; }
+
+.posctl--wide{ display:flex; width:100%; margin-top:7px; }
+.posctl--wide button{ flex:1; height:26px; }
+
+/* subtítulo dentro del panel del bloque */
+.blk__sub{
+  font-size:11px; font-weight:500;
+  letter-spacing:.09em; text-transform:uppercase;
+  color:var(--text-faint);
+  margin:var(--s5) 0 var(--s3);
+  padding-top:var(--s3);
+  border-top:1px solid var(--border);
+}
+
+/* ============================================================
+   MÚSICA
+   ============================================================ */
+.ytprev{
+  display:flex; align-items:center; gap:var(--s3);
+  margin-top:var(--s3);
+  padding:var(--s2);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--bg-primary);
+}
+.ytprev img{
+  width:72px; height:41px; flex:none;
+  object-fit:cover; border-radius:5px;
+}
+.ytprev b{ display:block; font-size:13px; font-weight:500; }
+.ytprev span{ display:block; font-size:11.5px; color:var(--text-muted); }
+.ytprev div{ min-width:0; }
+.ytprev b, .ytprev span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.inp--mono{ font-family:"JetBrains Mono", ui-monospace, monospace; font-size:12px; }
+
+.splists{ margin-top:var(--s3); display:grid; gap:4px; max-height:300px; overflow-y:auto; }
+.splist{
+  display:flex; align-items:center; gap:10px;
+  padding:7px 9px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--bg-primary);
+  cursor:pointer; text-align:left;
+  transition:border-color var(--transition-fast);
+}
+.splist:hover{ border-color:var(--border-strong); }
+.splist img, .splist span{
+  width:30px; height:30px; flex:none;
+  border-radius:5px; object-fit:cover;
+  background:var(--surface-2);
+  display:grid; place-items:center; font-size:14px;
+}
+.splist b{ flex:1; min-width:0; font-size:13px; font-weight:500;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.splist i{ font-style:normal; font-size:11px; color:var(--text-muted); }
+
+.sptracks{ margin-top:var(--s2); display:grid; gap:3px; max-height:320px; overflow-y:auto; }
+.sptrack{
+  display:flex; align-items:center; gap:10px;
+  padding:6px 8px;
+  border:1px solid transparent;
+  border-radius:var(--radius-sm);
+  background:transparent;
+  cursor:pointer; text-align:left; width:100%;
+  transition:background var(--transition-fast), border-color var(--transition-fast);
+}
+.sptrack:hover{ background:var(--surface-2); border-color:var(--border); }
+.sptrack img, .sptrack > span{
+  width:32px; height:32px; flex:none;
+  border-radius:4px; object-fit:cover;
+  background:var(--surface-2);
+  display:grid; place-items:center; font-size:14px;
+}
+.sptrack div{ flex:1; min-width:0; }
+.sptrack b{ display:block; font-size:12.5px; font-weight:500;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sptrack span{ display:block; font-size:11px; color:var(--text-muted);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sptrack__ok, .sptrack__no{
+  font-style:normal; flex:none;
+  font-size:10px; padding:2px 6px; border-radius:100px;
+}
+.sptrack__ok{ background:rgba(59,165,93,.16); color:var(--online); }
+.sptrack__no{ background:var(--surface-2); color:var(--text-faint); }
+.sptrack--on{
+  cursor:default; margin-bottom:var(--s3);
+  border:1px solid var(--accent); background:var(--surface-2);
+  padding:8px 10px;
+}
+
+/* ============================================================
+   DISEÑO DE ELEMENTOS · la lista de piezas
+   ============================================================
+   Aditivo: son clases que solo emite el editor de React. El
+   editor heredado no las usa, así que nada de esto cambia lo que
+   se ve hoy en producción.
+   ============================================================ */
+
+/* Una fila de acordeón deja de ser rejilla. La rejilla baja a la
+   cabecera y el cuerpo va debajo, a todo lo ancho: si el panel
+   siguiera dentro de la rejilla de la fila, cada control caería
+   en una columna distinta. */
+.row-it--acordeon{
+  display:block;
+  padding:0;
+  overflow:hidden;
+}
+.row-it--acordeon.is-open{
+  border-color:var(--border-loud);
+  background:var(--surface);
+}
+
+.row-it__cab{
+  display:grid;
+  grid-template-columns:auto 1fr auto auto;
+  align-items:center;
+  gap:var(--s3);
+  padding:10px 12px;
+}
+
+/* Título arriba, resumen debajo, y el chevron a la derecha
+   ocupando las dos filas. Sin resumen la fila de abajo no existe
+   y la cabecera se encoge sola — que una pieza no haya tocado
+   nada no debería costar altura. */
+.row-it--acordeon .row-it__abrir{
+  display:grid;
+  grid-template-columns:1fr auto;
+  grid-template-areas:"t g" "s g";
+  align-items:center;
+  gap:0 var(--s3);
+  width:100%;
+}
+.row-it--acordeon .row-it__t{ grid-area:t; }
+.row-it--acordeon .row-it__s{ grid-area:s; }
+.row-it--acordeon .row-it__go{ grid-area:g; margin:0; }
+/* Abierto, la flecha ya apunta hacia abajo desde el marcado: lo
+   que sobra es el desplazamiento del hover. */
+.row-it--acordeon.is-open .row-it__abrir:hover .row-it__go{ transform:none; }
+
+/* ---- el cuerpo del acordeón --------------------------------
+   Con su propia línea y su propio fondo. Sin eso, los controles
+   de una pieza se leen como si fueran de la siguiente. */
+.blk__b{
+  padding:var(--s4) 12px;
+  border-top:1px solid var(--border);
+  background:var(--bg-primary);
+}
+/* El primer subtítulo no necesita su línea: ya hay una encima. */
+.blk__b > .blk__sub:first-child{
+  margin-top:0; padding-top:0; border-top:0;
+}
+.row-it--acordeon > .btn--block{
+  margin:0 12px var(--s4);
+  width:calc(100% - 24px);
+}
+
+.btn--block{ display:flex; width:100%; justify-content:center; }
+
+/* ---- la biblioteca de "+ Añadir elemento" ------------------- */
+.row-it--add{
+  grid-template-columns:auto 1fr;
+  font:inherit; color:inherit; text-align:left;
+  cursor:pointer;
+}
+.row-it--add:hover:not(:disabled){
+  border-color:var(--border-loud);
+  background:var(--surface-hover);
+}
+/* Lo que ya está y no se puede duplicar sigue visible pero
+   apagado: quitarlo de la lista haría dudar de si existe. */
+.row-it--add:disabled{ opacity:.45; cursor:default; }
+.row-it--add:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+/* ---- progreso ----------------------------------------------- */
+.prg{
+  height:4px;
+  border-radius:99px;
+  background:var(--bg-primary);
+  border:1px solid var(--border);
+  overflow:hidden;
+  margin-bottom:var(--s4);
+}
+.prg > i{
+  display:block; height:100%;
+  background:var(--accent);
+  transition:width var(--transition-normal);
+}
+.prg__l{ list-style:none; margin:0; padding:0; display:grid; gap:1px; }
+.prg__i{ font-size:12.5px; color:var(--text-muted); }
+/* Un punto hecho es una confirmación, no una tarea: no es un
+   botón porque no hay nada que ir a hacer. */
+.prg__i.on{ color:var(--text-secondary); }
+.prg__i.on span[aria-hidden]{ color:var(--accent); }
+.prg__i button{
+  display:block; width:100%;
+  background:none; border:0; padding:3px 0; margin:0;
+  font:inherit; color:inherit; text-align:left; cursor:pointer;
+  border-radius:var(--radius-sm);
+  transition:color var(--transition-fast);
+}
+.prg__i button:hover{ color:var(--text-primary); }
+.prg__i button:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+/* ---- canales RGB (panel de superficie) ----------------------------- */
+.rgb{ display:flex; align-items:center; gap:7px; }
+.rgb__c{
+  display:flex; align-items:center; gap:6px; flex:1; min-width:0;
+  padding:6px 9px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--bg-primary);
+}
+.rgb__c:focus-within{ border-color:var(--accent); }
+.rgb__c span{ font-size:11px; color:var(--text-muted); flex:none; }
+.rgb__c input{
+  width:100%; min-width:0;
+  border:0; background:none; outline:none;
+  color:var(--text-primary);
+  font-size:13px; font-variant-numeric:tabular-nums;
+}
+/* Las flechas del number roban sitio en una caja de 3 dígitos */
+.rgb__c input::-webkit-outer-spin-button,
+.rgb__c input::-webkit-inner-spin-button{ appearance:none; margin:0; }
+.rgb__c input[type="number"]{ -moz-appearance:textfield; }
+
+/* ---- caja de ajustes dependiente de la opción elegida --------------- */
+.surf{
+  margin-bottom:var(--s4);
+  padding:14px;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-md);
+}
+.surf__t{
+  margin:0 0 12px;
+  font-size:12.5px; font-weight:600;
+  color:var(--text-secondary);
+}
+
+/* ---- columna de controles del editor -------------------------------- */
+.dash__seccion{ display:flex; flex-direction:column; }
+.dash__h2{
+  margin:0 0 var(--s4);
+  font-size:15px; font-weight:600;
+  color:var(--text-primary);
+}
+
+/* ---- zona para soltar el avatar ------------------------------------- */
+.drop{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:10px;
+  min-height:118px; padding:18px;
+  border:1px dashed var(--border-strong);
+  border-radius:var(--radius-md);
+  background:var(--surface-2, rgba(255,255,255,.02));
+  cursor:pointer;
+  text-align:center;
+  transition:border-color var(--transition-fast), background var(--transition-fast);
+}
+.drop:hover,
+.drop:focus-visible{ border-color:var(--accent); outline:none; }
+.drop.is-over{ border-color:var(--accent); background:var(--accent-soft); }
+.drop.is-busy{ cursor:progress; opacity:.7; }
+.drop__ico{ color:var(--text-muted); }
+.drop__ico svg{ width:34px; height:34px; display:block; }
+.drop__previa{
+  width:78px; height:78px;
+  object-fit:cover; border-radius:var(--radius-sm);
+  border:1px solid var(--border-strong);
+}
+.drop__txt{ font-size:12.5px; color:var(--text-muted); }
+
+.drop__pie{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:var(--s3); margin-top:8px;
+  font-size:11.5px;
+}
+.drop__nota{ color:var(--text-faint, var(--text-muted)); }
+.drop__err{ color:#F04747; }
+.drop__quitar{
+  flex:none;
+  background:none; border:0; padding:0;
+  color:var(--text-muted); font-size:11.5px;
+  text-decoration:underline; cursor:pointer;
+}
+.drop__quitar:hover{ color:var(--text-primary); }
+
+/* Miniatura del vídeo de fondo, para saber cuál es sin salir del editor */
+.vimeo__previa{
+  display:block; width:100%; margin-top:8px;
+  aspect-ratio:16/9; object-fit:cover;
+  border-radius:var(--radius-sm);
+  border:1px solid var(--border-strong);
+}
+/* Las dos cajas de subida en fila comparten alto */
+.f-row .drop{ min-height:96px; }
+
+/* ---- lista de bloques ----------------------------------------------- */
+/* Baldosas en dos columnas, no una lista de filas: dieciséis renglones a
+   todo el ancho eran una columna larguísima que había que recorrer entera
+   para llegar a los de abajo. En dos columnas caben de un vistazo. */
+.blist{
+  list-style:none; margin:0; padding:0;
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(190px, 1fr));
+  gap:8px;
+}
+.blist > li{ display:flex; }
+.blist__it{
+  position:relative;
+  width:100%;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center; gap:11px;
+  min-height:72px;
+  padding:13px 14px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--bg-primary);
+  color:inherit; text-align:left; cursor:pointer;
+  transition:border-color var(--transition-fast), background var(--transition-fast),
+             transform var(--transition-fast);
+}
+.blist__it:hover{
+  border-color:var(--border-strong);
+  background:var(--surface-2);
+  transform:translateY(-1px);
+}
+.blist__n{ font-size:13.5px; font-weight:600; }
+/* La descripción se recorta a dos líneas: si no, una baldosa larga estiraba
+   toda su fila y la rejilla quedaba desigual. */
+.blist__d{
+  font-size:11.5px; line-height:1.35; color:var(--text-muted);
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.blist__off{
+  position:absolute; top:8px; right:8px;
+  font-size:9.5px; letter-spacing:.08em; text-transform:uppercase;
+  padding:2px 7px; border-radius:100px;
+  background:var(--surface-3); color:var(--text-muted);
+}
+.blist__it.is-off{ opacity:.6; }
+.blist__it.is-off .blist__n{ color:var(--text-muted); }
+
+/* ---- miga de pan + grupos del editor de bloque ----------------------- */
+.miga{
+  display:flex; align-items:center; gap:8px;
+  margin-bottom:var(--s3);
+  font-size:12px; color:var(--text-muted);
+}
+.miga__volver{
+  background:none; border:0; padding:0;
+  color:var(--text-secondary); font-size:12px; cursor:pointer;
+}
+.miga__volver:hover{ color:var(--text-primary); }
+.miga__aqui{ color:var(--text-primary); }
+
+.dash__sub{
+  margin:-8px 0 var(--s4);
+  font-size:12.5px; color:var(--text-muted);
+}
+
+.grupo{
+  padding-top:var(--s4);
+  margin-bottom:var(--s4);
+  border-top:1px solid var(--border);
+}
+.grupo:first-of-type{ border-top:0; padding-top:0; }
+.grupo__t{
+  margin:0 0 var(--s3);
+  font-size:10.5px; font-weight:600;
+  letter-spacing:.12em; text-transform:uppercase;
+  color:var(--text-muted);
+}
+
+/* ---- opciones en tarjeta con miniatura ------------------------------ */
+/* Antes eran tres columnas fijas, porque solo habia un grupo de tres.
+   Ahora hay grupos de dos y de once: se reparten solas. */
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(74px, 1fr));
+  gap:6px;
+}
+.card{
+  display:flex; flex-direction:column; align-items:center; gap:7px;
+  padding:9px 5px 7px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--bg-primary);
+  color:var(--text-muted);
+  cursor:pointer;
+  transition:border-color var(--transition-fast), background var(--transition-fast),
+             color var(--transition-fast);
+}
+.card:hover{ border-color:var(--border-strong); color:var(--text-secondary); }
+.card.on{
+  border-color:var(--accent);
+  background:var(--accent-soft);
+  color:var(--accent);
+}
+.card__fig{ display:block; width:100%; color:currentColor; }
+/* Ancho fluido con tope: el dibujo se encoge con la columna en vez de
+   desbordarla, pero no crece mas alla de su tamano de diseno. */
+.card__fig svg{ display:block; width:100%; max-width:54px; height:auto; margin:0 auto; }
+.card__n{
+  font-size:11px; font-weight:500; line-height:1.25;
+  color:var(--text-secondary); text-align:center;
+  /* Nombres como «Desde la izquierda» no caben en una linea de 74px. */
+  overflow-wrap:anywhere;
+}
+.card.on .card__n{ color:var(--accent); }
+.card.on .card__n{ color:var(--text-primary); }
+@media (max-width:420px){ .cards{ grid-template-columns:1fr; } }
+
+/* ---- lienzo: manipular bloques sobre la vista previa ---------------- */
+/* El lienzo se mete ENTRE el hueco de la previa y el perfil. Si se queda
+   con alto automático, el min-height:100% del perfil no tiene contra qué
+   resolverse y la previa se corta en una franja: por eso el recorte solo
+   pasaba en modo libre. */
+.lienzo{
+  position:relative;
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+}
+.lienzo > .pf{ flex:1; }
+.lienzo__capa{
+  position:absolute; inset:0;
+  pointer-events:none;   /* la capa no estorba; sí lo hacen los tiradores */
+}
+.tirador{
+  position:absolute;
+  pointer-events:auto;
+  cursor:grab;
+  /* En reposo NO se dibuja nada: con todas las cajas marcadas a la vez, la
+     retícula tapaba el diseño que se está intentando componer. */
+  border:1px dashed transparent;
+  border-radius:6px;
+  /* Al soltar, el tirador vuelve deslizándose a la casilla donde cayó la
+     pieza. Sin transición daba un salto seco. */
+  transition:left .16s cubic-bezier(.2,.7,.3,1),
+             top .16s cubic-bezier(.2,.7,.3,1),
+             width .16s cubic-bezier(.2,.7,.3,1),
+             height .16s cubic-bezier(.2,.7,.3,1),
+             border-color .12s, background .12s;
+}
+/* Mientras se arrastra manda el ratón: sin transición, para que el puntero
+   no se despegue del punto por el que se agarró. */
+.tirador.is-libre{
+  transition:border-color .12s, background .12s;
+  will-change:transform;
+  z-index:2;
+}
+/* Nada de seleccionar texto ni cursores raros con el botón apretado. */
+.lienzo.is-arrastrando{ user-select:none; }
+.lienzo.is-arrastrando .tirador{ cursor:grabbing; }
+/* Solo se marca la que se está señalando, para saber qué se va a agarrar. */
+.tirador:hover{ border-color:rgba(255,255,255,.3); background:rgba(255,255,255,.04); }
+.tirador.is-on{
+  border-style:solid;
+  border-color:var(--accent);
+  background:rgba(255,255,255,.08);
+}
+.tirador__n{
+  position:absolute; top:-9px; left:6px;
+  padding:1px 6px; border-radius:100px;
+  background:var(--accent); color:var(--accent-ink);
+  font-size:9px; font-weight:600; letter-spacing:.04em;
+  opacity:0; transition:opacity .12s;
+  white-space:nowrap; pointer-events:none;
+}
+.tirador:hover .tirador__n,
+.tirador.is-on .tirador__n{ opacity:1; }
+/* Tirador de ancho: se agarra por el borde derecho */
+.tirador__ancho{
+  position:absolute; top:0; right:-4px; bottom:0;
+  width:9px;
+  cursor:ew-resize;
+}
+.tirador__ancho::after{
+  content:""; position:absolute; top:50%; right:3px;
+  width:3px; height:22px; margin-top:-11px;
+  border-radius:2px; background:var(--accent);
+  opacity:0; transition:opacity .12s;
+}
+.tirador:hover .tirador__ancho::after,
+.tirador.is-on .tirador__ancho::after{ opacity:1; }
+.dash__pista{
+  margin:-4px 0 var(--s4);
+  padding:10px 12px;
+  border-radius:var(--radius-sm);
+  background:var(--surface-2, rgba(255,255,255,.03));
+  font-size:11.5px; line-height:1.5; color:var(--text-muted);
+}
+
+/* ============================================================
+   ARMAZÓN DEL PANEL
+   Estaba con estilos en línea, y una media query no puede tocarlos:
+   por debajo de ~1000px las tres columnas se estrangulaban, los
+   textos se partían letra a letra y el encabezado de la vista previa
+   se convertía en una banda negra.
+   ============================================================ */
+.dashboard-layout{
+  display:flex;
+  height:calc(100vh - var(--nav-h, 60px));
+  overflow:hidden;
+}
+.dashboard__sidebar{
+  width:260px; flex:none;
+  display:flex; flex-direction:column; justify-content:space-between;
+  border-right:1px solid var(--border);
+  background:var(--bg-secondary, #0d0d0d);
+  overflow-y:auto;
+}
+.dashboard__editor{
+  flex:1 1 500px;
+  max-width:600px;
+  min-width:0;                 /* sin esto el contenido no deja encoger */
+  overflow-y:auto;
+  padding:32px 24px;
+  border-right:1px solid var(--border);
+}
+.dashboard__preview{
+  flex:1 1 500px;
+  min-width:0;
+  display:flex; flex-direction:column;
+  background:#000;
+}
+.prevbar{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:var(--s3);
+  padding:12px 20px;
+  border-bottom:1px solid var(--border);
+}
+.prevbar__t{ font-size:13px; color:var(--text-muted); white-space:nowrap; }
+.prevbar__vp{ display:flex; gap:4px; flex:none; }
+
+/* --- pantalla mediana: la vista previa baja debajo del editor ------ */
+@media (max-width:1100px){
+  .dashboard-layout{ flex-direction:column; height:auto; overflow:visible; }
+  .dashboard__sidebar{
+    width:auto;
+    flex-direction:row; justify-content:flex-start;
+    gap:var(--s3);
+    overflow-x:auto; overflow-y:hidden;
+    border-right:0; border-bottom:1px solid var(--border);
+  }
+  .dashboard__editor{
+    max-width:none;
+    overflow-y:visible;
+    border-right:0; border-bottom:1px solid var(--border);
+  }
+  .dashboard__preview{ min-height:70vh; }
+}
+
+.dash__quien{ padding:20px; border-bottom:1px solid var(--border); }
+.dash__quien-t{ font-weight:700; font-size:1.1rem; }
+.dash__quien-u{ font-size:.85rem; color:var(--text-muted); }
+.dash__nav{ padding:12px 8px; display:flex; flex-direction:column; gap:4px; }
+.dash__nav .btn{ justify-content:flex-start; text-align:left; gap:10px; }
+
+/* En horizontal la cabecera no debe partirse ni robar ancho a las
+   pestañas: se queda a su tamaño y en una línea. */
+@media (max-width:1100px){
+  .dashboard__sidebar > div{ display:flex; align-items:center; gap:var(--s3); min-width:0; }
+  .dash__quien{
+    flex:none;
+    padding:12px 16px;
+    border-bottom:0; border-right:1px solid var(--border);
+    white-space:nowrap;
+  }
+  .dash__nav{ flex-direction:row; overflow-x:auto; padding:10px 8px; }
+  .dash__nav .btn{ white-space:nowrap; flex:none; }
+}
+
+/* --- móvil: la cabecera sobra, el espacio es para las pestañas ----- */
+@media (max-width:640px){
+  .dash__quien{ display:none; }
+  .dashboard__editor{ padding:20px 16px; }
+}
+
+/* ============================================================
+   MUESTRA — los iconos de verdad dentro del editor
+   Las pastillas dicen el nombre del estilo; esto enseña el estilo.
+   Reutiliza `.pf-socials` / `.pf-badges`, así que aquí sólo hacen
+   falta los tokens `--p-*` que esas clases esperan y que fuera de
+   `.pf` no están definidos.
+   ============================================================ */
+.muestra{
+  --p-text:var(--text-primary);
+  --p-icon:var(--text-primary);
+  --p-dim:var(--text-muted);
+  --p-line:var(--border-strong);
+  --p-surface:var(--surface);
+  --p-surface-2:var(--surface-2);
+  --p-primary:var(--accent);
+  --p-chip-r:var(--radius-sm);
+  --p-fm:var(--font);
+  --u-ico:22px;
+  --u-just:flex-start;
+  --halo:var(--accent);
+
+  margin-top:10px;
+  padding:16px 14px;
+  border:1px dashed var(--border-strong);
+  border-radius:var(--radius-md);
+  background:var(--bg-secondary);
+}
+/* La muestra es para mirar, no para navegar: un clic aquí abriría
+   la red en otra pestaña en mitad de la edición. */
+.muestra .pf-social{ pointer-events:none; }
+
+.muestra__vacio{
+  margin:10px 0 0;
+  padding:14px;
+  border:1px dashed var(--border);
+  border-radius:var(--radius-md);
+  color:var(--text-muted);
+  font-size:12.5px;
+  line-height:1.5;
+}
+
+/* ============================================================
+   REDES Y ENLACES — se elige por icono, no por nombre
+   Una rejilla de botones con el nombre escrito ocupaba media
+   columna para cuarenta y tantas redes, y las pestañas de grupo
+   se partían letra a letra al encogerse. Aquí manda el logo: se
+   reconoce de un vistazo y cabe el catálogo entero.
+   ============================================================ */
+.tabs{
+  display:flex; gap:6px;
+  overflow-x:auto; padding-bottom:6px;
+  scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{ display:none; }
+/* flex:none es lo que impide que se estrujen hasta partir el texto */
+.tabs .pill{
+  flex:none; white-space:nowrap;
+  cursor:pointer;
+  transition:color var(--transition-fast), border-color var(--transition-fast),
+             background var(--transition-fast);
+}
+.tabs .pill:hover{ color:var(--text-primary); border-color:var(--border-strong); }
+.tabs .pill.is-active{
+  background:var(--accent); border-color:var(--accent);
+  color:var(--accent-ink); font-weight:600;
+}
+
+.netgrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(44px, 1fr));
+  gap:6px;
+}
+.netchip{
+  position:relative;
+  aspect-ratio:1;
+  display:grid; place-items:center;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--surface);
+  /* el logo va SIEMPRE en su color: es lo que hace que se reconozca de
+     un vistazo. Lo que separa puesto de no puesto es la caja, no el
+     color; apagarlos dejaba una parrilla gris indistinguible. */
+  color:var(--brand, var(--text-secondary));
+  cursor:pointer;
+  transition:border-color var(--transition-fast),
+             background var(--transition-fast), transform var(--transition-fast);
+}
+.netchip svg{ width:20px; height:20px; display:block; opacity:.8; }
+.netchip:hover svg,
+.netchip.is-on svg{ opacity:1; }
+.netchip:hover{
+  border-color:var(--border-loud);
+  transform:translateY(-2px);
+}
+.netchip.is-on{
+  border-color:color-mix(in srgb, var(--brand, var(--accent)) 55%, transparent);
+  background:color-mix(in srgb, var(--brand, var(--accent)) 13%, var(--surface));
+}
+/* un punto, no un tick: a 44 px un icono encima del logo lo tapa */
+.netchip.is-on::after{
+  content:'';
+  position:absolute; top:4px; right:4px;
+  width:5px; height:5px; border-radius:50%;
+  background:currentColor;
+}
+
+/* el comodín no es una red: ocupa la fila y se explica */
+.netchip--ancho{
+  grid-column:1 / -1;
+  aspect-ratio:auto;
+  grid-template-columns:auto 1fr;
+  justify-items:start; align-items:center;
+  gap:10px; padding:10px 12px;
+  text-align:left;
+}
+.netchip--ancho::after{ top:50%; right:12px; transform:translateY(-50%); }
+.netchip__t{ font-size:12.5px; font-weight:600; color:var(--text-primary); }
+.netchip__d{ font-size:11px; color:var(--text-muted); line-height:1.35; }
+
+/* ---- los que ya están puestos ---------------------------- */
+.enlaces{ display:flex; flex-direction:column; gap:8px; }
+.enlace{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center; gap:10px;
+  padding:8px 10px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--surface);
+}
+.enlace__ico{
+  display:grid; place-items:center;
+  width:28px; height:28px; flex:none;
+  border-radius:var(--radius-sm);
+  background:color-mix(in srgb, var(--brand, var(--accent)) 14%, transparent);
+  color:var(--brand, var(--text-primary));
+}
+.enlace__ico svg{ width:16px; height:16px; }
+.enlace__n{
+  font-family:var(--font);
+  font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--text-muted);
+}
+/* sin caja dentro de otra caja: la fila ya es el contenedor */
+.enlace__u{
+  width:100%;
+  border:0; background:transparent;
+  padding:1px 0;
+  color:var(--text-primary);
+  font-size:12.5px;
+  font-family:inherit;
+}
+.enlace__u:focus{ outline:none; color:#fff; }
+.enlace__u::placeholder{ color:var(--text-faint); }
+.enlace__x{
+  flex:none;
+  width:26px; height:26px;
+  display:grid; place-items:center;
+  border:0; border-radius:var(--radius-sm);
+  background:transparent; color:var(--text-faint);
+  cursor:pointer; font-size:15px; line-height:1;
+  transition:color var(--transition-fast), background var(--transition-fast);
+}
+.enlace__x:hover{ color:var(--dnd); background:color-mix(in srgb, var(--dnd) 16%, transparent); }
+
+/* ============================================================
+   INSIGNIAS — fichas de una línea
+   Las baldosas de 150 px con el icono a 2rem daban una cuadrícula
+   enorme para catorce insignias: había que hacer scroll para ver
+   cuáles tienes. Ahora es una ficha por fila, dos por columna
+   cuando hay sitio.
+   ============================================================ */
+.bgrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(196px, 1fr));
+  gap:8px;
+}
+.bcard{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:center; gap:10px;
+  padding:9px 10px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--surface);
+  color:inherit; text-align:left;
+  cursor:pointer;
+  transition:border-color var(--transition-fast), background var(--transition-fast);
+}
+.bcard:hover{ border-color:var(--border-loud); }
+.bcard__i{
+  display:grid; place-items:center;
+  width:30px; height:30px; flex:none;
+  /* Sin caja, por lo mismo que en los bloques: `drop-shadow` sigue el alfa
+     del elemento entero, y con fondo opaco el resplandor dibuja el cuadrado
+     en vez del icono. */
+  background:transparent;
+  color:var(--text-faint);
+  transition:color var(--transition-fast);
+}
+.bcard__i svg{ width:21px; height:21px; display:block; }
+.bcard__c{ min-width:0; }
+.bcard__n{
+  display:flex; align-items:center; gap:6px;
+  font-size:12.5px; font-weight:600; color:var(--text-primary);
+}
+.bcard__n span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* la rareza cabe en un punto: el nombre es lo que se lee */
+.bcard__r{
+  flex:none;
+  width:6px; height:6px; border-radius:50%;
+  background:var(--rare);
+}
+.bcard__d{
+  margin-top:2px;
+  font-size:11px; line-height:1.35; color:var(--text-muted);
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.bcard.is-on{
+  border-color:var(--rare);
+  background:color-mix(in srgb, var(--rare) 10%, var(--surface));
+}
+/* Activa: el icono toma el color de su rareza y brilla con el.
+   El resplandor va en el SVG, para que salga del trazo. */
+.bcard.is-on .bcard__i{ color:var(--rare); background:transparent; }
+.bcard.is-on .bcard__i svg{
+  filter:drop-shadow(0 0 4px color-mix(in srgb, var(--rare) 75%, transparent))
+         drop-shadow(0 0 11px color-mix(in srgb, var(--rare) 40%, transparent));
+}
+.bcard:hover .bcard__i{ color:var(--rare); }
+.bcard:not(.is-on):hover .bcard__i svg{
+  filter:drop-shadow(0 0 4px color-mix(in srgb, var(--rare) 45%, transparent));
+}
+
+/* La ficha del vídeo de Vimeo, debajo de la miniatura. */
+.vimeo__ficha{
+  margin:6px 0 0;
+  font-size:11.5px; line-height:1.45;
+  color:var(--text-muted);
+}
+.vimeo__ficha b{ color:var(--text-secondary); font-weight:600; }
+
+/* ---- subida de vídeo a Vimeo -------------------------------
+   La barra no es decorativa: una subida de 40 MB sin señal de
+   avance se lee como "se ha colgado" y la gente recarga. */
+.subvid__estado{ display:flex; flex-direction:column; gap:8px; width:100%; padding:4px 10px; }
+.subvid__t{ font-size:12.5px; font-weight:600; color:var(--text-primary); }
+.subvid__barra{
+  height:6px; border-radius:100px;
+  background:var(--surface-2); overflow:hidden;
+}
+.subvid__barra i{
+  display:block; height:100%;
+  background:linear-gradient(90deg, var(--accent), var(--accent));
+  transition:width .25s var(--ease-out);
+}
+/* Transcodificar no da porcentaje: una barra que se mueve sola dice
+   "sigo vivo" sin mentir sobre cuánto queda. */
+.subvid__barra i.is-indef{
+  background:linear-gradient(90deg,
+    transparent, var(--accent), transparent);
+  animation:subvidVaiven 1.4s ease-in-out infinite;
+}
+@keyframes subvidVaiven{
+  from{ transform:translateX(-100%); }
+  to{ transform:translateX(100%); }
+}
+.subvid__nota{ font-size:11px; color:var(--text-muted); line-height:1.4; }
+
+/* Nota debajo de un control, para el que no se explica solo. */
+.f__d{
+  margin:4px 0 0;
+  font-size:11px; line-height:1.4;
+  color:var(--text-muted);
+}
+
+/* ---- eje central del lienzo --------------------------------
+   Aparece solo mientras el imán tiene cogida la pieza. Una guía
+   permanente sería ruido encima de la vista previa. */
+.lienzo__eje{
+  position:absolute;
+  left:50%; top:0; bottom:0;
+  width:1px;
+  transform:translateX(-.5px);
+  background:linear-gradient(180deg,
+    transparent, var(--accent) 12%, var(--accent) 88%, transparent);
+  opacity:.85;
+  animation:ejeIn .12s ease-out both;
+}
+@keyframes ejeIn{ from{ opacity:0; } }
+
+/* El botón de publicar manda en su barra: es la única acción que saca
+   el perfil de aquí. Se queda pegado a la derecha de los tamaños. */
+.prevbar__pub{ flex:none; margin-left:auto; }
+@media (max-width:520px){
+  .prevbar{ flex-wrap:wrap; }
+  .prevbar__t{ order:-1; width:100%; }
+  .prevbar__pub{ margin-left:0; }
+}
+
+/* Pie del panel de animación: probar y volver atrás, juntos. */
+.anim__pie{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:var(--s3);
+  margin-top:10px;
+}
+.anim__reset{ font-size:12px; }
+
+/* ---- enlace propio: nombre e icono a elegir ----------------
+   La fila del enlace pasa a tres columnas + una fila extra para
+   el selector, que solo aparece si se pide. */
+.enlace__nom{
+  width:100%;
+  border:0; background:transparent; padding:0 0 1px;
+  color:var(--text-primary);
+  font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+  font-family:inherit; font-weight:600;
+}
+.enlace__nom:focus{ outline:none; color:#fff; }
+.enlace__nom::placeholder{
+  color:var(--text-faint); text-transform:none; letter-spacing:0; font-weight:400;
+}
+/* El icono del enlace propio es pulsable: se nota al pasar por encima. */
+.enlace__ico--elegir{
+  border:1px solid transparent;
+  cursor:pointer;
+  transition:border-color var(--transition-fast);
+}
+.enlace__ico--elegir:hover{ border-color:var(--border-loud); }
+
+.enlace__iconos{
+  grid-column:1 / -1;
+  margin-top:8px; padding-top:8px;
+  border-top:1px solid var(--border);
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(38px, 1fr));
+  gap:5px;
+  max-height:172px; overflow-y:auto;
+}
+.enlace__iconos .netchip{ border-radius:var(--radius-sm); }
+.enlace__iconos .netchip svg{ width:17px; height:17px; }
+
+/* El aviso de Lanyard lleva acción, así que respira como un bloque. */
+.drop__err .dc__unir{
+  display:inline-flex;
+  margin:8px 0;
+  text-decoration:none;
+}
+
+/* Icono propio en la fila del editor. */
+.enlace__ico--elegir img{
+  width:16px; height:16px; object-fit:contain;
+}
+/* El subidor ocupa la fila entera dentro del selector de iconos. */
+.enlace__iconos > .f{ grid-column:1 / -1; margin-bottom:4px; }
+
+/* ---- baldosa de bloque: icono, texto y estado ---------------
+   La lista se lee de un vistazo o no se lee. El icono dice QUÉ es
+   antes que el nombre, y el ojo dice si se ve, sin la palabra
+   «oculto» ocupando una esquina. */
+.blist__ico{
+  display:grid; place-items:center;
+  width:34px; height:34px; flex:none;
+  /* Sin fondo: `drop-shadow` sigue el canal alfa de TODO el elemento, asi
+     que con una caja opaca detras el resplandor dibujaba el cuadrado en vez
+     del icono. Sin fondo, sigue el trazo. */
+  background:transparent;
+  color:var(--text-secondary);
+  transition:color var(--transition-fast);
+}
+.blist__ico svg{ width:20px; height:20px; display:block; }
+.blist__it:hover .blist__ico{ color:var(--text-primary); }
+
+.blist__txt{ min-width:0; display:grid; gap:2px; }
+
+.blist__ojo{
+  display:grid; place-items:center;
+  width:22px; height:22px; flex:none;
+  color:var(--text-faint);
+  transition:color var(--transition-fast);
+}
+.blist__ojo svg{ width:16px; height:16px; display:block; }
+.blist__it:hover .blist__ojo{ color:var(--text-secondary); }
+
+/* Apagado: se atenúa entero y el icono pierde el fondo. Antes sólo bajaba
+   la opacidad y había que leer la pastilla para saberlo. */
+.blist__it.is-off .blist__ojo{ color:var(--text-muted); }
+
+/* ---- iconos del menú, con resplandor ------------------------
+   Emoji fuera: los dibuja el sistema operativo, cambian de forma en
+   cada aparato, no heredan el color del tema y no se les puede dar
+   brillo. Estos son SVG de trazo y hacen las tres cosas. */
+.dash__ico{
+  display:grid; place-items:center;
+  width:18px; height:18px; flex:none;
+  color:var(--text-muted);
+  transition:color var(--transition-fast), filter var(--transition-normal);
+}
+.dash__ico svg{ width:100%; height:100%; display:block; }
+.dash__nav .btn:hover .dash__ico{ color:var(--text-primary); }
+.dash__nav .btn:hover .dash__ico svg{
+  filter:drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 60%, transparent));
+}
+/* El activo lleva el acento de FONDO, asi que su resplandor no puede ser
+   del acento: seria blanco sobre blanco. Usa la tinta contraria —la misma
+   con la que se escribe encima— y entonces si se ve. */
+.dash__nav .btn--primary .dash__ico{ color:var(--accent-ink); }
+.dash__nav .btn--primary .dash__ico svg{
+  filter:drop-shadow(0 0 4px color-mix(in srgb, var(--accent-ink) 55%, transparent))
+         drop-shadow(0 0 9px color-mix(in srgb, var(--accent-ink) 28%, transparent));
+}
+
+/* Resplandor del icono del bloque: encendido brilla, apagado no. */
+.blist__ico{
+  transition:color var(--transition-fast), background var(--transition-fast),
+             filter var(--transition-normal);
+}
+/* El resplandor va en el SVG, no en su contenedor: asi sale del trazo. */
+.blist__it:not(.is-off) .blist__ico svg{
+  filter:drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 70%, transparent))
+         drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 35%, transparent));
+}
+.blist__it:not(.is-off) .blist__ico{ color:var(--accent); }
+.blist__it:not(.is-off):hover .blist__ico svg{
+  filter:drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 90%, transparent))
+         drop-shadow(0 0 14px color-mix(in srgb, var(--accent) 55%, transparent));
+}
+/* Apagado no brilla: el resplandor ES la señal de que esta encendido. */
+.blist__it.is-off .blist__ico{ color:var(--text-faint); }
+.blist__it.is-off .blist__ico svg{ filter:none; }
+
+/* ---- Insignias: de sólo lectura -------------------------------
+   Ya no hay nada que pulsar, así que la tarjeta deja de comportarse
+   como un botón. Lo que gana a cambio es la barra de progreso, que
+   es lo que convierte una pegatina en un objetivo. */
+
+.ins{ display:flex; flex-direction:column; gap:16px; }
+.ins__sub{
+  margin:4px 0 0;
+  color:var(--text-muted);
+  font-size:.85rem;
+}
+.ins__pie{
+  margin:0;
+  color:var(--text-faint);
+  font-size:.78rem;
+  line-height:1.55;
+  max-width:60ch;
+}
+
+.bcard--fija{ cursor:default; }
+.bcard--fija:hover{ border-color:var(--border); }
+
+/* La caja crece hacia abajo con la barra: sin esto, el icono se
+   quedaba centrado sobre un texto de tres alturas distintas. */
+.bcard--fija{ align-items:start; }
+.bcard--fija .bcard__i{ margin-top:2px; }
+
+.ins__prog{ display:block; margin-top:6px; }
+.ins__barra{
+  display:block;
+  height:3px;
+  border-radius:2px;
+  background:var(--surface-3);
+  overflow:hidden;
+}
+.ins__barra i{
+  display:block;
+  height:100%;
+  border-radius:2px;
+  background:var(--rare);
+  /* Sin transición al montar; sólo cuando el número llega del servidor. */
+  transition:width .5s var(--ease-out);
+}
+.ins__falta{
+  display:block;
+  margin-top:5px;
+  font-style:normal;
+  font-size:11px;
+  color:var(--text-muted);
+}
+
+.ins__cerrada,
+.ins__hecha{
+  display:block;
+  margin-top:6px;
+  font-size:10.5px;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+.ins__cerrada{ color:var(--text-faint); }
+.ins__hecha{ color:var(--rare); font-weight:600; }
+
+/* Sin conseguir, la tarjeta se aparta un paso: el color es el premio. */
+.bcard--fija:not(.is-on){ background:transparent; }
+.bcard--fija:not(.is-on) .bcard__n{ color:var(--text-secondary); }
+.bcard--fija:not(.is-on) .bcard__r{ opacity:.45; }
+
+@media (prefers-reduced-motion: reduce){
+  .ins__barra i{ transition:none; }
+}
+
+/* ---- Frontera de error ----------------------------------------
+   Se ve poco y se lee rapido: quien llega aqui ya tiene un problema,
+   no necesita que ademas grite. */
+.frontera{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  flex-wrap:wrap;
+  margin:16px;
+  padding:16px 18px;
+  border:1px solid rgba(248,81,73,.34);
+  border-radius:var(--radius-md);
+  background:rgba(248,81,73,.06);
+}
+.frontera > svg{ width:22px; height:22px; flex:none; color:#f85149; margin-top:1px; }
+.frontera > div{ flex:1 1 220px; min-width:0; }
+.frontera__t{ margin:0; font-weight:600; font-size:.93rem; }
+.frontera__d{
+  margin:5px 0 0;
+  color:var(--text-muted);
+  font-size:.83rem;
+  line-height:1.5;
+}
+.frontera__acc{ display:flex; gap:8px; flex:none; }

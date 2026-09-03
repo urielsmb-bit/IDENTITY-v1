@@ -33,7 +33,6 @@
   background-size:cover;
   background-position:center;
 }
-.pf-bg--fixed{ position:fixed; }
 .pf-bg--media{ background:var(--p-bg); }
 .pf-bg video,
 .pf-bg img.pf-bgimg{
@@ -1722,4 +1721,295 @@
 /* quien pidio menos movimiento no ve las barras bailar */
 @media (prefers-reduced-motion: reduce){
   .pf-insta.is-open .pf-insta__viz i{ animation:none; height:12px; }
+}
+
+/* ============================================================
+   AVATAR AVANZADO
+   ============================================================
+   Todo lo de aquí es ADITIVO: cuelga de atributos y variables
+   que un perfil guardado antes de esto no tiene, así que no
+   cambia ni un píxel de lo que ya existe. Un perfil sin
+   `data-avmask` no entra en ninguna de estas reglas.
+
+   Las máscaras van con `clip-path`, no con `mask-image`: un
+   clip-path es geometría escrita aquí mismo, sin URL, así que
+   no descarga nada ni depende de la política de contenido.
+   ============================================================ */
+
+/* --- qué parte de la foto se ve ---------------------------- */
+.pf-avatar img{ object-position:var(--u-avpos, 50% 50%); }
+
+/* --- cómo encaja la imagen --------------------------------
+   Independiente de la forma. Un PNG con transparencia quiere
+   verse entero aunque su caja sea un círculo. */
+.pf[data-avfit="contain"] .pf-avatar img{ object-fit:contain; }
+.pf[data-avfit="cover"]   .pf-avatar img{ object-fit:cover; }
+
+/* --- sin fondo detrás -------------------------------------
+   Lo que hace que un PNG recortado flote en vez de salir
+   pegado sobre un cuadrado gris. */
+.pf[data-avfondo="off"] .pf-avatar{ background:transparent; }
+
+/* --- máscaras ---------------------------------------------
+   El recorte va en una capa de dentro y NO en `.pf-avatar`.
+   Si se pusiera en el contenedor se llevaría por delante el
+   aro de `data-fx="ring"`, que se dibuja fuera de la caja
+   (inset:-9px), y el borde y el halo, que también son suyos.
+   La capa solo existe cuando hay máscara. */
+.pf-avatar__m{
+  position:absolute; inset:0;
+  display:grid; place-items:center;
+  background:inherit;
+  overflow:hidden;
+}
+.pf-avatar__m img{ width:100%; height:100%; }
+.pf[data-avmask]:not([data-avmask="none"]) .pf-avatar{ background:transparent; }
+
+.pf[data-avmask="hex"] .pf-avatar__m{
+  clip-path:polygon(50% 0%, 93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%);
+}
+.pf[data-avmask="shield"] .pf-avatar__m{
+  clip-path:polygon(50% 100%, 4% 72%, 4% 8%, 50% 0%, 96% 8%, 96% 72%);
+}
+.pf[data-avmask="star"] .pf-avatar__m{
+  clip-path:polygon(50% 0%, 61.8% 34.5%, 98% 34.5%, 68.8% 56%, 80.9% 91%,
+                    50% 69.5%, 19.1% 91%, 31.2% 56%, 2% 34.5%, 38.2% 34.5%);
+}
+.pf[data-avmask="diamond"] .pf-avatar__m{
+  clip-path:polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+/* Una superelipse de verdad, no un radio grande: la diferencia
+   se nota justo en las esquinas, que es lo único que se mira. */
+.pf[data-avmask="squircle"] .pf-avatar__m{
+  clip-path:path("M0,50 C0,10 10,0 50,0 C90,0 100,10 100,50 \
+                  C100,90 90,100 50,100 C10,100 0,90 0,50 Z");
+  clip-path:xywh(0 0 100% 100% round 30%);
+}
+
+/* --- decoración encima ------------------------------------
+   El marco animado que va POR ENCIMA del avatar, estilo
+   Discord. Sobresale a propósito: una decoración que cabe
+   dentro de la caja no se lee como un marco, se lee como parte
+   de la foto.
+
+   `pointer-events:none` porque el avatar se arrastra y se
+   selecciona en el editor, y un marco que se come el clic
+   convierte una pieza en intocable. */
+.pf-avatar__decor{
+  position:absolute;
+  inset:-12.5%;
+  background-image:var(--u-avdecor);
+  background-size:contain;
+  background-position:center;
+  background-repeat:no-repeat;
+  pointer-events:none;
+}
+
+/* ============================================================
+   NOMBRE VISIBLE
+   ============================================================
+   Aditivo, como el avatar avanzado: cuelga de variables y
+   atributos que un perfil de antes no tiene. Con todo a cero
+   —que es lo que sale si nadie eligió nada— estas reglas no
+   pintan nada distinto de lo que ya se pintaba.
+   ============================================================ */
+
+/* --- degradado propio del nombre --------------------------
+   El de `is-animname` usa los colores del tema y se mueve.
+   Este es tuyo, con tus dos colores, y se está quieto: son dos
+   cosas distintas y se pueden combinar. */
+.pf[data-namegrad="on"] .pf-name{
+  background-image:var(--u-namegrad);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+/* --- halo y sombra ----------------------------------------
+   OJO con el orden: esto va DESPUÉS de `.pf.glow-name` a
+   propósito. Tienen la misma especificidad, así que gana el
+   último, y `--u-nameglow` ya trae 24px cuando el interruptor
+   de siempre está encendido. Un perfil viejo ve exactamente el
+   mismo halo que veía.
+
+   Con degradado hay que cambiar de herramienta: bajo unas
+   letras transparentes, un `text-shadow` se ve POR DEBAJO del
+   relleno y queda como un manchón. `drop-shadow` sigue la
+   silueta, que es lo que uno espera de una sombra. */
+.pf:not([data-namegrad="on"]) .pf-name{
+  text-shadow:
+    0 0 var(--u-nameglow, 0px) color-mix(in srgb, var(--halo) 65%, transparent),
+    0 2px var(--u-nameshadow, 0px) var(--u-nameshadowc, rgba(0,0,0,.45));
+}
+.pf[data-namegrad="on"] .pf-name{
+  filter:
+    drop-shadow(0 0 var(--u-nameglow, 0px) var(--halo))
+    drop-shadow(0 2px var(--u-nameshadow, 0px) var(--u-nameshadowc, rgba(0,0,0,.45)));
+}
+
+/* --- animaciones ------------------------------------------ */
+.pf[data-nameanim="sweep"] .pf-name{
+  background-image:linear-gradient(100deg,
+    var(--p-text) 20%, var(--p-primary) 42%, var(--p-accent) 58%, var(--p-text) 80%);
+  background-size:250% 100%;
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  animation:nameSweep 5.5s linear infinite;
+}
+/* Con degradado propio, `sweep` mueve EL TUYO en vez de
+   sustituirlo por el del tema: elegir dos colores y que la
+   animación los ignore sería quitarte lo que acabas de elegir. */
+.pf[data-namegrad="on"][data-nameanim="sweep"] .pf-name{
+  background-image:var(--u-namegrad);
+  background-size:250% 100%;
+}
+.pf[data-nameanim="pulse"] .pf-name{
+  animation:nameLatido 2.8s var(--ease) infinite;
+}
+@keyframes nameLatido{ 50%{ transform:scale(1.03); } }
+.pf[data-nameanim="float"] .pf-name{
+  animation:nameFlota 5s var(--ease) infinite;
+}
+@keyframes nameFlota{ 50%{ transform:translateY(-5px); } }
+
+/* Quien pide menos movimiento lo pide para todo, no solo para
+   lo que ya existía cuando se escribió la regla de arriba. */
+@media (prefers-reduced-motion: reduce){
+  .pf[data-nameanim] .pf-name{ animation:none; }
+}
+
+/* ============================================================
+   @USUARIO
+   ============================================================ */
+
+/* El botón de copiar no se ve como un botón: se ve como el
+   @usuario, porque ES el @usuario. Lo único que cambia es el
+   cursor, que es donde se descubre que se puede tocar. */
+.pf-handle button{
+  font:inherit; color:inherit; letter-spacing:inherit;
+  background:none; border:0; padding:0; margin:0;
+  cursor:copy;
+}
+.pf-handle button:hover{ color:var(--p-text); }
+.pf-handle button:focus-visible{
+  outline:2px solid var(--p-primary); outline-offset:3px; border-radius:3px;
+}
+
+/* El acuse de recibo. Va en un ::after y no en el texto para que
+   copiar no cambie el ancho de la pieza: si el @usuario se
+   encogiera y se estirara, el perfil entero daría un salto. */
+.pf-handle[data-copiado="si"]{ position:relative; }
+.pf-handle[data-copiado="si"]::after{
+  content:"copiado";
+  position:absolute; left:100%; top:50%;
+  transform:translateY(-50%);
+  margin-left:8px;
+  font-size:10px; letter-spacing:.04em;
+  color:var(--p-primary);
+  white-space:nowrap;
+  pointer-events:none;
+}
+
+/* Dentro del editor no se copia: se selecciona. Es la misma
+   razón por la que ahí los enlaces del perfil tampoco navegan —
+   un clic en la vista previa sirve para elegir la pieza que vas
+   a editar, no para ejecutar lo que la pieza hace. */
+.prev__stage .pf-handle button{ pointer-events:none; }
+
+/* ============================================================
+   BIOGRAFÍA
+   ============================================================ */
+
+/* Los saltos de línea que alguien escribió, respetados. Hasta
+   ahora se guardaban y no se pintaban: el navegador colapsa el
+   salto a un espacio y una bio de tres párrafos salía como un
+   ladrillo. `pre-line` respeta los saltos y sigue colapsando los
+   espacios de más, que es lo que se quiere — no `pre`, que
+   conservaría también la sangría accidental de un copiar y
+   pegar. */
+.pf[data-biosaltos="on"] .pf-bio{ white-space:pre-line; }
+
+/* El ancho de lectura. Los 46 caracteres de siempre siguen
+   siendo el punto de partida: es la medida en la que una línea
+   se lee sin perder el renglón. */
+.pf-bio{ max-width:var(--u-biow, 46ch); }
+
+/* Alineación propia, independiente de la del perfil. El margen
+   acompaña al texto: con `max-width`, un párrafo alineado a la
+   derecha que sigue pegado a la izquierda se lee como un fallo
+   de maquetación. */
+.pf[data-bioalign="left"]   .pf-bio{ text-align:left;   margin-inline:0 auto; }
+.pf[data-bioalign="center"] .pf-bio{ text-align:center; margin-inline:auto; }
+.pf[data-bioalign="right"]  .pf-bio{ text-align:right;  margin-inline:auto 0; }
+
+/* Un enlace dentro de la bio se ve como un enlace, sin gritar. */
+.pf-bio a{
+  color:var(--p-text);
+  text-decoration:underline;
+  text-underline-offset:2px;
+  text-decoration-color:color-mix(in srgb, var(--p-primary) 60%, transparent);
+}
+.pf-bio a:hover{ color:var(--p-primary); }
+/* En el editor no navega: ahí el clic selecciona la pieza. */
+.prev__stage .pf-bio a{ pointer-events:none; }
+
+/* La etiqueta del contador de visitas. Va con el mismo tono que
+   el número: es parte de la misma frase, no un añadido. */
+.pf-views__l{ opacity:.75; }
+
+/* ============================================================
+   ANIMACIONES DE ENTRADA · lo que faltaba y lo nuevo
+   ============================================================ */
+
+/* `rise` es el valor por DEFECTO de `enterFx` desde siempre y no
+   tenía regla a nivel de perfil: la animación existía —la usan el
+   escalonado y las piezas sueltas— pero nadie la enganchaba al
+   `.pf-stack`. O sea que el efecto de entrada por defecto no
+   hacía nada en ningún perfil.
+
+   Va aquí abajo y no arriba con las suyas a propósito: quien lea
+   este bloque tiene que ver que es un arreglo, no una animación
+   más. */
+.pf[data-enter="rise"] .pf-stack{ animation:enterRise .6s var(--ease-out) both; }
+
+/* --- glitch ------------------------------------------------
+   Un salto de canal, no un temblor: los desplazamientos van con
+   `steps(1)` en el original del avatar y aquí con paradas secas
+   por la misma razón. Una interpolación suave lo convierte en un
+   balanceo, que es otra cosa. */
+@keyframes enterGlitch{
+  0%   { opacity:0; transform:translate(-7px, 3px); filter:hue-rotate(75deg) saturate(2.2); }
+  18%  { opacity:1; transform:translate(6px, -2px); filter:hue-rotate(-55deg) saturate(1.6); }
+  34%  { transform:translate(-4px, 1px); filter:none; }
+  52%  { transform:translate(3px, 0); }
+  70%  { transform:translate(-1px, 0); }
+  100% { transform:none; }
+}
+.pf[data-enter="glitch"] .pf-stack{ animation:enterGlitch .62s steps(1, end) both; }
+.pf-stack > [data-anim="glitch"]{ animation:enterGlitch .62s steps(1, end) both; }
+
+/* --- revelado 3D -------------------------------------------
+   La perspectiva va en la propia transformación y no en el
+   padre: puesta en `.pf-stack` afectaría a todo lo que hay
+   dentro durante toda la vida de la página, no solo al segundo
+   que dura la entrada. */
+@keyframes enter3d{
+  from{ opacity:0; transform:perspective(900px) rotateX(-26deg) translateY(20px); }
+  to  { opacity:1; transform:perspective(900px) rotateX(0) translateY(0); }
+}
+.pf[data-enter="reveal3d"] .pf-stack{
+  transform-origin:50% 0;
+  animation:enter3d .85s var(--ease-out) both;
+}
+.pf-stack > [data-anim="reveal3d"]{
+  transform-origin:50% 0;
+  animation:enter3d .85s var(--ease-out) both;
+}
+
+/* Las nuevas se apagan con las de siempre: la regla de arriba
+   nombra `.pf-stack` y `[data-anim]`, que ya las cubre, pero el
+   `data-enter` del perfil no estaba contemplado. */
+@media (prefers-reduced-motion:reduce){
+  .pf[data-enter] .pf-stack{ animation:none !important; }
 }

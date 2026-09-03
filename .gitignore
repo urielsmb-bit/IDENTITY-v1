@@ -47,3 +47,14 @@ IDENTITY_NEXT.md
 IDENTITY_ROADMAP.md
 DESPLIEGUE_VERCEL.md
 pruebas-backend.html
+
+# ---- estado local de la CLI de Supabase -----------------------
+# El enlace con el proyecto y la version de la CLI. Es de esta
+# maquina, no del proyecto.
+supabase/.temp/
+
+# ---- compilado --------------------------------------------------
+# Sale de `npm run build` en cada despliegue. Guardarlo solo genera
+# conflictos en cada rama por un fichero que nadie edita a mano.
+react/dist/
+dist/

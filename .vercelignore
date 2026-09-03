@@ -39,3 +39,12 @@ supabase/
 !IDENTITY_TERMINOS.md
 !IDENTITY_PRIVACIDAD.md
 !IDENTITY_COPYRIGHT.md
+
+# ---- la migracion a React, todavia no desplegada ---------------
+# CRITICO que este aqui desde el primer commit: un package.json en
+# el arbol puede hacer que Vercel decida solo que clase de proyecto
+# es. Ya paso con serve.py -lo tomo por un proyecto Python y la
+# compilacion entera fallo-, y esa vez .vercelignore no basto porque
+# la deteccion ocurre ANTES. Con el proyecto en una carpeta excluida
+# y `framework: null` en vercel.json, no hay por donde.
+app/

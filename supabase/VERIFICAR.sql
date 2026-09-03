@@ -1,7 +1,8 @@
 -- ============================================================
 -- IDENTITY · VERIFICAR
 --
--- Se ejecuta DESPUÉS de APLICAR.sql. No cambia nada: solo mira.
+-- Se ejecuta DESPUÉS de APLICAR.sql y de APLICAR_0007_0008.sql.
+-- No cambia nada: solo mira.
 --
 -- Cada fila dice qué se esperaba y qué hay. Si alguna sale MAL, esa
 -- parte de la auditoría sigue abierta en producción, por mucho que
@@ -220,6 +221,144 @@ with comprobaciones as (
       select allowed_mime_types from storage.buckets where id='media'
     ) @> array['image/webp','video/mp4'] then 'OK'
     else 'MAL: faltan tipos, el editor no podra subir' end
+
+  -- ============================================================
+  -- 0007 · insignias que no se puede poner uno mismo
+  -- ============================================================
+
+  union all
+  select 29, 'Existe la tabla de insignias concedidas',
+    case when exists (
+      select 1 from pg_tables
+      where schemaname='public' and tablename='insignias_concedidas'
+    ) then 'OK' else 'MAL: falta 0007 (las insignias no se pueden conceder)' end
+
+  union all
+  -- Lo importante no es que tenga RLS, es que NO tenga politica de
+  -- escritura: sin politica, RLS lo niega todo y solo entra por la clave
+  -- de servicio. Una politica de insert aqui seria volver al problema.
+  select 30, 'Nadie puede concederse una insignia',
+    case when not exists (
+      select 1 from pg_policies
+      where schemaname='public' and tablename='insignias_concedidas'
+        and cmd in ('INSERT','UPDATE','ALL')
+    ) then 'OK' else 'MAL: hay politica de escritura, cualquiera se las pone' end
+
+  union all
+  select 31, 'perfil_verificado() con search_path fijo',
+    case when exists (
+      select 1 from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname='public' and p.proname='perfil_verificado'
+        and p.prosecdef
+        and array_to_string(coalesce(p.proconfig,'{}'), ',') like '%search_path%'
+    ) then 'OK' else 'MAL: falta, o es SECURITY DEFINER sin search_path' end
+
+  union all
+  select 32, 'Existe la vista de insignias del perfil',
+    case when exists (
+      select 1 from pg_views
+      where schemaname='public' and viewname='insignias_de_perfil'
+    ) then 'OK' else 'MAL: el cliente no podra leer ninguna insignia' end
+
+  union all
+  -- Esto es el borrado del punto 4 de la 0007. Si queda alguna, la
+  -- migracion no llego a correr entera.
+  select 33, 'No queda ninguna insignia autoasignada guardada',
+    case when (
+      select count(*) from perfiles where apariencia ? 'badges'
+    ) = 0 then 'OK'
+    else 'MAL: ' || (select count(*) from perfiles where apariencia ? 'badges')
+         || ' perfiles conservan su lista vieja de insignias' end
+
+  -- ============================================================
+  -- 0008 · que «perfil publico» apagado signifique algo
+  -- ============================================================
+
+  union all
+  select 34, 'Descubrir respeta el ajuste de perfil publico',
+    -- `to_regclass` devuelve null si no existe, en vez de lanzar y abortar
+    -- la consulta entera dejando sin salida a las demas comprobaciones.
+    case when coalesce(
+      (select pg_get_viewdef(to_regclass('public.descubrir'))
+       where to_regclass('public.descubrir') is not null),
+      '') like '%discoverable%' then 'OK'
+    else 'MAL: apagar el ajuste no esconde nada, la fila se sigue sirviendo' end
+
+  union all
+  select 35, 'La vista publica trae las cifras del perfil',
+    case when (
+      select count(*) from information_schema.columns
+      where table_schema='public' and table_name='perfiles_publicos'
+        and column_name in ('vistas','nota','num_notas')
+    ) = 3 then 'OK'
+    else 'MAL: sin ellas, un perfil oculto pierde sus insignias de visitas' end
+
+  union all
+  -- La 0008 rehace `perfiles_publicos`, asi que la comprobacion 11 se
+  -- repite aqui a proposito: importa que siga siendo cierta DESPUES.
+  select 36, 'La vista publica sigue sin exponer `dueno`',
+    case when not exists (
+      select 1 from information_schema.columns
+      where table_schema='public' and table_name='perfiles_publicos'
+        and column_name in ('dueno','acepto_en','acepto_version')
+    ) then 'OK' else 'MAL: la vista rehecha filtro datos que no son publicos' end
+
+  -- ============================================================
+  -- 0009 · lo que 0007 y 0008 dejaron roto
+  -- ============================================================
+
+  union all
+  -- Tener politica de RLS no es tener permiso: son dos puertas. La 0007
+  -- puso la politica y se olvido del GRANT, asi que nadie leia nada.
+  select 37, 'Se pueden LEER las insignias concedidas',
+    case when exists (
+      select 1 from information_schema.role_table_grants
+      where table_name='insignias_concedidas'
+        and grantee in ('anon','authenticated')
+        and privilege_type='SELECT'
+    ) then 'OK' else 'MAL: falta el GRANT, ninguna insignia se cargara' end
+
+  union all
+  select 38, 'Se puede leer la vista de insignias',
+    case when exists (
+      select 1 from information_schema.role_table_grants
+      where table_name='insignias_de_perfil'
+        and grantee in ('anon','authenticated')
+        and privilege_type='SELECT'
+    ) then 'OK' else 'MAL: falta el GRANT' end
+
+  union all
+  -- Con `security_invoker`, la RLS de `perfiles` deja estas vistas mudas
+  -- para todo el que no sea el dueno. Fue justo lo que rompio la 0008.
+  select 39, 'Descubrir no depende de los permisos de quien la llama',
+    case when coalesce(
+      (select 'si' from pg_class c
+       join pg_namespace n on n.oid=c.relnamespace
+       where n.nspname='public' and c.relname='descubrir'
+         and array_to_string(coalesce(c.reloptions,'{}'), ',') like '%security_invoker=true%'),
+      'no') = 'no' then 'OK'
+    else 'MAL: Descubrir saldra vacio para todo el mundo menos el dueno' end
+
+  union all
+  select 40, 'La misma vista de insignias, igual',
+    case when coalesce(
+      (select 'si' from pg_class c
+       join pg_namespace n on n.oid=c.relnamespace
+       where n.nspname='public' and c.relname='insignias_de_perfil'
+         and array_to_string(coalesce(c.reloptions,'{}'), ',') like '%security_invoker=true%'),
+      'no') = 'no' then 'OK'
+    else 'MAL: «verificado» no aparecera en ningun perfil ajeno' end
+
+  union all
+  -- La 0004 redujo el listado a siete campos. La 0008 lo devolvio entero
+  -- sin querer; si vuelve a pasar, el buscador publica el perfil completo.
+  select 41, 'El listado publica solo la miniatura, no el perfil entero',
+    case when coalesce(
+      (select pg_get_viewdef(to_regclass('public.descubrir'))
+       where to_regclass('public.descubrir') is not null),
+      '') like '%jsonb_build_object%' then 'OK'
+    else 'MAL: Descubrir esta exponiendo `apariencia` completa' end
 )
 
 select
