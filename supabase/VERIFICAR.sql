@@ -359,6 +359,37 @@ with comprobaciones as (
        where to_regclass('public.descubrir') is not null),
       '') like '%jsonb_build_object%' then 'OK'
     else 'MAL: Descubrir esta exponiendo `apariencia` completa' end
+
+  -- ============================================================
+  -- 0010 · lo que hace falta para contar visitas
+  -- ============================================================
+
+  union all
+  select 42, 'pgcrypto instalada (digest para el hash del visitante)',
+    case when exists (select 1 from pg_extension where extname='pgcrypto')
+      then 'OK' else 'MAL: sin ella registrar_vista no puede hashear' end
+
+  union all
+  -- Sin esta fila el hash sale NULL y el insert choca contra `not null`.
+  -- La funcion de borde se lo traga y devuelve 204: las visitas se quedan
+  -- a cero sin que nada lo diga.
+  select 43, 'La pimienta de las visitas existe y no esta vacia',
+    case
+      when not exists (select 1 from privado.config where clave='pimienta_visitas')
+        then 'MAL: falta la fila. Las visitas nunca se contaran.'
+      when coalesce((select valor from privado.config where clave='pimienta_visitas'),'') = ''
+        then 'MAL: la fila esta vacia. Mismo efecto.'
+      else 'OK'
+    end
+
+  union all
+  select 44, 'registrar_vista avisa si le falta la pimienta',
+    case when coalesce(
+      (select pg_get_functiondef(p.oid) from pg_proc p
+       join pg_namespace n on n.oid=p.pronamespace
+       where n.nspname='public' and p.proname='registrar_vista' limit 1),
+      '') like '%pimienta_visitas: sin ella%' then 'OK'
+    else 'MAL: sigue la version que revienta sin decir por que (falta 0010)' end
 )
 
 select
