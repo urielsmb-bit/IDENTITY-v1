@@ -836,8 +836,12 @@
   background:var(--p-line);
 }
 .pf-stat{ background:var(--p-surface); padding:13px 8px; text-align:center; }
+/* La cifra sube un peldaño por culpa del suelo de 11px: su etiqueta
+   estaba en 9px y al subirla la pareja se quedo a solo cuatro pixeles
+   —16 contra 11—, y una cifra que se parece a su rotulo deja de leerse
+   como el dato principal del bloque. En --t4 vuelve a mandar. */
 .pf-stat__n{
-  font-family:var(--p-fm); font-size:var(--t3); font-weight:700;
+  font-family:var(--p-fm); font-size:var(--t4); font-weight:700;
   color:var(--p-primary); font-variant-numeric:tabular-nums;
 }
 .pf-stat__l{

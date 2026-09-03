@@ -100,7 +100,7 @@ export default function LegalPage() {
       ) : (
         <article
           className="legal-content"
-          style={{ lineHeight: '1.7', fontSize: '1rem', color: 'var(--text, #E7E9EA)' }}
+          style={{ lineHeight: '1.7', fontSize: 'var(--t3)', color: 'var(--text-primary)' }}
           dangerouslySetInnerHTML={{ __html: html }}
         />
       )}

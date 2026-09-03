@@ -66,8 +66,8 @@ export default function ProfilePage() {
   if (!profile) {
     return (
       <section className="pf-404" style={{ textAlign: 'center', padding: '120px 20px' }}>
-        <h1 style={{ fontSize: '3rem', marginBottom: '16px' }}>404</h1>
-        <p style={{ fontSize: '1.2rem', color: 'var(--text-muted, #888)', marginBottom: '32px' }}>
+        <h1 style={{ fontSize: 'var(--tf-page)', marginBottom: '16px' }}>404</h1>
+        <p style={{ fontSize: 'var(--t4)', color: 'var(--text-muted, #888)', marginBottom: '32px' }}>
           El perfil <strong>@{cleanUsername}</strong> no existe o no es público todavía.
         </p>
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>

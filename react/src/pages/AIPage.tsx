@@ -220,8 +220,8 @@ export default function AIPage() {
   return (
     <div className="ai-page wrap" style={{ paddingTop: '40px', paddingBottom: '80px' }}>
       <header style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '8px' }}>Generador por descripción</h1>
-        <p className="t-meta" style={{ fontSize: '1.1rem' }}>
+        <h1 style={{ fontSize: 'var(--tf-page)', marginBottom: '8px' }}>Generador por descripción</h1>
+        <p className="t-meta" style={{ fontSize: 'var(--t4)' }}>
           Escribe cómo quieres que se sienta tu perfil. Busca las palabras que
           reconoce —colores, ambientes, oficios— y monta un punto de partida
           que después cambias entero. Es instantáneo y no sale de tu
@@ -246,7 +246,7 @@ export default function AIPage() {
             />
 
             <div style={{ marginTop: '16px' }}>
-              <span className="t-meta" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '8px' }}>
+              <span className="t-meta" style={{ fontSize: 'var(--t3)', display: 'block', marginBottom: '8px' }}>
                 Prueba con estos ejemplos:
               </span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -255,7 +255,7 @@ export default function AIPage() {
                     key={i}
                     type="button"
                     className="btn btn--quiet btn--sm"
-                    style={{ textAlign: 'left', fontSize: '0.8rem', padding: '8px 12px' }}
+                    style={{ textAlign: 'left', fontSize: 'var(--t2)', padding: '8px 12px' }}
                     onClick={() => setPrompt(ex)}
                   >
                     "{ex}"
@@ -276,8 +276,8 @@ export default function AIPage() {
 
           {/* Generated breakdown */}
           <div className="panel" style={{ padding: '20px', borderRadius: '16px', background: 'var(--card-bg, rgba(255,255,255,0.02))', border: '1px solid var(--border, rgba(255,255,255,0.06))' }}>
-            <h3 style={{ fontSize: '1rem', marginBottom: '12px' }}>Parámetros deducidos</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.85rem' }}>
+            <h3 style={{ fontSize: 'var(--t3)', marginBottom: '12px' }}>Parámetros deducidos</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: 'var(--t3)' }}>
               <div><span className="t-meta">Tema:</span> <strong>{generated.theme}</strong></div>
               <div><span className="t-meta">Acento:</span> <span style={{ color: generated.accent, fontWeight: 700 }}>{generated.accent}</span></div>
               <div><span className="t-meta">Partículas:</span> <strong>{generated.particles}</strong></div>

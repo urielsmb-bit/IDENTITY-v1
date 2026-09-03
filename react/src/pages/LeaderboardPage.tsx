@@ -57,8 +57,8 @@ export default function LeaderboardPage() {
   return (
     <div className="leaderboard-page wrap" style={{ paddingTop: '40px', paddingBottom: '80px' }}>
       <header style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '8px' }}>Ranking Global</h1>
-        <p className="t-meta" style={{ fontSize: '1.1rem' }}>
+        <h1 style={{ fontSize: 'var(--tf-page)', marginBottom: '8px' }}>Ranking Global</h1>
+        <p className="t-meta" style={{ fontSize: 'var(--t4)' }}>
           Los perfiles más destacados de IDENTITY.
         </p>
 
@@ -91,12 +91,12 @@ export default function LeaderboardPage() {
               className="podium__item podium__item--2"
               style={{ textAlign: 'center', textDecoration: 'none', color: 'inherit', padding: '24px 16px', borderRadius: '16px', background: 'var(--card-bg, rgba(255,255,255,0.03))', border: '1px solid var(--border, rgba(255,255,255,0.08))', minWidth: '180px' }}
             >
-              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#C0C0C0', marginBottom: '8px' }}>🥈 #2</div>
-              <div style={{ width: '64px', height: '64px', borderRadius: '50%', margin: '0 auto 12px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem' }}>
+              <div style={{ fontSize: 'var(--t5)', fontWeight: 800, color: '#C0C0C0', marginBottom: '8px' }}>🥈 #2</div>
+              <div style={{ width: '64px', height: '64px', borderRadius: '50%', margin: '0 auto 12px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--t6)' }}>
                 {top2.avatarUrl ? <img src={safeMedia(top2.avatarUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (top2.emoji || '◈')}
               </div>
               <div style={{ fontWeight: 600 }}>{top2.name || top2.username}</div>
-              <div className="t-meta" style={{ fontSize: '0.85rem' }}>@{top2.username}</div>
+              <div className="t-meta" style={{ fontSize: 'var(--t3)' }}>@{top2.username}</div>
               <div style={{ marginTop: '8px', fontWeight: 700, color: 'var(--p-primary, #A855F7)' }}>{getMetricValue(top2)}</div>
             </Link>
           )}
@@ -108,13 +108,13 @@ export default function LeaderboardPage() {
               className="podium__item podium__item--1"
               style={{ textAlign: 'center', textDecoration: 'none', color: 'inherit', padding: '32px 20px', borderRadius: '16px', background: 'var(--card-bg, rgba(255,255,255,0.05))', border: '2px solid rgba(255,215,0,0.4)', transform: 'translateY(-16px)', minWidth: '200px' }}
             >
-              <div style={{ fontSize: '2rem', fontWeight: 800, color: '#FFD700', marginBottom: '8px' }}>👑 #1</div>
-              <div style={{ width: '80px', height: '80px', borderRadius: '50%', margin: '0 auto 12px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.2rem' }}>
+              <div style={{ fontSize: 'var(--t6)', fontWeight: 800, color: '#FFD700', marginBottom: '8px' }}>👑 #1</div>
+              <div style={{ width: '80px', height: '80px', borderRadius: '50%', margin: '0 auto 12px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--t7)' }}>
                 {top1.avatarUrl ? <img src={safeMedia(top1.avatarUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (top1.emoji || '◈')}
               </div>
-              <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{top1.name || top1.username}</div>
-              <div className="t-meta" style={{ fontSize: '0.85rem' }}>@{top1.username}</div>
-              <div style={{ marginTop: '8px', fontWeight: 700, color: '#FFD700', fontSize: '1.1rem' }}>{getMetricValue(top1)}</div>
+              <div style={{ fontWeight: 700, fontSize: 'var(--t4)' }}>{top1.name || top1.username}</div>
+              <div className="t-meta" style={{ fontSize: 'var(--t3)' }}>@{top1.username}</div>
+              <div style={{ marginTop: '8px', fontWeight: 700, color: '#FFD700', fontSize: 'var(--t4)' }}>{getMetricValue(top1)}</div>
             </Link>
           )}
 
@@ -125,12 +125,12 @@ export default function LeaderboardPage() {
               className="podium__item podium__item--3"
               style={{ textAlign: 'center', textDecoration: 'none', color: 'inherit', padding: '20px 16px', borderRadius: '16px', background: 'var(--card-bg, rgba(255,255,255,0.03))', border: '1px solid var(--border, rgba(255,255,255,0.08))', minWidth: '180px' }}
             >
-              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#CD7F32', marginBottom: '8px' }}>🥉 #3</div>
-              <div style={{ width: '64px', height: '64px', borderRadius: '50%', margin: '0 auto 12px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem' }}>
+              <div style={{ fontSize: 'var(--t5)', fontWeight: 800, color: '#CD7F32', marginBottom: '8px' }}>🥉 #3</div>
+              <div style={{ width: '64px', height: '64px', borderRadius: '50%', margin: '0 auto 12px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--t6)' }}>
                 {top3.avatarUrl ? <img src={safeMedia(top3.avatarUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (top3.emoji || '◈')}
               </div>
               <div style={{ fontWeight: 600 }}>{top3.name || top3.username}</div>
-              <div className="t-meta" style={{ fontSize: '0.85rem' }}>@{top3.username}</div>
+              <div className="t-meta" style={{ fontSize: 'var(--t3)' }}>@{top3.username}</div>
               <div style={{ marginTop: '8px', fontWeight: 700, color: 'var(--p-primary, #A855F7)' }}>{getMetricValue(top3)}</div>
             </Link>
           )}
@@ -158,7 +158,7 @@ export default function LeaderboardPage() {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600 }}>{p.name || p.username}</div>
-              <div className="t-meta" style={{ fontSize: '0.85rem' }}>@{p.username} {p.title && `· ${p.title}`}</div>
+              <div className="t-meta" style={{ fontSize: 'var(--t3)' }}>@{p.username} {p.title && `· ${p.title}`}</div>
             </div>
             <div style={{ fontWeight: 700, color: 'var(--p-primary, #A855F7)' }}>
               {getMetricValue(p)}

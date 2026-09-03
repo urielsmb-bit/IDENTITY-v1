@@ -616,7 +616,7 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          <span className="t-meta" style={{ fontSize: '0.8rem' }}>
+          <span className="t-meta" style={{ fontSize: 'var(--t2)' }}>
             {saving ? 'Guardando...' : dirty ? '● Cambios sin guardar' : '✓ Guardado'}
           </span>
         </div>
@@ -1198,8 +1198,8 @@ export default function DashboardPage() {
         {section === 'links' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
             <div>
-              <h2 style={{ fontSize: '1.4rem' }}>Redes y enlaces</h2>
-              <p className="t-meta" style={{ fontSize: '0.85rem', marginTop: '4px' }}>
+              <h2 style={{ fontSize: 'var(--t5)' }}>Redes y enlaces</h2>
+              <p className="t-meta" style={{ fontSize: 'var(--t3)', marginTop: '4px' }}>
                 Toca un logo para añadirlo o quitarlo.
               </p>
             </div>

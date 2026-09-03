@@ -59,8 +59,8 @@ export default function PricingPage() {
   return (
     <div className="pricing-page wrap" style={{ paddingTop: '40px', paddingBottom: '80px' }}>
       <header style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 48px' }}>
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '12px' }}>Precios simples y transparentes</h1>
-        <p className="t-meta" style={{ fontSize: '1.15rem' }}>
+        <h1 style={{ fontSize: 'var(--tf-page)', marginBottom: '12px' }}>Precios simples y transparentes</h1>
+        <p className="t-meta" style={{ fontSize: 'var(--t4)' }}>
           Sin suscripciones mensuales recurrentes que se olvidan. Pagas una sola vez y lo tienes para siempre.
         </p>
       </header>
@@ -76,7 +76,7 @@ export default function PricingPage() {
           borderRadius: 'var(--radius-md)',
           background: 'var(--surface-2)',
           color: 'var(--text-secondary)',
-          fontSize: '.9rem',
+          fontSize: 'var(--t3)',
           lineHeight: 1.6,
         }}
       >
@@ -114,7 +114,7 @@ export default function PricingPage() {
                   transform: 'translateX(-50%)',
                   background: 'var(--p-primary, #A855F7)',
                   color: '#fff',
-                  fontSize: '0.75rem',
+                  fontSize: 'var(--t2)',
                   fontWeight: 700,
                   padding: '4px 12px',
                   borderRadius: '12px',
@@ -127,16 +127,16 @@ export default function PricingPage() {
             )}
 
             <div>
-              <h3 style={{ fontSize: '1.4rem', marginBottom: '8px' }}>{plan.name}</h3>
-              <p className="t-meta" style={{ fontSize: '0.9rem', minHeight: '40px' }}>{plan.desc}</p>
+              <h3 style={{ fontSize: 'var(--t5)', marginBottom: '8px' }}>{plan.name}</h3>
+              <p className="t-meta" style={{ fontSize: 'var(--t3)', minHeight: '40px' }}>{plan.desc}</p>
 
               <div style={{ margin: '24px 0' }}>
-                <span style={{ fontSize: '3rem', fontWeight: 800 }}>{plan.price}</span>
-                <span className="t-meta" style={{ display: 'block', fontSize: '0.85rem' }}>{plan.period}</span>
+                <span style={{ fontSize: 'var(--tf-page)', fontWeight: 800 }}>{plan.price}</span>
+                <span className="t-meta" style={{ display: 'block', fontSize: 'var(--t3)' }}>{plan.period}</span>
               </div>
 
               <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.06)', paddingTop: '24px', marginBottom: '24px' }}>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.9rem' }}>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px', fontSize: 'var(--t3)' }}>
                   {plan.features.map((feat, i) => (
                     <li key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <span style={{ color: 'var(--p-primary, #A855F7)', fontWeight: 700 }}>✓</span>

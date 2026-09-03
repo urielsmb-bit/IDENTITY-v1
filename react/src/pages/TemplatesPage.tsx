@@ -186,8 +186,8 @@ export default function TemplatesPage() {
   return (
     <div className="templates-page wrap" style={{ paddingTop: '40px', paddingBottom: '80px' }}>
       <header style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '8px' }}>Plantillas de Diseño</h1>
-        <p className="t-meta" style={{ fontSize: '1.1rem' }}>
+        <h1 style={{ fontSize: 'var(--tf-page)', marginBottom: '8px' }}>Plantillas de Diseño</h1>
+        <p className="t-meta" style={{ fontSize: 'var(--t4)' }}>
           Elige un estilo base prediseñado y aplícalo a tu perfil con un solo clic.
         </p>
 
@@ -231,10 +231,10 @@ export default function TemplatesPage() {
             >
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h3 style={{ fontSize: '1.3rem', margin: 0 }}>{t.name}</h3>
+                  <h3 style={{ fontSize: 'var(--t5)', margin: 0 }}>{t.name}</h3>
                   <button
                     type="button"
-                    style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }}
+                    style={{ background: 'none', border: 'none', fontSize: 'var(--t4)', cursor: 'pointer' }}
                     onClick={() => toggleFavorite(t.id)}
                     title={isFav ? 'Quitar de favoritos' : 'Guardar en favoritos'}
                   >
@@ -254,10 +254,10 @@ export default function TemplatesPage() {
                     justifyContent: 'center',
                   }}
                 >
-                  <span style={{ fontSize: '2rem' }}>🎨</span>
+                  <span style={{ fontSize: 'var(--t6)' }}>🎨</span>
                 </div>
 
-                <div style={{ fontSize: '0.85rem', marginBottom: '20px' }}>
+                <div style={{ fontSize: 'var(--t3)', marginBottom: '20px' }}>
                   <div className="t-meta">Acento: <span style={{ color: tpl?.accent, fontWeight: 700 }}>{tpl?.accent}</span></div>
                   <div className="t-meta">Superficie: <strong>{tpl?.surface}</strong></div>
                   <div className="t-meta">Partículas: <strong>{tpl?.particles}</strong></div>

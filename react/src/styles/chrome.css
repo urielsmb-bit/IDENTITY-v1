@@ -318,7 +318,7 @@
   overflow:hidden;
   transition:border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
-.claim:focus-within{ border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+.claim:focus-within{ border-color:var(--brand-line); box-shadow:0 0 0 3px var(--brand-soft); }
 .claim__pre{
   display:flex; align-items:center;
   padding-left:var(--s4);

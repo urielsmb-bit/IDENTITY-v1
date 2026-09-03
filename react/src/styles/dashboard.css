@@ -307,6 +307,18 @@
 .rng input[type="range"]::-moz-range-thumb{
   width:14px; height:14px; border:0; border-radius:50%; background:var(--text-primary);
 }
+/* El `outline:none` de arriba dejaba el deslizador SIN ninguna señal de
+   foco, y es el mando principal de todo el editor: con teclado no habia
+   forma de saber en cual estabas. El anillo va en el tirador y no en la
+   barra, que mide 3px de alto y no se ve. Las dos reglas van separadas a
+   proposito: un pseudo-elemento con prefijo que el navegador no entiende
+   tira la regla ENTERA, asi que agruparlas dejaria a Firefox sin nada. */
+.rng input[type="range"]:focus-visible::-webkit-slider-thumb{
+  box-shadow:0 0 0 3px var(--bg-primary), 0 0 0 5px var(--brand);
+}
+.rng input[type="range"]:focus-visible::-moz-range-thumb{
+  box-shadow:0 0 0 3px var(--bg-primary), 0 0 0 5px var(--brand);
+}
 .rng output{
   width:44px; text-align:right; flex:none;
   font-size:var(--t2); color:var(--text-muted);
@@ -362,7 +374,7 @@
   transition:transform var(--transition-fast), color var(--transition-fast);
 }
 .row-it__abrir:hover .row-it__go{ transform:translateX(3px); color:var(--text); }
-.row-it__abrir:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; border-radius:6px; }
+.row-it__abrir:focus-visible{ outline:2px solid var(--brand); outline-offset:3px; border-radius:6px; }
 /* una copia se lee como lo que es: la misma pieza, otra vez */
 .row-it--copia{ border-left:2px solid var(--border-strong, rgba(255,255,255,.18)); }
 .row-it--copia .row-it__t{ opacity:.86; }
@@ -638,6 +650,7 @@
 }
 .prog__it:hover:not(:disabled){ border-color:var(--border-loud); color:var(--text-primary); }
 .prog__it:disabled{ cursor:default; opacity:.55; }
+.prog__it:not(:disabled):active{ transform:scale(.975); }
 .prog__mark{
   width:16px; height:16px; flex:none;
   border-radius:50%;
@@ -1482,7 +1495,8 @@
 /* Lo que ya está y no se puede duplicar sigue visible pero
    apagado: quitarlo de la lista haría dudar de si existe. */
 .row-it--add:disabled{ opacity:.45; cursor:default; }
-.row-it--add:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+.row-it--add:not(:disabled):active{ transform:scale(.99); }
+.row-it--add:focus-visible{ outline:2px solid var(--brand); outline-offset:2px; }
 
 /* ---- progreso ----------------------------------------------- */
 .prg{
@@ -1512,7 +1526,7 @@
   transition:color var(--transition-fast);
 }
 .prg__i button:hover{ color:var(--text-primary); }
-.prg__i button:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+.prg__i button:focus-visible{ outline:2px solid var(--brand); outline-offset:2px; }
 
 /* ---- canales RGB (panel de superficie) ----------------------------- */
 .rgb{ display:flex; align-items:center; gap:7px; }
@@ -1523,7 +1537,7 @@
   border-radius:var(--radius-sm);
   background:var(--bg-primary);
 }
-.rgb__c:focus-within{ border-color:var(--accent); }
+.rgb__c:focus-within{ border-color:var(--brand-line); box-shadow:0 0 0 3px var(--brand-soft); }
 .rgb__c span{ font-size:var(--t1); color:var(--text-muted); flex:none; }
 .rgb__c input{
   width:100%; min-width:0;
@@ -1594,8 +1608,14 @@
   text-align:center;
   transition:border-color var(--transition-fast), background var(--transition-fast);
 }
-.drop:hover,
-.drop:focus-visible{ border-color:var(--accent); outline:none; }
+/* Estaban juntos, o sea que el foco de teclado se veia igual que el raton
+   por encima —y con el raton en otro sitio, un borde encendido sin motivo
+   aparente—. Ahora el raton sube el borde y el teclado pone el anillo. */
+.drop:hover{ border-color:var(--border-loud); }
+.drop:focus-visible{
+  border-color:var(--brand-line);
+  outline:2px solid var(--brand); outline-offset:2px;
+}
 .drop.is-over{ border-color:var(--accent); background:var(--accent-soft); }
 .drop.is-busy{ cursor:progress; opacity:.7; }
 .drop__ico{ color:var(--text-muted); }
@@ -1742,6 +1762,16 @@
              color var(--transition-fast);
 }
 .card:hover{ border-color:var(--border-strong); color:var(--text-secondary); }
+/* Faltaba el acuse de recibo al pulsar: se hacia clic y hasta que no
+   repintaba no pasaba nada visible. Es el mismo hundido de `.btn`, para
+   que pulsar se sienta igual en todo el editor. */
+.card:active{ transform:scale(.975); }
+
+/* REGLA DEL SISTEMA: blanco es lo ELEGIDO, ambar es DONDE ESTA EL
+   TECLADO. Son dos preguntas distintas —que opcion esta puesta y que
+   opcion vas a activar si pulsas espacio— y mezclarlas en un color hace
+   que ninguna se lea. Por eso la seleccion se queda en `--accent` y el
+   foco en `--brand` en toda la hoja. */
 .card.on{
   border-color:var(--accent);
   background:var(--accent-soft);
