@@ -114,16 +114,44 @@ Deno.serve(async (req: Request) => {
     /* `view: disable` + `embed: whitelist` es lo que hace que el
        vídeo NO aparezca en vimeo.com y solo se pueda ver incrustado
        en los dominios permitidos. Sin esto, los fondos de la gente
-       serían una galería pública en la cuenta de IDENTITY. */
-    const r = await api('/me/videos', {
-      method: 'POST',
-      body: JSON.stringify({
-        upload: { approach: 'tus', size: tamano },
-        name: `fondo-${usuario.id}-${Date.now()}`,
-        description: `Fondo de perfil subido desde IDENTITY por ${usuario.id}`,
-        privacy: { view: 'disable', embed: 'whitelist', download: false, comments: 'nobody' },
-      }),
+       serían una galería pública en la cuenta de IDENTITY.
+
+       Pero la privacidad por dominio no está en todos los planes. Si
+       el plan no la admite, Vimeo responde 400 y ANTES eso dejaba la
+       subida muerta sin explicar por qué. Ahora se reintenta con lo
+       más cerrado que sí permite todo plan de pago: `unlisted`, que
+       no sale en búsquedas ni en el perfil de la cuenta, aunque sí se
+       ve con el enlace directo. Es un escalón menos, y se dice cuál
+       se usó en vez de callarlo. */
+    const nombre = `fondo-${usuario.id}-${Date.now()}`;
+    const descripcion = `Fondo de perfil subido desde IDENTITY por ${usuario.id}`;
+
+    const pedir = (privacy: Record<string, unknown>) =>
+      api('/me/videos', {
+        method: 'POST',
+        body: JSON.stringify({
+          upload: { approach: 'tus', size: tamano },
+          name: nombre,
+          description: descripcion,
+          privacy,
+        }),
+      });
+
+    let privacidad = 'estricta';
+    let r = await pedir({
+      view: 'disable',
+      embed: 'whitelist',
+      download: false,
+      comments: 'nobody',
     });
+
+    if (r.status === 400) {
+      // Puede ser el plan, o puede ser otra cosa: el cuerpo lo dice.
+      const porQue = await r.text();
+      console.warn('privacidad estricta rechazada, se prueba unlisted:', porQue.slice(0, 200));
+      privacidad = 'unlisted';
+      r = await pedir({ view: 'unlisted', download: false, comments: 'nobody' });
+    }
 
     if (!r.ok) {
       const detalle = await r.text();
@@ -143,7 +171,7 @@ Deno.serve(async (req: Request) => {
       if (dom) await api(`/videos/${id}/privacy/domains/${dom}`, { method: 'PUT' });
     }
 
-    return json({ id, enlace });
+    return json({ id, enlace, privacidad });
   }
 
   // ── 2 · preguntar si ya está transcodificado ──────────────
