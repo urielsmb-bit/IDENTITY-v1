@@ -350,9 +350,19 @@ export function ProfileView({
          pueden ocupar mas que la tarjeta—; en columna, el ancho maximo
          declarado. Medir `offsetWidth` en columna no sirve: ya viene
          encogido por el propio hueco y la division daria siempre uno. */
-      const disenio = modoLibre
-        ? pila.offsetWidth
-        : parseFloat(getComputedStyle(pila).maxWidth) || 460;
+      /* El ancho de DISEÑO sale de `--u-width`, la variable que lo declara.
+         Ni `offsetWidth` ni el `max-width` calculado sirven: los dos ya
+         vienen acotados al hueco —el segundo porque en `auto` la regla es
+         `min(--u-width, 100%)`— y la division daria siempre uno.
+
+         `full` se queda fuera a proposito: ese modo pide ocupar lo que
+         haya, o sea que es fluido por decision de su dueño y encogerlo
+         seria desobedecerle. */
+      const modo = raiz.getAttribute('data-width') || 'fixed';
+      const disenio =
+        modo === 'full'
+          ? 0
+          : parseFloat(getComputedStyle(raiz).getPropertyValue('--u-width')) || 460;
       if (!disenio) return;
 
       const escala = Math.min(1, disponible / disenio);
@@ -360,7 +370,6 @@ export function ProfileView({
       if (escala >= 0.999) {
         raiz.style.removeProperty('--u-escala');
         raiz.style.removeProperty('--u-escala-h');
-        raiz.style.removeProperty('--u-escala-mx');
         raiz.style.removeProperty('--u-ancho');
         return;
       }
@@ -377,10 +386,6 @@ export function ProfileView({
       raiz.style.setProperty(
         '--u-escala-h',
         `${-Math.round(pila.offsetHeight * (1 - escala))}px`,
-      );
-      raiz.style.setProperty(
-        '--u-escala-mx',
-        `${-Math.round((disenio * (1 - escala)) / 2)}px`,
       );
     };
 
@@ -406,7 +411,6 @@ export function ProfileView({
       const r = rootRef.current;
       r?.style.removeProperty('--u-escala');
       r?.style.removeProperty('--u-escala-h');
-      r?.style.removeProperty('--u-escala-mx');
       r?.style.removeProperty('--u-ancho');
     };
     /* Ojo con las dependencias: `p.pos` es un objeto que `normalizarPerfil`
@@ -415,7 +419,7 @@ export function ProfileView({
        el `requestAnimationFrame` llegara a medir, y nunca se fijaba nada.
        No hacen falta: el ResizeObserver ya ve cualquier cambio de tamano
        que provoquen, que es lo unico que importa aqui. */
-  }, [modoLibre, rootRef, cardRef]);
+  }, [rootRef, cardRef]);
 
   const orden = p.blockOrder ?? [];
 

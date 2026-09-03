@@ -136,11 +136,28 @@
    pieza entraba. Los margenes negativos recortan la caja sin escalar que
    el elemento sigue ocupando, para que no quede hueco muerto ni desborde. */
 .pf-escala{
+  /* ANCHO PROPIO, obligatorio. Sin el, en la rejilla del heroe —que tiene
+     `justify-items:center`— el envoltorio se encoge a su contenido, y el
+     `width:100%` de la tarjeta se calcula contra un padre que a su vez
+     depende de la tarjeta. El circulo se resuelve por lo minimo: una letra
+     por linea. Con ancho definido, la tarjeta vuelve a tener contra que
+     medir. */
+  width:100%;
+  display:flex;
+  justify-content:center;
   transform:scale(var(--u-escala, 1));
   transform-origin:top center;
   margin-bottom:var(--u-escala-h, 0px);
-  margin-inline:var(--u-escala-mx, 0px);
 }
+/* La colocacion la decidia `justify-items` del heroe sobre la tarjeta. Ahora
+   el hijo del heroe es el envoltorio, asi que la hereda el. */
+/* Y que NO la encoja. Un elemento flex se aprieta por defecto: la tarjeta
+   pedia sus 460 de diseño y el envoltorio la dejaba en 372, o sea justo lo
+   que este arreglo existe para evitar. */
+.pf-escala > .pf-stack{ flex:none; }
+
+.pf[data-pos="left"]  .pf-escala{ justify-content:flex-start; }
+.pf[data-pos="right"] .pf-escala{ justify-content:flex-end; }
 
 .pf-hero{
   position:relative;
