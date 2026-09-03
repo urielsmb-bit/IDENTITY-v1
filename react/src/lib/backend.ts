@@ -213,16 +213,39 @@ export async function cargarPerfil(username: string) {
     return aPerfil(data);
   };
 
-  const { data, error } = await client.from('perfiles_publicos')
-    .select('id,username,apariencia,creado,actualizado')
+  /* Con las cifras. Desde 0008 la vista publica las trae, y sin pedirlas
+     aqui el perfil llegaba con `views` vacio: el contador del propio perfil
+     y el del carrusel salian a cero aunque la base tuviera el numero bueno,
+     mientras la tarjeta de al lado —que lee la fila de Descubrir— enseñaba
+     el de verdad. Dos fuentes para el mismo dato y una sin el campo. */
+  const CAMPOS = 'id,username,apariencia,creado,actualizado,vistas,nota,num_notas';
+
+  let { data, error } = await client.from('perfiles_publicos')
+    .select(CAMPOS)
     .eq('username', username)
     .maybeSingle();
+
+  // 42703 = la columna no existe: la vista es anterior a 0008.
+  if (error && (error.code === '42703' || /column .* does not exist/i.test(error.message || ''))) {
+    ({ data, error } = await client.from('perfiles_publicos')
+      .select('id,username,apariencia,creado,actualizado')
+      .eq('username', username)
+      .maybeSingle());
+  }
 
   if (error && (error.code === '42P01' || error.code === 'PGRST205' || /does not exist|schema cache/i.test(error.message || ''))) {
     return porLaTabla();
   }
   if (error) throw traducir(error);
-  return aPerfil(data);
+
+  const p = aPerfil(data);
+  if (p && data) {
+    const f = data as Record<string, unknown>;
+    if (f.vistas != null) p.views = Number(f.vistas) || 0;
+    if (f.nota != null) p.nota = Number(f.nota);
+    if (f.num_notas != null) p.numNotas = Number(f.num_notas) || 0;
+  }
+  return p;
 }
 
 export async function cargarMio() {

@@ -18,14 +18,19 @@ export default function LeaderboardPage() {
   const localProfiles = useMemo(() => Object.values(profilesMap), [profilesMap]);
 
   const allProfiles = useMemo<Profile[]>(() => {
+    /* El servidor manda. Antes era al reves —lo local primero y el
+       servidor solo si faltaba— y eso hacia que cualquier perfil guardado
+       en este navegador TAPARA su fila del servidor: sus visitas, su nota,
+       su nombre, su avatar. Por eso los contadores salian siempre a cero
+       aunque la base ya tuviera el numero bueno.
+       Lo local se queda solo para lo que el servidor todavia no conoce:
+       tu borrador sin publicar. */
     const map = new Map<string, Profile>();
-    for (const p of localProfiles) {
-      if (p.username) map.set(p.username, p);
-    }
     for (const p of remoteProfiles) {
-      if (p.username && !map.has(p.username)) {
-        map.set(p.username, p as Profile);
-      }
+      if (p.username) map.set(p.username, p as Profile);
+    }
+    for (const p of localProfiles) {
+      if (p.username && !map.has(p.username)) map.set(p.username, p);
     }
     return Array.from(map.values()).filter((p) => p.discoverable !== false);
   }, [localProfiles, remoteProfiles]);
