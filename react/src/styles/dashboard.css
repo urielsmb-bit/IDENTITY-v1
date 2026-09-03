@@ -1576,13 +1576,15 @@
   padding-bottom:var(--s3);
   border-bottom:1px solid var(--border);
 }
-.dash__enc .dash__h2{ margin:0; }
-.dash__sub{
-  margin:5px 0 0;
-  color:var(--text-muted);
-  font-size:var(--t2);
-  line-height:1.5;
-}
+/* `.dash__sub` YA EXISTIA —la usan el editor de bloques y la pantalla de
+   redes— y su `margin:-8px` esta calculado para tirar del subtitulo hacia
+   arriba CONTANDO con que el `h2` conserva su margen inferior. Yo le
+   quitaba ese margen y declaraba otra `.dash__sub` encima, que perdia
+   contra la de mas abajo por orden. Resultado: los dos superpuestos.
+
+   Se usa el patron que ya estaba en vez de pelearse con el. Aqui solo
+   sobra el hueco de debajo, que lo pone el borde. */
+.dash__enc .dash__sub{ margin-bottom:0; }
 
 .dash__seccion{ display:flex; flex-direction:column; }
 /* Estaba en --t3 (15px) contra etiquetas de --t2 (13px): dos pixeles de
@@ -1933,8 +1935,26 @@
 }
 
 .dash__quien{ padding:20px; border-bottom:1px solid var(--border); }
-.dash__quien-t{ font-weight:700; font-size:var(--t4); }
-.dash__quien-u{ font-size:var(--t3); color:var(--text-muted); }
+/* Estaba en --t4 y peso 700: el MISMO tamaño que el titulo de seccion y
+   mas pesado. O sea que el mueble fijo de la barra gritaba mas que el
+   contenido, que es la jerarquia justo al reves.
+
+   Y ademas sobraba: quien esta en el editor ya sabe que esta en el
+   editor. Lo que hace falta saber es DE QUIEN es el perfil. Asi que
+   «Editor de Perfil» pasa a ser el rotulo pequeño —con la mono del
+   sistema, como el resto de rotulos— y el nombre de usuario pasa a
+   mandar. La escalera queda 18 titulo · 15 usuario · 11 rotulo. */
+.dash__quien-t{
+  font-family:var(--font-mono);
+  font-size:var(--t1); font-weight:500;
+  letter-spacing:.14em; text-transform:uppercase;
+  color:var(--text-muted);
+}
+.dash__quien-u{
+  margin-top:3px;
+  font-size:var(--t3); font-weight:600;
+  color:var(--text-primary);
+}
 .dash__nav{ padding:12px 8px; display:flex; flex-direction:column; gap:4px; }
 .dash__nav .btn{ justify-content:flex-start; text-align:left; gap:10px; }
 
