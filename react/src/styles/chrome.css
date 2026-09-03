@@ -664,19 +664,38 @@ body.is-dashboard .nav{ border-bottom-color:var(--border); }
    Sin un color nuevo: todo sale de los tokens que ya existen.
    ============================================================ */
 
-/* ---- las cifras -------------------------------------------------------
-   Una fila que se reparte el ancho. Las cifras van en mono tabular para
-   que queden alineadas en vertical y se puedan comparar de un vistazo, y
-   el rotulo debajo en la mono pequeña del sistema. */
-.cifras{ padding-block:var(--s7); }
-.cifras__l{
-  list-style:none; margin:0; padding:var(--s5) var(--s4);
-  display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
-  gap:var(--s5) var(--s4);
-  border-block:1px solid var(--border);
+/* ---- las cifras ------------------------------------------------------- */
+.cifras{ padding-block:var(--s8); text-align:center; }
+.cifras__cab{ max-width:56ch; margin:0 auto var(--s6); }
+.cifras__sub{
+  margin:var(--s3) 0 0;
+  font-size:var(--t4); line-height:1.55;
+  color:var(--text-muted);
 }
-.cifra{ display:flex; flex-direction:column; gap:4px; text-align:center; }
+.cifras__l{
+  list-style:none; margin:0 0 var(--s6); padding:0;
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(190px, 1fr));
+  gap:var(--s3);
+}
+/* Misma tarjeta que los rasgos y que el resto del producto. El icono va
+   arriba a la derecha y no delante de la cifra: delante competiria con
+   ella, y aqui lo que hay que leer primero es el numero. */
+.cifra{
+  position:relative;
+  display:flex; flex-direction:column; gap:4px;
+  padding:var(--s5) var(--s4);
+  text-align:left;
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  background:var(--surface);
+}
+.cifra__i{
+  position:absolute; top:var(--s4); right:var(--s4);
+  display:grid; place-items:center;
+  color:var(--text-faint);
+}
+.cifra__i svg{ width:16px; height:16px; }
 .cifra__n{
   font-size:var(--t6); font-weight:700;
   line-height:1; letter-spacing:-.03em;
@@ -688,6 +707,8 @@ body.is-dashboard .nav{ border-bottom-color:var(--border); }
   font-size:var(--t1); letter-spacing:.12em; text-transform:uppercase;
   color:var(--text-muted);
 }
+/* El formulario repetido, centrado y sin estirarse a todo el ancho. */
+.cifras__claim{ margin-inline:auto; max-width:420px; }
 
 /* ---- lo que hace ------------------------------------------------------ */
 .qhace{ padding-block:var(--s8); }
@@ -702,10 +723,33 @@ body.is-dashboard .nav{ border-bottom-color:var(--border); }
   grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
   gap:var(--s5);
 }
-/* Sin caja ni borde: seis tarjetas seguidas serian seis cajas y el ojo
-   deja de leer y empieza a contar. Lo que las separa es el espacio y una
-   linea fina arriba, que ademas ordena la rejilla en columnas visibles. */
-.rasgo{ padding-top:var(--s4); border-top:1px solid var(--border); }
+/* Empezaron sin caja y sin icono, con una raya fina arriba, para no
+   llenar la pagina de cajas. Salio peor: seis parrafos de gris del mismo
+   peso, sin nada donde posar el ojo, y ninguno se leia.
+
+   La caja que llevan ahora es la MISMA del resto del producto —la de las
+   plantillas, la de analiticas— asi que aqui no es adorno sino
+   coherencia. Y el icono no decora: es el ancla que hace que la vista
+   salte de una a otra en vez de leerlas en fila. */
+.rasgo{
+  display:flex; flex-direction:column;
+  padding:var(--s5);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  background:var(--surface);
+  transition:border-color var(--transition-normal), transform var(--transition-normal);
+}
+.rasgo:hover{ border-color:var(--border-strong); transform:translateY(-2px); }
+.rasgo__i{
+  display:grid; place-items:center;
+  width:34px; height:34px;
+  margin-bottom:var(--s4);
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  background:var(--surface-2);
+  color:var(--text-secondary);
+}
+.rasgo__i svg{ width:17px; height:17px; }
 .rasgo__t{
   margin:0 0 var(--s2);
   font-size:var(--t4); font-weight:600; letter-spacing:-.01em;
@@ -715,7 +759,6 @@ body.is-dashboard .nav{ border-bottom-color:var(--border); }
   margin:0;
   font-size:var(--t3); line-height:1.6;
   color:var(--text-muted);
-  max-width:46ch;
 }
 
 /* ---- preguntas -------------------------------------------------------- */

@@ -10,6 +10,140 @@ import type { Profile } from '@/types';
 import * as backend from '@/lib/backend';
 import { hasBackend } from '@/lib/supabase';
 
+/**
+ * Lo que hace IDENTITY. Todo esto existe y funciona hoy: no hay una sola
+ * linea aqui prometiendo algo sin construir.
+ *
+ * El texto va corto a proposito —dos lineas— porque en una rejilla de
+ * seis, un parrafo de cuatro lineas no se lee: se salta.
+ *
+ * Los iconos son de trazo y del mismo grosor que los del editor, para
+ * que no parezcan traidos de otro sitio.
+ */
+const RASGOS = [
+  {
+    t: 'Lo colocas tú',
+    d: 'Arrastra cada pieza donde quieras. El editor te enseña el resultado mientras lo tocas.',
+    icono: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1.5" />
+        <rect x="14" y="3" width="7" height="7" rx="1.5" />
+        <rect x="3" y="14" width="7" height="7" rx="1.5" />
+        <path d="M17.5 14.5v7M14 18h7" />
+      </svg>
+    ),
+  },
+  {
+    t: 'Fondo de foto o de vídeo',
+    d: 'Con desenfoque, opacidad y viñeta a tu gusto. Y partículas encima si te apetece.',
+    icono: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="16" rx="2.5" />
+        <circle cx="8.5" cy="9.5" r="1.6" />
+        <path d="m3.5 17 5-4.5 4 3.5 3-2.5 5 4" />
+      </svg>
+    ),
+  },
+  {
+    t: 'Se conecta a lo que ya usas',
+    d: 'Tu estado de Discord en vivo, tu música, tus redes y tus proyectos. Sin pegar enlaces sueltos.',
+    icono: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10 13.5a4 4 0 0 0 5.7.3l2.6-2.6a4 4 0 0 0-5.7-5.7l-1.5 1.5" />
+        <path d="M14 10.5a4 4 0 0 0-5.7-.3l-2.6 2.6a4 4 0 0 0 5.7 5.7l1.5-1.5" />
+      </svg>
+    ),
+  },
+  {
+    t: 'Plantillas de gente real',
+    d: 'Coge el diseño de otro perfil de un clic. Se copia cómo se ve, nunca su contenido.',
+    icono: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="8" y="3" width="13" height="13" rx="2.5" />
+        <path d="M16 19.5A2.5 2.5 0 0 1 13.5 22h-8A2.5 2.5 0 0 1 3 19.5v-8A2.5 2.5 0 0 1 5.5 9" />
+      </svg>
+    ),
+  },
+  {
+    t: 'Sabes quién te ve',
+    d: 'Cuántos vuelven, a qué hora te descubren y de qué país. Sin guardar la dirección de nadie.',
+    icono: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 20V10M9 20V4M15 20v-7M21 20v-11" />
+      </svg>
+    ),
+  },
+  {
+    t: 'Se ve igual en todas partes',
+    d: 'Tu composición no se recoloca en el móvil: se encoge entera y conserva su forma.',
+    icono: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="4" width="14" height="11" rx="2" />
+        <rect x="16" y="9" width="6" height="11" rx="1.6" />
+      </svg>
+    ),
+  },
+];
+
+/**
+ * Las cifras de la banda, en el orden en que se enseñan.
+ *
+ * Ninguna esta escrita a mano: la clave apunta a lo que devuelve la vista
+ * `cifras_publicas`, o sea la base. Y cada una SE CALLA si esta en cero
+ * —de ahi que sea una lista y no cuatro bloques copiados—: una portada
+ * que dice «0 plantillas» esta peor que una que no lo dice.
+ *
+ * La referencia que se pidio pone la cifra en el titular («mas de
+ * 2.270.000 personas usan...»). Aqui no: con cuatro perfiles, «mas de 4
+ * personas usan IDENTITY» hunde la pagina en vez de levantarla. El
+ * numero vive en su tarjeta, que se lee bien hoy y mejor cuando crezca.
+ */
+const CIFRAS_VISIBLES = [
+  {
+    k: 'perfiles' as const,
+    uno: 'perfil creado',
+    varios: 'perfiles creados',
+    icono: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21a8 8 0 0 1 16 0" />
+      </svg>
+    ),
+  },
+  {
+    k: 'visitas' as const,
+    uno: 'visita servida',
+    varios: 'visitas servidas',
+    icono: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 12s3.6-6.4 10-6.4S22 12 22 12s-3.6 6.4-10 6.4S2 12 2 12Z" />
+        <circle cx="12" cy="12" r="2.5" />
+      </svg>
+    ),
+  },
+  {
+    k: 'plantillas' as const,
+    uno: 'plantilla publicada',
+    varios: 'plantillas publicadas',
+    icono: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="8" y="3" width="13" height="13" rx="2.5" />
+        <path d="M16 19.5A2.5 2.5 0 0 1 13.5 22h-8A2.5 2.5 0 0 1 3 19.5v-8A2.5 2.5 0 0 1 5.5 9" />
+      </svg>
+    ),
+  },
+  {
+    k: 'usosPlantillas' as const,
+    uno: 'vez aplicada',
+    varios: 'veces aplicadas',
+    icono: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 6 9 17l-5-5" />
+      </svg>
+    ),
+  },
+];
+
 const INITIAL_DEMO: Profile = {
   username: 'demo',
   name: 'Uriel Ambrosio',
@@ -277,38 +411,47 @@ export default function LandingPage() {
               dice «0 perfiles» esta peor que una que no lo dice. */}
       {!!cifras && (cifras.perfiles > 0 || cifras.visitas > 0) && (
         <section className="cifras wrap">
+          <header className="cifras__cab">
+            <h2 className="t-h2">Todo lo tuyo, en un enlace</h2>
+            <p className="cifras__sub">
+              Un perfil que se ve como tú quieras, con tus redes, tu música y lo
+              que estés haciendo. Gratis, y tuyo desde el primer minuto.
+            </p>
+          </header>
+
           <ul className="cifras__l">
-            {cifras.perfiles > 0 && (
-              <li className="cifra">
-                <span className="cifra__n">{num(cifras.perfiles)}</span>
-                <span className="cifra__t">
-                  {cifras.perfiles === 1 ? 'perfil creado' : 'perfiles creados'}
-                </span>
-              </li>
-            )}
-            {cifras.visitas > 0 && (
-              <li className="cifra">
-                <span className="cifra__n">{num(cifras.visitas)}</span>
-                <span className="cifra__t">visitas servidas</span>
-              </li>
-            )}
-            {cifras.plantillas > 0 && (
-              <li className="cifra">
-                <span className="cifra__n">{num(cifras.plantillas)}</span>
-                <span className="cifra__t">
-                  {cifras.plantillas === 1 ? 'plantilla publicada' : 'plantillas publicadas'}
-                </span>
-              </li>
-            )}
-            {cifras.usosPlantillas > 0 && (
-              <li className="cifra">
-                <span className="cifra__n">{num(cifras.usosPlantillas)}</span>
-                <span className="cifra__t">
-                  {cifras.usosPlantillas === 1 ? 'vez aplicada' : 'veces aplicadas'}
-                </span>
-              </li>
-            )}
+            {CIFRAS_VISIBLES.map(({ k, uno, varios, icono }) => {
+              const v = cifras[k];
+              if (!v) return null;
+              return (
+                <li className="cifra" key={k}>
+                  <span className="cifra__i" aria-hidden="true">{icono}</span>
+                  <span className="cifra__n">{num(v)}</span>
+                  <span className="cifra__t">{v === 1 ? uno : varios}</span>
+                </li>
+              );
+            })}
           </ul>
+
+          {/* El formulario otra vez, aqui abajo. Quien ha llegado leyendo
+              hasta las cifras ya no tiene el de arriba a la vista, y
+              hacerle subir a buscarlo es la forma mas tonta de perderlo. */}
+          <form className="claim cifras__claim" onSubmit={handleClaimSubmit}>
+            <span className="claim__pre">identity.gg/</span>
+            <input
+              type="text"
+              placeholder="tunombre"
+              maxLength={24}
+              value={claimName}
+              onChange={(e) => setClaimName(e.target.value)}
+              aria-label="Elige tu nombre de usuario"
+              autoComplete="off"
+              spellCheck="false"
+            />
+            <button className="btn btn--primary btn--sm" type="submit">
+              Crear
+            </button>
+          </form>
         </section>
       )}
 
@@ -323,58 +466,25 @@ export default function LandingPage() {
           </p>
         </header>
 
+        {/* Cada una con su icono y su texto corto.
+
+            Antes eran seis parrafos largos de gris del mismo peso, sin
+            caja ni icono. Lo escribi asi para no llenar la pagina de
+            cajas, y salio peor: sin nada donde posar el ojo no se leia
+            ninguno. Y una pagina que vende algo VISUAL no puede estar
+            contada solo con palabras.
+
+            La caja es la misma que usa el resto del producto —la de las
+            plantillas, la de analiticas—, asi que aqui no es adorno: es
+            coherencia. */}
         <div className="qhace__rej">
-          <article className="rasgo">
-            <h3 className="rasgo__t">Lo colocas tú</h3>
-            <p>
-              Arrastra cada pieza donde la quieras o déjalas en columna. Cada una
-              lleva su tamaño, su color y su animación, y el editor te enseña el
-              resultado mientras lo tocas.
-            </p>
-          </article>
-
-          <article className="rasgo">
-            <h3 className="rasgo__t">Fondo de foto o de vídeo</h3>
-            <p>
-              Sube una imagen o un vídeo y ajusta el desenfoque, la opacidad y la
-              viñeta. Con partículas encima si te apetece: nieve, brasas, matriz.
-            </p>
-          </article>
-
-          <article className="rasgo">
-            <h3 className="rasgo__t">Se conecta a lo que ya usas</h3>
-            <p>
-              Tu estado de Discord en vivo, tu música, tus redes, tus proyectos y
-              tu galería. Sin ir pegando enlaces sueltos.
-            </p>
-          </article>
-
-          <article className="rasgo">
-            <h3 className="rasgo__t">Plantillas de gente real</h3>
-            <p>
-              Coge el diseño de otro perfil y aplícalo al tuyo de un clic. Se
-              copia cómo se ve, nunca su contenido, y puedes publicar el tuyo
-              para que lo use quien quiera.
-            </p>
-          </article>
-
-          <article className="rasgo">
-            <h3 className="rasgo__t">Sabes quién te ve</h3>
-            <p>
-              Personas distintas, cuántas vuelven, a qué hora te descubren y de
-              qué país. Sin guardar la dirección de nadie: sólo el país, y en dos
-              letras.
-            </p>
-          </article>
-
-          <article className="rasgo">
-            <h3 className="rasgo__t">Se ve igual en todas partes</h3>
-            <p>
-              Lo que compones no se recoloca en el móvil: se encoge entero y
-              conserva su forma, desde un teléfono pequeño hasta un monitor
-              ancho.
-            </p>
-          </article>
+          {RASGOS.map((r) => (
+            <article className="rasgo" key={r.t}>
+              <span className="rasgo__i" aria-hidden="true">{r.icono}</span>
+              <h3 className="rasgo__t">{r.t}</h3>
+              <p>{r.d}</p>
+            </article>
+          ))}
         </div>
       </section>
 
