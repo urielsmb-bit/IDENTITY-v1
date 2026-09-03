@@ -492,18 +492,28 @@ canvas.chart{ width:100%; display:block; }
 .tpl:hover{ transform:translateY(-3px); border-color:var(--border-strong); }
 
 /* --- miniatura --- */
+/* La previa manda en la tarjeta, asi que ocupa el ancho entero y fija su
+   proporcion: con `aspect-ratio` todas las tarjetas miden exactamente lo
+   mismo pase lo que pase con el nombre o con el autor, que es lo que hace
+   que una rejilla se lea como una rejilla y no como un muro irregular. */
 .tpl__pre{
   position:relative;
-  height:172px;
+  aspect-ratio:860 / 540;
   overflow:hidden;
   background:var(--bg-primary);
   border-bottom:1px solid var(--border);
   pointer-events:none;          /* la miniatura no se toca: para eso está "Ver" */
+  container-type:inline-size;
 }
+/* El perfil se pinta SIEMPRE a 860x540 y se encoge a lo que mida la
+   tarjeta. Antes la escala era fija (.325), o sea 279px de ancho: en una
+   columna mas estrecha sobraba y se recortaba por la derecha, y en una
+   mas ancha dejaba banda. `100cqw` es el ancho real de esta tarjeta, asi
+   que la escala se ajusta sola y ninguna previa se corta. */
 .tpl__scale{
   width:860px;
   height:540px;
-  transform:scale(.325);
+  transform:scale(calc(100cqw / 860));
   transform-origin:top left;
 }
 /* .pf-hero mide 100vh y dentro de
@@ -962,81 +972,6 @@ canvas.chart{ width:100%; display:block; }
   .ana__grafico{ height:220px; }
 }
 
-/* ---- plantillas publicadas -------------------------------------------- */
-.tpl{ padding-block:var(--s7) var(--s9); }
-.tpl__enc{ margin-bottom:var(--s5); }
-.tpl__sub{ margin:var(--s2) 0 0; max-width:58ch; color:var(--text-muted); font-size:var(--t3); }
-
-/* Publicar va arriba porque cuando no hay ninguna es lo unico que se
-   puede hacer en esta pagina. */
-.tpl__pub{ display:flex; gap:var(--s2); margin-bottom:var(--s6); max-width:520px; }
-.tpl__pub .inp{ flex:1; min-width:0; }
-.tpl__err{ color:var(--dnd); font-size:var(--t2); }
-
-.tpl__vacio{
-  padding:var(--s8) var(--s5);
-  text-align:center;
-  border:1px dashed var(--border-strong);
-  border-radius:var(--radius-lg);
-  color:var(--text-muted);
-  font-size:var(--t3);
-}
-.tpl__vacio-t{ margin:0 0 var(--s2); color:var(--text-primary); font-size:var(--t4); font-weight:600; }
-.tpl__vacio .btn{ margin-top:var(--s4); }
-
-.tpl__rej{
-  display:grid;
-  grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));
-  gap:var(--s4);
-}
-.tpl__card{
-  padding:var(--s4);
-  border:1px solid var(--border);
-  border-radius:var(--radius-lg);
-  background:var(--surface);
-}
-.tpl__card-h{ display:flex; align-items:baseline; justify-content:space-between; gap:var(--s2); }
-.tpl__nom{
-  margin:0; font-size:var(--t3); font-weight:600;
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-}
-/* El numero de usos es un dato, no un adorno: mono y de ancho fijo, como
-   el resto de cifras del producto. */
-.tpl__usos{
-  flex:none;
-  font-family:var(--font-mono); font-size:var(--t1);
-  font-variant-numeric:tabular-nums;
-  color:var(--text-muted);
-}
-.tpl__pie{ display:flex; gap:var(--s2); }
-.tpl__pie .btn{ flex:1; }
-
-/* ---- miniatura de plantilla -------------------------------------------
-   Lleva la clase `pf` para heredar la paleta real del tema —las variables
-   `--p-*` estan declaradas en `.pf[data-theme=...]`, y duplicarlas aqui
-   habria sido tener dos verdades—. Lo que hay que deshacer es lo que `.pf`
-   trae de pagina completa: alto de pantalla y posicionamiento. */
-.tpl__mini{
-  min-height:0;
-  height:104px;
-  margin-bottom:var(--s4);
-  border-radius:var(--radius-md);
-  border:1px solid var(--p-line, var(--border));
-  background:var(--p-bg, var(--surface));
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center; gap:7px;
-  overflow:hidden;
-  isolation:auto;
-}
-.tpl__mini-av{
-  width:26px; height:26px; border-radius:50%;
-  background:var(--p-primary, var(--accent));
-  box-shadow:0 0 0 3px var(--p-surface, transparent);
-}
-.tpl__mini-l{ height:5px; border-radius:100px; }
-.tpl__mini-l--a{ width:64px; background:var(--p-text, var(--text-primary)); opacity:.85; }
-.tpl__mini-l--b{ width:40px; background:var(--p-dim, var(--text-muted)); opacity:.7; }
-
 /* ---- previa de plantilla ----------------------------------------------
    Lleva `pf` y `pf-stack` para que las reglas de superficie del perfil de
    verdad —cristal con su desenfoque, relleno, halo— sean las MISMAS. Aqui
@@ -1098,18 +1033,141 @@ canvas.chart{ width:100%; display:block; }
   background:var(--p-primary, var(--accent)); opacity:.75;
 }
 
-.tpl__autor{
-  display:flex; align-items:center; gap:6px;
-  margin:var(--s3) 0;
-  font-size:var(--t1); color:var(--text-muted);
-  transition:color var(--transition-fast);
+/* ---- previa REAL: el perfil de su autor, encogido ---------------------
+   El perfil se pinta entero y su propio motor de escalado lo encoge para
+   que quepa, igual que hace en un movil. Lo unico que hace falta aqui es
+   darle una caja con medidas y recortar lo que sobre por abajo: un perfil
+   con muchos bloques es mas alto que ancho, y el motor solo baja hasta
+   0.42 para no volverlo ilegible. */
+.plt-prev--real{
+  position:relative;
+  height:190px;
+  padding:0;
+  overflow:hidden;
+  border-radius:var(--radius-md);
+  border:1px solid var(--border);
+  background:var(--bg-primary);
+  display:block;
 }
-.tpl__autor:hover{ color:var(--text-primary); }
-.tpl__autor img,
-.tpl__autor-ini{
-  width:20px; height:20px; border-radius:50%; flex:none;
+.plt-prev__lienzo{
+  position:absolute; inset:0;
+  /* Sin esto el perfil se lleva los clics de la tarjeta: dentro hay
+     enlaces, botones de voto y un reproductor. Es una foto, no un sitio
+     donde pulsar. */
+  pointer-events:none;
+  overflow:hidden;
+}
+/* El perfil trae `min-height:100dvh` porque normalmente ES la pagina.
+   Dentro de una tarjeta eso lo estiraria a la altura de la pantalla. */
+.plt-prev__lienzo .pf,
+.plt-prev__lienzo .pf-hero{
+  min-height:0;
+  height:100%;
+}
+/* Se degrada por abajo en vez de cortarse en seco: un corte recto parece
+   un fallo de maquetacion, un desvanecido se lee como «hay mas». */
+.plt-prev--real::after{
+  content:"";
+  position:absolute; inset:auto 0 0 0; height:54px;
+  background:linear-gradient(180deg, transparent, var(--bg-primary));
+  pointer-events:none;
+}
+
+
+/* ---- la pagina de plantillas -----------------------------------------
+   El contenedor NO puede llamarse `.tpl`: esa es la clase de la TARJETA,
+   con su borde, su fondo y su `overflow:hidden`. Poniendosela a la pagina
+   entera, el contenido acababa metido dentro de una tarjeta gigante. */
+.tplpage{ padding-block:var(--s7) var(--s9); }
+.tplpage .tpl__top{ margin-bottom:var(--s5); }
+.tpl__sub{
+  margin:var(--s2) 0 0;
+  max-width:58ch;
+  font-size:var(--t3); line-height:1.55;
+  color:var(--text-muted);
+}
+
+/* Pestañas: un solo raíl con fondo propio, no cuatro botones sueltos. Lo
+   que las hace leerse como UN mando es la caja que las contiene; sin
+   ella, cambiar de pestaña parece pulsar cuatro cosas distintas. */
+.tpl__tabs{
+  display:flex; gap:2px;
+  padding:3px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--bg-secondary);
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.tpl__tabs::-webkit-scrollbar{ display:none; }
+.tpl__tab{
+  display:inline-flex; align-items:center; gap:6px;
+  flex:none;
+  padding:7px var(--s3);
+  border:0; border-radius:var(--radius-sm);
+  background:transparent;
+  color:var(--text-muted);
+  font-size:var(--t2); font-weight:500;
+  white-space:nowrap; cursor:pointer;
+  transition:color var(--transition-fast), background var(--transition-fast);
+}
+.tpl__tab:hover{ color:var(--text-primary); }
+.tpl__tab.on{ background:var(--surface-2); color:var(--text-primary); }
+/* La cuenta en mono y tabular: son cifras que cambian al filtrar y no
+   deben mover la pestaña de sitio al pasar de 9 a 10. */
+.tpl__tab-n{
+  font-family:var(--font-mono);
+  font-size:var(--t1);
+  font-variant-numeric:tabular-nums;
+  color:var(--text-faint);
+}
+.tpl__tab.on .tpl__tab-n{ color:var(--text-secondary); }
+
+.tpl__bar{ margin-top:var(--s3); }
+.tpl__orden{ display:flex; align-items:center; gap:var(--s2); flex:none; }
+.tpl__orden-l{
+  font-family:var(--font-mono);
+  font-size:var(--t1); letter-spacing:.14em; text-transform:uppercase;
+  color:var(--text-muted);
+}
+.tpl__orden .sel{ width:auto; min-width:150px; }
+
+.tpl__pub{
+  display:flex; gap:var(--s2);
+  margin-top:var(--s3);
+  max-width:520px;
+}
+.tpl__pub .inp{ flex:1; min-width:0; }
+
+.tpl__err{ margin-top:var(--s4); color:var(--dnd); font-size:var(--t2); }
+.tpl__cargando{ margin-top:var(--s6); color:var(--text-muted); font-size:var(--t2); }
+
+.tpl__vacio{
+  margin-top:var(--s5);
+  padding:var(--s8) var(--s5);
+  text-align:center;
+  border:1px dashed var(--border-strong);
+  border-radius:var(--radius-lg);
+  color:var(--text-muted); font-size:var(--t2); line-height:1.6;
+}
+.tpl__vacio-t{ margin:0 0 var(--s2); color:var(--text-primary); font-size:var(--t4); font-weight:600; }
+.tpl__vacio .btn{ margin-top:var(--s4); }
+
+/* La firma, dentro de la tarjeta */
+.tpl__a--link{ display:inline-flex; align-items:center; gap:6px; transition:color var(--transition-fast); }
+.tpl__a--link:hover{ color:var(--text-primary); }
+.tpl__a--link img,
+.tpl__ini{
+  width:18px; height:18px; border-radius:50%; flex:none;
   object-fit:cover;
   display:grid; place-items:center;
   background:var(--surface-2);
   font-size:9px; font-weight:600; color:var(--text-secondary);
+}
+.tpl__meta svg{ width:13px; height:13px; flex:none; }
+.tpl__meta{ align-items:center; }
+
+@media (max-width:640px){
+  .tpl__bar{ flex-direction:column; align-items:stretch; }
+  .tpl__orden{ justify-content:space-between; }
 }

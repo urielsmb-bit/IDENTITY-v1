@@ -690,48 +690,82 @@ export interface PlantillaPublica {
   /** Quien la publico. Vacio si su perfil ya no esta activo. */
   autor: string;
   autorAvatar: string;
+  autorNombre: string;
+  /** El perfil de su autor, saneado, para poder pintar una previa de
+   *  verdad en vez de un maniqui. Nulo si su perfil ya no esta activo. */
+  autorPerfil: Profile | null;
 }
 
 /** Las publicadas, las mas usadas primero. */
 export async function listarPlantillas(): Promise<PlantillaPublica[]> {
   if (!supabase) return [];
-  const { data, error } = await supabase
-    .from('plantillas')
-    .select('id, nombre, ajustes, usos, creado, dueno')
-    .eq('estado', 'activa')
-    .order('usos', { ascending: false })
-    .order('creado', { ascending: false })
-    .limit(60);
-  if (error) throw traducir(error);
+  /* Se ata a una constante: dentro de la funcion de abajo, TypeScript ya
+     no puede saber que el `if` de arriba sigue valiendo. */
+  const db = supabase;
+  /* `usuario` la añade la migracion 0014. Si aun no esta aplicada, pedirla
+     rompe la consulta entera y con ella una pagina que hoy funciona. Se
+     reintenta sin ella: se pierden las previas —que es justo lo que esa
+     migracion viene a arreglar— y lo demas sigue en pie. Un despliegue no
+     tiene por que dejar la pagina rota mientras se aplica el SQL. */
+  const pedir = (cols: string) =>
+    db
+      .from('plantillas')
+      .select(cols)
+      .eq('estado', 'activa')
+      .order('usos', { ascending: false })
+      .order('creado', { ascending: false })
+      .limit(60);
+
+  /* Con la lista de columnas en una variable, el cliente ya no puede
+     deducir la forma de la fila, asi que se declara aqui. Todo lo que
+     entra por aqui se convierte campo a campo mas abajo. */
+  type FilaPlantilla = {
+    id: string; nombre: string; ajustes: unknown; usos: number;
+    creado: string; dueno: string; usuario?: string | null;
+  };
+
+  let r = await pedir('id, nombre, ajustes, usos, creado, dueno, usuario');
+  if (r.error) r = await pedir('id, nombre, ajustes, usos, creado, dueno');
+  if (r.error) throw traducir(r.error);
+  const data = (r.data ?? []) as unknown as FilaPlantilla[];
 
   const u = await usuario().catch(() => null);
 
-  /* Quien publico cada una, en una segunda consulta y no guardado en la
-     fila. Denormalizarlo seria una consulta menos, pero el dia que
-     alguien se cambia el nombre de usuario su plantilla quedaria
-     apuntando a un perfil que ya no existe, y eso no avisa: se ve bien y
-     el enlace lleva a un 404. Aqui siempre es el de ahora.
-     Si su perfil se borro o esta inactivo, la plantilla se queda —es de
-     quien la use, ya— pero sin firmar. */
-  const duenos = [...new Set((data ?? []).map((f) => String(f.dueno)))];
-  const autores = new Map<string, { username: string; avatar: string }>();
-  if (duenos.length) {
-    const { data: perfiles } = await supabase
-      .from('perfiles')
-      .select('dueno, username, apariencia')
-      .in('dueno', duenos)
-      .eq('estado', 'activo');
+  /* El perfil de cada autor, para poder pintar una previa de verdad.
+     Se busca por NOMBRE DE USUARIO en `perfiles_publicos`, no por `dueno`
+     en `perfiles`: la tabla no se lee desde fuera, y la vista —que es lo
+     que hay— da la apariencia entera pero a proposito no da `dueno`,
+     porque eso ataria cada perfil a una cuenta de acceso.
+
+     El nombre lo trae la propia plantilla, puesto por un disparador al
+     publicar y perseguido por otro si su autor se lo cambia. Copiarlo a
+     mano y confiar en acordarse era la version que se rompia sola. */
+  const usuarios = [...new Set(data.map((f) => String(f.usuario ?? '')).filter(Boolean))];
+  const autores = new Map<
+    string,
+    { username: string; avatar: string; nombre: string; perfil: Profile }
+  >();
+  if (usuarios.length) {
+    const { data: perfiles } = await db
+      .from('perfiles_publicos')
+      .select('username, apariencia')
+      .in('username', usuarios);
     for (const p of perfiles ?? []) {
       const ap = (p.apariencia ?? {}) as Record<string, unknown>;
-      autores.set(String(p.dueno), {
+      /* `apariencia` es un JSON que escribio otra persona. Va por el mismo
+         saneado que el perfil publico ANTES de que nadie lo pinte: un
+         perfil ajeno sin sanear acaba siendo HTML y CSS de esta pagina. */
+      autores.set(String(p.username).toLowerCase(), {
         username: String(p.username ?? ''),
         avatar: String(ap.avatarUrl ?? ''),
+        nombre: String(ap.name ?? ''),
+        perfil: normalizarPerfil({ ...ap, username: p.username }),
       });
     }
   }
 
-  return (data ?? []).map((f) => {
-    const a = autores.get(String(f.dueno));
+  return data.map((f) => {
+    const a = autores.get(String(f.usuario ?? '').toLowerCase());
     return {
       id: String(f.id),
       nombre: String(f.nombre ?? ''),
@@ -743,6 +777,8 @@ export async function listarPlantillas(): Promise<PlantillaPublica[]> {
       mia: !!u && f.dueno === u.id,
       autor: a?.username ?? '',
       autorAvatar: a?.avatar ?? '',
+      autorNombre: a?.nombre ?? '',
+      autorPerfil: a?.perfil ?? null,
     };
   });
 }
