@@ -45,7 +45,13 @@ function permitidos(): string[] {
  *
  *  Reflejar el origen recibido es el fallo clásico de CORS —
  *  equivale a `*` pero además permite credenciales. */
-export function cors(req: Request, metodos = 'POST, OPTIONS', cabeceras = 'content-type'): HeadersInit {
+/* `authorization` va en el valor por defecto y no como anadido de cada
+   funcion. TODA funcion de borde de Supabase la recibe —la manda el propio
+   cliente con la clave publica, y con el JWT de la sesion cuando la hay—,
+   asi que dejarla fuera del defecto significa que cada funcion nueva nace
+   rota y no se nota hasta que falla el preflight en produccion. Paso
+   exactamente eso con `registrar-vista` y `vimeo-subida`. */
+export function cors(req: Request, metodos = 'POST, OPTIONS', cabeceras = 'content-type, authorization'): HeadersInit {
   const origen = req.headers.get('origin') ?? '';
   const lista = permitidos();
 
