@@ -44,7 +44,10 @@
      y viven en la misma familia calida que la marca; `idle` es
      directamente la marca, que es lo que significa el ambar. */
   --online:  #56C486;
-  --idle:    var(--brand);
+  /* Colgaba de `--brand`; con la marca en blanco un punto de «ausente»
+     blanco no dice nada. Aqui el ambar no es marca, es semaforo: verde,
+     ambar y rojo son la convencion de estado en todas partes. */
+  --idle:    #D9A441;
   --dnd:     #E5544B;
   --offline: #6E6E6E;
 
@@ -58,15 +61,26 @@
      pisa nunca, y se usa poco a proposito: el anillo de foco, lo
      que esta activo y lo que acaba de guardarse. Nada mas.
 
-     Ambar y no violeta ni azul porque violeta y azul son el
-     uniforme de todas las herramientas oscuras —Linear, Vercel,
-     Raycast— y el parecido era justo la queja. El ambar sobre
-     casi-negro se lee calido y no se parece a ninguna. 9.95:1
-     sobre la superficie, o sea que ademas se lee. */
-  --brand:      #E8B14C;
-  --brand-ink:  #1A1204;
-  --brand-soft: rgba(232,177,76,.12);
-  --brand-line: rgba(232,177,76,.34);
+     Probamos ambar (#E8B14C) y a su dueño no le convencio, asi que
+     vuelve al blanco. Lo que NO vuelve atras es la estructura: la
+     marca sigue siendo un token propio y separado de `--accent`, y
+     los 35 sitios que la usan salen todos de aqui. Cambiar el color
+     de IDENTITY es cambiar estas cuatro lineas y nada mas.
+
+     Con el blanco se pierde una cosa que si valia: el foco y la
+     seleccion vuelven a verse igual, porque los dos son blancos.
+     Si algun dia se quiere recuperar esa distincion, basta con
+     poner aqui un color —cualquiera— y el resto se ajusta solo.
+
+     Referencia de contrastes sobre la superficie, por si sirve:
+     ambar #E8B14C 9.95 · cobre #D98E5A 7.32 · cian #4CC9E8 9.95 ·
+     violeta #8B7CF6 5.80 · lima #C6F24E 14.90. Violeta y azul son
+     el uniforme de Linear y Vercel, que era justo de lo que
+     queriamos separarnos. */
+  --brand:      #FFFFFF;
+  --brand-ink:  #050505;
+  --brand-soft: rgba(255,255,255,.10);
+  --brand-line: rgba(255,255,255,.34);
 
   /* ---- tipografía ---------------------------------------- */
   --font: "Inter", "Geist", "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
