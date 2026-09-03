@@ -36,15 +36,20 @@ interface ProfileViewProps {
    ya no se lee, y es preferible que la pagina se desplace a que el perfil
    sea ilegible.
 
-   Por arriba: 1.6 aprovecha un monitor grande sin que la tarjeta se
-   convierta en un cartel. Las imagenes tienen margen —los avatares se
-   suben a 512px— asi que a esta escala no se ven blandas.
+   Por arriba: 1, o sea que NO crece. Se probo dejandola crecer hasta 1.6
+   para aprovechar los monitores grandes y el resultado se veia inflado:
+   una tarjeta pensada a 720px puesta a 1152 deja de parecer una tarjeta.
+   El tamaño de diseño ya es el bueno en un ordenador; lo que hacia falta
+   era que cupiera en lo pequeño, no que llenara lo grande.
+
+   Si algun dia se quiere algo de crecimiento, es este numero y nada mas:
+   1.1 o 1.15 se notan poco y siguen sin inflar.
 
    `ANCHO_FULL` es el tope que su propia regla CSS le da al modo «todo el
    ancho»; se repite aqui porque el calculo necesita un numero y esa regla
    no lo expone en ninguna variable. */
 const ESCALA_MIN = 0.42;
-const ESCALA_MAX = 1.6;
+const ESCALA_MAX = 1;
 const ANCHO_FULL = 1100;
 /* Lo que su propia regla CSS le concede a «nombre al lado». */
 const ANCHO_AL_LADO = 720;
