@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Profile } from '@/types';
 import { FONTS } from '@/data/themes';
 import { ProfileView } from '@/components/profile/ProfileView';
@@ -24,6 +24,13 @@ import { safeMedia } from '@/lib/utils';
  * No lleva particulas ni animaciones de entrada: son doce de estas en una
  * pagina, y lo que hay que ver es la composicion, no el movimiento.
  */
+/* El perfil de la previa se pinta SIEMPRE a esta medida y luego se
+   encoge. Fija, para que todas las tarjetas salgan iguales: si cada una
+   se midiera sola, un diseño ancho y uno estrecho darian dos escalas
+   distintas y la rejilla dejaria de leerse como una rejilla. */
+const ANCHO_PREVIA = 860;
+const ALTO_PREVIA = 540;
+
 export function PreviaPlantilla({
   t,
   nombre,
@@ -41,6 +48,24 @@ export function PreviaPlantilla({
    *  bloques y su composicion; sin el, el maniqui de abajo. */
   perfil?: Profile | null;
 }) {
+  /* La caja mide y de ahi sale la escala. Va arriba del todo porque un
+     hook no puede vivir despues de un `return`. */
+  const caja = useRef<HTMLDivElement | null>(null);
+  const [escala, setEscala] = useState(0);
+
+  useEffect(() => {
+    const el = caja.current?.parentElement;   // .tpl__pre
+    if (!el) return;
+    const medir = () => {
+      const a = el.clientWidth;
+      if (a > 0) setEscala(a / ANCHO_PREVIA);
+    };
+    medir();
+    const ro = new ResizeObserver(medir);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [perfil]);
+
   /* Con el perfil de su autor se pinta el perfil entero, encogido. El
      maniqui de abajo dibujaba un avatar, un nombre y dos rayas: sobre un
      diseño con bloques de musica, presencia de Discord y un nombre
@@ -59,14 +84,30 @@ export function PreviaPlantilla({
      mide el hueco y se ajusta solo. Aqui el hueco es la caja de la
      tarjeta. */
   if (perfil) {
-    /* `tpl__scale` ya existia en la hoja, escrito para esta pagina y sin
-       usar por nadie: pinta el perfil a 860x540 y lo encoge a un tercio
-       con un `transform`. Es mejor que dejarselo al motor de escalado del
-       perfil —que mide su hueco— porque aqui la medida es siempre la
-       misma y sale igual en todas las tarjetas. Doce miniaturas que se
-       miden solas dan doce escalas distintas; estas doce son identicas. */
+    /* El perfil se pinta a 860x540 y se encoge a lo que mida su tarjeta.
+       La escala la mide este componente y NO la hoja de estilos: se probo
+       con `transform: scale(calc(100cqw / 860))` y no funciona, porque
+       `scale()` pide un NUMERO y `100cqw` es una longitud. Una declaracion
+       invalida se tira en silencio, asi que no habia escala ninguna: el
+       perfil salia a tamaño real dentro de una caja de 267px y se veia el
+       trozo de la izquierda. Se veia raro y no habia ningun error.
+
+       Con la medida hecha aqui, todas las tarjetas quedan a la misma
+       proporcion y ninguna se corta. */
     return (
-      <div className="tpl__scale" aria-hidden="true">
+      <div
+        className="tpl__escala"
+        ref={caja}
+        aria-hidden="true"
+        style={{
+          width: ANCHO_PREVIA,
+          height: ALTO_PREVIA,
+          transform: `scale(${escala})`,
+          /* Hasta que se mide, invisible: a escala 1 se veria un fogonazo
+             del perfil a tamaño real antes de encogerse. */
+          visibility: escala ? 'visible' : 'hidden',
+        }}
+      >
         <ProfileView profile={aplicarPlantilla(perfil, t)} preview />
       </div>
     );

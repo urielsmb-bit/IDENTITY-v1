@@ -505,22 +505,21 @@ canvas.chart{ width:100%; display:block; }
   pointer-events:none;          /* la miniatura no se toca: para eso está "Ver" */
   container-type:inline-size;
 }
-/* El perfil se pinta SIEMPRE a 860x540 y se encoge a lo que mida la
-   tarjeta. Antes la escala era fija (.325), o sea 279px de ancho: en una
-   columna mas estrecha sobraba y se recortaba por la derecha, y en una
-   mas ancha dejaba banda. `100cqw` es el ancho real de esta tarjeta, asi
-   que la escala se ajusta sola y ninguna previa se corta. */
-.tpl__scale{
-  width:860px;
-  height:540px;
-  transform:scale(calc(100cqw / 860));
-  transform-origin:top left;
-}
-/* .pf-hero mide 100vh y dentro de
-   una miniatura eso es la ventana, no la tarjeta */
-.tpl__scale .pf{ min-height:0; padding:0; }
-.tpl__scale .pf-hero{ min-height:540px; padding:36px 28px; }
-.tpl__scale .pf-scroll{ display:none; }
+/* La medida y la escala las pone el componente en linea, no esta hoja:
+   `scale()` pide un numero y no hay forma de sacar uno del ancho del
+   contenedor en CSS —`calc(100cqw / 860)` da una longitud, la
+   declaracion es invalida y se tira en silencio—. Aqui solo queda el
+   origen y lo que hay que deshacerle al perfil. */
+.tpl__escala{ transform-origin:top left; }
+/* `.pf-hero` mide 100vh, y dentro de una miniatura eso es la ventana, no
+   la tarjeta. */
+.tpl__escala .pf{ min-height:0; padding:0; }
+/* `.pf.is-preview .pf-hero` pone `min-height:0` y gana por especificidad
+   (0,3,0 contra 0,2,0), asi que hay que nombrarla. Sin esto el heroe medía
+   lo que pidiera el contenido —361px de los 540— y quedaba un cuarto de
+   la miniatura vacio por abajo. */
+.tpl__escala .pf.is-preview .pf-hero{ min-height:540px; padding:36px 28px; }
+.tpl__escala .pf-scroll{ display:none; }
 
 .tpl__fav{
   position:absolute; top:10px; right:10px;
@@ -1171,3 +1170,38 @@ canvas.chart{ width:100%; display:block; }
   .tpl__bar{ flex-direction:column; align-items:stretch; }
   .tpl__orden{ justify-content:space-between; }
 }
+
+
+/* ---- visualizar una plantilla ----------------------------------------
+   Se pinta a la misma medida fija que la miniatura y se encoge a lo que
+   quepa: asi lo que se ve en grande es lo mismo que se veia pequeño,
+   sin sorpresas al abrirlo. */
+.tplver{ position:relative; overflow:hidden; background:var(--bg-primary); }
+.tplver__lienzo{ transform-origin:top left; }
+.tplver__lienzo .pf{ min-height:0; padding:0; }
+.tplver__lienzo .pf.is-preview .pf-hero{ min-height:540px; padding:36px 28px; }
+.tplver__lienzo .pf-scroll{ display:none; }
+/* Es una vista, no un sitio donde pulsar: dentro hay enlaces, votos y un
+   reproductor que no son de quien mira. */
+.tplver__lienzo{ pointer-events:none; }
+.tplver__pie{
+  display:flex; align-items:center; gap:var(--s3);
+  padding:var(--s3) var(--s4);
+  border-top:1px solid var(--border);
+}
+.tplver__pie .btn{ flex:none; }
+.tplver__nota{
+  margin:0;
+  font-size:var(--t1); line-height:1.45;
+  color:var(--text-muted);
+}
+
+/* El boton de ver es cuadrado y no crece: la accion que manda es «Usar
+   plantilla», y dos botones del mismo ancho no dicen cual es cual. */
+.tpl__ver{ flex:none; width:34px; padding:0; display:grid; place-items:center; }
+.tpl__ver svg{ width:15px; height:15px; }
+
+/* El boton de ver es cuadrado y no crece: la accion que manda es «Usar
+   plantilla», y dos botones del mismo ancho no dicen cual es cual. */
+.tpl__ver{ flex:none; width:34px; padding:0; display:grid; place-items:center; }
+.tpl__ver svg{ width:15px; height:15px; }

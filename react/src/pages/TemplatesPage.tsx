@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PreviaPlantilla } from '@/components/plantillas/PreviaPlantilla';
+import { VerPlantilla } from '@/components/plantillas/VerPlantilla';
 import { useProfileStore } from '@/stores/profileStore';
 import { useToast } from '@/hooks/useToast';
 import { hasBackend } from '@/lib/supabase';
@@ -51,6 +52,8 @@ export default function TemplatesPage() {
   const [favs, setFavs] = useState<string[]>(() => local.favoritas());
   const [usadas, setUsadas] = useState<string[]>(() => local.usadas());
 
+  /** La que se esta viendo en grande. */
+  const [viendo, setViendo] = useState<backend.PlantillaPublica | null>(null);
   const [abierto, setAbierto] = useState(false);
   const [nombre, setNombre] = useState('');
   const [publicando, setPublicando] = useState(false);
@@ -361,6 +364,21 @@ export default function TemplatesPage() {
                   <button className="btn btn--primary btn--sm" onClick={() => void usar(p)}>
                     Usar plantilla
                   </button>
+                  {/* Ver antes de aplicar. La miniatura enseña que hizo su
+                      autor; esto responde la otra pregunta, que es la que
+                      importa antes de pulsar: como queda A MI. */}
+                  <button
+                    type="button"
+                    className="btn btn--ghost btn--sm tpl__ver"
+                    onClick={() => setViendo(p)}
+                    title={`Ver «${p.nombre}» con tu información`}
+                    aria-label={`Ver «${p.nombre}» con tu información`}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+                      <path d="M2 12s3.6-6.4 10-6.4S22 12 22 12s-3.6 6.4-10 6.4S2 12 2 12Z" />
+                      <circle cx="12" cy="12" r="2.5" />
+                    </svg>
+                  </button>
                   {p.mia && (
                     <button
                       type="button"
@@ -377,6 +395,29 @@ export default function TemplatesPage() {
           })}
         </div>
       )}
+
+      {viendo && (() => {
+        /* Sobre el perfil de quien mira. Si aun no tiene, sobre el de su
+           autor: enseñar algo es mejor que un hueco, y el pie del modal
+           dice cual de los dos se esta viendo. */
+        const mio = useProfileStore.getState().mine();
+        const base = mio ?? viendo.autorPerfil;
+        if (!base) return null;
+        return (
+          <VerPlantilla
+            nombre={viendo.nombre}
+            base={base}
+            esMio={!!mio}
+            ajustes={viendo.ajustes}
+            onCerrar={() => setViendo(null)}
+            onUsar={() => {
+              const elegida = viendo;
+              setViendo(null);
+              void usar(elegida);
+            }}
+          />
+        );
+      })()}
     </div>
   );
 }
