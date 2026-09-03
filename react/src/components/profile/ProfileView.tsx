@@ -325,40 +325,77 @@ export function ProfileView({
    * el ancho compuesto aunque ya este escalado: no hay realimentacion.
    */
   useEffect(() => {
-    if (modoLibre !== true) return;
     const pila = cardRef.current;
-    const hueco = pila?.parentElement;
-    if (!pila || !hueco) return;
+    const envoltura = pila?.parentElement;      // .pf-escala
+    const hueco = envoltura?.parentElement;     // .pf-hero
+    if (!pila || !envoltura || !hueco) return;
 
     let rafId = 0;
     const medir = () => {
       rafId = 0;
-      const compuesto = pila.offsetWidth;
-      const disponible = hueco.clientWidth;
-      if (!compuesto || !disponible) return;
-
-      const escala = Math.min(1, disponible / compuesto);
       const raiz = rootRef.current;
       if (!raiz) return;
+
+      /* Cuanto sitio hay de verdad: `clientWidth` incluye el relleno del
+         heroe, y ese relleno no es sitio para la tarjeta. */
+      const eh = getComputedStyle(hueco);
+      const disponible =
+        hueco.clientWidth -
+        (parseFloat(eh.paddingLeft) || 0) -
+        (parseFloat(eh.paddingRight) || 0);
+      if (disponible <= 0) return;
+
+      /* El ancho de DISEÑO, que es lo que hay que conservar.
+         En el lienzo lo dicta la composicion —las piezas colocadas a mano
+         pueden ocupar mas que la tarjeta—; en columna, el ancho maximo
+         declarado. Medir `offsetWidth` en columna no sirve: ya viene
+         encogido por el propio hueco y la division daria siempre uno. */
+      const disenio = modoLibre
+        ? pila.offsetWidth
+        : parseFloat(getComputedStyle(pila).maxWidth) || 460;
+      if (!disenio) return;
+
+      const escala = Math.min(1, disponible / disenio);
 
       if (escala >= 0.999) {
         raiz.style.removeProperty('--u-escala');
         raiz.style.removeProperty('--u-escala-h');
+        raiz.style.removeProperty('--u-escala-mx');
+        raiz.style.removeProperty('--u-ancho');
         return;
       }
+
+      /* Se fija el ancho de diseño y se encoge el conjunto. Dejar que la
+         tarjeta se estreche seria recolocar el contenido: el nombre parte
+         por otro sitio, el avatar cambia de fila... o sea, otro diseño. */
+      raiz.style.setProperty('--u-ancho', `${Math.round(disenio)}px`);
       raiz.style.setProperty('--u-escala', escala.toFixed(4));
-      // Un elemento escalado conserva su caja original en el flujo: sin esto
-      // quedaria un hueco muerto igual a lo que se ha encogido.
+
+      /* Un elemento escalado conserva su caja SIN escalar. Sin estas dos
+         compensaciones quedaria hueco muerto debajo y desbordaria a los
+         lados, y la pagina cogeria scroll horizontal. */
       raiz.style.setProperty(
         '--u-escala-h',
         `${-Math.round(pila.offsetHeight * (1 - escala))}px`,
+      );
+      raiz.style.setProperty(
+        '--u-escala-mx',
+        `${-Math.round((disenio * (1 - escala)) / 2)}px`,
       );
     };
 
     const pedir = () => {
       if (!rafId) rafId = requestAnimationFrame(medir);
     };
-    pedir();
+
+    /* La primera medida va DIRECTA, sin esperar al fotograma.
+       `requestAnimationFrame` no dispara en una pestana oculta, asi que
+       abriendo un perfil en segundo plano el escalado no llegaba a
+       aplicarse: se quedaba con el diseño recolocado hasta que algo
+       cambiaba de tamano. En un efecto el diseño ya esta calculado, o sea
+       que medir aqui es correcto. El rAF se reserva para juntar las
+       medidas seguidas del observador. */
+    medir();
 
     const ro = new ResizeObserver(pedir);
     ro.observe(hueco);
@@ -366,10 +403,19 @@ export function ProfileView({
     return () => {
       ro.disconnect();
       if (rafId) cancelAnimationFrame(rafId);
-      rootRef.current?.style.removeProperty('--u-escala');
-      rootRef.current?.style.removeProperty('--u-escala-h');
+      const r = rootRef.current;
+      r?.style.removeProperty('--u-escala');
+      r?.style.removeProperty('--u-escala-h');
+      r?.style.removeProperty('--u-escala-mx');
+      r?.style.removeProperty('--u-ancho');
     };
-  }, [modoLibre, rootRef, cardRef, p.pos, p.canvasH, p.sWidthPct]);
+    /* Ojo con las dependencias: `p.pos` es un objeto que `normalizarPerfil`
+       recrea en CADA render, asi que ponerlo aqui hacia que el efecto se
+       reiniciara sin parar. La limpieza borraba las variables antes de que
+       el `requestAnimationFrame` llegara a medir, y nunca se fijaba nada.
+       No hacen falta: el ResizeObserver ya ve cualquier cambio de tamano
+       que provoquen, que es lo unico que importa aqui. */
+  }, [modoLibre, rootRef, cardRef]);
 
   const orden = p.blockOrder ?? [];
 
@@ -550,6 +596,12 @@ export function ProfileView({
 
       {/* ── HÉROE ─────────────────────────────────────────── */}
       <section className="pf-hero">
+        {/* La escala vive aqui y no en `.pf-stack` a proposito. La pila ya
+            tiene dueño para su `transform`: la inclinacion 3D lo escribe, y
+            las animaciones de entrada tambien —y una animacion gana sobre
+            una declaracion, asi que la escala se perdia en cuanto una pieza
+            entraba—. Separandolas, cada una manda en su elemento. */}
+        <div className="pf-escala">
         <div ref={cardRef} className="pf-stack">
           <span className="pf-card__sheen" aria-hidden="true" />
 
@@ -874,6 +926,7 @@ export function ProfileView({
               <span>{p.views.toLocaleString('es-CO')} visitas</span>
             </div>
           )}
+        </div>
         </div>
       </section>
 

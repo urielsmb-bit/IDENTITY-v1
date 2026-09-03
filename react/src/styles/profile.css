@@ -129,6 +129,19 @@
 /* ============================================================
    HÉROE — la primera pantalla es el perfil, a pantalla completa
    ============================================================ */
+/* El envoltorio que encoge el conjunto.
+   Escala aqui en vez de en `.pf-stack` porque alli el `transform` ya lo
+   escriben la inclinacion 3D y las animaciones de entrada, y una animacion
+   gana siempre sobre una declaracion: la escala desaparecia en cuanto una
+   pieza entraba. Los margenes negativos recortan la caja sin escalar que
+   el elemento sigue ocupando, para que no quede hueco muerto ni desborde. */
+.pf-escala{
+  transform:scale(var(--u-escala, 1));
+  transform-origin:top center;
+  margin-bottom:var(--u-escala-h, 0px);
+  margin-inline:var(--u-escala-mx, 0px);
+}
+
 .pf-hero{
   position:relative;
   /* Se descuenta la barra: con 100vh el héroe sobresale por abajo justo lo
@@ -183,8 +196,15 @@
   display:flex;
   flex-direction:column;
   gap:var(--u-gap, 16px);
-  width:100%;
+  /* `--u-ancho` lo pone ProfileView cuando no cabe: fija el ancho de diseño
+     para que el contenido NO se recoloque, y el conjunto se encoge con
+     `--u-escala`. Sin el, `width:100%` estrecharia la tarjeta y el nombre
+     partiria por otro sitio: otro diseño, no el mismo mas pequeño. */
+  width:var(--u-ancho, 100%);
   max-width:var(--u-width, 460px);
+  /* Un elemento escalado conserva su caja sin escalar. Estas dos recortan
+     el hueco muerto que quedaria debajo y a los lados. */
+  transform-origin:top center;
   /* auto = el alto que pida el contenido, que es como se comportaba
      antes de que esto fuera regulable. */
   min-height:var(--u-sheight, auto);
@@ -243,7 +263,7 @@
   transform:perspective(900px)
             rotateX(var(--rx, 0deg))
             rotateY(var(--ry, 0deg))
-            scale(var(--u-escala, 1));
+            scale(1);
 }
 .pf[data-tilt="on"] .pf-stack{
   transition:transform .12s linear;
@@ -1120,13 +1140,26 @@
    Con ancho fijo la caja se estira aunque el contenido sea corto.
    "auto" la hace abrazar el contenido, que es casi siempre lo
    que la gente quiere cuando pone pocos bloques. */
+/* `--u-ancho` gana en las tres. Lo pone ProfileView cuando la tarjeta no
+   cabe: fija el ancho de DISEÑO para que el contenido no se recoloque y el
+   conjunto se encoja con `--u-escala`. Sin esto, estas reglas —que tienen
+   mas especificidad que `.pf-stack`— devolvian la tarjeta al ancho del
+   hueco y el nombre volvia a partirse en dos lineas.
+   El `min-width` y los `100%` de los `max-width` tambien tienen que ceder:
+   los tres acotan al hueco, que es justo de lo que se esta escapando. */
 .pf[data-width="auto"] .pf-stack{
-  width:fit-content;
-  min-width:min(280px, 100%);
-  max-width:min(var(--u-width, 460px), 100%);
+  width:var(--u-ancho, fit-content);
+  min-width:var(--u-ancho, min(280px, 100%));
+  max-width:var(--u-ancho, min(var(--u-width, 460px), 100%));
 }
-.pf[data-width="fixed"] .pf-stack{ width:100%; max-width:var(--u-width, 460px); }
-.pf[data-width="full"]  .pf-stack{ width:100%; max-width:min(1100px, 100%); }
+.pf[data-width="fixed"] .pf-stack{
+  width:var(--u-ancho, 100%);
+  max-width:var(--u-ancho, var(--u-width, 460px));
+}
+.pf[data-width="full"] .pf-stack{
+  width:var(--u-ancho, 100%);
+  max-width:var(--u-ancho, min(1100px, 100%));
+}
 
 /* ---- cabecera en fila: avatar junto al nombre ---------------- */
 @media (max-width:520px){
@@ -1385,7 +1418,7 @@
 .pf[data-layout="free"] .pf-avatar{ justify-self:inherit; }
 
 /* la rejilla necesita aire para que se note */
-.pf[data-layout="free"][data-width="auto"] .pf-stack{ width:100%; }
+.pf[data-layout="free"][data-width="auto"] .pf-stack{ width:var(--u-ancho, 100%); }
 
 @media (max-width:640px){
   /* El lienzo libre NO se deshace en movil.
@@ -2465,10 +2498,9 @@
    elemento escalado sigue ocupando su caja SIN escalar, hace falta
    `--u-escala-h` para recortar el hueco muerto que quedaria debajo.
    ============================================================ */
-.pf[data-layout="free"] .pf-stack{
-  transform-origin:top center;
-  margin-bottom:var(--u-escala-h, 0px);
-}
+/* Lo que antes era exclusivo del lienzo ahora vale para los dos modos y
+   vive en `.pf-stack`. La regla se queda vacia a proposito: quitarla del
+   todo escondia que aqui hubo una excepcion. */
 /* Con el lienzo escalado el ancho de la pieza ya no se puede recortar
    al del telefono: se recorta solo el conjunto. */
 @media (max-width:640px){
