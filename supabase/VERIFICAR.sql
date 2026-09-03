@@ -303,6 +303,62 @@ with comprobaciones as (
       where table_schema='public' and table_name='perfiles_publicos'
         and column_name in ('dueno','acepto_en','acepto_version')
     ) then 'OK' else 'MAL: la vista rehecha filtro datos que no son publicos' end
+
+  -- ============================================================
+  -- 0009 · lo que 0007 y 0008 dejaron roto
+  -- ============================================================
+
+  union all
+  -- Tener politica de RLS no es tener permiso: son dos puertas. La 0007
+  -- puso la politica y se olvido del GRANT, asi que nadie leia nada.
+  select 37, 'Se pueden LEER las insignias concedidas',
+    case when exists (
+      select 1 from information_schema.role_table_grants
+      where table_name='insignias_concedidas'
+        and grantee in ('anon','authenticated')
+        and privilege_type='SELECT'
+    ) then 'OK' else 'MAL: falta el GRANT, ninguna insignia se cargara' end
+
+  union all
+  select 38, 'Se puede leer la vista de insignias',
+    case when exists (
+      select 1 from information_schema.role_table_grants
+      where table_name='insignias_de_perfil'
+        and grantee in ('anon','authenticated')
+        and privilege_type='SELECT'
+    ) then 'OK' else 'MAL: falta el GRANT' end
+
+  union all
+  -- Con `security_invoker`, la RLS de `perfiles` deja estas vistas mudas
+  -- para todo el que no sea el dueno. Fue justo lo que rompio la 0008.
+  select 39, 'Descubrir no depende de los permisos de quien la llama',
+    case when coalesce(
+      (select 'si' from pg_class c
+       join pg_namespace n on n.oid=c.relnamespace
+       where n.nspname='public' and c.relname='descubrir'
+         and array_to_string(coalesce(c.reloptions,'{}'), ',') like '%security_invoker=true%'),
+      'no') = 'no' then 'OK'
+    else 'MAL: Descubrir saldra vacio para todo el mundo menos el dueno' end
+
+  union all
+  select 40, 'La misma vista de insignias, igual',
+    case when coalesce(
+      (select 'si' from pg_class c
+       join pg_namespace n on n.oid=c.relnamespace
+       where n.nspname='public' and c.relname='insignias_de_perfil'
+         and array_to_string(coalesce(c.reloptions,'{}'), ',') like '%security_invoker=true%'),
+      'no') = 'no' then 'OK'
+    else 'MAL: «verificado» no aparecera en ningun perfil ajeno' end
+
+  union all
+  -- La 0004 redujo el listado a siete campos. La 0008 lo devolvio entero
+  -- sin querer; si vuelve a pasar, el buscador publica el perfil completo.
+  select 41, 'El listado publica solo la miniatura, no el perfil entero',
+    case when coalesce(
+      (select pg_get_viewdef(to_regclass('public.descubrir'))
+       where to_regclass('public.descubrir') is not null),
+      '') like '%jsonb_build_object%' then 'OK'
+    else 'MAL: Descubrir esta exponiendo `apariencia` completa' end
 )
 
 select
