@@ -35,9 +35,17 @@ import { cors, preflight, origenValido, cuerpoEsJson } from '../_compartido/cors
  *  sirve la que le parezca y un cambio suyo rompe esto sin aviso. */
 const ACEPTA = 'application/vnd.vimeo.*+json;version=3.4';
 
-/** Tope por archivo. Un fondo es un bucle corto, no una película;
- *  el límite está para que un error de nadie llene la cuenta. */
-const MAX_BYTES = 60 * 1024 * 1024;
+/** Tope por archivo.
+ *
+ *  No hace falta comprimir antes de subir: Vimeo transcodifica cada
+ *  original a varias calidades y sirve la que le toque a cada visitante.
+ *  Recomprimir en el navegador le daría un original peor del que partir
+ *  —se perdería calidad dos veces— y encima tardaría minutos.
+ *
+ *  Así que el original sube tal cual y el tope es generoso. Sigue habiendo
+ *  uno porque el espacio de la cuenta es compartido entre todos los
+ *  perfiles: es una barrera contra el accidente, no contra el uso. */
+const MAX_BYTES = 500 * 1024 * 1024;
 
 function api(ruta: string, init: RequestInit = {}): Promise<Response> {
   const token = Deno.env.get('VIMEO_TOKEN') ?? '';

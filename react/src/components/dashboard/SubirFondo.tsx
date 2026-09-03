@@ -74,7 +74,7 @@ function explicar(e: unknown): string {
   return m || 'No se pudo subir el video.';
 }
 
-const MAX_VIDEO_MB = 60;
+const MAX_VIDEO_MB = 500;
 
 /**
  * Una sola caja para el fondo, sea foto o vídeo.
@@ -135,7 +135,11 @@ export function SubirFondo({ titulo, previa, onSubido, onQuitar, guia }: SubirFo
       // ── vídeo ───────────────────────────────────────────────
       if (archivo.size > MAX_VIDEO_MB * 1024 * 1024) {
         const mb = Math.round(archivo.size / 1048576);
-        setError(`El vídeo pesa ${mb} MB y el tope son ${MAX_VIDEO_MB}. Recorta el bucle o bájale la calidad.`);
+        setError(
+          `El vídeo pesa ${mb} MB y el tope son ${MAX_VIDEO_MB}. ` +
+            'No hace falta que lo comprimas tú: Vimeo lo optimiza al recibirlo. ' +
+            'Recorta el bucle y sube el original.',
+        );
         return;
       }
       if (!hasBackend() || !backend.haySesion()) {
@@ -151,8 +155,10 @@ export function SubirFondo({ titulo, previa, onSubido, onQuitar, guia }: SubirFo
         const mb = archivo.size / (1024 * 1024);
         if (mb > MAX_CUBO_MB) {
           setError(
-            `Ese vídeo pesa ${mb.toFixed(1)} MB y el tope es ${MAX_CUBO_MB} MB. ` +
-              'Recórtalo a unos segundos o bájale la calidad: un fondo es un bucle corto.',
+            `Ese vídeo pesa ${mb.toFixed(1)} MB y el tope es ${MAX_CUBO_MB} MB, ` +
+              'porque ahora mismo los vídeos se guardan sin optimizar y se ' +
+              'descargan enteros en cada visita. Con Vimeo conectado el tope ' +
+              `sube a ${MAX_VIDEO_MB} MB y él se encarga de comprimirlo.`,
           );
           if (entradaRef.current) entradaRef.current.value = '';
           return;
