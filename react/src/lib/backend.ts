@@ -460,6 +460,8 @@ export async function analiticasDe(perfilId: string, dias = 30) {
     nota: null as number | null,
     numNotas: 0,
     porDia: {} as Record<string, number>,
+    porHora: new Array(24).fill(0) as number[],
+    vuelven: 0,
     ultima: '' as string,
   };
   if (!supabase || !perfilId) return vacio;
@@ -472,7 +474,7 @@ export async function analiticasDe(perfilId: string, dias = 30) {
       .eq('perfil_id', perfilId)
       .maybeSingle(),
     client.from('vistas')
-      .select('primera,ultima')
+      .select('primera,ultima,veces')
       .eq('perfil_id', perfilId)
       .gte('primera', desde)
       .order('primera', { ascending: false })
@@ -486,22 +488,73 @@ export async function analiticasDe(perfilId: string, dias = 30) {
   for (let i = 0; i < dias; i++) {
     porDia[new Date(Date.now() - i * 86400000).toISOString().slice(0, 10)] = 0;
   }
+  /* Dos cosas mas que ya estaban en estas mismas filas y no se miraban.
+
+     `veces` dice cuantas veces ha vuelto cada visitante, asi que contar
+     los que pasan de una responde la pregunta que de verdad importa de un
+     perfil: si la gente te guarda o si pasa de largo. No hacia falta ni
+     una consulta mas, solo pedir la columna.
+
+     Y la HORA de `primera` dice a que hora te descubren, que es lo unico
+     accionable que hay aqui: sirve para decidir cuando compartir el
+     enlace. Es la hora del navegador de quien mira, no la del visitante
+     —eso no se guarda— y la pagina lo dice en vez de callarselo. */
+  const porHora = new Array(24).fill(0) as number[];
+  let vuelven = 0;
   let ultima = '';
   for (const f of filas) {
     const dia = String(f.primera ?? '').slice(0, 10);
     if (dia in porDia) porDia[dia] = (porDia[dia] ?? 0) + 1;
+
+    const h = new Date(String(f.primera ?? '')).getHours();
+    if (Number.isFinite(h) && h >= 0 && h < 24) porHora[h] = (porHora[h] ?? 0) + 1;
+
+    if ((Number(f.veces) || 1) > 1) vuelven++;
+
     const u = String(f.ultima ?? '');
     if (u > ultima) ultima = u;
   }
 
   const num = Number(m.num_notas) || 0;
   return {
+    porHora,
+    vuelven,
     unicas: Number(m.vistas_unicas) || 0,
     totales: Number(m.vistas_totales) || 0,
     nota: num > 0 ? Number(m.suma_notas) / num : null,
     numNotas: num,
     porDia,
     ultima,
+  };
+}
+
+/**
+ * Cuanto se han usado las plantillas que uno ha publicado.
+ *
+ * Es lo unico de estas analiticas que no habla de visitas, y por eso vale
+ * la pena: una visita dice que alguien te vio, y un uso dice que a alguien
+ * le gusto tanto tu diseño como para ponerselo. No es lo mismo.
+ *
+ * La politica de la tabla ya limita a las propias por `dueno`; el filtro
+ * de aqui es para no traerse la galeria entera.
+ */
+export async function usosDeMisPlantillas() {
+  const vacio = { plantillas: 0, usos: 0, mejor: '' };
+  if (!supabase) return vacio;
+  const u = await usuario().catch(() => null);
+  if (!u) return vacio;
+
+  const { data, error } = await supabase
+    .from('plantillas')
+    .select('nombre, usos')
+    .eq('dueno', u.id)
+    .order('usos', { ascending: false });
+  if (error || !data?.length) return vacio;
+
+  return {
+    plantillas: data.length,
+    usos: data.reduce((a, p) => a + (Number(p.usos) || 0), 0),
+    mejor: Number(data[0]?.usos) > 0 ? String(data[0]?.nombre ?? '') : '',
   };
 }
 

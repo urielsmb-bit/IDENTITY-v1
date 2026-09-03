@@ -906,11 +906,15 @@ canvas.chart{ width:100%; display:block; }
   border-radius:var(--radius-lg);
   background:var(--surface);
 }
+/* Mismo rotulo micro que el resto del producto: mono, mayuscula y muy
+   espaciado. Estaba en --t2 y en la fuente de texto, o sea del mismo
+   tamaño que su propia explicacion de debajo. */
 .ana__kpiT{
-  font-size:var(--t2);
-  letter-spacing:.05em;
+  font-family:var(--font-mono);
+  font-size:var(--t1);
+  letter-spacing:.14em;
   text-transform:uppercase;
-  color:var(--text-faint);
+  color:var(--text-muted);
 }
 .ana__kpiV{
   font-size:var(--t6);
@@ -1251,3 +1255,45 @@ body.probando .view{ padding-top:0; }
   .probar__eti{ display:none; }
   .probar__av{ display:none; }
 }
+
+
+/* ---- a que hora te descubren -----------------------------------------
+   24 barras y nada mas: ni biblioteca de graficos ni canvas. Con 24
+   numeros, un `div` por hora los dibuja igual y se puede pasar el raton
+   por encima para ver la cifra exacta. */
+.ana__horas{ padding:var(--s4) var(--s5) var(--s4); }
+.ana__horasG{
+  display:grid;
+  grid-template-columns:repeat(24, 1fr);
+  align-items:end;
+  gap:3px;
+  height:120px;
+}
+.ana__hora{
+  border-radius:3px 3px 1px 1px;
+  /* Las horas sin nadie se quedan como una raya al ras: enseñar el hueco
+     es parte del dato —hay franjas en las que no te ve nadie— y borrarlas
+     del todo haria creer que el grafico esta incompleto. */
+  background:var(--border-strong);
+  transition:background var(--transition-fast);
+}
+.ana__hora.on{ background:var(--text-secondary); }
+.ana__hora.on:hover{ background:var(--text-primary); }
+.ana__horasEje{
+  display:flex; justify-content:space-between;
+  margin-top:var(--s2);
+  font-family:var(--font-mono);
+  font-size:var(--t1);
+  font-variant-numeric:tabular-nums;
+  color:var(--text-faint);
+}
+
+/* ---- tus plantillas --------------------------------------------------- */
+.ana__plt{
+  display:flex; align-items:center; flex-wrap:wrap;
+  gap:var(--s4);
+  padding:var(--s4) var(--s5) var(--s5);
+}
+.ana__pltN{ display:flex; flex-direction:column; gap:2px; flex:none; }
+.ana__plt .ana__nota{ flex:1; min-width:180px; margin:0; }
+.ana__plt .btn{ flex:none; margin-left:auto; }

@@ -13,6 +13,8 @@ interface Datos {
   nota: number | null;
   numNotas: number;
   porDia: Record<string, number>;
+  porHora: number[];
+  vuelven: number;
   ultima: string;
 }
 
@@ -22,6 +24,8 @@ const VACIO: Datos = {
   nota: null,
   numNotas: 0,
   porDia: {},
+  porHora: new Array(24).fill(0),
+  vuelven: 0,
   ultima: '',
 };
 
@@ -53,6 +57,7 @@ export default function AnalyticsPage() {
   const [datos, setDatos] = useState<Datos>(VACIO);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
+  const [misPlantillas, setMisPlantillas] = useState({ plantillas: 0, usos: 0, mejor: '' });
   const lienzo = useRef<HTMLCanvasElement>(null);
 
   const id = profile?._id ?? '';
@@ -80,6 +85,16 @@ export default function AnalyticsPage() {
       vivo = false;
     };
   }, [id, rango]);
+
+  /* Las plantillas no dependen del rango: se piden una vez. */
+  useEffect(() => {
+    if (!hasBackend()) return;
+    let vivo = true;
+    backend.usosDeMisPlantillas()
+      .then((r) => { if (vivo) setMisPlantillas(r); })
+      .catch(() => {});
+    return () => { vivo = false; };
+  }, []);
 
   const serie = useMemo(
     () =>
@@ -226,10 +241,19 @@ export default function AnalyticsPage() {
           d="Contando las veces que alguien vuelve"
           cargando={cargando}
         />
+        {/* «Gente nueva» salia aqui Y era el grafico entero de abajo: el
+            mismo dato dos veces. En su sitio va el que no estaba en
+            ninguna parte y es el que de verdad dice algo de un perfil:
+            cuanta de esa gente ha vuelto. Una visita es que te vieron;
+            volver es que les intereso. */}
         <Kpi
-          t="Gente nueva"
-          v={num(nuevosEnRango)}
-          d={`Te descubrieron en los últimos ${rango} días`}
+          t="Han vuelto"
+          v={cargando ? '·' : `${num(datos.vuelven)}`}
+          d={
+            nuevosEnRango === 0
+              ? 'Sin visitas todavía en este período'
+              : `de ${num(nuevosEnRango)} que te descubrieron · ${Math.round((datos.vuelven / nuevosEnRango) * 100)}%`
+          }
           cargando={cargando}
         />
         <Kpi
@@ -266,6 +290,87 @@ export default function AnalyticsPage() {
             <canvas ref={lienzo} />
           )}
         </div>
+      </div>
+
+      {/* A que hora te descubren. Es lo unico accionable de esta pagina:
+          todo lo demas cuenta lo que ya paso; esto dice cuando compartir
+          el enlace la proxima vez. */}
+      {nuevosEnRango > 0 && (
+        <div className="ana__panel">
+          <div className="ana__panelCab">
+            <h2 className="ana__h2">A qué hora te descubren</h2>
+            <p className="ana__nota">
+              Cuándo llegó cada persona que te vio por primera vez. La hora es
+              la de tu reloj, no la de quien te visita: de dónde entran no se
+              guarda.
+            </p>
+          </div>
+          <Horas datos={datos.porHora} />
+        </div>
+      )}
+
+      {/* Lo unico aqui que no habla de visitas, y por eso vale la pena: una
+          visita dice que te vieron, un uso dice que a alguien le gusto tu
+          diseño lo bastante como para ponerselo. */}
+      {misPlantillas.plantillas > 0 && (
+        <div className="ana__panel">
+          <div className="ana__panelCab">
+            <h2 className="ana__h2">Tus plantillas</h2>
+            <p className="ana__nota">
+              {misPlantillas.plantillas === 1
+                ? 'Has publicado una plantilla.'
+                : `Has publicado ${misPlantillas.plantillas} plantillas.`}{' '}
+              {misPlantillas.usos === 0
+                ? 'Todavía no las ha usado nadie.'
+                : `Se han aplicado ${num(misPlantillas.usos)} ${misPlantillas.usos === 1 ? 'vez' : 'veces'}.`}
+            </p>
+          </div>
+          <div className="ana__plt">
+            <div className="ana__pltN">
+              <span className="ana__kpiV">{num(misPlantillas.usos)}</span>
+              <span className="ana__kpiD">
+                {misPlantillas.usos === 1 ? 'uso en total' : 'usos en total'}
+              </span>
+            </div>
+            {misPlantillas.mejor && (
+              <p className="ana__nota">
+                La más usada es <strong>«{misPlantillas.mejor}»</strong>.
+              </p>
+            )}
+            <Link className="btn btn--ghost btn--sm" to="/templates">
+              Ver la biblioteca
+            </Link>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Las 24 horas, en barras.
+ *
+ * Sin biblioteca de graficos y sin canvas: son 24 numeros y un `div` por
+ * hora los dibuja igual de bien. La altura sale del mayor, asi que la
+ * forma se lee aunque los numeros sean pequeños —con 11 visitas, escalar
+ * contra un maximo fijo dejaria 24 rayas planas—.
+ */
+function Horas({ datos }: { datos: number[] }) {
+  const tope = Math.max(1, ...datos);
+  return (
+    <div className="ana__horas">
+      <div className="ana__horasG">
+        {datos.map((n, h) => (
+          <div
+            key={h}
+            className={`ana__hora${n ? ' on' : ''}`}
+            style={{ height: `${Math.max(n ? 8 : 2, (n / tope) * 100)}%` }}
+            title={`${String(h).padStart(2, '0')}:00 · ${n} ${n === 1 ? 'persona' : 'personas'}`}
+          />
+        ))}
+      </div>
+      <div className="ana__horasEje" aria-hidden="true">
+        <span>00</span><span>06</span><span>12</span><span>18</span><span>23</span>
       </div>
     </div>
   );
