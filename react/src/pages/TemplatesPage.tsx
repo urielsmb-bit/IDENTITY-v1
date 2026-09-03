@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { PreviaPlantilla } from '@/components/plantillas/PreviaPlantilla';
 import { useProfileStore } from '@/stores/profileStore';
 import { useToast } from '@/hooks/useToast';
 import { hasBackend } from '@/lib/supabase';
 import * as backend from '@/lib/backend';
 import { aplicarPlantilla } from '@/lib/plantilla';
-import { num } from '@/lib/utils';
+import { num, safeMedia } from '@/lib/utils';
 
 /**
  * Plantillas.
@@ -141,11 +142,20 @@ export default function TemplatesPage() {
                 </span>
               </div>
 
-              <div className="pf tpl__mini" data-theme={p.ajustes.theme || 'dark'} aria-hidden="true">
-                <span className="tpl__mini-av" />
-                <span className="tpl__mini-l tpl__mini-l--a" />
-                <span className="tpl__mini-l tpl__mini-l--b" />
-              </div>
+              <PreviaPlantilla t={p.ajustes} />
+
+              {/* Quien la hizo. En una galeria de trabajo ajeno la firma no
+                  es un adorno: es de quien es. Si su perfil ya no esta
+                  activo la plantilla se queda —es de quien la use— pero
+                  sin firmar, en vez de enlazar a un sitio que no existe. */}
+              {p.autor && (
+                <Link className="tpl__autor" to={`/u/${p.autor}`}>
+                  {p.autorAvatar
+                    ? <img src={safeMedia(p.autorAvatar)} alt="" loading="lazy" />
+                    : <span className="tpl__autor-ini" aria-hidden="true">{p.autor.charAt(0).toUpperCase()}</span>}
+                  <span>@{p.autor}</span>
+                </Link>
+              )}
 
               <div className="tpl__pie">
                 <button className="btn btn--primary btn--sm" onClick={() => void usar(p)}>

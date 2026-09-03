@@ -1036,3 +1036,80 @@ canvas.chart{ width:100%; display:block; }
 .tpl__mini-l{ height:5px; border-radius:100px; }
 .tpl__mini-l--a{ width:64px; background:var(--p-text, var(--text-primary)); opacity:.85; }
 .tpl__mini-l--b{ width:40px; background:var(--p-dim, var(--text-muted)); opacity:.7; }
+
+/* ---- previa de plantilla ----------------------------------------------
+   Lleva `pf` y `pf-stack` para que las reglas de superficie del perfil de
+   verdad —cristal con su desenfoque, relleno, halo— sean las MISMAS. Aqui
+   solo se deshace lo que trae de pagina completa y se le ponen medidas de
+   miniatura. Nada de esto redefine como se ve un cristal: si eso cambia
+   algun dia, la previa cambia con ello y no hay una segunda copia que se
+   quede vieja. */
+.plt-prev{
+  min-height:0;
+  isolation:auto;
+  height:150px;
+  padding:var(--s3);
+  display:grid; place-items:center;
+  border-radius:var(--radius-md);
+  overflow:hidden;
+  background:var(--p-bg, var(--surface));
+  border:1px solid var(--p-line, var(--border));
+}
+.plt-prev__stack{
+  /* La pila de verdad mide su ancho con `--u-ancho`, que lo calcula el
+     guion de escalado mirando el hueco. Aqui no hay hueco que medir: se
+     le da una medida fija de miniatura. */
+  width:150px; max-width:150px; min-width:0;
+  padding:12px 10px;
+  display:flex; flex-direction:column; align-items:center; gap:5px;
+  transform:none;
+}
+.plt-prev__av{
+  width:30px; height:30px;
+  border-radius:50%;
+  background:var(--p-primary, var(--accent));
+  flex:none;
+}
+.pf[data-avshape="square"] .plt-prev__av{ border-radius:7px; }
+.pf[data-avshape="squircle"] .plt-prev__av{ border-radius:34%; }
+.pf[data-avglow="on"] .plt-prev__av{ box-shadow:0 0 12px var(--p-primary, var(--accent)); }
+
+.plt-prev__nom{
+  font-family:var(--u-fontd, var(--p-fd));
+  font-size:var(--t2); font-weight:700; line-height:1.1;
+  color:var(--p-text, var(--text-primary));
+  max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.plt-prev__at{
+  font-family:var(--u-font, var(--p-fb));
+  font-size:9px; color:var(--p-dim, var(--text-muted));
+}
+/* Dos rayas hacen de biografia: el texto de verdad no se leeria a este
+   tamaño y solo añadiria ruido. Lo que importa es que se vea el bloque. */
+.plt-prev__linea{
+  height:3px; border-radius:100px;
+  background:var(--p-dim, var(--text-muted)); opacity:.45;
+}
+.plt-prev__linea--a{ width:86px; }
+.plt-prev__linea--b{ width:58px; }
+.plt-prev__chips{ display:flex; gap:4px; margin-top:2px; }
+.plt-prev__chips i{
+  width:16px; height:6px; border-radius:100px;
+  background:var(--p-primary, var(--accent)); opacity:.75;
+}
+
+.tpl__autor{
+  display:flex; align-items:center; gap:6px;
+  margin:var(--s3) 0;
+  font-size:var(--t1); color:var(--text-muted);
+  transition:color var(--transition-fast);
+}
+.tpl__autor:hover{ color:var(--text-primary); }
+.tpl__autor img,
+.tpl__autor-ini{
+  width:20px; height:20px; border-radius:50%; flex:none;
+  object-fit:cover;
+  display:grid; place-items:center;
+  background:var(--surface-2);
+  font-size:9px; font-weight:600; color:var(--text-secondary);
+}

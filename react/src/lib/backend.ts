@@ -687,6 +687,9 @@ export interface PlantillaPublica {
   usos: number;
   creado: string;
   mia: boolean;
+  /** Quien la publico. Vacio si su perfil ya no esta activo. */
+  autor: string;
+  autorAvatar: string;
 }
 
 /** Las publicadas, las mas usadas primero. */
@@ -702,16 +705,46 @@ export async function listarPlantillas(): Promise<PlantillaPublica[]> {
   if (error) throw traducir(error);
 
   const u = await usuario().catch(() => null);
-  return (data ?? []).map((f) => ({
-    id: String(f.id),
-    nombre: String(f.nombre ?? ''),
-    /* Esta fila la escribio otra persona: se filtra antes de que toque
-       nada, no al aplicarla. */
-    ajustes: extraerPlantilla((f.ajustes ?? {}) as Partial<Profile>),
-    usos: Number(f.usos ?? 0),
-    creado: String(f.creado ?? ''),
-    mia: !!u && f.dueno === u.id,
-  }));
+
+  /* Quien publico cada una, en una segunda consulta y no guardado en la
+     fila. Denormalizarlo seria una consulta menos, pero el dia que
+     alguien se cambia el nombre de usuario su plantilla quedaria
+     apuntando a un perfil que ya no existe, y eso no avisa: se ve bien y
+     el enlace lleva a un 404. Aqui siempre es el de ahora.
+     Si su perfil se borro o esta inactivo, la plantilla se queda —es de
+     quien la use, ya— pero sin firmar. */
+  const duenos = [...new Set((data ?? []).map((f) => String(f.dueno)))];
+  const autores = new Map<string, { username: string; avatar: string }>();
+  if (duenos.length) {
+    const { data: perfiles } = await supabase
+      .from('perfiles')
+      .select('dueno, username, apariencia')
+      .in('dueno', duenos)
+      .eq('estado', 'activo');
+    for (const p of perfiles ?? []) {
+      const ap = (p.apariencia ?? {}) as Record<string, unknown>;
+      autores.set(String(p.dueno), {
+        username: String(p.username ?? ''),
+        avatar: String(ap.avatarUrl ?? ''),
+      });
+    }
+  }
+
+  return (data ?? []).map((f) => {
+    const a = autores.get(String(f.dueno));
+    return {
+      id: String(f.id),
+      nombre: String(f.nombre ?? ''),
+      /* Esta fila la escribio otra persona: se filtra antes de que toque
+         nada, no al aplicarla. */
+      ajustes: extraerPlantilla((f.ajustes ?? {}) as Partial<Profile>),
+      usos: Number(f.usos ?? 0),
+      creado: String(f.creado ?? ''),
+      mia: !!u && f.dueno === u.id,
+      autor: a?.username ?? '',
+      autorAvatar: a?.avatar ?? '',
+    };
+  });
 }
 
 /** Publica el aspecto del perfil que se le pase. Nunca su contenido. */
