@@ -15,7 +15,8 @@ import { getBadge } from '@/data/badges';
 import { insigniasGanadas } from '@/lib/insignias';
 import { safeUrl } from '@/lib/utils';
 import { idYouTube } from '@/lib/music';
-import { Campo, ColorRGB, Deslizador, Interruptor, Pastillas } from './Controles';
+import { Campo, ColorRGB, Deslizador, Interruptor, Pastillas, Tarjetas } from './Controles';
+import { DIBUJOS } from './dibujos';
 import { PanelAnimacion } from './PanelAnimacion';
 import { useDiscord, useIdDiscordDeLaSesion } from '@/hooks/useDiscord';
 import { useAuth } from '@/hooks/useAuth';
@@ -479,8 +480,9 @@ export function EditorBloque({ def, profile, onVolver, update }: EditorBloquePro
       case 'superficie':
         return (
           <Campo key={id} label="Caja del bloque">
-            <Pastillas
+            <Tarjetas
               opciones={BLOCK_SURFACES}
+                  dibujos={DIBUJOS.SURFACES}
               value={estilo.s || 'inherit'}
               onChange={(v) => setEstilo('s', v)}
             />
@@ -560,8 +562,9 @@ export function EditorBloque({ def, profile, onVolver, update }: EditorBloquePro
       case 'anim':
         return (
           <Campo key={id} label="Animación de entrada">
-            <Pastillas
+            <Tarjetas
               opciones={BLOCK_ANIMS}
+                  dibujos={DIBUJOS.BLOCK_ANIMS}
               value={estilo.anim || ''}
               onChange={(v) => setEstilo('anim', v)}
             />
@@ -674,8 +677,9 @@ export function EditorBloque({ def, profile, onVolver, update }: EditorBloquePro
       case 'alinear':
         return (
           <Campo key={id} label="Alineación">
-            <Pastillas
+            <Tarjetas
               opciones={ALINEACIONES}
+                  dibujos={DIBUJOS.ALIGNS}
               value={(estilo.align || '') as (typeof ALINEACIONES)[number]['id']}
               onChange={(v) => setEstilo('align', estilo.align === v ? '' : v)}
             />
@@ -755,8 +759,9 @@ export function EditorBloque({ def, profile, onVolver, update }: EditorBloquePro
       case 'estiloRedes':
         return (
           <Campo key={id} label="Estilo de los iconos">
-            <Pastillas
+            <Tarjetas
               opciones={SOCIAL_STYLES}
+                  dibujos={DIBUJOS.SOCIAL_STYLES}
               value={profile.socialStyle || 'icons'}
               onChange={(v) => update({ socialStyle: v })}
             />
@@ -766,8 +771,9 @@ export function EditorBloque({ def, profile, onVolver, update }: EditorBloquePro
       case 'estiloInsignias':
         return (
           <Campo key={id} label="Estilo de las insignias">
-            <Pastillas
+            <Tarjetas
               opciones={BADGE_STYLES}
+                  dibujos={DIBUJOS.BADGE_STYLES}
               value={profile.badgeStyle || 'icons'}
               onChange={(v) => update({ badgeStyle: v })}
             />
@@ -777,8 +783,9 @@ export function EditorBloque({ def, profile, onVolver, update }: EditorBloquePro
       case 'formaAvatar':
         return (
           <Campo key={id} label="Forma">
-            <Pastillas
+            <Tarjetas
               opciones={AV_SHAPES}
+                  dibujos={DIBUJOS.AV_SHAPES}
               value={profile.avShape || 'circle'}
               onChange={(v) => update({ avShape: v })}
             />
@@ -788,8 +795,9 @@ export function EditorBloque({ def, profile, onVolver, update }: EditorBloquePro
       case 'posAvatar':
         return (
           <Campo key={id} label="Dónde va">
-            <Pastillas
+            <Tarjetas
               opciones={AV_POS}
+                  dibujos={DIBUJOS.AV_POS}
               value={profile.avPos || 'center'}
               onChange={(v) => update({ avPos: v })}
             />

@@ -16,9 +16,8 @@ import {
   ColorRGB,
   Deslizador,
   Interruptor,
-  Pastillas,
-  Subpanel,
   Tarjetas,
+  Subpanel,
 } from '@/components/dashboard/Controles';
 import { SubirMedio } from '@/components/dashboard/SubirMedio';
 import { EditorBloque } from '@/components/dashboard/EditorBloque';
@@ -31,6 +30,7 @@ import { AjustesCuenta } from '@/components/dashboard/AjustesCuenta';
 import { Guia } from '@/components/dashboard/Guia';
 import { useGuia } from '@/hooks/useGuia';
 import { PanelInsignias } from '@/components/dashboard/PanelInsignias';
+import { DIBUJOS } from '@/components/dashboard/dibujos';
 import { BLOQUES, BLOQUE_POR_ID, type DefBloque, BLOQUES_APAGADOS_POR_DEFECTO } from '@/data/bloques';
 import { safeMedia } from '@/lib/utils';
 import * as backend from '@/lib/backend';
@@ -758,8 +758,9 @@ export default function DashboardPage() {
                 onChange={(v) => updateField('vignette', v)}
               />
               <Campo label="Partículas">
-                <Pastillas
+                <Tarjetas
                   opciones={PARTICLES}
+                  dibujos={DIBUJOS.PARTICLES}
                   value={profile.particles || 'none'}
                   onChange={(v) => updateField('particles', v)}
                 />
@@ -843,8 +844,9 @@ export default function DashboardPage() {
             <h2 className="dash__h2">Diseño · Controles</h2>
 
             <Campo label="Tipo de superficie">
-              <Pastillas
+              <Tarjetas
                 opciones={SURFACES}
+                  dibujos={DIBUJOS.SURFACES}
                 value={profile.surface || 'none'}
                 onChange={(v) => updateField('surface', v)}
               />
@@ -969,8 +971,9 @@ export default function DashboardPage() {
               label="Colocación de los bloques"
               valor={profile.layoutMode === 'free' ? 'arrastrando' : 'en columna'}
             >
-              <Pastillas
+              <Tarjetas
                 opciones={LAYOUT_MODES}
+                  dibujos={DIBUJOS.LAYOUT_MODES}
                 value={profile.layoutMode || 'stack'}
                 onChange={(v) => {
                   // Al entrar en el lienzo se siembran las coordenadas
@@ -1023,8 +1026,9 @@ export default function DashboardPage() {
                 }}
               />
               <Campo label="Cursor" guia="cursor">
-                <Pastillas
+                <Tarjetas
                   opciones={CURSORS}
+                  dibujos={DIBUJOS.CURSORS}
                   value={profile.cursor || 'default'}
                   onChange={(v) => updateField('cursor', v)}
                 />
@@ -1066,8 +1070,9 @@ export default function DashboardPage() {
 
               {(profile.cursorTrail ?? 0) > 0 && (
                 <Campo label="Tipo de estela">
-                  <Pastillas
+                  <Tarjetas
                     opciones={TRAIL_FX}
+                  dibujos={DIBUJOS.TRAIL_FX}
                     value={profile.cursorTrailFx || 'chispas'}
                     onChange={(v) => updateField('cursorTrailFx', v)}
                   />

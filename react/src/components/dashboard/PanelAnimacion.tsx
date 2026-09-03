@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
 import type { CatalogItem } from '@/data/themes';
 import { ANIM_DIRS, ANIM_EASINGS } from '@/data/themes';
-import { Campo, Deslizador, Interruptor, Pastillas } from './Controles';
+import { Campo, Deslizador, Interruptor, Tarjetas } from './Controles';
+import { DIBUJOS } from './dibujos';
 
 /**
  * Lo que necesita el panel, sin importar de dónde salga.
@@ -86,9 +87,10 @@ export function PanelAnimacion({ destino, catalogo, queEs, estilo, set }: PanelA
       {encendida && (
         <>
           <Campo label="Tipo">
-            <Pastillas
+            <Tarjetas
               // Sin «Del perfil» ni «Ninguna»: eso lo decide el interruptor.
               opciones={catalogo.filter((a) => a.id !== '' && a.id !== 'none')}
+                  dibujos={DIBUJOS.BLOCK_ANIMS}
               value={tipo}
               onChange={(v) => set('anim', v)}
             />
@@ -96,8 +98,9 @@ export function PanelAnimacion({ destino, catalogo, queEs, estilo, set }: PanelA
 
           {CON_DIRECCION.includes(tipo) && (
             <Campo label="Desde dónde">
-              <Pastillas
+              <Tarjetas
                 opciones={ANIM_DIRS}
+                  dibujos={DIBUJOS.ANIM_DIRS}
                 value={estilo.animDir || POR_DEFECTO.dir}
                 onChange={(v) => set('animDir', v)}
               />
@@ -137,8 +140,9 @@ export function PanelAnimacion({ destino, catalogo, queEs, estilo, set }: PanelA
           />
 
           <Campo label="Curva">
-            <Pastillas
+            <Tarjetas
               opciones={ANIM_EASINGS}
+                  dibujos={DIBUJOS.ANIM_EASINGS}
               value={estilo.animE || POR_DEFECTO.easing}
               onChange={(v) => set('animE', v)}
             />

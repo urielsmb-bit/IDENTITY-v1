@@ -138,10 +138,20 @@ export function Tarjetas<T extends string>({
   opciones,
   value,
   onChange,
+  dibujos,
 }: {
-  opciones: ReadonlyArray<{ id: T; name: string; dibujo: ReactNode }>;
+  opciones: ReadonlyArray<{ id: T; name: string; dibujo?: ReactNode }>;
   value: T;
   onChange: (v: T) => void;
+  /**
+   * Dibujo por id, para los catalogos que viven en `data/`.
+   *
+   * Alli hay datos, y un catalogo que exportara JSX dejaria de poder usarse
+   * fuera de React. El puente es el id, que es lo unico que las dos partes
+   * comparten. Si falta uno, la tarjeta sale solo con su nombre en vez de
+   * con un hueco.
+   */
+  dibujos?: Record<string, ReactNode>;
 }) {
   return (
     <div className="cards" role="group">
@@ -153,9 +163,11 @@ export function Tarjetas<T extends string>({
           className={`card${value === o.id ? ' on' : ''}`}
           onClick={() => onChange(o.id)}
         >
-          <span className="card__fig" aria-hidden="true">
-            {o.dibujo}
-          </span>
+          {(o.dibujo ?? dibujos?.[o.id]) && (
+            <span className="card__fig" aria-hidden="true">
+              {o.dibujo ?? dibujos?.[o.id]}
+            </span>
+          )}
           <span className="card__n">{o.name}</span>
         </button>
       ))}
