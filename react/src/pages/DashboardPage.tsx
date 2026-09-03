@@ -680,7 +680,21 @@ export default function DashboardPage() {
                       : { bgType: 'image', bgValue: r.url },
                   )
                 }
-                onQuitar={() => update({ bgType: 'none', bgValue: '' })}
+                anterior={profile.bgValue || ''}
+                onQuitar={() => {
+                  /* El archivo se va del cubo, no solo del perfil. Antes
+                     esto dejaba el fichero arriba para siempre, y como
+                     hay un tope de ocho por cuenta, quien probaba varios
+                     formatos acababa bloqueado con un aviso que decia
+                     «Borra alguno antes de subir otro» sin que existiera
+                     ninguna forma de borrar ninguno.
+
+                     Si el fondo es de Vimeo esto no hace nada: el video
+                     vive en la cuenta de Vimeo de su dueño y borrarlo de
+                     ahi es otra decision, no la de quitarlo del perfil. */
+                  void backend.borrarMedioPorUrl(profile.bgValue || '');
+                  update({ bgType: 'none', bgValue: '' });
+                }}
               />
             </div>
 

@@ -17,6 +17,10 @@ interface SubirFondoProps {
   titulo: string;
   /** URL del fondo actual, para enseñarlo dentro de la caja */
   previa?: string;
+  /** Lo que hay guardado AHORA en el perfil, para poder borrarlo del cubo
+      al sustituirlo. No sirve `previa`: cuando el fondo es un video de
+      Vimeo, `previa` trae la miniatura de Vimeo y no el archivo nuestro. */
+  anterior?: string;
   onSubido: (r: FondoSubido) => void;
   onQuitar?: () => void;
   /** Id de la pista de la guia que apunta aqui. */
@@ -88,7 +92,7 @@ const MAX_VIDEO_MB = 500;
  *   · un vídeo va entero a Vimeo, que lo transcodifica mucho mejor de lo que
  *     puede hacerlo un canvas, y tarda minutos en estar listo.
  */
-export function SubirFondo({ titulo, previa, onSubido, onQuitar, guia }: SubirFondoProps) {
+export function SubirFondo({ titulo, previa, anterior, onSubido, onQuitar, guia }: SubirFondoProps) {
   const entradaRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const [fase, setFase] = useState<Fase>('quieto');
@@ -116,7 +120,7 @@ export function SubirFondo({ titulo, previa, onSubido, onQuitar, guia }: SubirFo
         try {
           const img = await prepararImagen(archivo, { lado: 1920, maxAnimadoMB: 6 });
           if (hasBackend() && backend.haySesion()) {
-            const url = await backend.subirMedio(img.blob, 'fondo', img.extension);
+            const url = await backend.subirMedio(img.blob, 'fondo', img.extension, anterior);
             onSubido({ tipo: 'image', url });
             setNota(`Subida · ${img.ancho}×${img.alto}, ${img.pesoKB} KB`);
           } else {
@@ -172,7 +176,7 @@ export function SubirFondo({ titulo, previa, onSubido, onQuitar, guia }: SubirFo
         try {
           const ratio = await medirVideo(archivo);
           const ext = (archivo.name.split('.').pop() || 'mp4').toLowerCase();
-          const url = await backend.subirMedio(archivo, 'fondo', ext);
+          const url = await backend.subirMedio(archivo, 'fondo', ext, anterior);
           onSubido({ tipo: 'video', url, ratio });
           setNota(`Subido · ${mb.toFixed(1)} MB`);
         } catch (e) {

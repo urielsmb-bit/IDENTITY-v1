@@ -521,7 +521,64 @@ export async function contarVista(username: string) {
 
 // ---- Media ----
 
-export async function subirMedio(blob: Blob, tipo: string, extension: string) {
+/* Saca la ruta dentro del cubo a partir de una direccion publica, y
+   devuelve null si esa direccion NO es un archivo nuestro de este
+   usuario. Eso descarta de golpe los enlaces pegados a mano, las
+   direcciones de Vimeo y los archivos de otra cuenta: solo se borra lo
+   que sabemos que subimos aqui.
+
+   La base ya lo impide por su cuenta —la politica de borrado exige que
+   la primera carpeta sea el uid— asi que esto no es la cerradura, es no
+   llamar a la puerta para nada. */
+/* Exportada solo para poder probarla: es la que decide QUE se borra. */
+export function rutaDeUrl(url: string, uid: string, cubo: string): string | null {
+  const marca = '/storage/v1/object/public/' + cubo + '/';
+  const i = url.indexOf(marca);
+  if (i < 0) return null;
+  const cruda = url.slice(i + marca.length).split('?')[0];
+  if (!cruda) return null;
+  let ruta: string;
+  try {
+    ruta = decodeURIComponent(cruda);
+  } catch {
+    return null;
+  }
+  return ruta.startsWith(uid + '/') ? ruta : null;
+}
+
+/* Borra un archivo del cubo por su direccion publica.
+   Sustituye a un `borrarMedio(tipo, extension)` que habia aqui y que no
+   llamaba nadie: pedia la extension, y quien pulsa «Quitar» lo unico que
+   tiene a mano es la direccion. Por eso llevaba muerto desde el principio
+   y por eso «Quitar» no borraba nada. */
+export async function borrarMedioPorUrl(url: string) {
+  if (!supabase || !url) return false;
+  try {
+    const u = await usuario();
+    if (!u) return false;
+    const cubo = CONFIG.BUCKET_MEDIA;
+    const ruta = rutaDeUrl(url, u.id, cubo);
+    if (!ruta) return false;
+    await supabase.storage.from(cubo).remove([ruta]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/* `anterior` es la direccion del archivo al que este sustituye.
+   Hace falta porque la ruta lleva la extension —`<id>/fondo.mp4`— y el
+   `upsert` solo pisa al viejo si la extension coincide: subir un webm
+   encima de un mp4 dejaba los dos. Y como NADA borraba nunca, esos
+   huerfanos contaban para el tope de ocho archivos por cuenta, hasta
+   que la subida empezaba a fallar con «Borra alguno antes de subir
+   otro» y no habia ninguna forma de borrar nada. */
+export async function subirMedio(
+  blob: Blob,
+  tipo: string,
+  extension: string,
+  anterior?: string,
+) {
   if (!supabase) throw new Error('sin backend');
   const u = await usuario();
   if (!u) throw new Error('Hay que entrar en la cuenta para subir archivos');
@@ -538,25 +595,27 @@ export async function subirMedio(blob: Blob, tipo: string, extension: string) {
   });
   if (error) throw traducir(error);
   
+  /* El anterior se va DESPUES de que el nuevo este arriba: si se borrara
+     antes y la subida fallara, el usuario se quedaria sin ninguno de los
+     dos. Y si el borrado falla no se dice nada, porque el trabajo que
+     pidio —subir— ya salio bien. */
+  if (anterior) {
+    const vieja = rutaDeUrl(anterior, u.id, cubo);
+    if (vieja && vieja !== ruta) {
+      try {
+        await supabase.storage.from(cubo).remove([vieja]);
+      } catch {
+        /* se queda un huerfano; no es motivo para romperle la subida */
+      }
+    }
+  }
+
   const pub = supabase.storage.from(cubo).getPublicUrl(ruta);
   const url = pub?.data?.publicUrl;
   if (!url) throw new Error('No se pudo obtener la direccion del archivo');
   return url + '?v=' + Date.now();
 }
 
-export async function borrarMedio(tipo: string, extension: string) {
-  if (!supabase) return false;
-  try {
-    const u = await usuario();
-    if (!u) return false;
-    const cubo = CONFIG.BUCKET_MEDIA;
-    const ruta = u.id + '/' + tipo + '.' + extension;
-    await supabase.storage.from(cubo).remove([ruta]);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 // ---- Rating & Reports ----
 

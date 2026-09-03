@@ -60,7 +60,7 @@ export function SubirMedio({
         // Con cuenta abierta, Storage: el perfil viaja ligero y la imagen se
         // sirve desde una CDN en vez de ir incrustada en cada carga.
         if (hasBackend() && backend.haySesion()) {
-          const url = await backend.subirMedio(img.blob, destino, img.extension);
+          const url = await backend.subirMedio(img.blob, destino, img.extension, value);
           onChange({ url, animado: img.animado });
           setNota(`Subido · ${img.ancho}×${img.alto}, ${img.pesoKB} KB`);
         } else {
@@ -74,7 +74,7 @@ export function SubirMedio({
         if (entradaRef.current) entradaRef.current.value = '';
       }
     },
-    [onChange, destino, lado, maxAnimadoMB],
+    [onChange, destino, lado, maxAnimadoMB, value],
   );
 
   const previa = safeMedia(value);
@@ -150,6 +150,12 @@ export function SubirMedio({
             type="button"
             className="drop__quitar"
             onClick={() => {
+              /* El archivo del cubo se va con el. Antes esto solo
+                 limpiaba el campo del perfil y dejaba el archivo
+                 arriba para siempre: la gente creia estar borrando y
+                 no borraba nada. Se lanza sin esperar porque quitarlo
+                 de la vista no debe depender de la red. */
+              void backend.borrarMedioPorUrl(value);
               onChange({ url: '', animado: false });
               setNota('');
               setError('');
