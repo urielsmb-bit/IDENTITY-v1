@@ -2336,6 +2336,11 @@
   transform:translate(-50%,-50%) scale(var(--u-bg-scale, 1));
   border:0; pointer-events:none;
   opacity:var(--u-bg-op, 1);
+  /* Un `iframe` sin cargar se pinta BLANCO —es su fondo por defecto— y
+     sobre un perfil oscuro eso es un fogonazo cada vez que se entra.
+     Con el fondo del tema, mientras carga se ve el color del perfil y no
+     se nota nada. */
+  background:var(--p-bg, #000);
 }
 
 /* ============================================================

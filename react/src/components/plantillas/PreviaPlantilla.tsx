@@ -31,6 +31,28 @@ import { safeMedia } from '@/lib/utils';
 const ANCHO_PREVIA = 860;
 const ALTO_PREVIA = 540;
 
+/**
+ * Quita el fondo de foto o video SOLO para la miniatura.
+ *
+ * En una tarjeta de 265px, un fondo de video significa un `iframe` de
+ * Vimeo por plantilla. Y un iframe que aun no ha cargado se pinta BLANCO
+ * —es su fondo por defecto—, asi que la rejilla entera parpadeaba en
+ * blanco mientras cargaban. Con doce plantillas serian doce reproductores
+ * cargando a la vez para ocupar el tamaño de un sello.
+ *
+ * Ademas la miniatura ni siquiera deberia prometerlo: el fondo de su
+ * autor NO viaja dentro de la plantilla, asi que enseñarlo aqui seria
+ * vender algo que no se entrega.
+ *
+ * Esto NO toca lo que se guarda ni lo que se aplica: solo lo que se
+ * pinta en la tarjeta. En la pantalla de probar a tamaño completo el
+ * fondo que sale es el TUYO, que ya es tuyo y ya estaba cargado.
+ */
+function sinFondoPesado(p: Profile): Profile {
+  if (p.bgType !== 'image' && p.bgType !== 'video') return p;
+  return { ...p, bgType: 'none', bgValue: '' };
+}
+
 export function PreviaPlantilla({
   t,
   nombre,
@@ -108,7 +130,7 @@ export function PreviaPlantilla({
           visibility: escala ? 'visible' : 'hidden',
         }}
       >
-        <ProfileView profile={aplicarPlantilla(perfil, t)} preview />
+        <ProfileView profile={sinFondoPesado(aplicarPlantilla(perfil, t))} preview />
       </div>
     );
   }
