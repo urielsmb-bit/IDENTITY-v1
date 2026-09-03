@@ -25,10 +25,21 @@ import { cors, preflight, origenValido, cuerpoEsJson } from '../_compartido/cors
    revisa esta función: es el punto donde se decide si el ranking
    se puede comprar o no. */
 function ipDe(req: Request): string {
-  const cf = req.headers.get('cf-connecting-ip');
-  if (cf) return cf.trim();
+  /* En orden de confianza. Las de arriba las pone la infraestructura y
+     el cliente no las puede falsear; `x-forwarded-for` si, porque
+     cualquiera puede mandarla, y por eso va la ultima y se toma solo el
+     primer valor. Se prueban varias porque el nombre depende de quien
+     este delante: Cloudflare, Fly, el proxy de Supabase... y con una
+     sola, si el proveedor cambia, esto deja de contar EN SILENCIO. */
+  for (const nombre of ['cf-connecting-ip', 'true-client-ip', 'fly-client-ip', 'x-real-ip']) {
+    const v = req.headers.get(nombre);
+    if (v && v.trim()) return v.trim();
+  }
   const xff = req.headers.get('x-forwarded-for');
-  if (xff) return xff.split(',')[0].trim();
+  if (xff) {
+    const primera = xff.split(',')[0]?.trim() ?? '';
+    if (primera) return primera;
+  }
   return '';
 }
 
@@ -75,7 +86,16 @@ Deno.serve(async (req: Request) => {
   /* Sin IP no se puede distinguir a nadie de nadie: contarlo
      inflaría el número de visitantes únicos con cada petición.
      Mejor no contar que contar mal. */
-  if (!ip) return new Response(null, { status: 204, headers: CORS });
+  if (!ip) {
+    /* Sin esto el fallo era invisible: 204 sin contar y sin rastro. Si
+       aparece en el registro, es que ninguna de las cabeceras de arriba
+       llega y hay que anadir la que use el proveedor de turno. */
+    console.error(
+      'registrar_vista: sin IP. Cabeceras presentes:',
+      [...req.headers.keys()].join(', '),
+    );
+    return new Response(null, { status: 204, headers: CORS });
+  }
 
   /* La clave de servicio se salta RLS. Vive SOLO aquí, en las
      variables de entorno de la función. Nunca en el navegador. */
@@ -92,9 +112,14 @@ Deno.serve(async (req: Request) => {
   });
 
   if (error) {
-    console.error('registrar_vista', error.message);
+    console.error('registrar_vista fallo:', error.message, '| perfil:', username);
     return new Response(null, { status: 204, headers: CORS });
   }
+
+  /* Rastro de que si conto. Sin esto, «204» y «204» son la misma cosa
+     desde fuera y desde el registro, y no hay forma de distinguir que
+     funciona de que se cae en silencio. */
+  console.log('registrar_vista ok:', username);
 
   /* 204 siempre, tanto si contó como si no. Que la respuesta no
      revele si el perfil existe, si estaba oculto o si ya te había
