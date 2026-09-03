@@ -69,6 +69,17 @@ export function Navbar() {
             )}
           </span>
         )}
+        {/* Analiticas solo con sesion: la pagina es de TU perfil, y sin
+            cuenta no hay nada que enseñar. Estaba construida y no la
+            enlazaba nadie: solo se llegaba escribiendo la direccion. */}
+        {session && (
+          <Link
+            className={`btn btn--quiet btn--sm nav__hide-sm${isActive('/analytics') ? ' on' : ''}`}
+            to="/analytics"
+          >
+            Analíticas
+          </Link>
+        )}
         <Link className="btn btn--quiet btn--sm nav__hide-sm" to="/dashboard">
           Panel
         </Link>
