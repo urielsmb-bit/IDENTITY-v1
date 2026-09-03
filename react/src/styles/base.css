@@ -22,8 +22,15 @@
   /* ---- texto --------------------------------------------- */
   --text-primary:   #F2F2F2;
   --text-secondary: #A3A3A3;
-  --text-muted:     #6B6B6B;
-  --text-faint:     #4A4A4A;
+  /* Medidos sobre --surface (#0E0E0E). `muted` estaba en #6B6B6B,
+     que da 3.62:1 y no llega al 4.5 que pide AA para texto normal
+     —y se usa 106 veces, casi siempre en texto pequeño, o sea el
+     peor sitio donde ahorrar contraste—. `faint` estaba en #4A4A4A,
+     2.18:1: no fallaba, es que directamente no se veia. Estos dos
+     son los minimos que pasan; no se han subido mas para no perder
+     la escala de grises que ya funcionaba. */
+  --text-muted:     #7B7B7B;   /* 4.56:1 — AA texto normal   */
+  --text-faint:     #5F5F5F;   /* 3.02:1 — solo decorativo    */
 
   /* ---- acento: sobrescribible por usuario ----------------- */
   --accent:      #FFFFFF;
@@ -31,14 +38,84 @@
   --accent-soft: rgba(255,255,255,.10);
   --accent-glow: rgba(255,255,255,.22);
 
-  /* ---- semánticos ---------------------------------------- */
-  --online:  #3BA55D;
-  --idle:    #FAA81A;
-  --dnd:     #ED4245;
-  --offline: #747F8D;
+  /* ---- semánticos ----------------------------------------
+     Eran los de Discord, hex por hex (#3BA55D, #FAA81A, #ED4245,
+     #747F8D). Funcionaban, pero eran prestados. Estos son propios
+     y viven en la misma familia calida que la marca; `idle` es
+     directamente la marca, que es lo que significa el ambar. */
+  --online:  #56C486;
+  --idle:    var(--brand);
+  --dnd:     #E5544B;
+  --offline: #6E6E6E;
+
+  /* ---- marca: del envoltorio, nunca del perfil ------------
+     `--accent` sigue siendo blanco y sigue siendo del usuario: esa
+     decision de arriba no se toca. El problema era que entonces
+     IDENTITY no tenia NINGUN color propio, y un producto que vende
+     identidad no puede no tener ninguna.
+
+     Asi que la marca vive aparte, en un token que el usuario no
+     pisa nunca, y se usa poco a proposito: el anillo de foco, lo
+     que esta activo y lo que acaba de guardarse. Nada mas.
+
+     Ambar y no violeta ni azul porque violeta y azul son el
+     uniforme de todas las herramientas oscuras —Linear, Vercel,
+     Raycast— y el parecido era justo la queja. El ambar sobre
+     casi-negro se lee calido y no se parece a ninguna. 9.95:1
+     sobre la superficie, o sea que ademas se lee. */
+  --brand:      #E8B14C;
+  --brand-ink:  #1A1204;
+  --brand-soft: rgba(232,177,76,.12);
+  --brand-line: rgba(232,177,76,.34);
 
   /* ---- tipografía ---------------------------------------- */
   --font: "Inter", "Geist", "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Mono DEL ENVOLTORIO. No es `--p-fm`, que es del tema del perfil
+     y cambia a VT323 o Press Start 2P segun lo que elija el usuario:
+     las etiquetas del editor no pueden cambiar de fuente porque
+     alguien cambie el tema de su tarjeta. */
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Consolas, monospace;
+
+  /* ---- escala tipográfica ---------------------------------
+     Ocho peldaños y ninguno intermedio.
+
+     Antes habia 27 tamaños distintos repartidos en 349
+     declaraciones, con pasos de medio pixel (9.5, 10.5, 11.5,
+     12.5, 13.5, 14.5, 15.5), y el 82% del texto cabia entre 9px y
+     14.5px. Dos consecuencias, las dos malas: nada guiaba el ojo
+     —si todo mide casi lo mismo, hay que leerlo todo para saber
+     que importa— y los medios pixeles redondean distinto en cada
+     sistema, asi que ni siquiera se veia igual en dos maquinas.
+
+       --t1  11  micro    etiquetas en mayuscula, meta, sellos
+       --t2  13  pequeño  texto secundario, ayudas, pies
+       --t3  15  cuerpo   el tamaño por defecto de la interfaz
+       --t4  18  guia     titulos de fila, cifras destacadas
+       --t5  22  seccion
+       --t6  30  pagina
+       --t7  40  display
+       --t8  54  portada
+
+     Debajo de --t1 no va nada que haya que leer. */
+  --t1:11px; --t2:13px; --t3:15px; --t4:18px;
+  --t5:22px; --t6:30px; --t7:40px; --t8:54px;
+
+  /* ---- tipografia fluida: titulares -----------------------
+     Los titulares grandes SI deben encoger con la ventana: un
+     hero de 68px en un movil de 360 no cabe. Pero habia doce
+     `clamp` distintos —clamp(22,3vw,28), clamp(22,4vw,27),
+     clamp(21,3.4vw,26)...— que son el mismo peldaño escrito de
+     cuatro maneras. Son cuatro, y su suelo es un token de la
+     escala, que es donde mas importa que coincidan: en el movil.
+
+     El techo del hero pasa de --t8 a proposito. La escala de
+     ocho es para la INTERFAZ; una portada puede ser mas grande
+     que cualquier cosa de la interfaz, y encogerla a 54 seria
+     estropear algo que ya funcionaba. */
+  --tf-hero: clamp(var(--t7), 6vw, 68px);
+  --tf-page: clamp(var(--t6), 5vw, 52px);
+  --tf-sec:  clamp(var(--t5), 3vw, var(--t6));
+  --tf-lead: clamp(var(--t4), 1.7vw, var(--t5));
 
   /* ---- escala de espaciado -------------------------------- */
   --s1:4px;  --s2:8px;  --s3:12px; --s4:16px; --s5:24px;
@@ -82,7 +159,7 @@ body{
   background:var(--bg-primary);
   color:var(--text-primary);
   font-family:var(--font);
-  font-size:15px;
+  font-size:var(--t3);
   line-height:1.55;
   letter-spacing:-.011em;
   overflow-x:hidden;
@@ -96,10 +173,34 @@ a{ color:inherit; text-decoration:none; }
 
 ::selection{ background:var(--accent); color:var(--accent-ink); }
 
+/* El anillo de foco es de IDENTITY, no del usuario: por eso usa
+   `--brand` y no `--accent`. Antes era blanco puro, que sobre casi-negro
+   es un anillo durisimo y ademas se confundia con el texto y con los
+   botones primarios, que tambien son blancos. En ambar se distingue de
+   todo lo demas de un vistazo, y es el sitio donde la marca aparece mas
+   veces sin estorbar: solo lo ve quien navega con teclado. */
 :focus-visible{
-  outline:2px solid var(--accent);
+  outline:2px solid var(--brand);
   outline-offset:2px;
   border-radius:var(--radius-sm);
+}
+
+/* ---- etiqueta micro: la firma tipografica del editor ------
+   Mono, mayuscula y muy espaciada, siempre en --t1. Es lo unico
+   del envoltorio que no es Inter, y hace dos trabajos a la vez:
+   distingue "esto es una etiqueta, no contenido" sin usar color
+   ni iconos —que es lo que se pedia— y le da al editor una voz
+   propia sin llenarlo de adornos.
+
+   Va en mono del ENVOLTORIO (`--font-mono`), no en `--p-fm`, que
+   cambia con el tema del perfil. */
+.eti{
+  font-family:var(--font-mono);
+  font-size:var(--t1);
+  font-weight:500;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--text-muted);
 }
 
 /* barras de desplazamiento discretas */
@@ -128,29 +229,29 @@ a{ color:inherit; text-decoration:none; }
 h1,h2,h3,h4{ margin:0; font-weight:600; letter-spacing:-.03em; line-height:1.1; }
 
 .t-display{
-  font-size:clamp(40px,6.4vw,72px);
+  font-size:var(--tf-hero);
   font-weight:600;
   letter-spacing:-.042em;
   line-height:1.02;
 }
-.t-h1{ font-size:clamp(28px,4vw,40px); letter-spacing:-.035em; }
-.t-h2{ font-size:clamp(22px,2.6vw,28px); letter-spacing:-.03em; }
+.t-h1{ font-size:var(--tf-page); letter-spacing:-.035em; }
+.t-h2{ font-size:var(--tf-sec); letter-spacing:-.03em; }
 .t-sub{
-  font-size:clamp(17px,1.7vw,21px);
+  font-size:var(--tf-lead);
   font-weight:400;
   line-height:1.5;
   color:var(--text-secondary);
   letter-spacing:-.015em;
 }
-.t-body{ font-size:15px; color:var(--text-secondary); }
+.t-body{ font-size:var(--t3); color:var(--text-secondary); }
 .t-meta{
-  font-size:12px;
+  font-size:var(--t2);
   color:var(--text-muted);
   letter-spacing:.01em;
   font-variant-numeric:tabular-nums;
 }
 .t-label{
-  font-size:11px;
+  font-size:var(--t1);
   font-weight:500;
   letter-spacing:.09em;
   text-transform:uppercase;
@@ -180,7 +281,7 @@ h1,h2,h3,h4{ margin:0; font-weight:600; letter-spacing:-.03em; line-height:1.1; 
   border-radius:var(--radius-sm);
   background:var(--bg);
   color:var(--fg);
-  font-size:14px;
+  font-size:var(--t3);
   font-weight:500;
   letter-spacing:-.012em;
   cursor:pointer;
@@ -206,8 +307,8 @@ h1,h2,h3,h4{ margin:0; font-weight:600; letter-spacing:-.03em; line-height:1.1; 
 .btn--quiet{ --bd:transparent; --fg:var(--text-secondary); padding-inline:12px; }
 .btn--quiet:hover{ --fg:var(--text-primary); background:var(--surface); }
 
-.btn--sm{ padding:7px 13px; font-size:13px; }
-.btn--lg{ padding:13px 24px; font-size:15px; border-radius:var(--radius-md); }
+.btn--sm{ padding:7px 13px; font-size:var(--t2); }
+.btn--lg{ padding:13px 24px; font-size:var(--t3); border-radius:var(--radius-md); }
 .btn--block{ width:100%; }
 
 /* ---- superficies ------------------------------------------ */
@@ -223,7 +324,7 @@ h1,h2,h3,h4{ margin:0; font-weight:600; letter-spacing:-.03em; line-height:1.1; 
   border:1px solid var(--border);
   border-radius:100px;
   background:var(--bg-secondary);
-  font-size:12px;
+  font-size:var(--t2);
   color:var(--text-secondary);
 }
 
@@ -243,7 +344,7 @@ h1,h2,h3,h4{ margin:0; font-weight:600; letter-spacing:-.03em; line-height:1.1; 
   background:var(--surface-3);
   border:1px solid var(--border-strong);
   color:var(--text-primary);
-  font-size:13.5px;
+  font-size:var(--t2);
   font-weight:500;
   box-shadow:var(--shadow-lg);
   backdrop-filter:var(--blur);
@@ -373,5 +474,8 @@ img, video, canvas, svg, iframe{ max-width:100%; }
   /* Ningun campo por debajo de 44: ademas, en iOS un input con menos
      de 16px de letra hace que Safari haga zoom al enfocarlo y
      descoloca toda la pagina. */
+  /* Los 16px NO son un descuido de la escala: Safari en iOS hace zoom
+     sobre cualquier campo con texto menor de 16px al enfocarlo, y de ese
+     zoom no se vuelve solo. Es una defensa, no un tamaño. */
   input, select, textarea{ min-height:44px; font-size:max(16px, 1em); }
 }

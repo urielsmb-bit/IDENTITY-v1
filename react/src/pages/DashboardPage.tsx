@@ -167,10 +167,10 @@ const FORMATOS = [
    de forma y de color en cada aparato, no hereda el color del tema y no se
    le puede dar resplandor. Estos son nuestros y se comportan. */
 const SECTIONS = [
-  { id: 'overview', name: 'Perfil', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>` },
-  { id: 'design', name: 'Diseño', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 20 4"/><path d="M4 20h6"/><path d="M4 20v-6"/><path d="M14 4h6v6"/></svg>` },
-  { id: 'blocks', name: 'Bloques', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>` },
-  { id: 'links', name: 'Redes & Enlaces', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13.5a4 4 0 0 0 5.7.3l2.6-2.6a4 4 0 0 0-5.7-5.7l-1.5 1.5"/><path d="M14 10.5a4 4 0 0 0-5.7-.3l-2.6 2.6a4 4 0 0 0 5.7 5.7l1.5-1.5"/></svg>` },
+  { id: 'overview', name: 'Perfil', desc: 'Tu foto, tu fondo y quién eres.', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>` },
+  { id: 'design', name: 'Diseño', desc: 'Tema, colores, tipografía y forma de la tarjeta.', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 20 4"/><path d="M4 20h6"/><path d="M4 20v-6"/><path d="M14 4h6v6"/></svg>` },
+  { id: 'blocks', name: 'Bloques', desc: 'Qué piezas aparecen en tu perfil y en qué orden.', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>` },
+  { id: 'links', name: 'Redes & Enlaces', desc: 'Adónde lleva tu perfil: redes, enlaces y contacto.', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13.5a4 4 0 0 0 5.7.3l2.6-2.6a4 4 0 0 0-5.7-5.7l-1.5 1.5"/><path d="M14 10.5a4 4 0 0 0-5.7-.3l-2.6 2.6a4 4 0 0 0 5.7 5.7l1.5-1.5"/></svg>` },
   { id: 'badges', name: 'Badges', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 3 8l9 14 9-14-9-6Z"/><path d="M3 8h18M9 8l3 14M15 8l-3 14"/></svg>` },
   { id: 'settings', name: 'Ajustes', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"/></svg>` },
 ];
@@ -631,6 +631,22 @@ export default function DashboardPage() {
             delante, ni al reves. `reintentarCon` la seccion hace que el
             fallo se cure solo al cambiar de seccion. */}
         <Frontera donde="el editor" reintentarCon={section}>
+        {/* Las secciones entraban directas en los controles: el primer
+            elemento de «Diseño» era un rotulo que ponia «Fondo», y desde
+            ahi no se sabia ni en que seccion estabas ni para que servia.
+            Los tres sub-paneles —cuenta, insignias y editor de bloque— si
+            llevaban encabezado, asi que ademas era incoherente. Se usa su
+            mismo patron; las que ya lo traen se quedan fuera de esta
+            lista para no ponerselo dos veces. */}
+        {(() => {
+          const s = SECTIONS.find((x) => x.id === section);
+          return s?.desc ? (
+            <header className="dash__enc">
+              <h2 className="dash__h2">{s.name}</h2>
+              <p className="dash__sub">{s.desc}</p>
+            </header>
+          ) : null;
+        })()}
         {/* SECTION: Overview / Identidad */}
         {section === 'overview' && (
           <div className="dash__seccion">

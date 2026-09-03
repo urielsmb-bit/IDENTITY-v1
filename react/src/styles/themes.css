@@ -183,7 +183,7 @@
   --p-shadow:none;
   --p-track:0em;
 }
-.pf[data-theme="hacker"]{ font-size:19px; }
+.pf[data-theme="hacker"]{ font-size:var(--t4); }
 .pf[data-theme="hacker"] .pf-card{ border-style:dashed; }
 
 /* ---------- 11 · WINDOWS 98 -------------------------------- */

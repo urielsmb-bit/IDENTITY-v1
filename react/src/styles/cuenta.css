@@ -17,7 +17,7 @@
 .acc__sub{
   margin:6px 0 0;
   color:var(--text-muted);
-  font-size:.9rem;
+  font-size:var(--t3);
 }
 
 /* Aviso de «sin cuenta»: no es un error, es una explicación. */
@@ -28,7 +28,7 @@
   border-radius:var(--radius-md);
   background:var(--surface-2);
   color:var(--text-secondary);
-  font-size:.87rem;
+  font-size:var(--t3);
   line-height:1.55;
 }
 
@@ -68,14 +68,14 @@
 
 .acc__t{
   margin:0;
-  font-size:1rem;
-  font-weight:650;
+  font-size:var(--t3);
+  font-weight:600;
   letter-spacing:-.01em;
 }
 .acc__d{
   margin:3px 0 0;
   color:var(--text-muted);
-  font-size:.83rem;
+  font-size:var(--t2);
   line-height:1.5;
 }
 
@@ -118,11 +118,11 @@
   border-top:1px solid var(--border);
 }
 .acc__cuerpo > .acc__fila:first-child{ border-top:0; padding-top:0; }
-.acc__filaT{ font-weight:600; font-size:.92rem; }
+.acc__filaT{ font-weight:600; font-size:var(--t3); }
 .acc__filaD{
   margin:4px 0 0;
   color:var(--text-muted);
-  font-size:.82rem;
+  font-size:var(--t2);
   line-height:1.5;
   max-width:46ch;
 }
@@ -164,7 +164,7 @@
 
 .acc__msg{
   margin:0;
-  font-size:.83rem;
+  font-size:var(--t2);
   color:var(--text-muted);
 }
 .acc__msg--bien{ color:#3fb950; }
@@ -204,12 +204,12 @@
 .acc__prov:not(.is-on) .acc__provI{ color:var(--text-faint) !important; }
 
 .acc__provT{ flex:1; min-width:0; }
-.acc__provT b{ display:block; font-size:.9rem; font-weight:600; }
+.acc__provT b{ display:block; font-size:var(--t3); font-weight:600; }
 .acc__provT small{
   display:block;
   margin-top:2px;
   color:var(--text-muted);
-  font-size:.78rem;
+  font-size:var(--t2);
   line-height:1.45;
   overflow:hidden;
   text-overflow:ellipsis;
@@ -223,7 +223,7 @@
   border:1px solid var(--border);
   background:var(--surface-3);
   color:var(--text-faint);
-  font-size:.7rem;
+  font-size:var(--t1);
   font-weight:600;
   letter-spacing:.02em;
   text-transform:uppercase;
@@ -266,8 +266,8 @@
 
 .mdl__t{
   margin:0;
-  font-size:1.05rem;
-  font-weight:650;
+  font-size:var(--t4);
+  font-weight:600;
   letter-spacing:-.01em;
 }
 .mdl--peligro .mdl__t{ color:#f85149; }
@@ -275,7 +275,7 @@
 .mdl__d{
   margin:8px 0 0;
   color:var(--text-secondary);
-  font-size:.87rem;
+  font-size:var(--t3);
   line-height:1.55;
 }
 
@@ -297,13 +297,13 @@
   margin:0;
   padding-left:18px;
   color:var(--text-muted);
-  font-size:.84rem;
+  font-size:var(--t2);
   line-height:1.7;
 }
 .acc__lista b{ color:var(--text-secondary); }
 
 .acc__eti{
-  font-size:.82rem;
+  font-size:var(--t2);
   color:var(--text-secondary);
 }
 .acc__eti b{
@@ -313,7 +313,7 @@
 
 .acc__ultimo{
   margin:0;
-  font-size:.9rem;
+  font-size:var(--t3);
   color:var(--text-secondary);
 }
 .acc__ultimo b{

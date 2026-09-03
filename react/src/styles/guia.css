@@ -72,8 +72,8 @@
 .guia__t{
   margin:0;
   flex:1;
-  font-size:.88rem;
-  font-weight:650;
+  font-size:var(--t3);
+  font-weight:600;
   letter-spacing:-.01em;
   line-height:1.3;
 }
@@ -97,7 +97,7 @@
 .guia__d{
   margin:0;
   color:var(--text-secondary);
-  font-size:.8rem;
+  font-size:var(--t2);
   line-height:1.55;
 }
 
@@ -111,7 +111,7 @@
 
 .guia__cuenta{
   color:var(--text-faint);
-  font-size:.72rem;
+  font-size:var(--t2);
   font-variant-numeric:tabular-nums;
 }
 
@@ -150,7 +150,7 @@
   display:flex;
   align-items:center;
   gap:8px;
-  font-size:.82rem;
+  font-size:var(--t2);
   color:var(--text-muted);
 }
 
