@@ -46,6 +46,8 @@ interface ProfileViewProps {
 const ESCALA_MIN = 0.42;
 const ESCALA_MAX = 1.6;
 const ANCHO_FULL = 1100;
+/* Lo que su propia regla CSS le concede a «nombre al lado». */
+const ANCHO_AL_LADO = 720;
 const ANCHO_POR_DEFECTO = 460;
 
 function fontStack(id: string) {
@@ -405,8 +407,18 @@ export function ProfileView({
          uno propio —pide ocupar lo que haya— pero tiene un tope de 1100 en
          su regla, y ese es su diseño. */
       const modo = raiz.getAttribute('data-width') || 'fixed';
-      const anchoDisenio =
-        modo === 'full'
+      const alLado =
+        raiz.getAttribute('data-avpos') === 'side' &&
+        raiz.getAttribute('data-layout') !== 'free';
+
+      /* «Nombre al lado» NO usa `--u-width`: su regla lo ignora y toma hasta
+         720px, porque dos columnas necesitan sitio. Si aqui se fijara el
+         ancho del deslizador, la tarjeta saldria estrecha y el avatar se
+         subiria encima del nombre —o sea, otra composicion que la del
+         editor, que es justo lo que esto existe para evitar—. */
+      const anchoDisenio = alLado
+        ? ANCHO_AL_LADO
+        : modo === 'full'
           ? ANCHO_FULL
           : parseFloat(getComputedStyle(raiz).getPropertyValue('--u-width')) ||
             ANCHO_POR_DEFECTO;
@@ -417,6 +429,10 @@ export function ProfileView({
          mas lineas y sale un alto que no es el del diseño. Se fija primero
          y se mide despues. `offsetHeight` es medida de maquetacion, asi que
          no le afecta el `transform` que ya pueda haber puesto. */
+      /* Se fija SIEMPRE, quepa o no. Antes solo se ponia al encoger, y
+         entonces el mismo perfil tenia dos anchos distintos —el de la regla
+         CSS cuando cabia, el de diseño cuando no— y por tanto dos
+         composiciones. Fijandolo siempre, solo hay una. */
       raiz.style.setProperty('--u-ancho', `${Math.round(anchoDisenio)}px`);
       const altoDisenio = pila.offsetHeight;
 
