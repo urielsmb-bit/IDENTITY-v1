@@ -411,6 +411,75 @@ export async function insigniasDe(username: string) {
   return metricas;
 }
 
+/**
+ * Las analiticas de un perfil propio.
+ *
+ * Todo sale del servidor. Antes esta pagina leia `localStorage`, asi que
+ * ensenaba las visitas contadas EN ESTE NAVEGADOR: quien entrara desde el
+ * movil veia ceros aunque tuviera mil visitas de verdad.
+ *
+ * Un aviso sobre lo que se puede y lo que no. La tabla `vistas` guarda una
+ * fila POR VISITANTE —con cuando llego, cuando volvio y cuantas veces—, no
+ * una por visita. De ahi salen los totales exactos, y una serie diaria de
+ * GENTE NUEVA. Lo que no existe en ninguna parte es «visitas por dia»: para
+ * eso habria que guardar una fila por visita, que es mucho mas caro y no se
+ * eligio. La pagina dice lo que ensena, en vez de llamarlo otra cosa.
+ *
+ * `vistas` solo la lee su dueno: lo garantiza la politica de la tabla, no
+ * esta consulta.
+ */
+export async function analiticasDe(perfilId: string, dias = 30) {
+  const vacio = {
+    unicas: 0,
+    totales: 0,
+    nota: null as number | null,
+    numNotas: 0,
+    porDia: {} as Record<string, number>,
+    ultima: '' as string,
+  };
+  if (!supabase || !perfilId) return vacio;
+  const client = supabase;
+
+  const desde = new Date(Date.now() - dias * 86400000).toISOString();
+  const [metricas, visitas] = await Promise.all([
+    client.from('perfil_metricas')
+      .select('vistas_unicas,vistas_totales,suma_notas,num_notas')
+      .eq('perfil_id', perfilId)
+      .maybeSingle(),
+    client.from('vistas')
+      .select('primera,ultima')
+      .eq('perfil_id', perfilId)
+      .gte('primera', desde)
+      .order('primera', { ascending: false })
+      .limit(5000),
+  ]);
+
+  const m: any = metricas.data ?? {};
+  const filas: any[] = visitas.data ?? [];
+
+  const porDia: Record<string, number> = {};
+  for (let i = 0; i < dias; i++) {
+    porDia[new Date(Date.now() - i * 86400000).toISOString().slice(0, 10)] = 0;
+  }
+  let ultima = '';
+  for (const f of filas) {
+    const dia = String(f.primera ?? '').slice(0, 10);
+    if (dia in porDia) porDia[dia] = (porDia[dia] ?? 0) + 1;
+    const u = String(f.ultima ?? '');
+    if (u > ultima) ultima = u;
+  }
+
+  const num = Number(m.num_notas) || 0;
+  return {
+    unicas: Number(m.vistas_unicas) || 0,
+    totales: Number(m.vistas_totales) || 0,
+    nota: num > 0 ? Number(m.suma_notas) / num : null,
+    numNotas: num,
+    porDia,
+    ultima,
+  };
+}
+
 export async function contarVista(username: string) {
   if (!supabase) return;
   try {

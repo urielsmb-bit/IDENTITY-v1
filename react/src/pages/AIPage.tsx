@@ -220,9 +220,12 @@ export default function AIPage() {
   return (
     <div className="ai-page wrap" style={{ paddingTop: '40px', paddingBottom: '80px' }}>
       <header style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '8px' }}>Generador Inteligente</h1>
+        <h1 style={{ fontSize: '2.5rem', marginBottom: '8px' }}>Generador por descripción</h1>
         <p className="t-meta" style={{ fontSize: '1.1rem' }}>
-          Describe cómo quieres que se sienta tu perfil y el generador ajustará el tema, colores y efectos.
+          Escribe cómo quieres que se sienta tu perfil. Busca las palabras que
+          reconoce —colores, ambientes, oficios— y monta un punto de partida
+          que después cambias entero. Es instantáneo y no sale de tu
+          navegador.
         </p>
       </header>
 
@@ -234,7 +237,7 @@ export default function AIPage() {
               Describe tu estilo
             </label>
             <textarea
-              className="input"
+              className="ta"
               rows={4}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}

@@ -838,3 +838,115 @@ canvas.chart{ width:100%; display:block; }
   .disc__q{ max-width:none; }
   .disc__busca .disc__orden{ width:100%; }
 }
+
+/* ==========================================================
+   Analíticas
+   ========================================================== */
+
+.ana{ padding:40px 0 80px; }
+
+.ana__cab{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+  margin-bottom:28px;
+}
+.ana__h1{
+  margin:0;
+  font-size:clamp(1.8rem, 4vw, 2.4rem);
+  letter-spacing:-.025em;
+}
+.ana__sub{ margin:6px 0 0; color:var(--text-muted); font-size:.95rem; }
+.ana__rangos{ display:flex; gap:6px; }
+
+.ana__error{
+  margin:0 0 20px;
+  padding:11px 14px;
+  border:1px solid rgba(248,81,73,.34);
+  border-radius:var(--radius-md);
+  background:rgba(248,81,73,.07);
+  color:#f85149;
+  font-size:.87rem;
+}
+
+.ana__kpis{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+  gap:12px;
+  margin-bottom:20px;
+}
+.ana__kpi{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  padding:18px 20px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  background:var(--surface);
+}
+.ana__kpiT{
+  font-size:.76rem;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  color:var(--text-faint);
+}
+.ana__kpiV{
+  font-size:2rem;
+  font-weight:750;
+  line-height:1.1;
+  letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;
+  color:var(--accent);
+}
+.ana__kpiD{ font-size:.78rem; color:var(--text-muted); line-height:1.4; }
+
+.ana__panel{
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  background:var(--surface);
+  overflow:hidden;
+}
+.ana__panelCab{ padding:18px 20px 0; }
+.ana__h2{ margin:0; font-size:1.05rem; letter-spacing:-.01em; }
+.ana__nota{
+  margin:6px 0 0;
+  color:var(--text-muted);
+  font-size:.81rem;
+  line-height:1.5;
+  max-width:62ch;
+}
+.ana__grafico{
+  position:relative;
+  width:100%;
+  height:280px;
+  padding:12px 8px 8px;
+}
+.ana__grafico canvas{ display:block; width:100%; height:100%; }
+.ana__vacio{
+  margin:0;
+  display:grid;
+  place-items:center;
+  height:100%;
+  color:var(--text-muted);
+  font-size:.9rem;
+  text-align:center;
+}
+
+.ana__aviso{
+  text-align:center;
+  padding:110px 20px;
+}
+.ana__aviso h2{ margin:0 0 10px; font-size:1.5rem; }
+.ana__aviso p{
+  margin:0 auto 22px;
+  max-width:46ch;
+  color:var(--text-muted);
+  line-height:1.6;
+}
+
+@media (max-width:640px){
+  .ana__cab{ align-items:flex-start; }
+  .ana__grafico{ height:220px; }
+}

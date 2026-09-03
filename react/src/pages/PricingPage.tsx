@@ -66,6 +66,25 @@ export default function PricingPage() {
       </header>
 
       {/* Plans Grid */}
+      <p
+        style={{
+          margin: '0 auto 28px',
+          maxWidth: '58ch',
+          textAlign: 'center',
+          padding: '12px 16px',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-md)',
+          background: 'var(--surface-2)',
+          color: 'var(--text-secondary)',
+          fontSize: '.9rem',
+          lineHeight: 1.6,
+        }}
+      >
+        Los planes de pago todavía no están abiertos. Mientras tanto{' '}
+        <strong>todo lo de esta página funciona sin pagar nada</strong>: no hay
+        nada bloqueado.
+      </p>
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', alignItems: 'stretch' }}>
         {PLANS.map((plan) => (
           <div
@@ -128,13 +147,27 @@ export default function PricingPage() {
               </div>
             </div>
 
-            <Link
-              to="/dashboard"
-              className={`btn ${plan.highlight ? 'btn--primary' : 'btn--quiet'}`}
-              style={{ width: '100%', textAlign: 'center', padding: '12px' }}
-            >
-              {plan.cta}
-            </Link>
+            {plan.id === 'free' ? (
+              <Link
+                to="/dashboard"
+                className="btn btn--primary"
+                style={{ width: '100%', textAlign: 'center', padding: '12px' }}
+              >
+                {plan.cta}
+              </Link>
+            ) : (
+              /* No hay cobro conectado. Antes este boton decia «Obtener Pro»
+                 y llevaba al panel: quien lo pulsaba se quedaba esperando
+                 una pantalla de pago que no existe. */
+              <button
+                type="button"
+                className="btn btn--quiet"
+                disabled
+                style={{ width: '100%', padding: '12px' }}
+              >
+                Todavía no está a la venta
+              </button>
+            )}
           </div>
         ))}
       </div>
