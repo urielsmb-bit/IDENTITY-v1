@@ -407,6 +407,23 @@ with comprobaciones as (
   select 46, 'digest() se puede llamar de verdad',
     case when (select encode(digest('x','sha256'),'hex')) is not null
       then 'OK' else 'MAL' end
+
+  union all
+  -- `revoke ... from public` se lo quita a TODO el que no tenga permiso
+  -- propio, y la funcion de borde llama con service_role. Sin este grant
+  -- el RPC responde «permission denied» y la funcion devuelve 204 igual.
+  select 47, 'service_role PUEDE ejecutar registrar_vista',
+    case when has_function_privilege(
+      'service_role', 'public.registrar_vista(citext, text, text)', 'EXECUTE'
+    ) then 'OK' else 'MAL: le falta EXECUTE, no contara ninguna visita' end
+
+  union all
+  select 48, 'y el navegador sigue sin poder',
+    case when not has_function_privilege(
+           'anon', 'public.registrar_vista(citext, text, text)', 'EXECUTE')
+      and not has_function_privilege(
+           'authenticated', 'public.registrar_vista(citext, text, text)', 'EXECUTE')
+      then 'OK' else 'MAL: se pueden inventar visitas desde el navegador' end
 )
 
 select
