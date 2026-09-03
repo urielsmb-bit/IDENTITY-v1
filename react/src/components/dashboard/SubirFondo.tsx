@@ -24,6 +24,28 @@ interface SubirFondoProps {
 
 type Fase = 'quieto' | 'imagen' | 'subiendo' | 'procesando';
 
+/**
+ * Traduce el fallo a algo accionable.
+ *
+ * «Failed to fetch» es lo que dice el navegador cuando una peticion no llega
+ * a salir, y no distingue entre las dos causas que tiene esto en la
+ * practica: que la funcion de borde rechace el origen, o que el CSP no deje
+ * hablar con el host al que Vimeo manda subir. Las dos se arreglan en la
+ * configuracion, no reintentando, asi que decirlo ahorra media hora.
+ */
+function explicar(e: unknown): string {
+  const m = e instanceof Error ? e.message : String(e);
+  if (/failed to fetch|networkerror|load failed/i.test(m)) {
+    return 'No se pudo hablar con el servidor de subida. Suele ser la configuracion: '
+      + 'que el dominio no este en ORIGENES_PERMITIDOS, o que falte el permiso del '
+      + 'CSP. Mira la consola: el motivo exacto sale ahi.';
+  }
+  if (/VIMEO_TOKEN/i.test(m)) {
+    return 'Falta el token de Vimeo en el servidor. Sin el no se pueden subir videos.';
+  }
+  return m || 'No se pudo subir el video.';
+}
+
 const MAX_VIDEO_MB = 60;
 
 /**
@@ -106,7 +128,7 @@ export function SubirFondo({ titulo, previa, onSubido, onQuitar, guia }: SubirFo
         onSubido({ tipo: 'video', url: `https://vimeo.com/${r.id}`, ratio: r.ratio });
       } catch (e) {
         if (e instanceof DOMException && e.name === 'AbortError') setError('Subida cancelada.');
-        else setError(e instanceof Error ? e.message : 'No se pudo subir el vídeo.');
+        else setError(explicar(e));
       } finally {
         setFase('quieto');
         setAvance(null);
