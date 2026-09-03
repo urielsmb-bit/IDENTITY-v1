@@ -108,9 +108,14 @@ npx supabase functions list
 Y desde la aplicación: visita un perfil y mira si el contador sube. Si no sube,
 mira el registro:
 
-```bash
-npx supabase functions logs registrar-vista
-```
+El CLI **no tiene** `functions logs`. Los registros estan en el panel:
+`supabase.com/dashboard` -> tu proyecto -> **Edge Functions** -> la funcion
+-> pestana **Logs**.
+
+Y si lo que no cuadra son las visitas, hay un diagnostico que mira por
+dentro: pega `supabase/DIAGNOSTICO_VISTAS.sql` en el editor SQL. La funcion
+devuelve 204 tanto si conto como si fallo —a proposito, para no revelar si
+un perfil existe— asi que desde fuera no se puede saber.
 
 Si aparece `ORIGENES_PERMITIDOS sin configurar`, es el paso 2.
 
