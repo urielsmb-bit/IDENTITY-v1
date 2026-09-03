@@ -5,7 +5,6 @@ import { useProfileStore } from '@/stores/profileStore';
 import { useDiscoverProfiles } from '@/hooks/useProfile';
 import { useToast } from '@/hooks/useToast';
 import { CarruselPerfiles } from '@/components/landing/CarruselPerfiles';
-import { ProfileCard } from '@/components/discover/ProfileCard';
 import { slug, num } from '@/lib/utils';
 import type { Profile } from '@/types';
 
@@ -196,11 +195,6 @@ export default function LandingPage() {
     return profiles.reduce((acc, p) => acc + (p.views || 0), 0);
   }, [profiles]);
 
-  const featuredProfiles = useMemo(() => {
-    if (profiles.length > 0) return profiles.slice(0, 8);
-    return [demoProfile];
-  }, [profiles, demoProfile]);
-
   const handleClaimSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const clean = slug(claimName);
@@ -276,23 +270,6 @@ export default function LandingPage() {
       </section>
 
       {/* Featured Rail */}
-      <section className="band wrap">
-        <div className="band__head">
-          <div>
-            <h2 className="t-h2">Gente que ya lo hizo</h2>
-            <p>Cada uno de estos perfiles usa el mismo editor que vas a usar tú.</p>
-          </div>
-          <Link className="btn btn--ghost btn--sm" to="/discover">
-            Ver todos
-          </Link>
-        </div>
-        <div className="rail">
-          {featuredProfiles.map((p, idx) => (
-            <ProfileCard key={p.username || idx} profile={p} />
-          ))}
-        </div>
-      </section>
-
       {/* Call to action footer banner */}
       <section className="close-band">
         <h2>Deja de explicar quién eres.</h2>
