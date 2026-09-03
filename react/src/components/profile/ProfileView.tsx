@@ -52,7 +52,6 @@ const ESCALA_MIN = 0.42;
 const ESCALA_MAX = 1;
 const ANCHO_FULL = 1100;
 /* Lo que su propia regla CSS le concede a «nombre al lado». */
-const ANCHO_AL_LADO = 720;
 const ANCHO_POR_DEFECTO = 460;
 
 function fontStack(id: string) {
@@ -412,18 +411,18 @@ export function ProfileView({
          uno propio —pide ocupar lo que haya— pero tiene un tope de 1100 en
          su regla, y ese es su diseño. */
       const modo = raiz.getAttribute('data-width') || 'fixed';
-      const alLado =
-        raiz.getAttribute('data-avpos') === 'side' &&
-        raiz.getAttribute('data-layout') !== 'free';
 
-      /* «Nombre al lado» NO usa `--u-width`: su regla lo ignora y toma hasta
-         720px, porque dos columnas necesitan sitio. Si aqui se fijara el
-         ancho del deslizador, la tarjeta saldria estrecha y el avatar se
-         subiria encima del nombre —o sea, otra composicion que la del
-         editor, que es justo lo que esto existe para evitar—. */
-      const anchoDisenio = alLado
-        ? ANCHO_AL_LADO
-        : modo === 'full'
+      /* «Avatar al lado» tuvo aqui un ancho fijo de 720 durante un tiempo,
+         para que editor y perfil publico no discreparan. Discrepaban porque
+         su regla CSS tomaba el ancho del hueco, y el hueco es estrecho en el
+         editor y ancho en produccion. Eso lo arregla `--u-ancho`, que sale
+         del perfil guardado y vale igual en los dos sitios; el 720 solo
+         quedaba matando el deslizador de «Ancho de la superficie», que en
+         ese formato no hacia nada. Medido: las dos columnas aguantan hasta
+         200px sin montarse ni desbordar —el nombre solo parte en mas
+         lineas—, asi que no hay nada que proteger. Manda el deslizador. */
+      const anchoDisenio =
+        modo === 'full'
           ? ANCHO_FULL
           : parseFloat(getComputedStyle(raiz).getPropertyValue('--u-width')) ||
             ANCHO_POR_DEFECTO;
@@ -519,8 +518,26 @@ export function ProfileView({
     vv?.addEventListener('resize', medir);
     window.addEventListener('orientationchange', medir);
 
+    /* Si algo por encima ANIMA su ancho, el observador ve la ultima medida
+       que le llego, y esa puede ser la del fotograma anterior al final de la
+       animacion: la escala se queda a medio camino. Pasa con el marco de la
+       vista previa del editor, que anima `max-width` al cambiar de PC a
+       tablet o movil. Se escucha en captura, y no en el marco concreto,
+       para no meter aqui una clase que solo existe en el editor: vale
+       igual para cualquier contenedor que se anime, hoy o mañana. El filtro
+       por propiedad deja pasar solo lo que puede cambiar el sitio
+       disponible, asi que los cientos de transiciones de color y sombra de
+       la pagina no cuestan nada. */
+    const alAcabar = (ev: TransitionEvent) => {
+      if (!/width|height|padding|transform|scale/.test(ev.propertyName)) return;
+      const t = ev.target;
+      if (t instanceof Element && t.contains(hueco)) medir();
+    };
+    document.addEventListener('transitionend', alAcabar, true);
+
     return () => {
       ro.disconnect();
+      document.removeEventListener('transitionend', alAcabar, true);
       window.clearTimeout(tarde);
       window.removeEventListener('resize', medir);
       vv?.removeEventListener('resize', medir);
@@ -530,7 +547,13 @@ export function ProfileView({
       r?.style.removeProperty('--u-escala-alto');
       r?.style.removeProperty('--u-ancho');
     };
-  }, [rootRef, cardRef]);
+    /* Estas cuatro son las que deciden el ancho de diseño, y tienen que
+       estar aqui aunque parezca que sobran: al fijar `--u-ancho` la
+       maquetacion deja de cambiar cuando su dueño mueve el deslizador de
+       ancho, asi que ningun observador se entera y el ancho fijado se
+       quedaba con el valor viejo. El mando se quedaba muerto. Son valores
+       simples, no objetos, asi que no provocan medidas de mas. */
+  }, [rootRef, cardRef, p.sWidthPct, p.widthMode, p.avPos, p.layoutMode]);
 
   const orden = p.blockOrder ?? [];
 

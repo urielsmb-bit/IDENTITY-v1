@@ -2264,10 +2264,9 @@
      las de `data-width` y sin nombrarlo devolvia la tarjeta al ancho del
      hueco, que es cuando el avatar se sube encima del nombre. */
   width:var(--u-ancho, 100%);
-  /* Dos columnas necesitan ancho: en los 460px de la tarjeta vertical el
-     texto se envuelve y deja de leerse como una banda. Se acota a 720px
-     porque pasada esa medida la línea se vuelve incómoda de leer. Aquí el
-     ancho lo manda el formato, no el control de "Ancho de la superficie". */
+  /* El ancho lo manda "Ancho de la superficie", igual que en el resto de
+     formatos. El 720 es solo el respaldo de mientras el guion no ha medido:
+     dos columnas piden mas sitio que los 460 de la tarjeta vertical. */
   max-width:var(--u-ancho, min(100%, 720px));
 }
 /* Sin flex ya no hay `gap`: la separación la ponen los márgenes. */
