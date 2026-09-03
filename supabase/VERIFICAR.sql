@@ -390,6 +390,23 @@ with comprobaciones as (
        where n.nspname='public' and p.proname='registrar_vista' limit 1),
       '') like '%pimienta_visitas: sin ella%' then 'OK'
     else 'MAL: sigue la version que revienta sin decir por que (falta 0010)' end
+
+  union all
+  -- En Supabase pgcrypto vive en `extensions`, no en `public`. Con el
+  -- search_path fijo de la funcion —que es una defensa, no un descuido—
+  -- `digest()` no se resuelve y `vistas` se queda vacia para siempre.
+  select 45, 'registrar_vista alcanza digest() (esquema extensions)',
+    case when coalesce(
+      (select array_to_string(p.proconfig, ',') from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname='public' and p.proname='registrar_vista' limit 1),
+      '') like '%extensions%' then 'OK'
+    else 'MAL: falta `extensions` en su search_path (aplica 0011)' end
+
+  union all
+  select 46, 'digest() se puede llamar de verdad',
+    case when (select encode(digest('x','sha256'),'hex')) is not null
+      then 'OK' else 'MAL' end
 )
 
 select
