@@ -15,6 +15,7 @@ const DiscoverPage = lazy(() => import('./pages/DiscoverPage'));
 const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage'));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
 const TemplatesPage = lazy(() => import('./pages/TemplatesPage'));
+const ProbarPlantillaPage = lazy(() => import('./pages/ProbarPlantillaPage'));
 const PricingPage = lazy(() => import('./pages/PricingPage'));
 const LegalPage = lazy(() => import('./pages/LegalPage'));
 
@@ -79,6 +80,9 @@ export default function App() {
               }
             />
             <Route path="/templates" element={<TemplatesPage />} />
+            {/* Antes que `/:username`, o «probar» se leeria como el nombre
+                de alguien. */}
+            <Route path="/probar/:id" element={<ProbarPlantillaPage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/terminos" element={<LegalPage />} />
             <Route path="/privacidad" element={<LegalPage />} />

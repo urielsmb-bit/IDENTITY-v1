@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PreviaPlantilla } from '@/components/plantillas/PreviaPlantilla';
-import { VerPlantilla } from '@/components/plantillas/VerPlantilla';
 import { useProfileStore } from '@/stores/profileStore';
 import { useToast } from '@/hooks/useToast';
 import { hasBackend } from '@/lib/supabase';
@@ -52,8 +51,6 @@ export default function TemplatesPage() {
   const [favs, setFavs] = useState<string[]>(() => local.favoritas());
   const [usadas, setUsadas] = useState<string[]>(() => local.usadas());
 
-  /** La que se esta viendo en grande. */
-  const [viendo, setViendo] = useState<backend.PlantillaPublica | null>(null);
   const [abierto, setAbierto] = useState(false);
   const [nombre, setNombre] = useState('');
   const [publicando, setPublicando] = useState(false);
@@ -370,7 +367,7 @@ export default function TemplatesPage() {
                   <button
                     type="button"
                     className="btn btn--ghost btn--sm tpl__ver"
-                    onClick={() => setViendo(p)}
+                    onClick={() => navigate(`/probar/${p.id}`)}
                     title={`Ver «${p.nombre}» con tu información`}
                     aria-label={`Ver «${p.nombre}» con tu información`}
                   >
@@ -396,28 +393,6 @@ export default function TemplatesPage() {
         </div>
       )}
 
-      {viendo && (() => {
-        /* Sobre el perfil de quien mira. Si aun no tiene, sobre el de su
-           autor: enseñar algo es mejor que un hueco, y el pie del modal
-           dice cual de los dos se esta viendo. */
-        const mio = useProfileStore.getState().mine();
-        const base = mio ?? viendo.autorPerfil;
-        if (!base) return null;
-        return (
-          <VerPlantilla
-            nombre={viendo.nombre}
-            base={base}
-            esMio={!!mio}
-            ajustes={viendo.ajustes}
-            onCerrar={() => setViendo(null)}
-            onUsar={() => {
-              const elegida = viendo;
-              setViendo(null);
-              void usar(elegida);
-            }}
-          />
-        );
-      })()}
     </div>
   );
 }

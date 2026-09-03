@@ -783,6 +783,50 @@ export async function listarPlantillas(): Promise<PlantillaPublica[]> {
   });
 }
 
+/** Una sola, por su id. Para la pantalla de probarla a pantalla completa,
+ *  a la que se puede llegar por un enlace sin haber pasado por la lista. */
+export async function obtenerPlantilla(id: string): Promise<PlantillaPublica | null> {
+  if (!supabase || !id) return null;
+  const db = supabase;
+  const pedir = (cols: string) =>
+    db.from('plantillas').select(cols).eq('id', id).eq('estado', 'activa').maybeSingle();
+
+  let r = await pedir('id, nombre, ajustes, usos, creado, dueno, usuario');
+  if (r.error) r = await pedir('id, nombre, ajustes, usos, creado, dueno');
+  if (r.error || !r.data) return null;
+  const f = r.data as unknown as {
+    id: string; nombre: string; ajustes: unknown; usos: number;
+    creado: string; dueno: string; usuario?: string | null;
+  };
+
+  let autor = '', autorAvatar = '', autorNombre = '', autorPerfil: Profile | null = null;
+  if (f.usuario) {
+    const { data: p } = await db
+      .from('perfiles_publicos')
+      .select('username, apariencia')
+      .eq('username', f.usuario)
+      .maybeSingle();
+    if (p) {
+      const ap = (p.apariencia ?? {}) as Record<string, unknown>;
+      autor = String(p.username ?? '');
+      autorAvatar = String(ap.avatarUrl ?? '');
+      autorNombre = String(ap.name ?? '');
+      autorPerfil = normalizarPerfil({ ...ap, username: p.username });
+    }
+  }
+
+  const u = await usuario().catch(() => null);
+  return {
+    id: String(f.id),
+    nombre: String(f.nombre ?? ''),
+    ajustes: extraerPlantilla((f.ajustes ?? {}) as Partial<Profile>),
+    usos: Number(f.usos ?? 0),
+    creado: String(f.creado ?? ''),
+    mia: !!u && f.dueno === u.id,
+    autor, autorAvatar, autorNombre, autorPerfil,
+  };
+}
+
 /** Publica el aspecto del perfil que se le pase. Nunca su contenido. */
 export async function publicarPlantilla(nombre: string, perfil: Partial<Profile>) {
   if (!supabase) throw new Error('sin backend');

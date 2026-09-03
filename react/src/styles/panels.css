@@ -1172,36 +1172,82 @@ canvas.chart{ width:100%; display:block; }
 }
 
 
-/* ---- visualizar una plantilla ----------------------------------------
-   Se pinta a la misma medida fija que la miniatura y se encoge a lo que
-   quepa: asi lo que se ve en grande es lo mismo que se veia pequeño,
-   sin sorpresas al abrirlo. */
-.tplver{ position:relative; overflow:hidden; background:var(--bg-primary); }
-.tplver__lienzo{ transform-origin:top left; }
-.tplver__lienzo .pf{ min-height:0; padding:0; }
-.tplver__lienzo .pf.is-preview .pf-hero{ min-height:540px; padding:36px 28px; }
-.tplver__lienzo .pf-scroll{ display:none; }
-/* Es una vista, no un sitio donde pulsar: dentro hay enlaces, votos y un
-   reproductor que no son de quien mira. */
-.tplver__lienzo{ pointer-events:none; }
-.tplver__pie{
+/* El boton de ver es cuadrado y no crece: la accion que manda es «Usar
+   plantilla», y dos botones del mismo ancho no dicen cual es cual. */
+.tpl__ver{ flex:none; width:34px; padding:0; display:grid; place-items:center; }
+.tpl__ver svg{ width:15px; height:15px; }
+
+/* El boton de ver es cuadrado y no crece: la accion que manda es «Usar
+   plantilla», y dos botones del mismo ancho no dicen cual es cual. */
+.tpl__ver{ flex:none; width:34px; padding:0; display:grid; place-items:center; }
+.tpl__ver svg{ width:15px; height:15px; }
+
+/* ---- probar una plantilla a pantalla completa -------------------------
+   Flota sobre el perfil y NO vive dentro de el: dentro heredaria su tema,
+   y una barra que cambia de color segun la plantilla que estas probando
+   deja de leerse como algo tuyo. Por eso usa los colores del envoltorio
+   aunque este encima de un perfil de cualquier color. */
+.probar{
+  position:fixed;
+  top:max(var(--s3), env(safe-area-inset-top));
+  left:50%; transform:translateX(-50%);
+  z-index:900;
   display:flex; align-items:center; gap:var(--s3);
-  padding:var(--s3) var(--s4);
-  border-top:1px solid var(--border);
+  max-width:min(560px, calc(100vw - var(--s5)));
+  padding:8px 8px 8px var(--s3);
+  border:1px solid var(--border-strong);
+  border-radius:100px;
+  /* Lo unico que se difumina en toda la pagina, y con motivo: debajo hay
+     un fondo que no controlamos y el texto tiene que leerse encima. */
+  background:rgba(5,5,5,.72);
+  backdrop-filter:blur(14px) saturate(140%);
+  -webkit-backdrop-filter:blur(14px) saturate(140%);
+  box-shadow:var(--shadow);
 }
-.tplver__pie .btn{ flex:none; }
-.tplver__nota{
-  margin:0;
-  font-size:var(--t1); line-height:1.45;
+.probar__av{
+  width:34px; height:34px; border-radius:50%; flex:none;
+  object-fit:cover; border:1px solid var(--border-strong);
+}
+.probar__txt{ display:flex; flex-direction:column; min-width:0; line-height:1.25; }
+.probar__eti{
+  font-family:var(--font-mono);
+  font-size:var(--t1); letter-spacing:.14em; text-transform:uppercase;
   color:var(--text-muted);
 }
+.probar__nom{
+  font-size:var(--t2); font-weight:600; color:var(--text-primary);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+/* Sin esto «de @usuario» se parte en tres renglones dentro de la barra y
+   la deja del alto de un parrafo. Se recorta con puntos suspensivos, que
+   es lo correcto: el nombre completo esta a un clic en la lista. */
+.probar__por{
+  font-size:var(--t1); color:var(--text-muted);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.probar__acc{ display:flex; gap:6px; margin-left:auto; flex:none; }
 
-/* El boton de ver es cuadrado y no crece: la accion que manda es «Usar
-   plantilla», y dos botones del mismo ancho no dicen cual es cual. */
-.tpl__ver{ flex:none; width:34px; padding:0; display:grid; place-items:center; }
-.tpl__ver svg{ width:15px; height:15px; }
+/* Mientras se prueba, la pagina ES el perfil: la barra de IDENTITY
+   arriba rompe la ilusion de tenerlo puesto. */
+body.probando .nav{ display:none; }
+body.probando .view{ padding-top:0; }
 
-/* El boton de ver es cuadrado y no crece: la accion que manda es «Usar
-   plantilla», y dos botones del mismo ancho no dicen cual es cual. */
-.tpl__ver{ flex:none; width:34px; padding:0; display:grid; place-items:center; }
-.tpl__ver svg{ width:15px; height:15px; }
+.probar__esperando{
+  min-height:60vh;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:var(--s4);
+  color:var(--text-muted); font-size:var(--t3);
+}
+
+@media (max-width:560px){
+  /* En estrecho manda poder salir y aplicar; el rotulo y la foto de su
+     autor son contexto y se van antes que los botones. */
+  .probar{
+    left:var(--s3); right:var(--s3);
+    transform:none;
+    max-width:none;
+    border-radius:var(--radius-lg);
+  }
+  .probar__eti{ display:none; }
+  .probar__av{ display:none; }
+}
