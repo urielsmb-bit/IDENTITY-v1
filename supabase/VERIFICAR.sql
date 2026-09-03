@@ -1,7 +1,8 @@
 -- ============================================================
 -- IDENTITY · VERIFICAR
 --
--- Se ejecuta DESPUÉS de APLICAR.sql. No cambia nada: solo mira.
+-- Se ejecuta DESPUÉS de APLICAR.sql y de APLICAR_0007_0008.sql.
+-- No cambia nada: solo mira.
 --
 -- Cada fila dice qué se esperaba y qué hay. Si alguna sale MAL, esa
 -- parte de la auditoría sigue abierta en producción, por mucho que
@@ -220,6 +221,88 @@ with comprobaciones as (
       select allowed_mime_types from storage.buckets where id='media'
     ) @> array['image/webp','video/mp4'] then 'OK'
     else 'MAL: faltan tipos, el editor no podra subir' end
+
+  -- ============================================================
+  -- 0007 · insignias que no se puede poner uno mismo
+  -- ============================================================
+
+  union all
+  select 29, 'Existe la tabla de insignias concedidas',
+    case when exists (
+      select 1 from pg_tables
+      where schemaname='public' and tablename='insignias_concedidas'
+    ) then 'OK' else 'MAL: falta 0007 (las insignias no se pueden conceder)' end
+
+  union all
+  -- Lo importante no es que tenga RLS, es que NO tenga politica de
+  -- escritura: sin politica, RLS lo niega todo y solo entra por la clave
+  -- de servicio. Una politica de insert aqui seria volver al problema.
+  select 30, 'Nadie puede concederse una insignia',
+    case when not exists (
+      select 1 from pg_policies
+      where schemaname='public' and tablename='insignias_concedidas'
+        and cmd in ('INSERT','UPDATE','ALL')
+    ) then 'OK' else 'MAL: hay politica de escritura, cualquiera se las pone' end
+
+  union all
+  select 31, 'perfil_verificado() con search_path fijo',
+    case when exists (
+      select 1 from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname='public' and p.proname='perfil_verificado'
+        and p.prosecdef
+        and array_to_string(coalesce(p.proconfig,'{}'), ',') like '%search_path%'
+    ) then 'OK' else 'MAL: falta, o es SECURITY DEFINER sin search_path' end
+
+  union all
+  select 32, 'Existe la vista de insignias del perfil',
+    case when exists (
+      select 1 from pg_views
+      where schemaname='public' and viewname='insignias_de_perfil'
+    ) then 'OK' else 'MAL: el cliente no podra leer ninguna insignia' end
+
+  union all
+  -- Esto es el borrado del punto 4 de la 0007. Si queda alguna, la
+  -- migracion no llego a correr entera.
+  select 33, 'No queda ninguna insignia autoasignada guardada',
+    case when (
+      select count(*) from perfiles where apariencia ? 'badges'
+    ) = 0 then 'OK'
+    else 'MAL: ' || (select count(*) from perfiles where apariencia ? 'badges')
+         || ' perfiles conservan su lista vieja de insignias' end
+
+  -- ============================================================
+  -- 0008 · que «perfil publico» apagado signifique algo
+  -- ============================================================
+
+  union all
+  select 34, 'Descubrir respeta el ajuste de perfil publico',
+    -- `to_regclass` devuelve null si no existe, en vez de lanzar y abortar
+    -- la consulta entera dejando sin salida a las demas comprobaciones.
+    case when coalesce(
+      (select pg_get_viewdef(to_regclass('public.descubrir'))
+       where to_regclass('public.descubrir') is not null),
+      '') like '%discoverable%' then 'OK'
+    else 'MAL: apagar el ajuste no esconde nada, la fila se sigue sirviendo' end
+
+  union all
+  select 35, 'La vista publica trae las cifras del perfil',
+    case when (
+      select count(*) from information_schema.columns
+      where table_schema='public' and table_name='perfiles_publicos'
+        and column_name in ('vistas','nota','num_notas')
+    ) = 3 then 'OK'
+    else 'MAL: sin ellas, un perfil oculto pierde sus insignias de visitas' end
+
+  union all
+  -- La 0008 rehace `perfiles_publicos`, asi que la comprobacion 11 se
+  -- repite aqui a proposito: importa que siga siendo cierta DESPUES.
+  select 36, 'La vista publica sigue sin exponer `dueno`',
+    case when not exists (
+      select 1 from information_schema.columns
+      where table_schema='public' and table_name='perfiles_publicos'
+        and column_name in ('dueno','acepto_en','acepto_version')
+    ) then 'OK' else 'MAL: la vista rehecha filtro datos que no son publicos' end
 )
 
 select
