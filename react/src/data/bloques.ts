@@ -23,7 +23,6 @@ export type ControlId =
   | 'tamano'
   // color
   | 'color'
-  | 'opacidad'
   // resplandor
   | 'halo'
   // caja
@@ -31,11 +30,13 @@ export type ControlId =
   | 'relleno'
   | 'radio'
   | 'ancho'
+  | 'centrar'
+  | 'opacidad'
+  | 'anim'
   | 'borde'
   | 'desenfoque'
   | 'brillo'
   // composición
-  | 'anim'
   | 'alinear'
   | 'margen'
   // piezas con contenido propio
@@ -48,7 +49,6 @@ export type ControlId =
   | 'portadaMusica'
   | 'posAvatar'
   | 'formaAvatar'
-  | 'centrar'
   | 'animacion'
   | 'heredarCaja'
   | 'discordId'

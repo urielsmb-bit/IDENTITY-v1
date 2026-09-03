@@ -268,9 +268,12 @@ export function ProfileView({
     if (pistas.length > 0) music.play();
   };
 
-  const notaMedia = p.ratings
-    ? (p.ratings.design + p.ratings.originality + p.ratings.aesthetic) / 3
-    : 0;
+  /* La nota la calcula el servidor a partir de `valoraciones`.
+     Antes esto promediaba `p.ratings.design/originality/aesthetic`, tres
+     campos que no escribia nadie: el panel ensenaba 0.0 y «0 VOTOS» aunque
+     el perfil tuviera votos de verdad. */
+  const notaMedia = p.nota ?? 0;
+  const votos = p.numNotas ?? 0;
 
 
   /* Las insignias se calculan, no se leen del perfil.
@@ -955,32 +958,17 @@ export function ProfileView({
             <h2 className="pf-sec__h">Califica este perfil</h2>
 
             <div className="pf-rate__score">
-              {notaMedia.toFixed(1)}
-              <small>{p.ratings?.votes || 0} VOTOS</small>
+              {votos > 0 ? notaMedia.toFixed(1) : '—'}
+              <small>
+                {votos} {votos === 1 ? 'VOTO' : 'VOTOS'}
+              </small>
             </div>
 
-            {p.ratings && p.ratings.votes > 0 && (
-              <div className="pf-rate__rows">
-                {(
-                  [
-                    ['Diseño', p.ratings.design],
-                    ['Original', p.ratings.originality],
-                    ['Estética', p.ratings.aesthetic],
-                  ] as const
-                ).map(([etiqueta, valor]) => (
-                  <div className="pf-rate__row" key={etiqueta}>
-                    <span className="pf-rate__lab">{etiqueta}</span>
-                    <span className="pf-rate__bar">
-                      <i style={{ width: `${Math.min(100, (valor / 5) * 100)}%` }} />
-                    </span>
-                    <span className="pf-rate__v">{valor.toFixed(1)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
             <div className="pf-vote">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+              {/* Cinco, no diez: la tabla `valoraciones` tiene
+                  `check (nota between 1 and 5)`, asi que del 6 en
+                  adelante el voto se rechazaba en el servidor. */}
+              {[1, 2, 3, 4, 5].map((n) => (
                 <button
                   key={n}
                   type="button"

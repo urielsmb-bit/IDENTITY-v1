@@ -5,7 +5,10 @@ import { useDiscoverProfiles } from '@/hooks/useProfile';
 import { safeMedia, num } from '@/lib/utils';
 import type { Profile } from '@/types';
 
-type Metric = 'views' | 'rating' | 'likes' | 'level';
+/* Visitas y nota, y nada mas. «Nivel» y «likes» eran campos que nadie
+   incrementaba —todo el mundo salia con Nv 1 y 0 likes—, asi que ordenar
+   por ellos daba una clasificacion sin sentido. */
+type Metric = 'views' | 'rating';
 
 export default function LeaderboardPage() {
   const [metric, setMetric] = useState<Metric>('views');
@@ -29,17 +32,7 @@ export default function LeaderboardPage() {
 
   const rankedProfiles = useMemo(() => {
     return [...allProfiles].sort((a, b) => {
-      if (metric === 'rating') {
-        const avgA = a.ratings
-          ? (a.ratings.design + a.ratings.originality + a.ratings.aesthetic) / 3
-          : 0;
-        const avgB = b.ratings
-          ? (b.ratings.design + b.ratings.originality + b.ratings.aesthetic) / 3
-          : 0;
-        return avgB - avgA;
-      }
-      if (metric === 'likes') return (b.likes || 0) - (a.likes || 0);
-      if (metric === 'level') return (b.level || 1) - (a.level || 1);
+      if (metric === 'rating') return (b.nota ?? 0) - (a.nota ?? 0);
       return (b.views || 0) - (a.views || 0);
     });
   }, [allProfiles, metric]);
@@ -51,13 +44,8 @@ export default function LeaderboardPage() {
 
   const getMetricValue = (p: Profile) => {
     if (metric === 'rating') {
-      const avg = p.ratings
-        ? (p.ratings.design + p.ratings.originality + p.ratings.aesthetic) / 3
-        : 0;
-      return `${avg.toFixed(1)} ★`;
+      return p.numNotas ? `${(p.nota ?? 0).toFixed(1)} ★` : 'sin votos';
     }
-    if (metric === 'likes') return `${p.likes || 0} ❤️`;
-    if (metric === 'level') return `Nv ${p.level || 1}`;
     return `${num(p.views || 0)} visitas`;
   };
 
@@ -84,20 +72,6 @@ export default function LeaderboardPage() {
             onClick={() => setMetric('rating')}
           >
             ⭐ Calificación
-          </button>
-          <button
-            type="button"
-            className={`btn btn--sm ${metric === 'level' ? 'btn--primary' : 'btn--quiet'}`}
-            onClick={() => setMetric('level')}
-          >
-            ⚡ Nivel
-          </button>
-          <button
-            type="button"
-            className={`btn btn--sm ${metric === 'likes' ? 'btn--primary' : 'btn--quiet'}`}
-            onClick={() => setMetric('likes')}
-          >
-            ❤️ Likes
           </button>
         </div>
       </header>

@@ -50,6 +50,10 @@ export default function ProfilePage() {
       try {
         await backend.valorar(profile._id, score);
       } catch (err) {
+        /* Se deshace el voto local. Antes solo se anotaba en la consola: la
+           persona veia su nota marcada y creia que habia contado. */
+        setVote(null);
+        setMyVote(cleanUsername, 0);
         console.error('Error al enviar valoración:', err);
       }
     }

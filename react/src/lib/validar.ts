@@ -100,8 +100,6 @@ const FORMAS: Record<string, any> = {
   links: { title: TOPE.corto, url: TOPE.url, desc: TOPE.medio, icon: 24 },
   projects: { title: TOPE.corto, desc: TOPE.medio, url: TOPE.url, tag: 24, img: 'medio' },
   gallery: { url: 'medio', alt: TOPE.corto, caption: TOPE.medio },
-  live: { title: TOPE.corto, url: TOPE.url, kind: 24 },
-  fields: { label: TOPE.corto, value: TOPE.medio, icon: 24 },
   tags: null,
   blocksOff: null,
   blockOrder: null
@@ -269,11 +267,7 @@ function esquema(ID: any) {
     sOpacity: (v: any) => numOnulo(v, 0, 100),
     sBorder: (v: any) => numOnulo(v, 0, 100),
     blockRadius: (v: any) => numOnulo(v, 0, 60),
-    level: (v: any) => numero(v, 0, 999, 1),
-    xp: (v: any) => numero(v, 0, 1e9, 0),
-    xpMax: (v: any) => numero(v, 1, 1e9, 100),
     views: (v: any) => numero(v, 0, 1e9, 0),
-    likes: (v: any) => numero(v, 0, 1e9, 0),
     /* Las calcula el servidor y llegan pegadas al perfil. Se dejan pasar
        porque de ellas salen las insignias de visitas y valoraciones; si el
        normalizador las tira, esas insignias se quedan a cero para siempre. */
@@ -373,13 +367,6 @@ export function perfil(p: any, defectos: any, catalogs: Record<string, unknown>)
       : '';
   }
 
-  if (p.status && typeof p.status === 'object') {
-    out.status = {
-      state: deLista(p.status.state, ids(ID?.STATUS_STATES), 'online'),
-      activity: texto(p.status.activity, TOPE.corto),
-      detail: texto(p.status.detail, TOPE.medio)
-    };
-  }
 
   if (p.audio && typeof p.audio === 'object') {
     out.audio = {

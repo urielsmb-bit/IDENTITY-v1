@@ -28,18 +28,6 @@ export interface GalleryItem {
   caption: string;
 }
 
-export interface LiveItem {
-  title: string;
-  url: string;
-  kind: string;
-}
-
-export interface FieldItem {
-  label: string;
-  value: string;
-  icon: string;
-}
-
 export interface BlockPos {
   col: number;
   span: number;
@@ -100,17 +88,6 @@ export interface BlockStyle {
   bdw?: number | null;
 }
 
-export interface BlockContent {
-  text?: string;
-  nets?: string[];
-}
-
-export interface ProfileStatus {
-  state: string;
-  activity: string;
-  detail: string;
-}
-
 export interface AudioTrack {
   title: string;
   artist: string;
@@ -132,13 +109,6 @@ export interface ProfileAudio {
   yt: string;
   ytUrl: string;
   tracks: AudioTrack[];
-}
-
-export interface ProfileRatings {
-  design: number;
-  originality: number;
-  aesthetic: number;
-  votes: number;
 }
 
 export interface Profile {
@@ -227,11 +197,7 @@ export interface Profile {
   sOpacity: number | null;
   sBorder: number | null;
   blockRadius: number | null;
-  level: number;
-  xp: number;
-  xpMax: number;
   views: number;
-  likes: number;
   /** Nota media. La calcula el servidor; no se guarda en el perfil. */
   nota?: number | null;
   numNotas?: number;
@@ -248,9 +214,6 @@ export interface Profile {
   avGlow: boolean;
   monoIcons: boolean;
   bgFixed: boolean;
-  fxMagnet: boolean;
-  fxGlow: boolean;
-  fxParallax: boolean;
   gradient: boolean;
   animatedName: boolean;
   glowName: boolean;
@@ -262,17 +225,14 @@ export interface Profile {
   /** Lo que se lee en la pantalla de entrada. Vacio = el texto por defecto. */
   gateText?: string;
   verified: boolean;
-  premium: boolean;
   discoverable: boolean;
   showStats: boolean;
   showRate: boolean;
-  discordWidget: boolean;
   /** Id numerico de Discord (17-20 digitos) para el widget de presencia. */
   discordId?: string;
   /** Poner el marco de Nitro alrededor del avatar del perfil.
    *  Sin valor = si, cuando la cuenta tiene uno. */
   discordDeco?: boolean;
-  trackClick: boolean;
 
   /* background */
   bgType: 'none' | 'color' | 'gradient' | 'image' | 'video';
@@ -302,19 +262,14 @@ export interface Profile {
   links: LinkItem[];
   projects: ProjectItem[];
   gallery: GalleryItem[];
-  live: LiveItem[];
-  fields: FieldItem[];
   tags: string[];
 
   /* block maps */
   pos: Record<string, BlockPos>;
   bstyle: Record<string, BlockStyle>;
-  bcontent: Record<string, BlockContent>;
 
   /* complex objects */
-  status?: ProfileStatus;
   audio?: ProfileAudio;
-  ratings?: ProfileRatings;
 
   /* internal marks */
   _id?: string;

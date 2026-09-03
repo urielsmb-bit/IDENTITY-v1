@@ -72,18 +72,11 @@ const INITIAL_DEMO: Profile = {
   sOpacity: null,
   sBorder: null,
   blockRadius: null,
-  level: 8,
-  xp: 750,
-  xpMax: 1000,
   views: 14200,
-  likes: 380,
   avBorder: true,
   avGlow: true,
   monoIcons: false,
   bgFixed: true,
-  fxMagnet: true,
-  fxGlow: true,
-  fxParallax: true,
   gradient: true,
   animatedName: true,
   glowName: true,
@@ -93,12 +86,9 @@ const INITIAL_DEMO: Profile = {
   tilt: true,
   gate: false,
   verified: true,
-  premium: true,
   discoverable: true,
   showStats: true,
   showRate: true,
-  discordWidget: false,
-  trackClick: true,
   bgType: 'gradient',
   bgValue: 'linear-gradient(135deg, #0d0c22 0%, #1e1b4b 50%, #0f172a 100%)',
   socials: [
@@ -131,15 +121,12 @@ const INITIAL_DEMO: Profile = {
     },
   ],
   gallery: [],
-  live: [],
-  fields: [],
   tags: ['developer', 'design'],
   blocksOff: [...BLOQUES_APAGADOS_POR_DEFECTO],
   blockOrder: [],
   canvasH: null,
   pos: {},
   bstyle: {},
-  bcontent: {},
   audio: {
     provider: 'youtube',
     src: 'manual',
@@ -355,7 +342,7 @@ export default function LandingPage() {
               @{demoProfile.username} · {demoProfile.title}
             </div>
             <div className="t-meta" style={{ marginTop: '6px' }}>
-              {num(demoProfile.views)} visitas · nivel {demoProfile.level}
+              {num(demoProfile.views)} visitas
             </div>
           </div>
           <Link

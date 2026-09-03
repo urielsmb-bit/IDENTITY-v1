@@ -238,18 +238,11 @@ function createBlankProfile(username = 'usuario'): Profile {
     sOpacity: null,
     sBorder: null,
     blockRadius: null,
-    level: 1,
-    xp: 0,
-    xpMax: 100,
     views: 0,
-    likes: 0,
     avBorder: true,
     avGlow: true,
     monoIcons: false,
     bgFixed: true,
-    fxMagnet: true,
-    fxGlow: true,
-    fxParallax: true,
     gradient: true,
     animatedName: true,
     glowName: true,
@@ -259,12 +252,9 @@ function createBlankProfile(username = 'usuario'): Profile {
     tilt: true,
     gate: false,
     verified: false,
-    premium: false,
     discoverable: true,
     showStats: true,
     showRate: true,
-    discordWidget: false,
-    trackClick: true,
     bgType: 'gradient',
     bgValue: 'linear-gradient(135deg, #0d0c22 0%, #1e1b4b 50%, #0f172a 100%)',
     socials: [
@@ -274,15 +264,12 @@ function createBlankProfile(username = 'usuario'): Profile {
     links: [],
     projects: [],
     gallery: [],
-    live: [],
-    fields: [],
     tags: ['developer'],
     blocksOff: [...BLOQUES_APAGADOS_POR_DEFECTO],
     blockOrder: [],
     canvasH: null,
     pos: {},
     bstyle: {},
-    bcontent: {},
   };
 }
 
@@ -1006,20 +993,6 @@ export default function DashboardPage() {
                 ajustes.
               </p>
             )}
-
-            {/* Lo que quedaba en «Temas & FX». La sección se fue; estos
-                mandos no, porque son de cómo se ve el perfil entero y ese
-                es el asunto de Diseño. */}
-            <section className="grupo">
-              <h3 className="grupo__t">Tema</h3>
-              <Campo label="Partículas">
-                <Pastillas
-                  opciones={PARTICLES}
-                  value={profile.particles || 'none'}
-                  onChange={(v) => updateField('particles', v)}
-                />
-              </Campo>
-            </section>
 
             <section className="grupo" data-guia="movimiento">
               <h3 className="grupo__t">Movimiento</h3>

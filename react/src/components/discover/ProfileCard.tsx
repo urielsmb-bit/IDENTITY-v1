@@ -87,7 +87,9 @@ export function ProfileCard({ profile: p }: ProfileCardProps) {
 
       <span className="pcard__foot">
         <span className="pcard__views">{num(p.views || 0)} visitas</span>
-        <span>Nv {p.level || 1}</span>
+        {/* La nota, si la hay. Antes aqui salia «Nv 1» en todas las
+            tarjetas: nadie subia nunca de nivel. */}
+        {p.numNotas ? <span>{(p.nota ?? 0).toFixed(1)} ★</span> : null}
       </span>
     </Link>
   );

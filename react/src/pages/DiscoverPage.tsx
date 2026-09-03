@@ -69,10 +69,13 @@ export default function DiscoverPage() {
           new Date(b.joined || 0).getTime() - new Date(a.joined || 0).getTime()
         );
       }
-      // trending: score based on views + level + likes
-      const scoreA = (a.views || 0) + (a.level || 1) * 50 + (a.likes || 0) * 10;
-      const scoreB = (b.views || 0) + (b.level || 1) * 50 + (b.likes || 0) * 10;
-      return scoreB - scoreA;
+      /* Tendencia: visitas y nota, que son las dos cosas que se miden.
+         Antes sumaba `level * 50 + likes * 10`, y como nadie sube de nivel
+         ni da likes, esos dos sumandos valian lo mismo para todo el mundo:
+         el orden acababa siendo el de visitas con pasos de mas. */
+      const puntos = (x: Profile) =>
+        (x.views || 0) + (x.numNotas ? (x.nota ?? 0) * (x.numNotas || 0) * 4 : 0);
+      return puntos(b) - puntos(a);
     });
   }, [allProfiles, filter, query, sort]);
 

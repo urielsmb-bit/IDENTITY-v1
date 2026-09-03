@@ -133,12 +133,6 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="panel" style={{ padding: '24px', borderRadius: '16px', background: 'var(--card-bg, rgba(255,255,255,0.03))', border: '1px solid var(--border, rgba(255,255,255,0.08))' }}>
-          <span className="t-meta" style={{ fontSize: '0.85rem' }}>Nivel de cuenta</span>
-          <div style={{ fontSize: '2rem', fontWeight: 800, marginTop: '8px', color: '#FAA61A' }}>
-            Nv {mine.level || 1}
-          </div>
-        </div>
       </div>
 
       {/* Chart Panel */}
