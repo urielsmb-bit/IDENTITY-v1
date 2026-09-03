@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { acotarCanal, hexARgb, rgbAHex, type Rgb } from '@/lib/color';
 
 /**
@@ -193,9 +193,60 @@ export function ColorRGB({
   porDefecto: string;
   onChange: (hex: string) => void;
 }) {
-  const rgb = hexARgb(value, porDefecto);
+  /* El selector nativo dispara `change` MUCHAS veces por fotograma
+     mientras se arrastra el raton por el cuadro de color, y cada una de
+     esas veces repintaba el perfil entero: por eso el cursor se sentia
+     pegajoso, como si fuera por detras de la mano.
+
+     Ahora el color se guarda aparte y se enseña al instante —el selector
+     y las cifras responden sin esperar a nadie— y al perfil solo se le
+     manda UNA vez por fotograma. Se pintan los mismos fotogramas que
+     antes; lo que se dejan de hacer son los repintados de mas entre
+     fotograma y fotograma, que no se veian y costaban todo. */
+  const [local, setLocal] = useState<string | null>(null);
+  const pendiente = useRef<string | null>(null);
+  const cuadro = useRef(0);
+
+  /* Mientras no se esta arrastrando manda el perfil, para que un color
+     puesto desde otro sitio —una muestra, otra plantilla— se vea aqui. */
+  const vigente = local ?? value;
+  const rgb = hexARgb(vigente, porDefecto);
   const hex = rgbAHex(rgb);
-  const canal = (k: keyof Rgb, v: number) => onChange(rgbAHex({ ...rgb, [k]: acotarCanal(v) }));
+
+  const empujar = useCallback(
+    (nuevo: string) => {
+      setLocal(nuevo);
+      pendiente.current = nuevo;
+      if (cuadro.current) return;
+      cuadro.current = requestAnimationFrame(() => {
+        cuadro.current = 0;
+        const v = pendiente.current;
+        pendiente.current = null;
+        if (v) onChange(v);
+      });
+    },
+    [onChange],
+  );
+
+  /* Al soltar se suelta tambien el borrador: a partir de ahi vuelve a
+     mandar lo que diga el perfil. Y si quedaba un fotograma pedido, se
+     manda su valor para no perder el ultimo movimiento. */
+  const soltar = useCallback(() => {
+    if (cuadro.current) {
+      cancelAnimationFrame(cuadro.current);
+      cuadro.current = 0;
+      const v = pendiente.current;
+      pendiente.current = null;
+      if (v) onChange(v);
+    }
+    setLocal(null);
+  }, [onChange]);
+
+  useEffect(() => () => {
+    if (cuadro.current) cancelAnimationFrame(cuadro.current);
+  }, []);
+
+  const canal = (k: keyof Rgb, v: number) => empujar(rgbAHex({ ...rgb, [k]: acotarCanal(v) }));
 
   return (
     <Campo label={label} valor={`R:${rgb.r} G:${rgb.g} B:${rgb.b}`}>
@@ -205,7 +256,8 @@ export function ColorRGB({
           className="col-custom"
           value={hex}
           aria-label={`${label}: selector de color`}
-          onChange={(e) => onChange(e.target.value.toUpperCase())}
+          onChange={(e) => empujar(e.target.value.toUpperCase())}
+          onBlur={soltar}
         />
         {(['r', 'g', 'b'] as const).map((k) => (
           <label key={k} className="rgb__c">

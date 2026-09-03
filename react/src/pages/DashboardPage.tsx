@@ -803,15 +803,6 @@ export default function DashboardPage() {
               </Campo>
             </section>
 
-            <Deslizador
-              label="Ajustar tamaño"
-              sufijo="%"
-              min={20}
-              max={100}
-              value={avatarPct}
-              onChange={(pct) => updateField('avSize', Math.round(pct * 2.4))}
-            />
-
             <div className="f-row">
               <Campo label="Nombre visible">
                 <input
@@ -986,6 +977,20 @@ export default function DashboardPage() {
               max={40}
               value={profile.radius ?? 18}
               onChange={(v) => updateField('radius', v)}
+            />
+
+            {/* Estaba en «Perfil», entre la foto y el nombre, y ahi
+                desentonaba: esa seccion es lo que ERES —tu foto, tu fondo,
+                tu nombre— y esto es como se ve. Ademas era el unico sitio
+                del editor donde se podia tocar, asi que en vez de quitarlo
+                se trae aqui, con los demas mandos de aspecto. */}
+            <Deslizador
+              label="Tamaño del avatar"
+              sufijo="%"
+              min={20}
+              max={100}
+              value={avatarPct}
+              onChange={(pct) => updateField('avSize', Math.round(pct * 2.4))}
             />
 
             <Campo label="Formato" guia="formato">
