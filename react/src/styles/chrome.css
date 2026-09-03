@@ -199,17 +199,6 @@
   box-shadow:0 0 0 2px var(--accent-soft);
 }
 
-/* ============================================================
-   BANDAS DE LA PORTADA
-   ============================================================ */
-
-.band{ padding-block:clamp(48px,7vw,88px); }
-.band__head{
-  display:flex; align-items:flex-end; justify-content:space-between;
-  gap:var(--s5); margin-bottom:var(--s5);
-  flex-wrap:wrap;
-}
-.band__head p{ margin:6px 0 0; color:var(--text-secondary); font-size:var(--t3); max-width:52ch; }
 
 /* carrusel horizontal de perfiles reales */
 /* Era un carril horizontal de anchos fijos de 232px. Con muchas tarjetas
@@ -220,13 +209,6 @@
    fila, y cuando haya doce bajan a la siguiente en vez de esconderse
    detras de un desplazamiento lateral que en un raton no se ve. En
    pantallas estrechas el `auto-fit` las apila solo. */
-.rail{
-  display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(212px, 1fr));
-  gap:var(--s3);
-  padding-bottom:var(--s3);
-}
-.rail > *{ min-width:0; }
 
 /* ---- perfil del día ------------------------------------------ */
 .potd{
@@ -462,7 +444,10 @@ body.is-dashboard .nav{ border-bottom-color:var(--border); }
 
 .carr__pista{
   position:relative;
-  height:clamp(460px,62vh,560px); height:clamp(460px,62dvh,560px);
+  /* Crece para que quepa el suelo SIN encoger la tarjeta: el suelo se
+     lleva 72px, asi que la pista los añade en vez de quitarselos a lo
+     que hay que mirar. */
+  height:clamp(532px,70vh,632px); height:clamp(532px,70dvh,632px);
   display:grid; place-items:center;
   /* Los vecinos asoman por los lados y ahí se cortan. */
   overflow:hidden;
@@ -471,8 +456,13 @@ body.is-dashboard .nav{ border-bottom-color:var(--border); }
 
 .carr__slot{
   position:absolute;
+  /* Arriba del todo y un poco mas baja que la pista: el hueco que queda
+     debajo es el suelo. Antes llegaba al ras y por eso las tarjetas
+     flotaban en el vacio: sin suelo no hay nada que diga a que altura
+     estan, y una cosa sin altura no tiene profundidad. */
+  top:0;
   width:min(100%, 380px);
-  height:100%;
+  height:calc(100% - 72px);
   border:1px solid var(--border-strong);
   border-radius:var(--radius-xl);
   overflow:hidden;
@@ -532,9 +522,96 @@ body.is-dashboard .nav{ border-bottom-color:var(--border); }
   background:radial-gradient(42% 46% at 50% 48%, rgba(255,255,255,.06), transparent 70%);
 }
 
+/* El suelo. Son dos cosas y hacen falta las dos:
+
+   La SOMBRA DE CONTACTO es lo que dice que la tarjeta esta apoyada.
+   Estrecha, oscura y justo debajo del canto: si se separa o se ensancha,
+   deja de leerse como contacto y pasa a ser una mancha.
+
+   El CHARCO DE LUZ es mas ancho y clarisimo, y es lo que dice que hay
+   una superficie ahi: sin el, la sombra flota sobre negro y no se apoya
+   en nada. Uno sin el otro no funciona.
+
+   Va pegado al canto inferior de la tarjeta, no al de la pista, que es
+   donde estaria el suelo de verdad. */
+.carr__reflejo{
+  position:absolute;
+  left:50%; bottom:0;
+  width:min(100%, 380px);
+  --h:72px;
+  height:var(--h);
+  transform:translateX(-50%);
+  pointer-events:none;
+  z-index:0;
+  overflow:hidden;
+}
+/* El perfil entero, volteado y APLASTADO dentro de la franja del suelo.
+
+   El primer intento reflejaba solo su borde inferior, que es lo que
+   devolveria un espejo mirado de frente. Fiel y completamente inutil: el
+   borde inferior de estas tarjetas es negro, asi que el reflejo salia
+   negro sobre negro y no se veia nada.
+
+   Una superficie mirada casi de canto no devuelve una franja: devuelve
+   la cosa entera, achatada. Por eso aqui entra la tarjeta completa
+   comprimida a un septimo, y por eso se reconocen el avatar y el nombre.
+   Es una licencia —el angulo exacto no daria esto— pero es la que hace
+   que se lea como un reflejo en vez de como una mancha.
+
+   La cuenta: la caja mide --h, dentro se pinta el perfil a --h*7, se
+   voltea a -1/7 (queda encima de la caja) y se baja --h para meterlo
+   dentro. Los dos sietes tienen que ser el mismo numero. */
+.carr__reflejo > *{
+  position:absolute;
+  left:0; right:0; top:0;
+  height:calc(var(--h) * 7);
+  transform:translateY(var(--h)) scaleY(-0.142857);
+  transform-origin:top;
+}
+/* Sin `height` aqui: este selector apunta al MISMO elemento que el
+   `> *` de arriba —el hijo es el propio `.pf`— y con dos clases le ganaba
+   en especificidad, asi que el perfil se quedaba en los 72px de la caja
+   en vez de los 504 que hay que aplastar. El alto lo pone la regla de
+   arriba y esta solo deshace el alto de pantalla. */
+.carr__reflejo .pf{ min-height:0; }
+.carr__reflejo .pf-hero{ min-height:100%; height:100%; }
+
+/* Lo que lo convierte en reflejo y no en una copia boca abajo: se apaga
+   al alejarse de la tarjeta, se emborrona y va a media luz. Una
+   superficie no devuelve una imagen nitida, devuelve una idea. */
+.carr__reflejo::after{
+  content:"";
+  position:absolute; inset:0;
+  /* Se apaga al alejarse de la tarjeta. Empieza casi transparente —ahi
+     se tocan— y acaba en el negro del fondo, para que el reflejo no
+     termine en un canto recto. */
+  background:linear-gradient(180deg, rgba(5,5,5,.35), rgba(5,5,5,.9) 72%, #050505);
+}
+/* Poco desenfoque: aplastado a un septimo, dos pixeles ya lo borran
+   entero. Y el aplastado en si ya hace de difuminado. */
+.carr__reflejo > *{ filter:blur(.6px) saturate(.85); opacity:.62; }
+
+/* Y la sombra de contacto, que es lo unico que quedaba bien de la
+   version anterior: estrecha, oscura y pegada al canto. Es lo que dice
+   que esta APOYADA. Sin ella el reflejo parece otra tarjeta debajo. */
+.carr__pista::after{
+  content:"";
+  position:absolute;
+  left:50%; bottom:72px;
+  transform:translateX(-50%);
+  width:min(86%, 400px);
+  height:26px;
+  pointer-events:none;
+  z-index:1;
+  background:radial-gradient(50% 100% at 50% 100%, rgba(0,0,0,.8), transparent 72%);
+}
+
 .carr__pie{
   position:absolute; z-index:3;
-  left:50%; bottom:14px;
+  /* Sobre la tarjeta, no sobre el reflejo: 72 del suelo mas los 14 de
+     siempre. Con `bottom:14px` caia encima del reflejo y se leia como si
+     flotara sobre el agua. */
+  left:50%; bottom:86px;
   transform:translateX(-50%);
   display:flex; align-items:center; gap:10px;
   padding:7px 14px;

@@ -93,6 +93,26 @@ export function CarruselPerfiles({ perfiles, cada = 5200 }: CarruselPerfilesProp
           </div>
         ))}
 
+        {/* EL REFLEJO.
+            Es el mismo perfil otra vez, del reves y desvanecido. Antes
+            aqui habia una repisa pintada con degradados y no colaba: un
+            suelo oscuro NO es mas claro que lo que lo rodea, y pintar una
+            mancha clara debajo de una tarjeta oscura sobre fondo oscuro
+            se lee como un estante iluminado, no como suelo. Lo que se ve
+            de verdad en una superficie oscura es lo que tiene encima.
+
+            Por eso esto es el contenido de verdad, no una imitacion: si
+            el perfil del centro tiene el nombre en morado, el reflejo lo
+            tiene en morado, y cuando cambia de perfil, cambia con el. No
+            hay nada que mantener en dos sitios.
+
+            Solo el del centro. Los de los lados estan desenfocados y a
+            media luz; un reflejo suyo no se distinguiria del fondo y
+            costaria otro perfil entero de pintar. */}
+        <div className="carr__reflejo" aria-hidden="true" inert>
+          <Slot base={actual} activo={false} />
+        </div>
+
         {/* La ficha del que está en medio, encima del propio perfil. */}
         <Link className="carr__pie" to={`/u/${actual.username}`}>
           <span className="carr__at">@{actual.username}</span>
