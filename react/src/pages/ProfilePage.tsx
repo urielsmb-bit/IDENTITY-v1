@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile';
 import { useProfileStore, getMyVote, setMyVote } from '@/stores/profileStore';
+import { useAuthStore } from '@/stores/authStore';
 import { ProfileView } from '@/components/profile/ProfileView';
 import { Denunciar } from '@/components/profile/Denunciar';
 import * as backend from '@/lib/backend';
@@ -12,8 +13,15 @@ export default function ProfilePage() {
   const { username } = useParams<{ username: string }>();
   const cleanUsername = username?.toLowerCase().trim();
   const { profile, isLoading } = useProfile(cleanUsername);
+  /* «Este perfil es mío» pide las dos cosas.
+     `mineName` vive en el navegador y sólo lo escribe quien ha entrado de
+     verdad — pero al SALIR se borra y al CADUCAR la sesión no. Sin mirar
+     también la sesión, un navegador donde alguien entró hace meses seguiría
+     escondiendo el botón de denunciar en ese perfil para siempre, sin que
+     haya nadie dentro. */
   const mineName = useProfileStore((s) => s.mineName);
-  const esMio = !!cleanUsername && mineName === cleanUsername;
+  const haySesion = useAuthStore((s) => !!s.user);
+  const esMio = haySesion && !!cleanUsername && mineName === cleanUsername;
   const [vote, setVote] = useState<number | null>(null);
   /* Las insignias no vienen con el perfil: viven en otra vista y en
      otra tabla. Se piden aparte para que un fallo suyo no impida que
