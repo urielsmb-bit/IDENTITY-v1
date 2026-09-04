@@ -128,50 +128,119 @@ export default function AnalyticsPage() {
     const H = caja.height;
     ctx.clearRect(0, 0, W, H);
 
-    const raya = getComputedStyle(document.documentElement)
-      .getPropertyValue('--accent')
-      .trim() || '#A855F7';
-    const pad = 30;
-    const anchoU = W - pad * 2;
-    const altoU = H - pad * 2;
+    /* Los colores salen de la hoja. El relleno estaba escrito a mano en
+       morado —`rgba(168,85,247,...)`— cuando el trazo ya venia de
+       `--accent`: dos criterios distintos en el mismo grafico, y un color
+       que no es de la paleta. */
+    const raiz = getComputedStyle(document.documentElement);
+    const tinta = raiz.getPropertyValue('--text-primary').trim() || '#F2F2F2';
+    const tenue = raiz.getPropertyValue('--text-faint').trim() || '#5F5F5F';
+    const linea = raiz.getPropertyValue('--border').trim() || 'rgba(255,255,255,.07)';
+    const mono = raiz.getPropertyValue('--font-mono').trim() || 'monospace';
+
+    /* Margenes asimetricos: a la izquierda cabe la cifra del eje, abajo
+       la fecha, y arriba y a la derecha solo hace falta que la curva no
+       toque el borde. Un margen igual en los cuatro lados desperdicia
+       sitio en dos de ellos. */
+    const izq = 34;
+    const der = 14;
+    const arr = 16;
+    const aba = 26;
+    const anchoU = W - izq - der;
+    const altoU = H - arr - aba;
     const tope = Math.max(...serie.map((x) => x.n), 4);
 
-    ctx.strokeStyle = 'rgba(255,255,255,.06)';
-    ctx.lineWidth = 1;
+    const px = (i: number) => izq + (anchoU / (serie.length - 1)) * i;
+    const py = (v: number) => arr + altoU - (v / tope) * altoU;
+
+    /* ---- rejilla y eje vertical ---- */
+    ctx.font = `10px ${mono}`;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'right';
     for (let i = 0; i <= 4; i++) {
-      const y = pad + (altoU / 4) * i;
+      const y = arr + (altoU / 4) * i;
+      ctx.strokeStyle = linea;
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(pad, y);
-      ctx.lineTo(W - pad, y);
+      ctx.moveTo(izq, y);
+      ctx.lineTo(W - der, y);
       ctx.stroke();
+      /* Solo el techo y el suelo llevan cifra: cinco numeros en un
+         grafico de esta altura es mas ruido que informacion, y con estos
+         dos ya se sabe la escala. */
+      if (i === 0 || i === 4) {
+        ctx.fillStyle = tenue;
+        ctx.fillText(String(i === 0 ? tope : 0), izq - 8, y);
+      }
     }
 
-    const px = (i: number) => pad + (anchoU / (serie.length - 1)) * i;
-    const py = (v: number) => H - pad - (v / tope) * altoU;
+    /* ---- eje horizontal: las fechas ----
+       Antes no habia ninguna, asi que se veian los picos pero no CUANDO
+       fueron, que es la mitad de la informacion. Se reparten cuatro o
+       cinco para que no se toquen sea cual sea el rango. */
+    const cada = Math.max(1, Math.round(serie.length / 5));
+    ctx.textAlign = 'center';
+    ctx.fillStyle = tenue;
+    serie.forEach((p, i) => {
+      if (i % cada !== 0 && i !== serie.length - 1) return;
+      const x = px(i);
+      if (x < izq + 14 || x > W - der - 14) return;
+      const d = new Date(p.dia + 'T00:00:00');
+      ctx.fillText(
+        d.toLocaleDateString('es', { day: 'numeric', month: 'short' }).replace('.', ''),
+        x,
+        H - aba / 2,
+      );
+    });
 
-    ctx.beginPath();
-    serie.forEach((p, i) => (i ? ctx.lineTo(px(i), py(p.n)) : ctx.moveTo(px(i), py(p.n))));
-    ctx.strokeStyle = raya;
-    ctx.lineWidth = 2.5;
+    /* ---- la curva ----
+       Suave, con una cuadratica por cada par de puntos pasando por su
+       punto medio. Con lineas rectas, un dato aislado se veia como un
+       pico de aguja; asi se lee como una tendencia, que es lo que es. */
+    const curva = () => {
+      ctx.beginPath();
+      ctx.moveTo(px(0), py(serie[0]?.n ?? 0));
+      for (let i = 1; i < serie.length; i++) {
+        const x0 = px(i - 1);
+        const y0 = py(serie[i - 1]?.n ?? 0);
+        const x1 = px(i);
+        const y1 = py(serie[i]?.n ?? 0);
+        ctx.quadraticCurveTo(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
+      }
+      ctx.lineTo(px(serie.length - 1), py(serie[serie.length - 1]?.n ?? 0));
+    };
+
+    curva();
+    ctx.lineTo(W - der, arr + altoU);
+    ctx.lineTo(izq, arr + altoU);
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, arr, 0, arr + altoU);
+    grad.addColorStop(0, 'rgba(255,255,255,.14)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    curva();
+    ctx.strokeStyle = tinta;
+    ctx.lineWidth = 2;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.stroke();
 
-    ctx.lineTo(W - pad, H - pad);
-    ctx.lineTo(pad, H - pad);
-    ctx.closePath();
-    const grad = ctx.createLinearGradient(0, pad, 0, H - pad);
-    grad.addColorStop(0, 'rgba(168,85,247,.22)');
-    grad.addColorStop(1, 'rgba(168,85,247,0)');
-    ctx.fillStyle = grad;
-    ctx.fill();
-
     // El último punto marcado: es el dato que se mira primero.
     const fin = serie[serie.length - 1];
     if (fin) {
+      const x = px(serie.length - 1);
+      const y = py(fin.n);
+      /* Un cerco del color del panel para que el punto se despegue de la
+         curva en vez de fundirse con ella. */
       ctx.beginPath();
-      ctx.arc(px(serie.length - 1), py(fin.n), 3.5, 0, Math.PI * 2);
-      ctx.fillStyle = raya;
+      ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+      ctx.fillStyle = raiz.getPropertyValue('--surface').trim() || '#0E0E0E';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = tinta;
       ctx.fill();
     }
   }, [serie]);
