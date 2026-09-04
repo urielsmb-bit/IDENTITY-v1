@@ -25,11 +25,13 @@ const RASGOS = [
     t: 'Lo colocas tú',
     d: 'Arrastra cada pieza donde quieras. El editor te enseña el resultado mientras lo tocas.',
     icono: (
+      /* Un bloque y las cuatro flechas de mover. Antes eran tres cuadros
+         MAS una cruz: dos ideas —«hay piezas» y «se añaden»— peleandose
+         en 24 pixeles, y ninguna se leia. Aqui solo se dice una cosa, que
+         es la que importa: esto se coloca. */
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="7" rx="1.5" />
-        <rect x="14" y="3" width="7" height="7" rx="1.5" />
-        <rect x="3" y="14" width="7" height="7" rx="1.5" />
-        <path d="M17.5 14.5v7M14 18h7" />
+        <rect x="8" y="8" width="8" height="8" rx="2" />
+        <path d="M12 2.5 14 5h-4l2-2.5ZM12 21.5 10 19h4l-2 2.5ZM2.5 12 5 10v4l-2.5-2ZM21.5 12 19 14v-4l2.5 2Z" fill="currentColor" stroke="none" />
       </svg>
     ),
   },
@@ -69,7 +71,8 @@ const RASGOS = [
     d: 'Cuántos vuelven, a qué hora te descubren y de qué país. Sin guardar la dirección de nadie.',
     icono: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 20V10M9 20V4M15 20v-7M21 20v-11" />
+        <path d="M3 21h18" />
+        <path d="M6.5 18v-6M11.5 18V5M16.5 18v-9" />
       </svg>
     ),
   },
@@ -137,8 +140,12 @@ const CIFRAS_VISIBLES = [
     uno: 'vez aplicada',
     varios: 'veces aplicadas',
     icono: (
+      /* Aplicar: algo que baja y entra. El tic suelto que habia antes
+         tenia dos trazos contra los seis de sus vecinos y se veia como un
+         hueco en la fila. */
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 6 9 17l-5-5" />
+        <path d="M12 3v11m0 0 4-4m-4 4-4-4" />
+        <path d="M4 16v2.5A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V16" />
       </svg>
     ),
   },
@@ -411,9 +418,14 @@ export default function LandingPage() {
               dice «0 perfiles» esta peor que una que no lo dice. */}
       {!!cifras && (cifras.perfiles > 0 || cifras.visitas > 0) && (
         <section className="cifras wrap">
-          <header className="cifras__cab">
+          {/* Mismo encabezado en las dos secciones: rotulo mono, titular y
+              una frase. Antes una iba centrada y la otra a la izquierda, y
+              esa mezcla es de las cosas que hacen que una pagina parezca
+              montada a trozos aunque cada trozo este bien. */}
+          <header className="sec__cab">
+            <span className="sec__eti">La plataforma</span>
             <h2 className="t-h2">Todo lo tuyo, en un enlace</h2>
-            <p className="cifras__sub">
+            <p className="sec__sub">
               Un perfil que se ve como tú quieras, con tus redes, tu música y lo
               que estés haciendo. Gratis, y tuyo desde el primer minuto.
             </p>
@@ -458,9 +470,10 @@ export default function LandingPage() {
       {/* ---- Lo que hace IDENTITY. Todo lo de aqui existe y funciona hoy:
               no hay una sola linea prometiendo algo sin construir. */}
       <section className="qhace wrap">
-        <header className="qhace__cab">
+        <header className="sec__cab">
+          <span className="sec__eti">Qué hace</span>
           <h2 className="t-h2">No es una lista de enlaces</h2>
-          <p className="qhace__sub">
+          <p className="sec__sub">
             Es una página entera, tuya, con su fondo, su tipografía y sus piezas
             puestas donde tú quieras.
           </p>
@@ -492,7 +505,10 @@ export default function LandingPage() {
               el teclado, el buscar-en-pagina del navegador y los lectores
               de pantalla sin escribir una linea de guion. */}
       <section className="faq wrap">
-        <h2 className="t-h2 faq__h">Preguntas</h2>
+        <header className="sec__cab">
+          <span className="sec__eti">Dudas</span>
+          <h2 className="t-h2">Lo que suelen preguntar</h2>
+        </header>
 
         <details className="faq__i">
           <summary>¿Cuánto cuesta?</summary>
