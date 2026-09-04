@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useProfileStore } from '@/stores/profileStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useMyProfile } from '@/hooks/useProfile';
-import { useIdDiscordDeLaSesion } from '@/hooks/useDiscord';
+import { useCuentaDiscordDeLaSesion } from '@/hooks/useDiscord';
 import { useEditorStore } from '@/stores/editorStore';
 import { useToast } from '@/hooks/useToast';
 import { ProfileView } from '@/components/profile/ProfileView';
@@ -558,12 +558,26 @@ export default function DashboardPage() {
    * proposito pasa a ser cadena vacia —que si existe— y no se vuelve a
    * poner: la decision de quitarlo es suya, no nuestra.
    */
-  const idDiscordSesion = useIdDiscordDeLaSesion();
+  const cuentaDiscord = useCuentaDiscordDeLaSesion();
   useEffect(() => {
-    if (!profile || !idDiscordSesion) return;
-    if (profile.discordId !== undefined) return;
-    updateField('discordId', idDiscordSesion);
-  }, [profile, idDiscordSesion, updateField]);
+    if (!profile || !cuentaDiscord.id) return;
+    if (profile.discordId === undefined) updateField('discordId', cuentaDiscord.id);
+
+    /* Y la etiqueta, el nombre y el avatar, que son lo que permite pintar el
+       widget sin Lanyard. Estos SI se refrescan aunque ya existan: si te
+       cambias el nombre en Discord, el perfil tiene que decir el nuevo.
+       Solo cuando cambian, o cada render dejaria el perfil sucio y
+       guardando. */
+    if (cuentaDiscord.usuario && profile.discordUser !== cuentaDiscord.usuario) {
+      updateField('discordUser', cuentaDiscord.usuario);
+    }
+    if (cuentaDiscord.mostrar && profile.discordName !== cuentaDiscord.mostrar) {
+      updateField('discordName', cuentaDiscord.mostrar);
+    }
+    if (cuentaDiscord.avatar && profile.discordAvatar !== cuentaDiscord.avatar) {
+      updateField('discordAvatar', cuentaDiscord.avatar);
+    }
+  }, [profile, cuentaDiscord, updateField]);
 
   /** Escribe una fila de enlaces sin pisar las demás. */
   const escribirEnlace = useCallback(

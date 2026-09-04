@@ -405,6 +405,25 @@ export function ProfileView({
   const marcoDiscord = quiereMarco ? discord?.decoracion || '' : '';
 
   /**
+   * Quien es, con Lanyard o sin el.
+   *
+   * Antes el widget entero colgaba de Lanyard: sin Lanyard no se pintaba
+   * NADA, ni el nombre. Eso convertia en obligatorio entrar en el servidor
+   * de un tercero para que se te viera la cuenta de Discord en tu propio
+   * perfil.
+   *
+   * La etiqueta, el nombre y el avatar los da tu propio inicio de sesion con
+   * Discord y se guardan en el perfil al enlazarlo. Lanyard solo aporta lo
+   * que cambia en vivo —el estado y lo que estas haciendo—, que es lo unico
+   * que Discord no deja leer de otra forma. Sin el, el widget sale igual;
+   * solo que quieto.
+   */
+  const dcNombre = discord?.mostrar || p.discordName || '';
+  const dcUsuario = discord?.usuario || p.discordUser || '';
+  const dcAvatar = discord?.avatar || p.discordAvatar || '';
+  const hayDiscord = !!(dcNombre || dcUsuario);
+
+  /**
    * Encaja el lienzo libre en pantallas estrechas SIN deshacerlo.
    *
    * El diseno se compone a un ancho concreto (`--u-width`). Si la pantalla
@@ -901,35 +920,52 @@ export function ProfileView({
           )}
 
           {/* Widget de Discord */}
-          {ver('discord') && discord && (
+          {ver('discord') && hayDiscord && (
             <div
               className="pf-dc"
               {...bloque('discord')}
               style={
                 {
                   ...(bloque('discord').style as React.CSSProperties),
-                  '--st': COLOR_ESTADO[discord.estado] ?? COLOR_ESTADO.offline,
+                  '--st': COLOR_ESTADO[discord?.estado ?? ''] ?? COLOR_ESTADO.offline,
                 } as React.CSSProperties
               }
             >
               <span className="pf-dc__av">
-                {discord.avatar ? (
-                  <img src={discord.avatar} alt="" loading="lazy" />
+                {dcAvatar ? (
+                  <img src={dcAvatar} alt="" loading="lazy" />
                 ) : (
                   <span aria-hidden="true">👤</span>
                 )}
                 {/* El marco de Nitro va ENCIMA del avatar y desbordandolo:
                     esa es su gracia, y por eso no puede ir dentro del
                     recorte circular. */}
-                {discord.decoracion && (
+                {discord?.decoracion && (
                   <img className="pf-dc__deco" src={discord.decoracion} alt="" aria-hidden="true" />
                 )}
-                <i className="pf-dc__dot" />
+                {/* El punto de estado SOLO cuando hay presencia de verdad.
+                    Sin Lanyard no se sabe si estas conectado, y un punto
+                    gris se lee como «desconectado», que es afirmar algo que
+                    no se sabe. */}
+                {discord && <i className="pf-dc__dot" />}
               </span>
               <span>
-                <span className="pf-dc__u">{discord.mostrar || discord.usuario}</span>
-                <span className="pf-dc__s">{discord.actividad}</span>
-                {discord.detalle && <span className="pf-dc__s">{discord.detalle}</span>}
+                <span className="pf-dc__u">
+                  {dcNombre || dcUsuario}
+                  {/* La etiqueta, al lado del nombre. `pf-dc__bd` ya estaba
+                      en el CSS esperando a que alguien la usara. */}
+                  {dcUsuario && dcNombre && dcUsuario !== dcNombre && (
+                    <b className="pf-dc__bd">@{dcUsuario}</b>
+                  )}
+                </span>
+                {/* Estado y actividad son dos lineas, no una. Antes se
+                    pisaban: jugando desaparecia el estado, y sin jugar salia
+                    el estado donde deberia ir la actividad. */}
+                {discord?.estadoNombre && (
+                  <span className="pf-dc__s">{discord.estadoNombre}</span>
+                )}
+                {discord?.actividad && <span className="pf-dc__s">{discord.actividad}</span>}
+                {discord?.detalle && <span className="pf-dc__s">{discord.detalle}</span>}
               </span>
             </div>
           )}

@@ -321,6 +321,17 @@ function esquema(ID: any) {
       return /^\d{17,20}$/.test(t) ? t : '';
     },
     discordDeco: bool,
+    /* La etiqueta y el nombre vienen del propio inicio de sesion, no los
+       teclea nadie: 32 es el maximo que admite Discord y de ahi no pasan. */
+    discordUser: (v: any) => texto(v, 32),
+    discordName: (v: any) => texto(v, 32),
+    /* Y el avatar, solo del CDN de Discord. Es de donde puede venir; dejar
+       pasar cualquier `https://` seria abrir un campo mas por el que hacer
+       que el perfil de otro cargue lo que tu quieras. */
+    discordAvatar: (v: any) => {
+      const s = String(v ?? '').trim().slice(0, 300);
+      return /^https:\/\/cdn\.discordapp\.com\/[\w./-]+(\?[\w=&.-]*)?$/.test(s) ? s : '';
+    },
     showStats: bool, showRate: bool, discordWidget: bool, trackClick: bool,
     
     // 100 es "sin tocar". Menos de 100 dejaria hueco alrededor del fondo,

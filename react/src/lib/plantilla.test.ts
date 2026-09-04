@@ -15,6 +15,8 @@ const PERSONAL = {
   pronouns: 'el', emoji: '🦈', age: 22, bio: 'hola', about: 'texto largo',
   avatarUrl: 'https://x.supabase.co/storage/v1/object/public/media/uid/avatar.png',
   joined: '2026-01-01', discordId: '123456789012345678',
+  discordUser: 'sharkiii', discordName: 'Uriel',
+  discordAvatar: 'https://cdn.discordapp.com/avatars/1/abc.png',
   gateText: 'contraseña: 1234', cursorImg: 'https://x/mi-cursor.png',
   socials: [{ net: 'x', user: 'shark' }],
   links: [{ label: 'mi web', url: 'https://ejemplo.com' }],
@@ -37,6 +39,7 @@ describe('extraerPlantilla · lo que NO puede salir', () => {
   for (const campo of [
     'username', 'name', 'title', 'location', 'pronouns', 'emoji', 'age',
     'bio', 'about', 'avatarUrl', 'joined', 'discordId', 'gateText',
+    'discordUser', 'discordName', 'discordAvatar',
     'cursorImg', 'socials', 'links', 'projects', 'gallery', 'tags', 'audio',
     'views', 'nota', 'numNotas', 'verified',
   ]) {
@@ -163,6 +166,7 @@ describe('la lista blanca', () => {
     const prohibidos = ['username', 'name', 'bio', 'about', 'avatarUrl',
       'socials', 'links', 'projects', 'gallery', 'tags', 'audio', 'title',
       'location', 'pronouns', 'emoji', 'age', 'discordId', 'gateText',
+      'discordUser', 'discordName', 'discordAvatar',
       'cursorImg', 'views', 'verified', 'gate'];
     const cruce = (CAMPOS_PLANTILLA as readonly string[]).filter((c) => prohibidos.includes(c));
     expect(cruce).toEqual([]);

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 
 /** Lo que nos interesa de lo que devuelve Lanyard. */
@@ -12,7 +12,18 @@ export interface PresenciaDiscord {
   decoracion: string;
   /** online | idle | dnd | offline */
   estado: string;
-  /** «Jugando a…», «Escuchando…», o vacío */
+  /** «En línea», «Ausente»… El estado, escrito. Siempre tiene algo. */
+  estadoNombre: string;
+  /**
+   * «Jugando a…», «Escuchando…», o el estado personalizado. Vacío si no hay
+   * NADA que contar.
+   *
+   * Antes, sin actividad, aquí caía el nombre del estado. Eso hacía que el
+   * estado y la actividad fueran la misma línea y se taparan: jugando
+   * perdías el «En línea», y sin jugar el widget decía «No molestar» donde
+   * debería decir a qué estás jugando. Ahora son dos cosas distintas y se
+   * pintan las dos.
+   */
   actividad: string;
   detalle: string;
 }
@@ -58,8 +69,6 @@ function leer(d: Record<string, any>): PresenciaDiscord | null {
     detalle = [principal.details, principal.state].filter(Boolean).join(' · ');
   } else if (personalizado?.state) {
     actividad = String(personalizado.state);
-  } else {
-    actividad = NOMBRE_ESTADO[estado] ?? '';
   }
 
   const dec = u.avatar_decoration_data?.asset;
@@ -75,6 +84,7 @@ function leer(d: Record<string, any>): PresenciaDiscord | null {
       ? `https://cdn.discordapp.com/avatar-decoration-presets/${dec}.png?size=160&passthrough=true`
       : '',
     estado,
+    estadoNombre: NOMBRE_ESTADO[estado] ?? '',
     actividad,
     detalle: detalle.slice(0, 80),
   };
@@ -212,20 +222,62 @@ export function useDiscord(id: string | undefined, activo = true) {
   return { presencia, error, cargando };
 }
 
+/** Lo que la propia cuenta enlazada dice de sí misma. Sin Lanyard de por medio. */
+export interface CuentaDiscord {
+  id: string;
+  /** La etiqueta: el @usuario de Discord. */
+  usuario: string;
+  /** El nombre que se ha puesto para que se le vea, si tiene uno. */
+  mostrar: string;
+  avatar: string;
+}
+
+const CUENTA_VACIA: CuentaDiscord = { id: '', usuario: '', mostrar: '', avatar: '' };
+
+const cad = (v: unknown): string => (typeof v === 'string' ? v : '');
+
 /**
- * El id de Discord de quien tiene la sesión abierta, sacado de su login.
+ * La cuenta de Discord de quien tiene la sesión abierta, sacada de su login.
  *
- * Si entró con Discord, Supabase ya guarda su id en la identidad: pedírselo
- * a mano es pedirle un dato que la página tiene delante. Devuelve cadena
- * vacía si entró por otro medio.
+ * Esto es lo que hace que Lanyard deje de ser obligatorio. Al entrar con
+ * Discord, Supabase ya guarda quién eres —etiqueta, nombre y avatar— en la
+ * identidad de la sesión. Con eso el widget se puede pintar entero; Lanyard
+ * solo hace falta para lo que cambia en vivo, que es el estado y lo que
+ * estés haciendo.
+ *
+ * Los nombres de los campos no son uno solo a propósito: `provider_id` es
+ * como los llama Supabase y `sub` es el estándar de OpenID, y según la
+ * versión llega uno u otro.
  */
-export function useIdDiscordDeLaSesion(): string {
-  return useAuthStore((s) => {
-    const ident = s.user?.identities?.find((i) => i.provider === 'discord');
+export function useCuentaDiscordDeLaSesion(): CuentaDiscord {
+  const ident = useAuthStore((s) =>
+    s.user?.identities?.find((i) => i.provider === 'discord'),
+  );
+  return useMemo(() => {
     const d = ident?.identity_data as Record<string, unknown> | undefined;
-    // Supabase lo pone en `provider_id`; `sub` es el nombre estándar de
-    // OpenID y algunas versiones usan ese.
-    const v = d?.provider_id ?? d?.sub ?? ident?.id;
-    return typeof v === 'string' && /^\d{17,20}$/.test(v) ? v : '';
-  });
+    if (!d && !ident) return CUENTA_VACIA;
+
+    const bruto = cad(d?.provider_id) || cad(d?.sub) || cad(ident?.id);
+    const id = /^\d{17,20}$/.test(bruto) ? bruto : '';
+    if (!id) return CUENTA_VACIA;
+
+    const claims = (d?.custom_claims ?? {}) as Record<string, unknown>;
+    const usuario = cad(d?.user_name) || cad(d?.preferred_username) || cad(d?.name);
+    const mostrar = cad(claims.global_name) || cad(d?.full_name) || cad(d?.name);
+    const avatar = cad(d?.avatar_url) || cad(d?.picture);
+
+    return {
+      id,
+      usuario: usuario.slice(0, 32),
+      mostrar: mostrar.slice(0, 32),
+      // Solo del CDN de Discord: es de donde puede venir, y asi este campo
+      // no se convierte en una via para cargar lo que sea desde un perfil.
+      avatar: /^https:\/\/cdn\.discordapp\.com\//.test(avatar) ? avatar : '',
+    };
+  }, [ident]);
+}
+
+/** Atajo para quien solo necesita el id. */
+export function useIdDiscordDeLaSesion(): string {
+  return useCuentaDiscordDeLaSesion().id;
 }

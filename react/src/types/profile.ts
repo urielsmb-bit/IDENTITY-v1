@@ -230,6 +230,20 @@ export interface Profile {
   showRate: boolean;
   /** Id numerico de Discord (17-20 digitos) para el widget de presencia. */
   discordId?: string;
+  /**
+   * Lo que la cuenta de Discord dice de si misma, copiado al enlazarla.
+   *
+   * Esto NO viene de Lanyard: viene del propio inicio de sesion con Discord,
+   * asi que existe siempre que hayas conectado la cuenta. Es lo que permite
+   * que el widget se pinte sin depender de un servicio de terceros; Lanyard,
+   * cuando esta, solo le añade lo que esta pasando en vivo.
+   *
+   * Se guarda en el perfil porque quien lo visita no tiene tu sesion de la
+   * que sacarlo.
+   */
+  discordUser?: string;
+  discordName?: string;
+  discordAvatar?: string;
   /** Poner el marco de Nitro alrededor del avatar del perfil.
    *  Sin valor = si, cuando la cuenta tiene uno. */
   discordDeco?: boolean;

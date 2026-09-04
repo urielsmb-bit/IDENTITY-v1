@@ -18,7 +18,7 @@ import { idYouTube } from '@/lib/music';
 import { Campo, ColorRGB, Deslizador, Interruptor, Pastillas, Tarjetas } from './Controles';
 import { DIBUJOS } from './dibujos';
 import { PanelAnimacion } from './PanelAnimacion';
-import { useDiscord, useIdDiscordDeLaSesion } from '@/hooks/useDiscord';
+import { useDiscord, useIdDiscordDeLaSesion, useCuentaDiscordDeLaSesion } from '@/hooks/useDiscord';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { SubirMedio } from './SubirMedio';
@@ -199,7 +199,8 @@ function CampoDiscord({
   profile: Profile;
   update: (p: Partial<Profile>) => void;
 }) {
-  const idSesion = useIdDiscordDeLaSesion();
+  const cuenta = useCuentaDiscordDeLaSesion();
+  const idSesion = cuenta.id;
   const id = profile.discordId || idSesion;
   const { presencia, error, cargando } = useDiscord(id, !!id);
   const { enlazarDiscord } = useAuth();
@@ -241,18 +242,33 @@ function CampoDiscord({
     <Campo label="Tu cuenta de Discord" valor={presencia ? 'conectado' : undefined}>
       {cargando && !presencia && <p className="f__d" style={{ marginTop: 0 }}>Conectando…</p>}
 
-      {presencia && (
+      {/* Lo que se va a ver, dicho igual que se va a ver. Sin Lanyard sigue
+          habiendo etiqueta y nombre; lo que falta es la parte de en vivo. */}
+      {(presencia || cuenta.usuario || profile.discordUser) && (
         <p className="f__d" style={{ marginTop: 0 }}>
-          <b>{presencia.mostrar || presencia.usuario}</b> · {presencia.actividad}
-          {presencia.decoracion ? ' · con decoración' : ''}
+          <b>{presencia?.mostrar || cuenta.mostrar || profile.discordName || ''}</b>
+          {(() => {
+            const et = presencia?.usuario || cuenta.usuario || profile.discordUser || '';
+            return et ? ` @${et}` : '';
+          })()}
+          {presencia?.estadoNombre ? ` · ${presencia.estadoNombre}` : ''}
+          {presencia?.actividad ? ` · ${presencia.actividad}` : ''}
+          {presencia?.decoracion ? ' · con decoración' : ''}
         </p>
       )}
 
+      {/* Opcional, y se dice que lo es.
+          Esto era un aviso rojo que empezaba por «Falta un paso», o sea que
+          leia como un error y como un requisito. No lo es: tu etiqueta, tu
+          nombre y tu avatar ya salen sin esto. Lo unico que añade Lanyard es
+          lo que cambia en vivo, y es lo unico que Discord no deja leer de
+          ninguna otra forma sin montar un bot propio. */}
       {error === 'sin-lanyard' && (
-        <div className="drop__err" role="alert">
+        <div className="drop__nota">
           <p style={{ margin: 0 }}>
-            Falta un paso: la presencia se lee de Lanyard, y Lanyard sólo
-            publica la de quien está en su servidor.
+            Tu etiqueta y tu avatar ya se ven en el perfil. Si además quieres
+            que se vea <b>en vivo</b> tu estado y a qué estás jugando, eso lo
+            publica Lanyard, y sólo de quien esté en su servidor.
           </p>
           <a
             className="btn btn--sm btn--ghost dc__unir"
@@ -263,8 +279,7 @@ function CampoDiscord({
             Entrar en el servidor de Lanyard ↗
           </a>
           <p className="f__d" style={{ margin: 0 }}>
-            Se abre en otra pestaña. Entra y vuelve: esto se conecta solo, sin
-            recargar.
+            Es opcional. Si entras, esto se conecta solo, sin recargar.
           </p>
         </div>
       )}
@@ -276,24 +291,47 @@ function CampoDiscord({
         </p>
       )}
 
-      {/* Guardar el id sólo cuando ya no está: viene de la sesión, y el
-          perfil público no tiene sesión de la que sacarlo. */}
-      {!profile.discordId && idSesion ? <GuardarId id={idSesion} update={update} /> : null}
+      {/* Se guarda en el perfil lo que dice la sesión: quien lo visita no
+          tiene tu sesión de la que sacarlo. */}
+      <GuardarCuenta cuenta={cuenta} profile={profile} update={update} />
     </Campo>
   );
 }
 
-/** Fija el id en el perfil en cuanto se sabe, sin que nadie lo pulse. */
-function GuardarId({
-  id,
+/**
+ * Copia la cuenta de Discord al perfil en cuanto se sabe, sin que nadie
+ * pulse nada.
+ *
+ * Antes solo copiaba el id, y el id por si solo no pinta nada: hacia falta
+ * Lanyard para traducirlo a un nombre. Copiando tambien la etiqueta, el
+ * nombre y el avatar, el widget se pinta sin depender de nadie.
+ *
+ * Escribe solo lo que ha CAMBIADO. Llamar a `update` con lo mismo que ya
+ * hay marca el perfil como sucio en cada render y acaba en un guardado
+ * continuo contra el servidor.
+ */
+function GuardarCuenta({
+  cuenta,
+  profile,
   update,
 }: {
-  id: string;
+  cuenta: { id: string; usuario: string; mostrar: string; avatar: string };
+  profile: Profile;
   update: (p: Partial<Profile>) => void;
 }) {
+  const { id, usuario, mostrar, avatar } = cuenta;
   useEffect(() => {
-    update({ discordId: id });
-  }, [id, update]);
+    if (!id) return;
+    const cambios: Partial<Profile> = {};
+    if (!profile.discordId) cambios.discordId = id;
+    if (usuario && profile.discordUser !== usuario) cambios.discordUser = usuario;
+    if (mostrar && profile.discordName !== mostrar) cambios.discordName = mostrar;
+    if (avatar && profile.discordAvatar !== avatar) cambios.discordAvatar = avatar;
+    if (Object.keys(cambios).length > 0) update(cambios);
+  }, [
+    id, usuario, mostrar, avatar, update,
+    profile.discordId, profile.discordUser, profile.discordName, profile.discordAvatar,
+  ]);
   return null;
 }
 
