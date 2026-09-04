@@ -1340,3 +1340,135 @@ body.probando .view{ padding-top:0; }
   .ana__pais{ grid-template-columns:20px minmax(0,1fr) 40px; }
   .ana__paisBar{ display:none; }
 }
+
+/* ============================================================
+   RANKING
+   Una tabla, no un podio. El podio daba tres tarjetas grandes con oro,
+   plata y bronce y una lista deslavazada debajo: media pantalla para
+   enseñar tres nombres. Una clasificacion se lee COMPARANDO, y para
+   comparar hacen falta las cifras alineadas en una columna.
+   ============================================================ */
+.rank{ padding-block:var(--s7) var(--s9); }
+.rank__cab{ margin-bottom:var(--s6); }
+.rank__cab .t-h1{ margin:0; }
+.rank__cab .sec__sub{ max-width:56ch; }
+
+.rank__mandos{
+  display:flex; flex-wrap:wrap; align-items:center; gap:var(--s3);
+  margin-top:var(--s5);
+}
+/* Mismo rail de pestañas que la biblioteca de plantillas: lo que las
+   hace leerse como UN mando es la caja que las contiene. */
+.rank__tabs{
+  display:flex; gap:2px; flex:none;
+  padding:3px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--bg-secondary);
+}
+.rank__tab{
+  padding:7px var(--s4);
+  border:0; border-radius:var(--radius-sm);
+  background:transparent;
+  color:var(--text-muted);
+  font-size:var(--t2); font-weight:500;
+  cursor:pointer; white-space:nowrap;
+  transition:color var(--transition-fast), background var(--transition-fast);
+}
+.rank__tab:hover{ color:var(--text-primary); }
+.rank__tab.on{ background:var(--surface-2); color:var(--text-primary); }
+.rank__buscar{ flex:1; min-width:200px; max-width:340px; }
+
+.rank__tabla{
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  background:var(--surface);
+  overflow:hidden;
+}
+/* Las tres columnas se declaran UNA vez aqui y las filas las heredan, que
+   es lo que mantiene la cifra de la derecha en la misma vertical en
+   todas. Con anchos por fila, cada una acabaria donde le tocara. */
+.rank__th,
+.rank__f{
+  display:grid;
+  grid-template-columns:44px 40px minmax(0,1fr) auto;
+  align-items:center;
+  gap:var(--s3);
+  padding:0 var(--s5);
+}
+.rank__th{
+  height:38px;
+  border-bottom:1px solid var(--border);
+  background:var(--bg-secondary);
+  font-family:var(--font-mono);
+  font-size:var(--t1); letter-spacing:.14em; text-transform:uppercase;
+  color:var(--text-faint);
+}
+/* La cabecera no tiene avatar, asi que su segunda columna va vacia y el
+   nombre de la columna cae debajo del nombre del perfil. */
+.rank__th span:nth-child(2){ grid-column:3; }
+.rank__thv{ grid-column:4; text-align:right; }
+
+.rank__l{ list-style:none; margin:0; padding:0; }
+.rank__f{
+  height:62px;
+  color:inherit;
+  border-bottom:1px solid var(--border);
+  transition:background var(--transition-fast);
+}
+.rank__l li:last-child .rank__f{ border-bottom:0; }
+.rank__f:hover{ background:var(--surface-2); }
+
+/* El puesto en mono tabular: es lo que hace que la columna quede recta al
+   pasar de 9 a 10. */
+.rank__n{
+  font-family:var(--font-mono);
+  font-size:var(--t2);
+  font-variant-numeric:tabular-nums;
+  color:var(--text-faint);
+}
+/* Los tres primeros solo pesan mas. Nada de oro, plata y bronce: tres
+   colores para tres puestos son tres cosas que aprenderse, y el orden ya
+   lo dice el numero. */
+.rank__f.es-top .rank__n{ color:var(--text-primary); font-weight:600; }
+
+.rank__av{
+  width:34px; height:34px; border-radius:50%;
+  overflow:hidden; flex:none;
+  display:grid; place-items:center;
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  font-size:var(--t2);
+}
+.rank__av img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+.rank__id{ display:flex; align-items:baseline; gap:var(--s2); min-width:0; }
+.rank__nom{
+  font-size:var(--t3); font-weight:500;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.rank__at{
+  font-size:var(--t2); color:var(--text-muted);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.rank__v{
+  font-family:var(--font-mono);
+  font-size:var(--t3); font-weight:600;
+  font-variant-numeric:tabular-nums;
+  text-align:right;
+  color:var(--text-primary);
+}
+
+.rank__vacio{
+  padding:var(--s8) var(--s5); text-align:center;
+  border:1px dashed var(--border-strong);
+  border-radius:var(--radius-lg);
+  color:var(--text-muted); font-size:var(--t3);
+}
+
+@media (max-width:560px){
+  /* El usuario baja debajo del nombre: en 360px no caben en la misma
+     linea sin que uno de los dos se corte a la mitad. */
+  .rank__th, .rank__f{ grid-template-columns:32px 34px minmax(0,1fr) auto; padding-inline:var(--s4); }
+  .rank__id{ flex-direction:column; align-items:flex-start; gap:0; }
+}

@@ -11,7 +11,6 @@ const LandingPage = lazy(() => import('./pages/LandingPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const AuthPage = lazy(() => import('./pages/AuthPage'));
-const DiscoverPage = lazy(() => import('./pages/DiscoverPage'));
 const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage'));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
 const TemplatesPage = lazy(() => import('./pages/TemplatesPage'));
@@ -69,7 +68,6 @@ export default function App() {
               }
             />
             <Route path="/entrar" element={<AuthPage />} />
-            <Route path="/discover" element={<DiscoverPage />} />
             <Route path="/top" element={<LeaderboardPage />} />
             <Route
               path="/analytics"

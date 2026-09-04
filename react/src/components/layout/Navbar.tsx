@@ -35,9 +35,6 @@ export function Navbar() {
       </Link>
 
       <nav className="nav__links" aria-label="Principal">
-        <Link to="/discover" className={isActive('/discover') ? 'on' : ''}>
-          Descubrir
-        </Link>
         <Link to="/top" className={isActive('/top') ? 'on' : ''}>
           Ranking
         </Link>

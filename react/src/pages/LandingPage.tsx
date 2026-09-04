@@ -359,7 +359,7 @@ export default function LandingPage() {
           {/* Solo si de verdad se ha apuntado alguien esta semana. Antes
               ponia `profiles.length || 120`: sin perfiles decia «120
               perfiles creados esta semana», que era inventado y ademas
-              de los que se comprueban solos mirando Descubrir. */}
+              de los que se comprueban solos mirando el ranking. */}
           {!!cifras?.nuevosSemana && (
             <span className="hero__eyebrow">
               <i className="dot" />
@@ -399,8 +399,8 @@ export default function LandingPage() {
           </form>
 
           <div className="hero__cta">
-            <Link className="btn btn--ghost" to="/discover">
-              Explorar perfiles
+            <Link className="btn btn--ghost" to="/top">
+              Ver perfiles
             </Link>
           </div>
 
@@ -573,7 +573,6 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="foot">
         <span>IDENTITY</span>
-        <Link to="/discover">Descubrir</Link>
         <Link to="/top">Ranking</Link>
         <Link to="/pricing">Precios</Link>
         <Link to="/terminos">Términos</Link>

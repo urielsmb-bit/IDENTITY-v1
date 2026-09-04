@@ -31,7 +31,7 @@ const PLANS = [
       'Efectos de cursor avanzados y halo interactivo',
       'Analíticas completas (90 días)',
       'Widget de música de Spotify e integraciones',
-      'Prioridad en el directorio de Descubrir',
+      'Prioridad en el ranking',
     ],
     cta: 'Obtener Pro',
     highlight: true,
