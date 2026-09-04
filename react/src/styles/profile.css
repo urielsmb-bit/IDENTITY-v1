@@ -2658,6 +2658,23 @@
   border:1px dashed var(--p-line, rgba(255,255,255,.18));
   border-radius:var(--u-radius, 12px);
   background:transparent;
+  /* Sin esto el aviso se parte LETRA A LETRA y baja en vertical.
+
+     El perfil aplica `overflow-wrap:anywhere` a todo —hace falta para
+     que un nombre larguisimo sin espacios no desborde la tarjeta— pero
+     eso tambien vuelve su ancho minimo el de UN caracter. En la rejilla
+     libre, un bloque que se guardo cuando estaba vacio conserva ese
+     ancho de casi nada, y el aviso caia dentro: 46 lineas de una letra.
+
+     Se le pone suelo y se le prohibe partir palabras. Si aun asi no cabe,
+     que se corte por el borde: un texto cortado se entiende, una columna
+     de letras sueltas no. */
+  min-width:min(200px, 100%);
+  overflow:hidden;
+}
+.pf-badges--vacio span{
+  overflow-wrap:normal;
+  word-break:normal;
 }
 .pf-badges--vacio span{
   font-family:var(--p-fm);
