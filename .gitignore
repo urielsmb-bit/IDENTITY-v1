@@ -51,7 +51,11 @@ pruebas-backend.html
 # ---- estado local de la CLI de Supabase -----------------------
 # El enlace con el proyecto y la version de la CLI. Es de esta
 # maquina, no del proyecto.
-supabase/.temp/
+# El CLI de Supabase deja aqui el proyecto enlazado. La regla llevaba
+# barra al principio del patron, o sea que solo casaba desde la raiz: al
+# lanzar `supabase` desde `react/` se creaba `react/supabase/.temp/` y ese
+# no lo ignoraba nadie. `**/` lo caza se lance desde donde se lance.
+**/supabase/.temp/
 
 # ---- compilado --------------------------------------------------
 # Sale de `npm run build` en cada despliegue. Guardarlo solo genera
