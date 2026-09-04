@@ -863,7 +863,21 @@ canvas.chart{ width:100%; display:block; }
    Analíticas
    ========================================================== */
 
-.ana{ padding:40px 0 80px; }
+/* La separacion entre bloques la pone el contenedor UNA vez, no cada
+   bloque por su cuenta con su propio margen. Antes eran 12 entre las
+   cifras, 20 debajo de ellas y 16 entre paneles: tres medidas distintas
+   sin razon, y cada vez que se añade un bloque hay que acordarse de
+   ponerle el suyo.
+
+   Dos escalones: --s5 entre BLOQUES y --s4 dentro de cada rejilla. Que
+   lo de dentro este mas junto que lo de fuera es lo que hace que se lean
+   como grupos en vez de como una lista larga de cajas. */
+.ana{
+  display:flex;
+  flex-direction:column;
+  gap:var(--s5);
+  padding:40px 0 80px;
+}
 
 .ana__cab{
   display:flex;
@@ -871,7 +885,7 @@ canvas.chart{ width:100%; display:block; }
   justify-content:space-between;
   gap:16px;
   flex-wrap:wrap;
-  margin-bottom:28px;
+  margin-bottom:0;
 }
 .ana__h1{
   margin:0;
@@ -894,8 +908,7 @@ canvas.chart{ width:100%; display:block; }
 .ana__kpis{
   display:grid;
   grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
-  gap:12px;
-  margin-bottom:20px;
+  gap:var(--s4);
 }
 .ana__kpi{
   display:flex;
