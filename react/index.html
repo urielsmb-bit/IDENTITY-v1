@@ -4,11 +4,19 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
-  <!-- Preconexiones de red (DNS + TLS) -->
+  <!-- Preconexiones de red (DNS + TLS).
+       Supabase iba sin preconexión, y es el único sitio al que la página
+       llama SIEMPRE: el perfil, las insignias, las visitas. Se preparaban
+       DNS y TLS con YouTube —que solo hace falta si hay música— y no con
+       el servidor del que depende que se vea algo. -->
+  <link rel="preconnect" href="%VITE_SUPABASE_URL%" crossorigin />
   <link rel="preconnect" href="https://www.youtube.com" crossorigin />
   <link rel="preconnect" href="https://i.ytimg.com" crossorigin />
   <link rel="dns-prefetch" href="https://www.youtube.com" />
   <link rel="dns-prefetch" href="https://i.ytimg.com" />
+
+  <link rel="icon" href="/icono.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/manifest.webmanifest" />
 
   <title>IDENTITY — Tu identidad, en línea.</title>
   <meta name="description" content="Crea un perfil que se sienta como tú. Temas, efectos, badges y estadísticas." />

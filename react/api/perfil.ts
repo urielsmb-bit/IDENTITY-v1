@@ -130,25 +130,33 @@ export default async function handler(req: Request): Promise<Response> {
   const CLAVE = process.env.VITE_SUPABASE_KEY || '';
   if (!SUPA || !CLAVE) return respuesta(html, 60);
 
-  let ap: Record<string, unknown>;
+  /* Las mismas columnas que pide el navegador. No es capricho: la fila se
+     manda entera dentro del HTML para que la aplicacion no tenga que
+     volver a pedirla, y si aqui faltara una columna el perfil llegaria
+     distinto segun por donde entres —sin visitas, sin nota—. */
+  const CAMPOS = 'id,username,apariencia,creado,actualizado,vistas,nota,num_notas';
+
+  let fila: Record<string, unknown>;
   try {
     /* La vista publica, no la tabla: es la que existe para que la lea
        cualquiera, y a proposito no expone el dueño de cada perfil. */
     const r = await fetch(
       `${SUPA}/rest/v1/perfiles_publicos` +
-        `?select=username,apariencia&username=eq.${encodeURIComponent(usuario)}&limit=1`,
+        `?select=${CAMPOS}&username=eq.${encodeURIComponent(usuario)}&limit=1`,
       {
         headers: { apikey: CLAVE, authorization: `Bearer ${CLAVE}` },
         signal: AbortSignal.timeout(2500),
       },
     );
     if (!r.ok) return respuesta(html, 60);
-    const filas = (await r.json()) as Array<{ apariencia?: Record<string, unknown> }>;
+    const filas = (await r.json()) as Array<Record<string, unknown>>;
     if (!filas?.[0]) return respuesta(html, 300);
-    ap = filas[0].apariencia ?? {};
+    fila = filas[0];
   } catch {
     return respuesta(html, 60);
   }
+
+  const ap = (fila.apariencia as Record<string, unknown>) ?? {};
 
   const nombre = linea(ap.name, 60) || usuario;
   const oficio = linea(ap.title, 60);
@@ -185,13 +193,45 @@ export default async function handler(req: Request): Promise<Response> {
     .filter(Boolean)
     .join('\n  ');
 
+  /**
+   * Y la fila entera, para que el navegador no la vuelva a pedir.
+   *
+   * Ver un perfil eran cuatro pasos en fila india —HTML, JavaScript,
+   * consulta a Supabase, pintar— y los tres primeros no se solapan: cada
+   * uno espera al anterior. El tercero sobra: la fila ya esta aqui, se
+   * consulto para escribir las etiquetas de arriba. Mandarla no cuesta ni
+   * una peticion mas y le ahorra al visitante una ida y vuelta completa a
+   * otro dominio antes de ver nada.
+   *
+   * Va escapado el `<`, que es lo unico que puede romper esto: un `</script`
+   * dentro del JSON cerraria la etiqueta ahi mismo y lo que siguiera —una
+   * biografia, un nombre— pasaria a ser HTML de la pagina.
+   *
+   * Y con tope. Un perfil con muchos bloques puede ocupar bastante, y a
+   * partir de cierto tamaño meterlo en el HTML retrasa lo que venia a
+   * adelantar: pasado el limite, que lo pida por la red como siempre.
+   */
+  const TOPE_PRECARGA = 48 * 1024;
+  let precarga = '';
+  try {
+    const json = JSON.stringify(fila);
+    if (json.length <= TOPE_PRECARGA) {
+      precarga =
+        `\n  <script id="perfil-precargado" type="application/json">` +
+        json.replace(/</g, '\\u003c') +
+        `</script>`;
+    }
+  } catch {
+    /* Fila que no se deja convertir: se pide por la red y ya. */
+  }
+
   /* Se SUSTITUYEN el titulo y la descripcion del cascaron. Añadir los nuevos
      sin quitar los viejos deja dos de cada, y cual gana lo decide cada robot
      por su cuenta: la mitad enseñaria el titulo generico. */
   const salida = html
     .replace(/<title>[\s\S]*?<\/title>\s*/i, '')
     .replace(/<meta\s+name="description"[^>]*>\s*/i, '')
-    .replace('</head>', `  ${etiquetas}\n</head>`);
+    .replace('</head>', `  ${etiquetas}${precarga}\n</head>`);
 
   return respuesta(salida, 300);
 }

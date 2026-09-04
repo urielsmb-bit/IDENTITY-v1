@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="IDENTITY">
+  <!--
+    La pestaña no tenía icono: ninguno. En un producto que se llama IDENTITY
+    y que va de que se te reconozca, la pestaña salía con el globo genérico
+    de "página sin identificar".
+
+    Una I con remates, no un palo. A 16 píxeles un palo vertical no se lee
+    como una letra —se lee como una raya— y las barras de arriba y abajo son
+    lo único que la hace reconocible a ese tamaño.
+
+    Marca de relleno: cámbialo cuando tengas el logo de verdad.
+  -->
+  <rect width="32" height="32" rx="7" fill="#0A0A0A"/>
+  <rect x="1" y="1" width="30" height="30" rx="6" fill="none" stroke="#FFFFFF" stroke-opacity=".14"/>
+  <path fill="#FFFFFF" d="M9 8h14v3.4h-5.1v9.2H23V24H9v-3.4h5.1v-9.2H9z"/>
+</svg>

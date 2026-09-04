@@ -1,6 +1,7 @@
 import { supabase, hasBackend } from './supabase';
 import { CONFIG } from '@/config';
 import { normalizarPerfil } from './normalizar';
+import { filaPrecargada } from './precarga';
 import type { Session, User, Provider } from '@supabase/supabase-js';
 import { extraerPlantilla, type AjustesPlantilla } from './plantilla';
 import type { Profile } from '@/types';
@@ -198,6 +199,13 @@ export function alCambiarSesion(fn: (evento: string, sesion: Session | null) => 
 let avisadoDeLaVista = false;
 
 export async function cargarPerfil(username: string) {
+  /* Antes que nada: la fila que el servidor dejo escrita en el HTML.
+     Es la misma que devolveria la consulta de mas abajo —misma vista, mismo
+     embudo de limpieza— pero sin la ida y vuelta a otro dominio, que en la
+     primera carga es lo unico que separa la pantalla negra del perfil. */
+  const precargada = filaPrecargada(username);
+  if (precargada) return conCifras(precargada);
+
   if (!supabase) return null;
   const client = supabase;
 
@@ -240,9 +248,21 @@ export async function cargarPerfil(username: string) {
   }
   if (error) throw traducir(error);
 
-  const p = aPerfil(data);
-  if (p && data) {
-    const f = data as Record<string, unknown>;
+  return conCifras(data);
+}
+
+/**
+ * Fila de la vista pública a perfil, cifras incluidas.
+ *
+ * Estaba suelto dentro de `cargarPerfil`. Ahora hay dos caminos que
+ * terminan en un perfil —la red y la fila que el servidor deja escrita en
+ * el HTML— y tienen que dar EXACTAMENTE lo mismo: si uno se olvida de las
+ * visitas, el contador sale a cero según por dónde hayas llegado.
+ */
+function conCifras(fila: unknown) {
+  const p = aPerfil(fila);
+  if (p && fila) {
+    const f = fila as Record<string, unknown>;
     if (f.vistas != null) p.views = Number(f.vistas) || 0;
     if (f.nota != null) p.nota = Number(f.nota);
     if (f.num_notas != null) p.numNotas = Number(f.num_notas) || 0;
