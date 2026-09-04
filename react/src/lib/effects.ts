@@ -106,10 +106,22 @@ export function particles(canvas: HTMLCanvasElement | null, type: string, color:
     build();
   }
 
+  /**
+   * Cuantas partículas caben.
+   *
+   * El divisor estaba en 14000, que en una pantalla de 1356x625 daban
+   * SESENTA puntos: uno cada 118 px. Medido sobre el lienzo, el efecto
+   * ocupaba el 0,131 % de los píxeles con una opacidad media de 100 sobre
+   * 255. O sea: estaba encendido, se movía, y no se veía.
+   *
+   * `matrix` se queda como estaba: son columnas de caracteres, no puntos, y
+   * al doble de densidad se convierten en una pared verde.
+   */
   function count() {
     const area = W * H;
-    const n = Math.round(area / (opts.light ? 26000 : 14000));
-    const cap = opts.light ? 44 : (type === 'matrix' ? 90 : 130);
+    const denso = type === 'matrix' ? 14000 : 7000;
+    const n = Math.round(area / (opts.light ? denso * 1.9 : denso));
+    const cap = opts.light ? 60 : (type === 'matrix' ? 90 : 220);
     return Math.max(8, Math.min(cap, n));
   }
 
@@ -123,8 +135,12 @@ export function particles(canvas: HTMLCanvasElement | null, type: string, color:
     const p: any = { x: Math.random() * W, y: anywhere ? Math.random() * H : -10 };
     switch (type) {
       case 'stars':
-        p.r = Math.random() * 1.5 + 0.4;
-        p.a = Math.random() * 0.7 + 0.15;
+        /* Radio de 0,4 px: eso es medio píxel, y medio píxel a media
+           opacidad no es una estrella, es ruido. Y el suelo de opacidad en
+           0,15 dejaba la mitad del campo por debajo de lo que distingue un
+           ojo sobre negro. */
+        p.r = Math.random() * 1.8 + 0.7;
+        p.a = Math.random() * 0.65 + 0.32;
         p.tw = Math.random() * 0.04 + 0.008;
         p.vx = (Math.random() - 0.5) * 0.08;
         p.vy = (Math.random() - 0.5) * 0.08;
@@ -248,9 +264,22 @@ export function particles(canvas: HTMLCanvasElement | null, type: string, color:
         case 'stars':
           p.x += p.vx; p.y += p.vy;
           p.a += p.tw;
-          if (p.a > 0.9 || p.a < 0.12) p.tw *= -1;
+          if (p.a > 0.95 || p.a < 0.22) p.tw *= -1;
           if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
           if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+          /* Halo en las grandes.
+             Un disco plano se lee como una mota de polvo en la pantalla; lo
+             que hace que algo parezca una ESTRELLA es el resplandor
+             alrededor. Va como un segundo círculo muy transparente y no con
+             `shadowBlur`, que en canvas cuesta un desenfoque de verdad por
+             cada punto y por cada fotograma. Y sólo en las grandes: en las
+             pequeñas no se distingue y sería trabajo tirado. */
+          if (p.r > 1.7) {
+            ctx!.beginPath();
+            ctx!.arc(p.x, p.y, p.r * 2.6, 0, 6.283);
+            ctx!.fillStyle = 'rgba(' + C + ',' + (p.a * 0.16).toFixed(3) + ')';
+            ctx!.fill();
+          }
           ctx!.beginPath();
           ctx!.arc(p.x, p.y, p.r, 0, 6.283);
           ctx!.fillStyle = 'rgba(' + C + ',' + p.a + ')';
