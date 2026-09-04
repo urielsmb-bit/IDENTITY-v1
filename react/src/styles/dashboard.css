@@ -1914,7 +1914,41 @@
   border-bottom:1px solid var(--border);
 }
 .prevbar__t{ font-size:var(--t2); color:var(--text-muted); white-space:nowrap; }
-.prevbar__vp{ display:flex; gap:4px; flex:none; }
+/* El mismo rail que las pestañas de la biblioteca y las del ranking:
+   una caja con fondo propio y las tres opciones dentro. Eran tres botones
+   sueltos y uno de ellos blanco relleno, que pesaba tanto como el de
+   «Publicar y ver» —la accion de verdad de esta barra— y competia con el.
+   Elegir un tamaño de previa no es publicar. */
+.prevbar__vp{
+  display:flex; gap:2px; flex:none;
+  padding:3px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--bg-secondary);
+}
+.prevbar__v{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px var(--s3);
+  border:0; border-radius:var(--radius-sm);
+  background:transparent;
+  color:var(--text-muted);
+  font-size:var(--t2); font-weight:500;
+  white-space:nowrap; cursor:pointer;
+  transition:color var(--transition-fast), background var(--transition-fast);
+}
+.prevbar__v svg{ width:15px; height:15px; flex:none; }
+.prevbar__v:hover{ color:var(--text-primary); }
+.prevbar__v.on{ background:var(--surface-2); color:var(--text-primary); }
+
+/* En estrecho se van los nombres y quedan los iconos: tres dibujos que se
+   distinguen entre si dicen lo mismo en un tercio del sitio. Por eso
+   importaba que Tablet y Movil dejaran de llevar el mismo. */
+@media (max-width:900px){
+  .prevbar__v{ padding-inline:9px; }
+  .prevbar__v span + *,
+  .prevbar__v{ font-size:0; }
+  .prevbar__v svg{ width:16px; height:16px; }
+}
 
 /* --- pantalla mediana: la vista previa baja debajo del editor ------ */
 @media (max-width:1100px){

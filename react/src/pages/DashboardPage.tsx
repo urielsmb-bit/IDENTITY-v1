@@ -168,6 +168,44 @@ const FORMATOS = [
 /* Iconos de trazo, no emoji. Un emoji lo dibuja el sistema operativo: cambia
    de forma y de color en cada aparato, no hereda el color del tema y no se
    le puede dar resplandor. Estos son nuestros y se comportan. */
+/* Los tres tamaños de la vista previa. «Desktop» estaba en ingles entre
+   «Tablet» y «Movil», que no lo estan. */
+const VISTAS = [
+  {
+    id: 'desktop' as const,
+    nombre: 'Escritorio',
+    titulo: 'Como se ve en un ordenador',
+    icono: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2.5" y="4" width="19" height="13" rx="2" />
+        <path d="M9 21h6M12 17v4" />
+      </svg>
+    ),
+  },
+  {
+    id: 'tablet' as const,
+    nombre: 'Tablet',
+    titulo: 'Como se ve en una tableta',
+    icono: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="4.5" y="2.5" width="15" height="19" rx="2.5" />
+        <path d="M11 18.5h2" />
+      </svg>
+    ),
+  },
+  {
+    id: 'mobile' as const,
+    nombre: 'Móvil',
+    titulo: 'Como se ve en un teléfono',
+    icono: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="7" y="2.5" width="10" height="19" rx="2.5" />
+        <path d="M11 18.5h2" />
+      </svg>
+    ),
+  },
+];
+
 const SECTIONS = [
   { id: 'overview', name: 'Perfil', desc: 'Tu foto, tu fondo y quién eres.', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>` },
   { id: 'design', name: 'Diseño', desc: 'Tema, colores, tipografía y forma de la tarjeta.', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 20 4"/><path d="M4 20h6"/><path d="M4 20v-6"/><path d="M14 4h6v6"/></svg>` },
@@ -1487,28 +1525,30 @@ export default function DashboardPage() {
             {publicando ? 'Publicando…' : 'Publicar y ver ↗'}
           </button>
 
-          <div className="prevbar__vp">
-            <button
-              type="button"
-              className={`btn btn--sm ${viewport === 'desktop' ? 'btn--primary' : 'btn--quiet'}`}
-              onClick={() => setViewport('desktop')}
-            >
-              🖥 Desktop
-            </button>
-            <button
-              type="button"
-              className={`btn btn--sm ${viewport === 'tablet' ? 'btn--primary' : 'btn--quiet'}`}
-              onClick={() => setViewport('tablet')}
-            >
-              📱 Tablet
-            </button>
-            <button
-              type="button"
-              className={`btn btn--sm ${viewport === 'mobile' ? 'btn--primary' : 'btn--quiet'}`}
-              onClick={() => setViewport('mobile')}
-            >
-              📱 Móvil
-            </button>
+          {/* Un solo mando, no tres botones sueltos. Es el mismo rail que
+              usan las pestañas de la biblioteca y las del ranking: lo que
+              hace que se lean como UNA eleccion de tres es la caja que
+              las contiene.
+
+              Y sin emojis. Ademas de desentonar con los iconos de trazo
+              del resto del editor, Tablet y Movil llevaban EL MISMO
+              telefono, asi que el icono no distinguia nada: era ruido con
+              forma de ayuda. */}
+          <div className="prevbar__vp" role="tablist" aria-label="Tamaño de la vista previa">
+            {VISTAS.map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                role="tab"
+                aria-selected={viewport === v.id}
+                className={`prevbar__v${viewport === v.id ? ' on' : ''}`}
+                onClick={() => setViewport(v.id)}
+                title={v.titulo}
+              >
+                <span aria-hidden="true">{v.icono}</span>
+                {v.nombre}
+              </button>
+            ))}
           </div>
         </div>
 
