@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { Profile } from '@/types/profile';
-import { estadoInsignias, type DatosInsignias, type EstadoInsignia } from '@/lib/insignias';
+import { estadoInsignias, type EstadoInsignia } from '@/lib/insignias';
 import { COLOR_RAREZA, NOMBRE_RAREZA } from '@/data/badges';
-import * as backend from '@/lib/backend';
-import { hasBackend } from '@/lib/supabase';
+import { useInsignias } from '@/hooks/useInsignias';
 
 /** Por qué una insignia todavía no puede darse a nadie. */
 const BLOQUEO: Record<string, string> = {
@@ -26,32 +25,11 @@ const BLOQUEO: Record<string, string> = {
  * mueve a nada; una con la barra a medias, sí.
  */
 export function PanelInsignias({ profile }: { profile: Profile }) {
-  const [datos, setDatos] = useState<DatosInsignias>({});
-
-  /* Las cifras no viajan con el perfil: viven en la vista `descubrir` y en
-     `insignias_de_perfil`. Se piden aquí, y si fallan se sigue con lo que
-     trae el perfil, que alcanza para las de antigüedad. */
-  useEffect(() => {
-    const base: DatosInsignias = {
-      creado: profile.joined,
-      vistas: profile.views,
-      nota: profile.nota,
-      numNotas: profile.numNotas,
-    };
-    setDatos(base);
-
-    if (!hasBackend() || !profile.username) return;
-    let vivo = true;
-    backend
-      .insigniasDe(profile.username)
-      .then((d) => {
-        if (vivo) setDatos({ ...base, ...d });
-      })
-      .catch(() => {});
-    return () => {
-      vivo = false;
-    };
-  }, [profile.username, profile.joined, profile.views, profile.nota, profile.numNotas]);
+  /* De un solo sitio, el mismo que usa la vista previa del editor. Antes
+     cada uno lo pedia por su cuenta y no daban lo mismo: este veia
+     «Verificado» porque preguntaba al servidor, y la previa no, asi que
+     una decia «llevas 1» y la otra «todavia ninguna». */
+  const { datos } = useInsignias(profile);
 
   /* Orden: primero las que llevas, luego las que están más cerca, y al final
      las que hoy no puede tener nadie. Así lo alcanzable queda arriba. */

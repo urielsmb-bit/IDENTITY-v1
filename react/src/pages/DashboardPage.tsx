@@ -32,6 +32,7 @@ import { Frontera } from '@/components/layout/Frontera';
 import { useGuia } from '@/hooks/useGuia';
 import { PanelInsignias } from '@/components/dashboard/PanelInsignias';
 import { PublicarPlantilla } from '@/components/dashboard/PublicarPlantilla';
+import { useInsignias } from '@/hooks/useInsignias';
 import { DIBUJOS } from '@/components/dashboard/dibujos';
 import { BLOQUES, BLOQUE_POR_ID, type DefBloque, BLOQUES_APAGADOS_POR_DEFECTO } from '@/data/bloques';
 import { safeMedia } from '@/lib/utils';
@@ -331,6 +332,13 @@ export default function DashboardPage() {
   const [iconoAbierto, setIconoAbierto] = useState<number | null>(null);
   /** Bloque abierto en su editor. null = la lista. */
   const [bloqueAbierto, setBloqueAbierto] = useState<DefBloque | null>(null);
+
+  /* Las insignias de verdad, para que la vista previa enseñe lo mismo que
+     el panel de Badges. Sin esto la previa las deducia de los numeros del
+     perfil y se perdia las que concede el servidor —«Verificado» entre
+     ellas— asi que decia «todavia ninguna» al lado de un panel que decia
+     «llevas 1». */
+  const { ganadas: insigniasGanadasDelPerfil } = useInsignias(profile);
 
   /** Handle bajo el que el borrador vive hoy en el store. Cambia al renombrar. */
   const storeKeyRef = useRef('');
@@ -1531,10 +1539,10 @@ export default function DashboardPage() {
                   setBloqueAbierto(def);
                 }}
               >
-                <ProfileView profile={profile} preview={true} />
+                <ProfileView profile={profile} insignias={insigniasGanadasDelPerfil} preview={true} />
               </LienzoBloques>
             ) : (
-              <ProfileView profile={profile} preview={true} />
+              <ProfileView profile={profile} insignias={insigniasGanadasDelPerfil} preview={true} />
             )}
             </Frontera>
           </div>
