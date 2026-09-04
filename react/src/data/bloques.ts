@@ -16,6 +16,9 @@ export type ControlId =
   // contenido
   | 'texto'
   | 'visible'
+  // color
+  | 'degradadoNombre'
+  | 'animarNombre'
   // tipografía
   | 'fuente'
   | 'caso'
@@ -99,6 +102,13 @@ const TIPOGRAFIA: GrupoControles = {
   controles: ['fuente', 'tamano', 'caso', 'espaciado'],
 };
 const COLOR: GrupoControles = { titulo: 'Color', controles: ['color'] };
+/* El nombre lleva ademas el degradado, que rellena las letras con los dos
+   colores del tema. Vive aqui y no en `COLOR` a secas porque solo el
+   nombre lo tiene: es una propiedad del perfil, no del bloque. */
+const COLOR_NOMBRE: GrupoControles = {
+  titulo: 'Color',
+  controles: ['color', 'degradadoNombre', 'animarNombre'],
+};
 
 /** Redes e insignias no se pintan como un texto: cada pieza tiene su
  *  propia forma. La caja es opcional, y por defecto no la hay. */
@@ -144,7 +154,7 @@ export const BLOQUES: DefBloque[] = [
     descripcion: 'Cómo se muestra tu nombre en el perfil.',
     icono: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7V5h16v2"/><path d="M12 5v14"/><path d="M9 19h6"/></svg>`,
     campoTexto: 'name',
-    grupos: [conTexto(), TIPOGRAFIA, COLOR, RESPLANDOR, COMPOSICION, ENTRADA],
+    grupos: [conTexto(), TIPOGRAFIA, COLOR_NOMBRE, RESPLANDOR, COMPOSICION, ENTRADA],
   },
   {
     id: 'handle',

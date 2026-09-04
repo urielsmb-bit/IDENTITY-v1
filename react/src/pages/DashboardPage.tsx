@@ -246,8 +246,18 @@ function createBlankProfile(username = 'usuario'): Profile {
     avGlow: true,
     monoIcons: false,
     bgFixed: true,
-    gradient: true,
-    animatedName: true,
+    /* El nombre nace BLANCO. Estaba en `true`, o sea que se rellenaba con
+       un degradado de los colores del tema: cualquiera que se creaba un
+       perfil salia con el nombre morado o rosa sin haberlo pedido, y sin
+       forma de quitarlo porque el interruptor no existia en ninguna
+       parte. El color de las letras se elige en el editor; el que no
+       elige nada, blanco. */
+    gradient: false,
+    /* Y sin barrido. Es la SEGUNDA cosa que teñia el nombre sin haberla
+       pedido: rellena las letras con un degradado animado de los colores
+       del tema, asi que apagar el degradado fijo no bastaba —el nombre
+       seguia morado— y tampoco tenia interruptor. */
+    animatedName: false,
     glowName: true,
     glowSocials: true,
     glowBadges: true,

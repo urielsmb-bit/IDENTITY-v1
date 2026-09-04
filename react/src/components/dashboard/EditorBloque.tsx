@@ -445,6 +445,28 @@ export function EditorBloque({ def, profile, onVolver, update }: EditorBloquePro
           />
         );
 
+      case 'degradadoNombre':
+        return (
+          <Interruptor
+            key={id}
+            label="Degradado en el nombre"
+            desc="Rellena las letras con los dos colores del tema en vez del color de arriba."
+            on={!!profile.gradient}
+            onChange={(v) => update({ gradient: v })}
+          />
+        );
+
+      case 'animarNombre':
+        return (
+          <Interruptor
+            key={id}
+            label="Barrido de luz"
+            desc="Un brillo que recorre las letras. Tambien las tiñe con los colores del tema."
+            on={!!profile.animatedName}
+            onChange={(v) => update({ animatedName: v })}
+          />
+        );
+
       case 'halo':
         return (
           <div key={id}>
