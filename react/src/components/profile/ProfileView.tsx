@@ -871,7 +871,20 @@ export function ProfileView({
           {/* Biografía */}
           {ver('bio') && p.bio && <p className="pf-bio" {...bloque('bio')}>{p.bio}</p>}
 
-          {/* Badges */}
+          {/* Badges.
+              En el perfil publico, sin insignias no se pinta nada: una fila
+              vacia es un hueco sin explicacion.
+
+              Pero en el EDITOR eso hacia que encender el bloque no hiciera
+              nada visible, sin decir por que. Quien lo enciende cree que
+              esta roto, y de hecho es lo que se ha reportado. Asi que en la
+              vista previa el hueco habla: dice que las insignias saldran
+              solas cuando se ganen. */}
+          {ver('badges') && preview && insignias.length === 0 && (
+            <div className="pf-badges pf-badges--vacio" {...bloque('badges')}>
+              <span>Tus insignias saldrán aquí en cuanto ganes la primera.</span>
+            </div>
+          )}
           {ver('badges') && insignias.length > 0 && (
             <div className="pf-badges" data-style={p.badgeStyle || 'icons'} {...bloque('badges')}>
               {insignias.slice(0, 8).map((bId) => {
