@@ -489,6 +489,31 @@
   font-size:var(--t2); font-weight:600; color:var(--p-text);
 }
 .pf-dc__bd{ font-size:var(--t1); opacity:.85; }
+/* La columna de texto no se encoge por debajo de su contenido: sin esto, la
+   caratula del disco a la derecha aplastaba el nombre. */
+.pf-dc__txt{ min-width:0; }
+/* Etiqueta de servidor de Discord. Pastilla, no texto suelto: es un
+   distintivo que se lleva, y de dos letras sueltas al lado del @usuario no
+   se entiende que sea otra cosa. */
+.pf-dc__gt{
+  display:inline-flex; align-items:center; gap:4px;
+  padding:1px 6px;
+  border:1px solid var(--p-line);
+  border-radius:6px;
+  font-family:var(--p-fm); font-size:var(--t1); font-weight:700;
+  letter-spacing:.03em;
+  opacity:.9;
+}
+.pf-dc__gt img{ width:14px; height:14px; display:block; flex:none; }
+/* La caratula de lo que suena. `flex:none` por lo de siempre: en una fila
+   flex una imagen se deja encoger por debajo de su contenido. */
+.pf-dc__disco{
+  width:38px; height:38px; flex:none;
+  margin-left:auto;
+  border-radius:6px; overflow:hidden;
+  border:1px solid var(--p-line);
+}
+.pf-dc__disco img{ width:100%; height:100%; object-fit:cover; display:block; }
 .pf-dc__s{ display:block; font-size:var(--t1); color:var(--p-dim); margin-top:1px; }
 
 /* --- actividad en vivo --- */

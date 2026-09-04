@@ -5,6 +5,16 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/u/:usuario",
+      "missing": [
+        {
+          "type": "query",
+          "key": "_o"
+        }
+      ],
+      "destination": "/api/perfil?u=:usuario"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

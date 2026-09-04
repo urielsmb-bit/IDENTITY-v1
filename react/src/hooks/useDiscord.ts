@@ -26,6 +26,20 @@ export interface PresenciaDiscord {
    */
   actividad: string;
   detalle: string;
+  /**
+   * La etiqueta de servidor de Discord: ese «LPR» de dos a cuatro letras que
+   * la gente lleva al lado del nombre. Lanyard ya la mandaba en
+   * `primary_guild` y no la miraba nadie.
+   */
+  guild: { tag: string; icono: string } | null;
+  /**
+   * Lo que suena en Spotify, con caratula.
+   *
+   * Viene aparte de `activities` y con mas cosas: Lanyard da el titulo, el
+   * artista y la imagen del disco. Por la lista de actividades solo se sacaba
+   * «Escuchando Spotify», que es la mitad de la frase.
+   */
+  cancion: { titulo: string; artista: string; portada: string } | null;
 }
 
 /** Los colores son los de Discord: reconocerlos es el punto. */
@@ -72,6 +86,29 @@ function leer(d: Record<string, any>): PresenciaDiscord | null {
   }
 
   const dec = u.avatar_decoration_data?.asset;
+
+  const pg = u.primary_guild;
+  const guild =
+    pg?.tag && pg?.identity_enabled !== false
+      ? {
+          tag: String(pg.tag).slice(0, 8),
+          icono: pg.badge
+            ? `https://cdn.discordapp.com/clan-badges/${pg.identity_guild_id}/${pg.badge}.png?size=32`
+            : '',
+        }
+      : null;
+
+  const sp = d.listening_to_spotify ? d.spotify : null;
+  const cancion = sp?.song
+    ? {
+        titulo: String(sp.song).slice(0, 80),
+        artista: String(sp.artist || '').slice(0, 80),
+        portada: /^https:\/\/i\.scdn\.co\//.test(String(sp.album_art_url || ''))
+          ? String(sp.album_art_url)
+          : '',
+      }
+    : null;
+
   return {
     id: String(u.id),
     usuario: String(u.username || ''),
@@ -87,6 +124,8 @@ function leer(d: Record<string, any>): PresenciaDiscord | null {
     estadoNombre: NOMBRE_ESTADO[estado] ?? '',
     actividad,
     detalle: detalle.slice(0, 80),
+    guild,
+    cancion,
   };
 }
 

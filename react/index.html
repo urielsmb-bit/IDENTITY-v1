@@ -15,6 +15,20 @@
   <meta name="theme-color" content="#050505" />
   <meta name="color-scheme" content="dark" />
 
+  <!-- La tarjeta de vista previa por defecto.
+       No había NINGUNA: pegar un enlace de IDENTITY en Discord, WhatsApp o
+       Twitter no enseñaba nada, porque quien arma esa tarjeta es un robot
+       que no ejecuta JavaScript y aquí la página se rellena en el navegador.
+       Estas son las de todo el sitio; las de cada perfil las pone
+       `api/perfil.ts` en el servidor, con su nombre y su foto. -->
+  <meta property="og:site_name" content="IDENTITY" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="IDENTITY — Tu identidad, en línea." />
+  <meta property="og:description" content="Crea un perfil que se sienta como tú. Temas, efectos, badges y estadísticas." />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="IDENTITY — Tu identidad, en línea." />
+  <meta name="twitter:description" content="Crea un perfil que se sienta como tú. Temas, efectos, badges y estadísticas." />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link

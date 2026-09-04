@@ -949,13 +949,24 @@ export function ProfileView({
                     no se sabe. */}
                 {discord && <i className="pf-dc__dot" />}
               </span>
-              <span>
+              <span className="pf-dc__txt">
                 <span className="pf-dc__u">
+                  {/* El nombre, y solo el nombre. El @usuario de Discord
+                      tambien se llego a enseñar aqui y sobraba: al lado del
+                      nombre que ya se ve es la misma persona dicha dos
+                      veces, y ademas publica tu usuario de Discord a quien
+                      no tiene por que tenerlo. Se sigue guardando porque es
+                      el nombre de recambio para quien no tenga uno puesto. */}
                   {dcNombre || dcUsuario}
-                  {/* La etiqueta, al lado del nombre. `pf-dc__bd` ya estaba
-                      en el CSS esperando a que alguien la usara. */}
-                  {dcUsuario && dcNombre && dcUsuario !== dcNombre && (
-                    <b className="pf-dc__bd">@{dcUsuario}</b>
+                  {/* La etiqueta de servidor. Lanyard ya la mandaba en
+                      `primary_guild` y no la leia nadie. */}
+                  {discord?.guild && (
+                    <b className="pf-dc__gt" title={`Servidor: ${discord.guild.tag}`}>
+                      {discord.guild.icono && (
+                        <img src={discord.guild.icono} alt="" aria-hidden="true" />
+                      )}
+                      {discord.guild.tag}
+                    </b>
                   )}
                 </span>
                 {/* Estado y actividad son dos lineas, no una. Antes se
@@ -964,9 +975,26 @@ export function ProfileView({
                 {discord?.estadoNombre && (
                   <span className="pf-dc__s">{discord.estadoNombre}</span>
                 )}
-                {discord?.actividad && <span className="pf-dc__s">{discord.actividad}</span>}
-                {discord?.detalle && <span className="pf-dc__s">{discord.detalle}</span>}
+                {/* Con cancion no se repite «Escuchando Spotify»: la linea de
+                    abajo ya dice QUE suena, que es la mitad que faltaba. */}
+                {discord?.cancion ? (
+                  <span className="pf-dc__s">
+                    Escuchando {discord.cancion.titulo}
+                    {discord.cancion.artista ? ` · ${discord.cancion.artista}` : ''}
+                  </span>
+                ) : (
+                  <>
+                    {discord?.actividad && <span className="pf-dc__s">{discord.actividad}</span>}
+                    {discord?.detalle && <span className="pf-dc__s">{discord.detalle}</span>}
+                  </>
+                )}
               </span>
+
+              {discord?.cancion?.portada && (
+                <span className="pf-dc__disco">
+                  <img src={discord.cancion.portada} alt="" loading="lazy" />
+                </span>
+              )}
             </div>
           )}
 
