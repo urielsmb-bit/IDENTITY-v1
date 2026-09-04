@@ -1516,3 +1516,74 @@ body.probando .view{ padding-top:0; }
   .rank__th, .rank__f{ grid-template-columns:32px 34px minmax(0,1fr) auto; padding-inline:var(--s4); }
   .rank__id{ flex-direction:column; align-items:flex-start; gap:0; }
 }
+
+/* ============================================================
+   DENUNCIAR UN PERFIL
+   La maquinaria estaba puesta desde la migración fundacional —tabla,
+   nueve motivos, políticas, limitador de 50/hora— y lo único que
+   faltaba era esto. Una política de retirada que nadie puede activar
+   no protege a quien sale en una foto que no autorizó.
+   ============================================================ */
+.denun__btn{
+  position:fixed;
+  right:max(var(--s3), env(safe-area-inset-right));
+  bottom:max(var(--s3), env(safe-area-inset-bottom));
+  z-index:900;
+  display:inline-flex; align-items:center; gap:7px;
+  padding:7px 12px 7px 10px;
+  border:1px solid var(--border);
+  border-radius:100px;
+  /* Debajo hay un fondo que no controlamos —foto o vídeo de otra
+     persona— así que el texto necesita algo opaco detrás. */
+  background:rgba(5,5,5,.62);
+  backdrop-filter:blur(12px) saturate(140%);
+  -webkit-backdrop-filter:blur(12px) saturate(140%);
+  color:var(--text-muted);
+  font-family:var(--font-mono, ui-monospace, monospace);
+  font-size:var(--t1);
+  cursor:pointer;
+  /* Discreto por diseño: esta página es de otra persona y el botón no
+     debe competir con ella. Aparece al acercarse y al llegar con el
+     tabulador, nunca de entrada. */
+  opacity:.28;
+  transition:opacity var(--transition-fast), color var(--transition-fast),
+             border-color var(--transition-fast);
+}
+.denun__btn:hover,
+.denun__btn:focus-visible{ opacity:1; color:var(--text-primary); border-color:var(--border-strong); }
+.denun__btn svg{ width:14px; height:14px; flex:none; }
+/* En un teléfono no hay «acercarse»: o se ve, o no existe. */
+@media (hover:none){ .denun__btn{ opacity:.55; } }
+@media (max-width:520px){ .denun__btn span{ display:none; } .denun__btn{ padding:9px; } }
+
+.denun__lista{ border:0; padding:0; margin:0; display:grid; gap:2px; }
+.denun__leg{
+  padding:0 0 8px;
+  color:var(--text-secondary);
+  font-size:var(--t2);
+}
+.denun__op{
+  display:flex; align-items:center; gap:10px;
+  padding:8px 10px;
+  border-radius:var(--radius-md);
+  font-size:var(--t3);
+  cursor:pointer;
+}
+.denun__op:hover{ background:var(--surface-2); }
+.denun__op input{ flex:none; accent-color:var(--text-primary); }
+/* El texto entero es la diana, no sólo el círculo de 13 px. */
+.denun__op span{ flex:1; }
+
+.denun__det{ display:grid; gap:6px; margin-top:6px; }
+.denun__det > span{ font-size:var(--t2); color:var(--text-secondary); }
+.denun__det textarea{
+  width:100%;
+  padding:9px 11px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--surface-2);
+  color:var(--text-primary);
+  font-family:inherit; font-size:var(--t3);
+  resize:vertical;
+}
+.denun__aviso{ color:var(--dnd, #ED4245); font-size:var(--t1); line-height:1.45; }

@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile';
 import { useProfileStore, getMyVote, setMyVote } from '@/stores/profileStore';
 import { ProfileView } from '@/components/profile/ProfileView';
+import { Denunciar } from '@/components/profile/Denunciar';
 import * as backend from '@/lib/backend';
 import { insigniasGanadas } from '@/lib/insignias';
 import { hasBackend } from '@/lib/supabase';
@@ -11,6 +12,8 @@ export default function ProfilePage() {
   const { username } = useParams<{ username: string }>();
   const cleanUsername = username?.toLowerCase().trim();
   const { profile, isLoading } = useProfile(cleanUsername);
+  const mineName = useProfileStore((s) => s.mineName);
+  const esMio = !!cleanUsername && mineName === cleanUsername;
   const [vote, setVote] = useState<number | null>(null);
   /* Las insignias no vienen con el perfil: viven en otra vista y en
      otra tabla. Se piden aparte para que un fallo suyo no impida que
@@ -83,11 +86,16 @@ export default function ProfilePage() {
   }
 
   return (
-    <ProfileView
-      profile={profile}
-      insignias={insignias}
-      onVote={handleVote}
-      myVote={vote}
-    />
+    <>
+      <ProfileView
+        profile={profile}
+        insignias={insignias}
+        onVote={handleVote}
+        myVote={vote}
+      />
+      {/* No en el tuyo: denunciarte a ti mismo no lleva a ninguna parte y
+          el botón sólo estorbaría en la página que más vas a mirar. */}
+      {esMio ? null : <Denunciar perfilId={profile._id} username={profile.username} />}
+    </>
   );
 }

@@ -753,10 +753,25 @@ export async function valorar(perfilId: string, nota: number) {
   return true;
 }
 
+/**
+ * Denunciar un perfil.
+ *
+ * Se firma cuando hay sesion. No es para señalar a quien denuncia —las
+ * politicas de la tabla no dejan leer las denuncias a NADIE, ni siquiera a
+ * su autor— sino porque una denuncia sin firma no se puede contestar ni
+ * contrastar, y porque el limitador de la base cuenta diez al dia por
+ * cuenta: sin `autor_id`, quien entra a denunciar en masa no gasta cupo.
+ */
 export async function denunciar(perfilId: string, motivo: string, detalle?: string) {
   if (!supabase) throw new Error('sin backend');
+  const u = await usuario().catch(() => null);
   const { error } = await supabase.from('denuncias')
-    .insert({ perfil_id: perfilId, motivo, detalle: detalle || null });
+    .insert({
+      perfil_id: perfilId,
+      motivo,
+      detalle: detalle || null,
+      autor_id: u?.id ?? null,
+    });
   if (error) throw traducir(error);
   return true;
 }
