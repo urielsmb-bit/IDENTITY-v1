@@ -296,11 +296,17 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
+      {/* Los tres de abajo, en rejilla y no apilados. Cada uno ocupaba el
+          ancho entero para enseñar contenido de un palmo: la lista de
+          paises son cuatro renglones y las plantillas son un numero.
+          Puestos en columnas, la pagina cabe de una vez en pantalla en
+          vez de pedir tres pantallazos de desplazamiento. */}
+      <div className="ana__rej">
       {/* A que hora te descubren. Es lo unico accionable de esta pagina:
           todo lo demas cuenta lo que ya paso; esto dice cuando compartir
           el enlace la proxima vez. */}
       {nuevosEnRango > 0 && (
-        <div className="ana__panel">
+        <div className="ana__panel ana__panel--ancho">
           <div className="ana__panelCab">
             <h2 className="ana__h2">A qué hora te descubren</h2>
             <p className="ana__nota">
@@ -322,9 +328,9 @@ export default function AnalyticsPage() {
           <div className="ana__panelCab">
             <h2 className="ana__h2">De dónde te ven</h2>
             <p className="ana__nota">
-              Sólo el país, nunca la ciudad ni la dirección de nadie. Se
-              empezó a guardar hace poco, así que las visitas de antes no
-              lo tienen.
+              {datos.porPais.length > 0
+                ? 'Sólo el país, nunca la ciudad ni la dirección de nadie.'
+                : 'Sólo el país, nunca la ciudad ni la dirección de nadie. Se empezó a guardar hace poco: las próximas visitas ya lo traerán.'}
             </p>
           </div>
           <Paises lista={datos.porPais} sin={datos.sinPais} />
@@ -335,7 +341,11 @@ export default function AnalyticsPage() {
           visita dice que te vieron, un uso dice que a alguien le gusto tu
           diseño lo bastante como para ponerselo. */}
       {misPlantillas.plantillas > 0 && (
-        <div className="ana__panel">
+        /* A todo el ancho: su contenido es un numero y un boton en una
+           fila, asi que en una columna de un tercio dejaba la otra mitad
+           de la fila vacia. Como banda llena el hueco y ademas cierra la
+           pagina, que es donde le toca. */
+        <div className="ana__panel ana__panel--tira">
           <div className="ana__panelCab">
             <h2 className="ana__h2">Tus plantillas</h2>
             <p className="ana__nota">
@@ -365,6 +375,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
@@ -393,11 +404,10 @@ function Paises({ lista, sin }: { lista: { pais: string; n: number }[]; sin: num
   const tope = Math.max(1, ...lista.map((x) => x.n));
   return (
     <div className="ana__paises">
-      {lista.length === 0 ? (
-        <p className="ana__nota" style={{ margin: 0 }}>
-          Todavía no hay ninguna visita con país. Las próximas sí lo tendrán.
-        </p>
-      ) : (
+      {/* Sin paises todavia no se dice nada aqui: la explicacion de arriba
+          ya lo cuenta, y repetirlo era gastar un panel entero en decir dos
+          veces que no hay nada. */}
+      {lista.length === 0 ? null : (
         <ol className="ana__paisL">
           {/* Ocho y basta: una lista de cuarenta paises con una visita cada
               uno no se lee, y los que importan son los de arriba. */}

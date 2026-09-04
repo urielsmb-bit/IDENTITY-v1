@@ -1261,7 +1261,7 @@ body.probando .view{ padding-top:0; }
    24 barras y nada mas: ni biblioteca de graficos ni canvas. Con 24
    numeros, un `div` por hora los dibuja igual y se puede pasar el raton
    por encima para ver la cifra exacta. */
-.ana__horas{ padding:var(--s4) var(--s5) var(--s4); }
+.ana__horas{ padding:var(--s4) var(--s5) var(--s5); }
 .ana__horasG{
   display:grid;
   grid-template-columns:repeat(24, 1fr);
@@ -1295,8 +1295,28 @@ body.probando .view{ padding-top:0; }
   padding:var(--s4) var(--s5) var(--s5);
 }
 .ana__pltN{ display:flex; flex-direction:column; gap:2px; flex:none; }
-.ana__plt .ana__nota{ flex:1; min-width:180px; margin:0; }
+.ana__plt .ana__nota{ flex:1; min-width:140px; margin:0; }
 .ana__plt .btn{ flex:none; margin-left:auto; }
+
+/* ---- los tres paneles de abajo, en rejilla ---------------------------
+   Apilados a todo el ancho, cada uno gastaba una pantalla para enseñar
+   contenido de un palmo: la lista de paises son cuatro renglones y las
+   plantillas son un numero. En columnas, la pagina cabe de una vez.
+
+   Las horas piden ancho —son 24 barras— asi que ocupan dos columnas de
+   tres; los otros dos caben en una. Cuando no hay sitio para tres, el
+   `auto-fit` los baja solo. */
+.ana__rej{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));
+  gap:var(--s4);
+  align-items:start;
+}
+@media (min-width:1000px){
+  .ana__rej{ grid-template-columns:repeat(3, 1fr); }
+  .ana__panel--ancho{ grid-column:span 2; }
+  .ana__panel--tira{ grid-column:1 / -1; }
+}
 
 /* ---- de donde te ven --------------------------------------------------
    Cuatro columnas fijas: bandera, nombre, barra y cifra. Fijas para que
