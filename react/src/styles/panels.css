@@ -932,7 +932,14 @@ canvas.chart{ width:100%; display:block; }
   background:var(--surface);
   overflow:hidden;
 }
-.ana__panelCab{ padding:18px 20px 0; }
+/* Una raya entre la cabecera y el contenido. Sin ella el texto que
+   explica el grafico y el grafico mismo se tocan, y el ojo los lee como
+   una sola masa: no se sabe donde acaba lo que hay que leer y donde
+   empieza lo que hay que mirar. */
+.ana__panelCab{
+  padding:var(--s4) var(--s5);
+  border-bottom:1px solid var(--border);
+}
 .ana__h2{ margin:0; font-size:var(--t4); letter-spacing:-.01em; }
 .ana__nota{
   margin:6px 0 0;
@@ -945,7 +952,7 @@ canvas.chart{ width:100%; display:block; }
   position:relative;
   width:100%;
   height:280px;
-  padding:12px 8px 8px;
+  padding:var(--s4) var(--s3) var(--s3);
 }
 .ana__grafico canvas{ display:block; width:100%; height:100%; }
 .ana__vacio{
@@ -1352,7 +1359,11 @@ body.probando .view{ padding-top:0; }
   text-align:right;
   color:var(--text-primary);
 }
-.ana__paisSin{ margin-top:var(--s4); }
+/* El margen solo cuando hay una lista encima de la que separarse. Sin
+   paises todavia, esa separacion dejaba un hueco flotando en medio del
+   panel sin nada a lo que pertenecer. */
+.ana__paisL + .ana__paisSin{ margin-top:var(--s4); }
+.ana__paisSin{ margin-top:0; }
 
 @media (max-width:520px){
   /* En estrecho la barra sobra antes que el nombre: el nombre es el dato
