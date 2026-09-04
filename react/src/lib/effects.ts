@@ -506,6 +506,8 @@ export function cursor(
   opciones: {
     img?: string; size?: number | null;
     trail?: number | null; trailFx?: string;
+    /** Si se pasa, solo se deja ver encima de ese elemento. */
+    ambito?: HTMLElement | null;
   } = {},
 ) {
   // Con imagen propia se dibuja aunque el tipo sea "default": la imagen ES
@@ -618,53 +620,90 @@ export function cursor(
   }
 
   let mx = -100, my = -100;
-  let px = -100, py = -100, vx = 0, vy = 0;
-  /* Seguimiento exponencial, NO un muelle.
-     Un muelle se pasa de largo y vuelve, y eso era el rebote que se notaba.
-     Acercandose una fraccion de lo que falta en cada fotograma, la marca
-     sigue al puntero suave y NUNCA lo sobrepasa.
+  /** Desvio del temblor del glitch. Lo pone el fotograma; se compone al
+   *  pintar para que el puntero y el temblor no se pisen el transform. */
+  let glx = 0, gly = 0;
 
-     La constante va en TIEMPO, no en fotogramas. Con una fraccion fija por
-     fotograma el cursor iba mas lento en una pantalla de 60 Hz que en una
-     de 144, y ademas 0.34 tardaba ocho fotogramas en alcanzar al raton:
-     eso es el retraso que se notaba. Con TAU=8 ms se cubre el 88 % de la
-     distancia en un fotograma de 60 Hz —imperceptible— y se sigue limando
-     el temblor del puntero. */
-  const TAU = 8;
-  let tPrevio = 0;
+  /**
+   * El AMBITO: donde se deja ver.
+   *
+   * En el editor el cursor tiene que verse —es lo que estas eligiendo— pero
+   * solo encima de la vista previa. Si se dejara suelto por toda la pagina,
+   * los mandos y los paneles se quedarian sin puntero de sistema util y con
+   * una marca de perfil encima, que no es de ellos.
+   */
+  const ambito = opciones.ambito || null;
+  let dentro = !ambito;
+  if (ambito) el.classList.add('cur--fuera');
 
-  function onMove(e: MouseEvent) {
+  /**
+   * Se pinta en el EVENTO, no en el fotograma.
+   *
+   * Antes la posicion se acercaba al raton dentro de un rAF con una
+   * constante de 8 ms. Eso es retraso siempre: 8 ms de seguimiento MAS la
+   * espera al siguiente fotograma. Y el evento `mousemove` que lo
+   * alimentaba lo entrega el navegador a ritmo de pantalla, asi que un
+   * raton de 1000 Hz en un monitor de 240 Hz no servia de nada.
+   *
+   * Ahora la posicion se escribe en cuanto llega, desde `pointerrawupdate`
+   * —que si entrega al ritmo del raton, por encima del de la pantalla—. El
+   * navegador compone una sola vez por fotograma de todas formas, asi que
+   * escribir de mas entre fotogramas no pinta de mas: solo quita espera.
+   */
+  function pintar() {
+    let tr = 'translate3d(' + mx + 'px,' + my + 'px,0)';
+    if (glx || gly) {
+      tr += ' translate3d(' + glx.toFixed(1) + 'px,' + gly.toFixed(1) + 'px,0)';
+    }
+    el.style.transform = tr;
+  }
+
+  /** Posicion, y nada mas: es lo que corre a 1000 Hz. */
+  function onPos(e: MouseEvent) {
     mx = e.clientX; my = e.clientY;
-    const over = e.target && (e.target as Element).closest &&
-      (e.target as Element).closest('a,button,.pf-link,.pf-social,.pf-badge');
+    pintar();
+  }
+
+  /* Lo que cuesta —mirar debajo de que se esta— se queda en `pointermove`,
+     que va a ritmo de pantalla. Preguntarle `closest()` al DOM mil veces
+     por segundo es trabajo tirado: el estado de «encima de un enlace» no
+     cambia mas deprisa que un fotograma. */
+  function onEncima(e: MouseEvent) {
+    const t = e.target as Element | null;
+    if (ambito) {
+      const d = !!(t && ambito.contains(t));
+      if (d !== dentro) {
+        dentro = d;
+        el.classList.toggle('cur--fuera', !d);
+      }
+    }
+    const over = t && t.closest && t.closest('a,button,.pf-link,.pf-social,.pf-badge');
     el.classList.toggle('is-hot', !!over);
   }
 
-  const soltar = ticker(() => {
-    const ahoraT = performance.now();
-    // El primer fotograma no tiene anterior con el que medir.
-    const dt = tPrevio ? Math.min(64, ahoraT - tPrevio) : 16.7;
-    tPrevio = ahoraT;
-    const k = 1 - Math.exp(-dt / TAU);
+  /* Posicion del fotograma anterior. El glitch mide velocidad POR FOTOGRAMA
+     y no por evento: por evento, a 240 Hz los saltos son cuatro veces mas
+     cortos y el temblor no llegaba a dispararse nunca. */
+  let fx = -100, fy = -100;
 
-    const antesX = px, antesY = py;
-    px += (mx - px) * k;
-    py += (my - py) * k;
-    // La velocidad se saca de lo que se ha movido de verdad: el glitch la
-    // necesita y ya no hay integrador del que leerla.
-    vx = px - antesX;
-    vy = py - antesY;
+  /* Un cursor liso —un punto, un aro, una imagen— ya no necesita fotograma
+     ninguno: se pinta solo cuando el raton se mueve. Antes cada cursor
+     dejaba un rAF encendido para siempre repitiendo el mismo calculo, y
+     eso es tiempo de fotograma que le quitas a todo lo demas de la pagina
+     por algo que no cambia. */
+  const necesitaFotograma = type === 'glitch' || DENSIDAD > 0;
 
-    let tr = 'translate3d(' + px.toFixed(2) + 'px,' + py.toFixed(2) + 'px,0)';
+  const soltar = !necesitaFotograma ? () => {} : ticker(() => {
     if (type === 'glitch') {
-      const v = Math.min(1, Math.hypot(vx, vy) / 26);
+      const v = Math.min(1, Math.hypot(mx - fx, my - fy) / 26);
+      fx = mx; fy = my;
       el.style.setProperty('--gl', v.toFixed(3));
-      tr += ' translate3d(' + (Math.random() - 0.5) * 7 * v + 'px,' +
-            (Math.random() - 0.5) * 7 * v + 'px,0)';
+      glx = (Math.random() - 0.5) * 7 * v;
+      gly = (Math.random() - 0.5) * 7 * v;
+      pintar();
     }
-    el.style.transform = tr;
 
-    if (DENSIDAD > 0) {
+    if (DENSIDAD > 0 && dentro) {
       const ahora = performance.now();
 
       // Se suelta por DISTANCIA recorrida, no por tiempo: parado no deja
@@ -701,11 +740,19 @@ export function cursor(
     }
   });
 
-  window.addEventListener('mousemove', onMove, { passive: true });
+  /* `pointerrawupdate` entrega TODOS los movimientos del raton, sin
+     agruparlos por fotograma, que es lo unico que permite aprovechar un
+     monitor rapido. Donde no exista, `pointermove` hace de las dos cosas y
+     el resultado es el de siempre, no peor. */
+  const CRUDO = 'onpointerrawupdate' in window;
+  const EVENTO_POS = CRUDO ? 'pointerrawupdate' : 'pointermove';
+  window.addEventListener(EVENTO_POS, onPos as EventListener, { passive: true });
+  window.addEventListener('pointermove', onEncima as EventListener, { passive: true });
 
   return register(() => {
     soltar();
-    window.removeEventListener('mousemove', onMove);
+    window.removeEventListener(EVENTO_POS, onPos as EventListener);
+    window.removeEventListener('pointermove', onEncima as EventListener);
     el.remove();
     chispas.forEach((c) => c.el.remove());
   });

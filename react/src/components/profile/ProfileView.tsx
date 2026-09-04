@@ -104,6 +104,40 @@ function varsAnimacion(b: BlockStyle): Record<string, string> {
 /** Interruptor a atributo: el CSS pregunta por "on"/"off", no por booleanos. */
 const sw = (v: unknown) => (v ? 'on' : 'off');
 
+/**
+ * Pedirle al fondo en video que se ponga en marcha.
+ *
+ * En el movil el navegador no deja que nada empiece a moverse por su cuenta
+ * mientras la persona no haya tocado la pantalla. Al cargar, el video pide
+ * reproducirse y se lo niegan — y no lo vuelve a intentar en su vida.
+ *
+ * La musica si sonaba, y por eso se veia raro: la musica se lanza DENTRO
+ * del toque de la puerta, asi que el navegador la cuenta como algo que has
+ * pedido tu y la deja. El video no estaba enganchado a ese toque. Ahora si.
+ *
+ * Vimeo va en un iframe de otro dominio, o sea que no se le puede llamar:
+ * se le manda un recado. Con el origen puesto a proposito y no a `*`, que
+ * seria gritarle el mensaje a cualquier marco que hubiera dentro.
+ */
+function arrancarFondo(raiz: HTMLElement | null) {
+  if (!raiz) return;
+
+  const video = raiz.querySelector('video');
+  // El `catch` no es decoracion: si el navegador lo niega otra vez, la
+  // promesa se rechaza y sin recogerla ensucia la consola de quien mira.
+  if (video) void video.play().catch(() => {});
+
+  const marco = raiz.querySelector<HTMLIFrameElement>('iframe.pf-bgvideo');
+  try {
+    marco?.contentWindow?.postMessage(
+      JSON.stringify({ method: 'play' }),
+      'https://player.vimeo.com',
+    );
+  } catch {
+    /* Marco todavia sin cargar. Se queda como estaba. */
+  }
+}
+
 export function ProfileView({
   profile: p,
   insignias: insigniasDadas,
@@ -134,11 +168,19 @@ export function ProfileView({
   // Apagada en el editor: la tarjeta moviendose mientras se arrastran los
   // bloques por el lienzo pelea con el propio arrastre. Se ve al publicar.
   const { rootRef, cardRef } = useTilt(!!p.tilt && !preview);
-  useCursor(p.cursor || 'default', !preview, {
+  /* En el editor SI se ve, acotado a la vista previa.
+     Estaba apagado con `!preview`, o sea que elegias cursor a ciegas: la
+     unica forma de ver cual habias puesto era publicar y abrir tu propio
+     perfil. Pero `preview` tambien es cierto en el carrusel de la portada y
+     en las miniaturas de plantillas —cuatro perfiles a la vez, cada uno
+     queriendo mandar en el puntero de toda la pagina—, asi que se enciende
+     por `editando`, que es solo el editor, y se acota a la tarjeta. */
+  useCursor(p.cursor || 'default', !preview || editando, {
     img: safeMedia(p.cursorImg || ''),
     size: p.cursorSize,
     trail: p.cursorTrail,
     trailFx: p.cursorTrailFx,
+    ambitoRef: editando ? rootRef : undefined,
   });
 
   const music = useMusic();
@@ -279,6 +321,17 @@ export function ProfileView({
     return () => window.clearTimeout(t);
   }, [preview, p.gate]);
 
+  /* Sin puerta no hay toque al que engancharse, y en modo ahorro de bateria
+     el movil le niega el arranque hasta a un video mudo. Se reintenta con el
+     primer toque que haya, sea donde sea. El oyente se quita solo: es una
+     oportunidad, no un vigilante encendido toda la visita. */
+  useEffect(() => {
+    if (preview || p.bgType !== 'video') return;
+    const alTocar = () => arrancarFondo(rootRef.current);
+    window.addEventListener('pointerdown', alTocar, { once: true, passive: true });
+    return () => window.removeEventListener('pointerdown', alTocar);
+  }, [preview, p.bgType, rootRef]);
+
   const abrirPuerta = () => {
     setGateUnlocked(true);
     setRevelando(true);
@@ -304,6 +357,7 @@ export function ProfileView({
 
     window.setTimeout(() => setRevelando(false), 1400);
     if (pistas.length > 0) music.play();
+    arrancarFondo(rootRef.current);
   };
 
   /* La nota la calcula el servidor a partir de `valoraciones`.
@@ -686,7 +740,7 @@ export function ProfileView({
       data-revelar={revelando ? 'on' : undefined}
       data-blockstyle={p.blockStyle || 'inherit'}
       data-cursor={p.cursor || 'default'}
-      data-curimg={p.cursorImg && !preview ? 'on' : undefined}
+      data-curimg={p.cursorImg && (!preview || editando) ? 'on' : undefined}
       data-nameanim={p.animatedName ? 'sweep' : 'none'}
       data-namegrad={sw(p.gradient)}
       data-borde={p.sBorderOn === false ? 'off' : 'on'}

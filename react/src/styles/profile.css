@@ -415,7 +415,11 @@
 .pf-handle{ font-family:var(--b-font, var(--p-fm)); font-size:var(--t2); color:var(--p-dim); }
 .pf-title{ font-size:var(--t3); color:var(--p-dim); }
 .pf-title b{ color:var(--p-text); font-weight:600; }
-.pf-joined{ font-family:var(--b-font, var(--p-fm)); font-size:var(--t1); color:var(--p-dim); opacity:.8; }
+/* Sin `opacity:.8` encima del color. Era la unica linea del perfil con las
+   dos atenuaciones puestas a la vez: un gris ya apagado (--p-dim) rebajado
+   otro 20 %. Al lado, @usuario lleva el MISMO color y se lee; la fecha
+   parecia estar medio borrada a proposito. */
+.pf-joined{ font-family:var(--b-font, var(--p-fm)); font-size:var(--t1); color:var(--p-dim); }
 
 .pf-fields{ display:flex; flex-wrap:wrap; gap:6px; justify-content:var(--u-just, flex-start); }
 .pf-field{
@@ -881,7 +885,12 @@
   font-family:var(--p-fm); font-size:var(--t1);
   color:var(--p-dim);
 }
-.pf-views svg{ width:13px; height:13px; opacity:.8; flex:none; }
+/* En em, como los iconos de insignia, y no en px.
+   Clavado en 13px el ojo no crecia con su bloque: subiendo el tamano al
+   doble el numero pasaba de 11 a 30 px y el ojo se quedaba en 13, un
+   garbanzo al lado del texto. Y sobraba el `opacity` —el color ya viene
+   apagado— que lo dejaba mas flojo que las cifras que acompana. */
+.pf-views svg{ width:1.25em; height:1.25em; flex:none; }
 .pf-views__sep{ opacity:.4; }
 
 /* ============================================================
@@ -1147,6 +1156,11 @@
 .pf[data-cursor]:not([data-cursor="default"]){ cursor:none; }
 .pf[data-cursor]:not([data-cursor="default"]) *{ cursor:none !important; }
 .cur{ position:fixed; top:0; left:0; z-index:9990; pointer-events:none; will-change:transform; }
+/* Fuera de su ambito. En el editor el cursor es del PERFIL, no de los
+   mandos: encima de los paneles se aparta y vuelve el puntero de siempre.
+   Sin transicion a proposito: un cursor que se desvanece con retraso deja
+   un fantasma siguiendote por los botones. */
+.cur--fuera, .cur--fuera *{ opacity:0; }
 .cur--dot{
   width:9px; height:9px; margin:-4.5px 0 0 -4.5px;
   border-radius:50%; background:var(--p-primary,#fff);
