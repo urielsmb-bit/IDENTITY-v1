@@ -43,24 +43,49 @@ function linea(v: unknown, max: number): string {
   return String(v ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
 }
 
-/* El cascaron no cambia dentro de un despliegue, asi que se pide una vez
-   por instancia y se reutiliza. Un despliegue nuevo estrena instancias, o
-   sea que esto no puede quedarse con el HTML de una version vieja. */
+/* El cascaron no cambia dentro de un despliegue, asi que se pide una vez por
+   instancia y se reutiliza. */
 let cascaron: string | null = null;
 
-async function traerCascaron(origen: string): Promise<string | null> {
+/**
+ * De donde se pide el cascaron.
+ *
+ * `VERCEL_URL` es la direccion propia de ESTE despliegue, y esa es la
+ * gracia: el dominio de siempre apunta a lo que este publicado ahora
+ * mismo, que durante el minuto que dura una publicacion puede ser la
+ * version anterior. Una instancia recien nacida en ese minuto se guardaba
+ * el HTML viejo y lo servia el resto de su vida — la pagina cargaba, pero
+ * con los archivos de la version de antes.
+ *
+ * Pidiendoselo a su propio despliegue, el HTML y la funcion son siempre de
+ * la misma version. Si esa direccion no responde —puede estar protegida—
+ * se cae al dominio normal, que es lo que habia antes: peor, pero no roto.
+ */
+function origenes(publico: string): string[] {
+  const propio = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '';
+  return propio && propio !== publico ? [propio, publico] : [publico];
+}
+
+async function traerCascaron(publico: string): Promise<string | null> {
   if (cascaron) return cascaron;
-  for (let intento = 0; intento < 2; intento++) {
-    try {
-      const r = await fetch(`${origen}/index.html`, {
-        signal: AbortSignal.timeout(3000),
-      });
-      if (r.ok) {
-        cascaron = await r.text();
-        return cascaron;
+  for (const origen of origenes(publico)) {
+    for (let intento = 0; intento < 2; intento++) {
+      try {
+        const r = await fetch(`${origen}/index.html`, {
+          signal: AbortSignal.timeout(3000),
+        });
+        if (r.ok) {
+          const texto = await r.text();
+          // Un HTML sin el punto de montaje no es el cascaron: es una
+          // pagina de error o una pantalla de proteccion del despliegue.
+          if (texto.includes('id="root"')) {
+            cascaron = texto;
+            return cascaron;
+          }
+        }
+      } catch {
+        /* se reintenta una vez por origen y se pasa al siguiente */
       }
-    } catch {
-      /* se reintenta una vez y ya */
     }
   }
   return null;
