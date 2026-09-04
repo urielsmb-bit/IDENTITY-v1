@@ -24,6 +24,17 @@ interface ProfileViewProps {
    */
   insignias?: string[];
   preview?: boolean;
+  /**
+   * Quien mira es el dueno y lo esta editando ahora mismo.
+   *
+   * No es lo mismo que `preview`. `preview` solo dice «esto va dibujado
+   * dentro de otra cosa», y eso tambien es cierto en el carrusel de la
+   * portada y en las miniaturas de plantillas, que enseñan perfiles de
+   * OTRA gente. Colgar de `preview` las pistas del editor hacia que la
+   * portada le dijera «tus insignias saldran aqui» a un visitante, sobre
+   * un perfil que no era suyo.
+   */
+  editando?: boolean;
   onVote?: (score: number) => void;
   myVote?: number | null;
 }
@@ -97,6 +108,7 @@ export function ProfileView({
   profile: p,
   insignias: insigniasDadas,
   preview = false,
+  editando = false,
   onVote,
   myVote,
 }: ProfileViewProps) {
@@ -877,16 +889,21 @@ export function ProfileView({
 
               Pero en el EDITOR eso hacia que encender el bloque no hiciera
               nada visible, sin decir por que. Quien lo enciende cree que
-              esta roto, y de hecho es lo que se ha reportado. Asi que en la
-              vista previa el hueco habla: dice que las insignias saldran
-              solas cuando se ganen. */}
-          {ver('badges') && preview && insignias.length === 0 && (
+              esta roto, y de hecho es lo que se ha reportado. Asi que en el
+              editor el hueco habla: dice que las insignias saldran solas
+              cuando se ganen.
+
+              Y SOLO en el editor. Colgado de `preview` se colaba en el
+              carrusel de la portada y en las miniaturas de plantillas
+              —perfiles de otra gente— donde un «tus insignias» dirigido al
+              visitante no significa nada. */}
+          {ver('badges') && editando && insignias.length === 0 && (
             <div className="pf-badges pf-badges--vacio" {...bloque('badges')}>
               <span>Tus insignias saldrán aquí en cuanto ganes la primera.</span>
             </div>
           )}
           {ver('badges') && insignias.length > 0 && (
-            <div className="pf-badges" data-style={p.badgeStyle || 'icons'} {...bloque('badges')}>
+            <div className="pf-badges" data-style={p.badgeStyle || 'plain'} {...bloque('badges')}>
               {insignias.slice(0, 8).map((bId) => {
                 const b = getBadge(bId);
                 if (!b) return null;

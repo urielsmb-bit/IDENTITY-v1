@@ -240,7 +240,7 @@ function createBlankProfile(username = 'usuario'): Profile {
     avatarFx: 'pulse',
     socialStyle: 'icons',
     musicStyle: 'compact',
-    badgeStyle: 'icons',
+    badgeStyle: 'plain',
     blockStyle: 'glass',
     layoutMode: 'stack',
     stackPos: 'center',
@@ -1589,10 +1589,10 @@ export default function DashboardPage() {
                   setBloqueAbierto(def);
                 }}
               >
-                <ProfileView profile={profile} insignias={insigniasGanadasDelPerfil} preview={true} />
+                <ProfileView profile={profile} insignias={insigniasGanadasDelPerfil} preview={true} editando />
               </LienzoBloques>
             ) : (
-              <ProfileView profile={profile} insignias={insigniasGanadasDelPerfil} preview={true} />
+              <ProfileView profile={profile} insignias={insigniasGanadasDelPerfil} preview={true} editando />
             )}
             </Frontera>
           </div>

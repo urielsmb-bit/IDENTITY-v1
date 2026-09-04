@@ -515,6 +515,9 @@
 .pf-badges{ display:flex; flex-wrap:wrap; gap:7px; justify-content:var(--u-just, flex-start); }
 .pf-badge{
   position:relative;
+  /* No se encoge: si no caben, la fila las envuelve (flex-wrap). Encogerlas
+     es lo que las aplastaba hasta dejar el nombre en 4px de ancho. */
+  flex:none;
   display:inline-flex; align-items:center; gap:6px;
   padding:5px 11px 5px 8px;
   border-radius:var(--p-chip-r);
@@ -526,13 +529,35 @@
   transition:transform var(--transition-fast), border-color var(--transition-fast);
 }
 .pf-badge:hover{ transform:translateY(-2px); border-color:var(--p-primary); }
-.pf-badge i{ font-style:normal; font-size:var(--t2); display:inline-flex; }
+/* flex:none o el icono sale APLASTADO. Un SVG que solo trae viewBox no
+   tiene ancho propio, asi que como hijo de un flex se le deja encoger por
+   debajo de su contenido: el sello de "Verificado" salia de 14x19 en vez
+   de 19x19, medio ovalo, sin que ninguna regla dijera nada de eso. */
+.pf-badge i{ font-style:normal; font-size:var(--t2); display:inline-flex; flex:none; }
 /* Los iconos de insignia son SVG y heredan el color: se dimensionan en em
    para seguir al tamaño de la píldora, igual que hacían los emoji. */
 .pf-badge i svg{ width:1.25em; height:1.25em; display:block; }
+
+/* El nombre, entero o nada.
+   El perfil aplica overflow-wrap:anywhere a todo —hace falta para que un
+   nombre larguisimo sin espacios no desborde la tarjeta— y eso vuelve el
+   ancho minimo de un texto el de UN caracter. En la rejilla libre el bloque
+   de insignias conserva el ancho que se le guardo cuando no pintaba nada
+   (en el perfil que lo destapo, un 6% = 28px), y «Verificado» caia dentro:
+   diez letras en vertical, una por linea, 173px de alto.
+   Se prohibe partir la palabra y se le quita el encogido. La pastilla sobra
+   del bloque unos pixeles y no pasa nada: el bloque no tiene borde. */
+.pf-badge b{ flex:none; overflow-wrap:normal; word-break:normal; }
 .pf-badges[data-style="icons"] .pf-badge i svg{ width:1.5em; height:1.5em; }
 .pf-badges[data-style="icons"] .pf-badge{ padding:4px 6px; gap:0; border-color:transparent; background:transparent; }
-.pf-badges[data-style="icons"] .pf-badge b{ display:none; }
+.pf-badges[data-style="icons"] .pf-badge b{
+  /* Se va de la VISTA, no del arbol. Con display:none una insignia en modo
+     icono no existe para un lector de pantalla y lo unico que quedaba era
+     el title, que muchos no anuncian: el icono se leia como nada. */
+  position:absolute; width:1px; height:1px;
+  padding:0; margin:-1px; overflow:hidden;
+  clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
 .pf-badge[data-rare="legendary"]{
   border-color:var(--p-primary);
   box-shadow:0 0 18px -6px var(--p-primary);
@@ -2469,7 +2494,14 @@
 
 /* boxed: solo el glifo, pero dentro de su caja */
 .pf-badges[data-style="boxed"] .pf-badge{ padding:6px 8px; gap:0; }
-.pf-badges[data-style="boxed"] .pf-badge b{ display:none; }
+.pf-badges[data-style="boxed"] .pf-badge b{
+  /* Se va de la VISTA, no del arbol. Con display:none una insignia en modo
+     icono no existe para un lector de pantalla y lo unico que quedaba era
+     el title, que muchos no anuncian: el icono se leia como nada. */
+  position:absolute; width:1px; height:1px;
+  padding:0; margin:-1px; overflow:hidden;
+  clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
 .pf-badges[data-style="boxed"] .pf-badge i svg{ width:1.5em; height:1.5em; }
 
 /* legendary sigue marcando borde: si no hay caja, se marca con halo */

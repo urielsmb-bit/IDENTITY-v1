@@ -262,7 +262,7 @@ function esquema(ID: any) {
     avatarFx: (v: any) => deLista(v, ids(ID?.AVATAR_FX), 'none'),
     socialStyle: (v: any) => deLista(v, ids(ID?.SOCIAL_STYLES), 'icons'),
     musicStyle: (v: any) => deLista(v, ids(ID?.MUSIC_STYLES), 'compact'),
-    badgeStyle: (v: any) => deLista(v, ids(ID?.BADGE_STYLES), 'icons'),
+    badgeStyle: (v: any) => deLista(v, ids(ID?.BADGE_STYLES), 'plain'),
     blockStyle: (v: any) => deLista(v, ids(ID?.BLOCK_STYLES), 'inherit'),
     layoutMode: (v: any) => deLista(v, ids(ID?.LAYOUT_MODES), 'stack'),
     stackPos: (v: any) => deLista(v, ids(ID?.STACK_POS), 'center'),

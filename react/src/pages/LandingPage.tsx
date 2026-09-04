@@ -175,7 +175,7 @@ const INITIAL_DEMO: Profile = {
   avatarFx: 'pulse',
   socialStyle: 'icons',
   musicStyle: 'compact',
-  badgeStyle: 'icons',
+  badgeStyle: 'plain',
   blockStyle: 'glass',
   layoutMode: 'stack',
   stackPos: 'center',

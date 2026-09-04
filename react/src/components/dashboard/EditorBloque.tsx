@@ -121,7 +121,7 @@ function MuestraInsignias({ profile }: { profile: Profile }) {
   }
   return (
     <div className="muestra">
-      <div className="pf-badges" data-style={profile.badgeStyle || 'icons'}>
+      <div className="pf-badges" data-style={profile.badgeStyle || 'plain'}>
         {insignias.slice(0, 8).map((id) => {
           const b = getBadge(id);
           if (!b) return null;
@@ -796,7 +796,7 @@ export function EditorBloque({ def, profile, onVolver, update }: EditorBloquePro
             <Tarjetas
               opciones={BADGE_STYLES}
                   dibujos={DIBUJOS.BADGE_STYLES}
-              value={profile.badgeStyle || 'icons'}
+              value={profile.badgeStyle || 'plain'}
               onChange={(v) => update({ badgeStyle: v })}
             />
           </Campo>
