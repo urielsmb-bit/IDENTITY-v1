@@ -767,6 +767,12 @@ export function AjustesCuenta({
           on={!!profile.showRate}
           onChange={(v) => update({ showRate: v })}
         />
+        <Interruptor
+          label="Contar los clics en tus enlaces"
+          desc="Cuántas veces han pulsado cada enlace, en Analíticas. No se guarda quién pulsó: sólo un número por enlace y por día."
+          on={profile.trackClick !== false}
+          onChange={(v) => update({ trackClick: v })}
+        />
       </Bloque>
 
       {/* La guia no es un ajuste de cuenta, asi que no se le da una tarjeta

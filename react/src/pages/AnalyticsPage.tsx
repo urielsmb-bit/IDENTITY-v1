@@ -62,6 +62,7 @@ export default function AnalyticsPage() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [misPlantillas, setMisPlantillas] = useState({ plantillas: 0, usos: 0, mejor: '' });
+  const [clics, setClics] = useState({ total: 0, porDia: {} as Record<string, number>, porEnlace: [] as { destino: string; n: number }[] });
   const lienzo = useRef<HTMLCanvasElement>(null);
 
   const id = profile?._id ?? '';
@@ -88,6 +89,18 @@ export default function AnalyticsPage() {
     return () => {
       vivo = false;
     };
+  }, [id, rango]);
+
+  /* Los clics van aparte y NO tumban la pagina si fallan: mientras la
+     0017 no este aplicada, la tabla no existe y la consulta da error.
+     El resto de las analiticas no tiene por que caerse por eso. */
+  useEffect(() => {
+    if (!hasBackend() || !id) return;
+    let vivo = true;
+    backend.clicsDe(id, rango)
+      .then((c) => { if (vivo) setClics(c); })
+      .catch(() => {});
+    return () => { vivo = false; };
   }, [id, rango]);
 
   /* Las plantillas no dependen del rango: se piden una vez. */
@@ -406,6 +419,54 @@ export default function AnalyticsPage() {
         </div>
       )}
 
+      {/* La otra mitad de la pelicula.
+          Una visita dice que alguien te vio. Un clic dice que alguien se
+          llevo algo de aqui, que es para lo que existe una pagina de
+          enlaces. Hasta hoy solo se contaba la primera. */}
+      <div className="ana__panel">
+        <div className="ana__panelCab">
+          <h2 className="ana__h2">Qué pulsan</h2>
+          <p className="ana__nota">
+            {clics.total === 0
+              ? 'Todavía nadie ha pulsado un enlace. Se empezó a contar hace poco: lo de antes no está.'
+              : 'Son pulsaciones, no personas: no se guarda quién pulsó, así que dos clics de alguien que vuelve son dos.'}
+          </p>
+        </div>
+
+        <div className="ana__kpis">
+          <div className="ana__kpi">
+            <span className="ana__kpiV">{num(clics.total)}</span>
+            <span className="ana__kpiD">{clics.total === 1 ? 'clic' : 'clics'}</span>
+          </div>
+          {/* Clics por cada cien visitas. Es la cifra que dice si tu perfil
+              CONVIERTE o solo lo miran — y no vale nada sin visitas debajo,
+              asi que con cero no se enseña un 0 % que no significa nada. */}
+          <div className="ana__kpi">
+            <span className="ana__kpiV">
+              {nuevosEnRango > 0 ? `${Math.round((clics.total / nuevosEnRango) * 100)}%` : '—'}
+            </span>
+            <span className="ana__kpiD">de las visitas pulsa</span>
+          </div>
+        </div>
+
+        {clics.porEnlace.length > 0 && (
+          <ol className="ana__paisL">
+            {clics.porEnlace.slice(0, 8).map(({ destino, n }) => (
+              <li className="ana__pais" key={destino}>
+                {/* El dominio, no la URL entera: una fila de lista no da
+                    para 200 caracteres y lo que quieres saber es a donde
+                    fueron, no con que parametros. */}
+                <span className="ana__paisN" title={destino}>{dominio(destino)}</span>
+                <span className="ana__paisBar" aria-hidden="true">
+                  <i style={{ width: `${Math.max(4, (n / Math.max(1, clics.porEnlace[0]?.n ?? 1)) * 100)}%` }} />
+                </span>
+                <span className="ana__paisC">{n}</span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+
       {/* Lo unico aqui que no habla de visitas, y por eso vale la pena: una
           visita dice que te vieron, un uso dice que a alguien le gusto tu
           diseño lo bastante como para ponerselo. */}
@@ -467,6 +528,17 @@ const NOMBRES = (() => {
    vistazo sin leerla. */
 function bandera(cc: string) {
   return String.fromCodePoint(...[...cc].map((c) => 127397 + c.charCodeAt(0)));
+}
+
+/** De `https://instagram.com/uriel?x=1` a `instagram.com/uriel`. El
+ *  esquema y los parametros no dicen nada en una lista. */
+function dominio(u: string): string {
+  try {
+    const x = new URL(u);
+    return (x.host + x.pathname).replace(/\/$/, '').replace(/^www\./, '').slice(0, 42);
+  } catch {
+    return u.slice(0, 42);
+  }
 }
 
 function Paises({ lista, sin }: { lista: { pais: string; n: number }[]; sin: number }) {

@@ -228,6 +228,17 @@ export interface Profile {
   discoverable: boolean;
   showStats: boolean;
   showRate: boolean;
+  /**
+   * Contar cuántas veces pulsan tus enlaces.
+   *
+   * Estaba en el validador y en ningún sitio más — ni en este tipo, ni en
+   * la interfaz, ni en la base. Un campo que se guardaba y no hacía nada.
+   * Ahora enciende el contador de `clics`, que cuenta pulsaciones por
+   * enlace y por día y no guarda quién pulsó.
+   *
+   * Sin valor = sí. Apagarlo es tu decisión, no la nuestra.
+   */
+  trackClick?: boolean;
   /** Id numerico de Discord (17-20 digitos) para el widget de presencia. */
   discordId?: string;
   /**

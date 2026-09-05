@@ -565,6 +565,59 @@ export async function analiticasDe(perfilId: string, dias = 30) {
 }
 
 /**
+ * Cuantas veces han pulsado tus enlaces.
+ *
+ * Es la otra mitad de la pelicula. Una visita dice que alguien te vio; un
+ * clic dice que alguien se llevo algo de aqui, que es para lo que existe
+ * una pagina de enlaces.
+ *
+ * Devuelve CLICS, no personas, y hay que decirlo asi: la tabla guarda un
+ * contador por enlace y por dia, sin visitante ni huella. Es a proposito
+ * —el dato mas barato de proteger es el que no se recoge— pero significa
+ * que dos clics de la misma persona son dos.
+ *
+ * `clics` solo la lee su dueño: lo garantiza la politica de la tabla, no
+ * esta consulta.
+ */
+export async function clicsDe(perfilId: string, dias = 30) {
+  const vacio = { total: 0, porDia: {} as Record<string, number>, porEnlace: [] as { destino: string; n: number }[] };
+  if (!supabase || !perfilId) return vacio;
+
+  const desde = new Date(Date.now() - dias * 86400000).toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from('clics')
+    .select('destino,dia,veces')
+    .eq('perfil_id', perfilId)
+    .gte('dia', desde)
+    .limit(5000);
+
+  /* Si la 0017 no esta aplicada, la tabla no existe y esto responde con
+     error. No es motivo para tumbar la pagina entera de analiticas: se
+     devuelve vacio y las demas secciones siguen. */
+  if (error || !data) return vacio;
+
+  let total = 0;
+  const porDia: Record<string, number> = {};
+  const porEnlace = new Map<string, number>();
+  for (const f of data as Array<Record<string, unknown>>) {
+    const n = Number(f.veces) || 0;
+    const dia = String(f.dia ?? '').slice(0, 10);
+    const destino = String(f.destino ?? '');
+    total += n;
+    if (dia) porDia[dia] = (porDia[dia] ?? 0) + n;
+    if (destino) porEnlace.set(destino, (porEnlace.get(destino) ?? 0) + n);
+  }
+
+  return {
+    total,
+    porDia,
+    porEnlace: [...porEnlace.entries()]
+      .map(([destino, n]) => ({ destino, n }))
+      .sort((a, b) => b.n - a.n),
+  };
+}
+
+/**
  * Cuanto se han usado las plantillas que uno ha publicado.
  *
  * Es lo unico de estas analiticas que no habla de visitas, y por eso vale
@@ -982,6 +1035,29 @@ export async function publicarPlantilla(nombre: string, perfil: Partial<Profile>
     .insert({ dueno: u.id, nombre: limpio, ajustes });
   if (error) throw traducir(error);
   return true;
+}
+
+/**
+ * Anota que alguien pulsó un enlace del perfil.
+ *
+ * No devuelve nada ni se espera: quien pulsa se está yendo a otra
+ * página y no debe esperar a nuestro contador para irse. Si falla, se
+ * pierde ese clic y no pasa nada — un contador no vale una navegación.
+ *
+ * No manda quién pulsó porque no hay quién: la tabla guarda un contador
+ * por enlace y por día, sin visitante ni huella.
+ */
+export function registrarClic(username: string, destino: string) {
+  if (!supabase || !username || !destino) return;
+  void supabase
+    .rpc('registrar_clic', { p_username: username, p_destino: destino.slice(0, 300) })
+    .then(
+      () => {},
+      () => {
+        /* Puede ser que la 0017 aun no este aplicada. Silencio: no vamos
+           a llenarle la consola a quien visita un perfil por eso. */
+      },
+    );
 }
 
 /** Suma un uso. Va por RPC porque el contador no lo escribe el navegador. */

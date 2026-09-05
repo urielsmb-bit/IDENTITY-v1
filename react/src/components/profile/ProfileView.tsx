@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Profile, AudioTrack, BlockStyle } from '@/types';
 import { NETS } from '@/data/nets';
 import { getBadge } from '@/data/badges';
@@ -12,6 +12,7 @@ import { useMusic } from '@/hooks/useMusic';
 import { safeUrl, safeMedia } from '@/lib/utils';
 import { incrustable } from '@/lib/validar';
 import { esVimeo, urlFondoVimeo } from '@/lib/vimeo';
+import { registrarClic } from '@/lib/backend';
 
 interface ProfileViewProps {
   profile: Profile;
@@ -418,6 +419,28 @@ export function ProfileView({
    * que Discord no deja leer de otra forma. Sin el, el widget sale igual;
    * solo que quieto.
    */
+  /**
+   * Anotar que han pulsado un enlace.
+   *
+   * En una pagina de enlaces, «¿alguien pulso?» es la pregunta: hasta
+   * ahora se contaban visitas y no si alguien se llevaba algo de aqui.
+   *
+   * No cuenta en `preview`, que es cierto en el editor, en el carrusel de
+   * la portada y en las miniaturas de plantillas: ahi los enlaces ni
+   * siquiera llevan a ningun sitio, y contarlos ensuciaria las cifras de
+   * su dueño con clics que no existieron.
+   *
+   * `trackClick` en false lo apaga: es tu perfil y puedes no querer que
+   * se anote nada.
+   */
+  const anotarClic = useCallback(
+    (destino: string) => {
+      if (preview || p.trackClick === false || !p.username || !destino) return;
+      registrarClic(p.username, destino);
+    },
+    [preview, p.trackClick, p.username],
+  );
+
   const dcNombre = discord?.mostrar || p.discordName || '';
   const dcUsuario = discord?.usuario || p.discordUser || '';
   const dcAvatar = discord?.avatar || p.discordAvatar || '';
@@ -1075,6 +1098,7 @@ export function ProfileView({
                     key={`${s.net}-${idx}`}
                     className="pf-social"
                     href={safeUrl(s.url)}
+                    onClick={() => anotarClic(s.url)}
                     target="_blank"
                     rel="noopener noreferrer nofollow"
                     data-net={s.net}
@@ -1236,6 +1260,8 @@ export function ProfileView({
                   key={i}
                   className="pf-link"
                   href={safeUrl(link.url)}
+
+                  onClick={() => anotarClic(link.url)}
                   target="_blank"
                   rel="noopener noreferrer nofollow"
                 >
