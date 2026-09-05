@@ -28,6 +28,7 @@ import { useVimeo } from '@/hooks/useVimeo';
 import { SubirFondo } from '@/components/dashboard/SubirFondo';
 import { AjustesCuenta } from '@/components/dashboard/AjustesCuenta';
 import { Guia } from '@/components/dashboard/Guia';
+import { Buscador } from '@/components/dashboard/Buscador';
 import { Frontera } from '@/components/layout/Frontera';
 import { useGuia } from '@/hooks/useGuia';
 import { PanelInsignias } from '@/components/dashboard/PanelInsignias';
@@ -380,6 +381,7 @@ export default function DashboardPage() {
   const [iconoAbierto, setIconoAbierto] = useState<number | null>(null);
   /** Bloque abierto en su editor. null = la lista. */
   const [bloqueAbierto, setBloqueAbierto] = useState<DefBloque | null>(null);
+  const [buscando, setBuscando] = useState(false);
 
   /* Las insignias de verdad, para que la vista previa enseñe lo mismo que
      el panel de Badges. Sin esto la previa las deducia de los numeros del
@@ -558,6 +560,30 @@ export default function DashboardPage() {
    * proposito pasa a ser cadena vacia —que si existe— y no se vuelve a
    * poner: la decision de quitarlo es suya, no nuestra.
    */
+
+  /* Ctrl+K / Cmd+K abre el buscador desde cualquier parte del editor.
+     Se ignora si ya estas escribiendo en un campo con el foco puesto: ahi
+     el atajo del navegador o el del sistema pueden significar otra cosa y
+     robarlo seria peor que no tenerlo. */
+  useEffect(() => {
+    const alPulsar = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setBuscando(true);
+      }
+    };
+    window.addEventListener('keydown', alPulsar);
+    return () => window.removeEventListener('keydown', alPulsar);
+  }, []);
+
+  /** Saltar a lo que se eligio en el buscador. */
+  const irA = useCallback((r: { seccion: string; bloque?: DefBloque }) => {
+    setSection(r.seccion);
+    /* El bloque, si lo hay. Y `null` si no: quedarse el anterior abierto
+       al saltar a otra seccion enseña el panel equivocado. */
+    setBloqueAbierto(r.bloque ?? null);
+  }, [setSection]);
+
   const cuentaDiscord = useCuentaDiscordDeLaSesion();
   useEffect(() => {
     if (!profile || !cuentaDiscord.id) return;
@@ -640,6 +666,22 @@ export default function DashboardPage() {
             <div className="dash__quien-t">Editor de Perfil</div>
             <div className="dash__quien-u">@{profile.username}</div>
           </div>
+
+          {/* El buscador va ARRIBA de la navegación y con su atajo escrito.
+              Un Ctrl+K que no se ve en ninguna parte lo usa quien ya sabía
+              que existe — o sea, nadie. */}
+          <button
+            type="button"
+            className="dash__buscar"
+            onClick={() => setBuscando(true)}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.6-3.6" strokeLinecap="round" />
+            </svg>
+            <span>Buscar un ajuste</span>
+            <kbd>Ctrl K</kbd>
+          </button>
 
           <nav className="dash__nav">
             {SECTIONS.map((sec) => (
@@ -1612,6 +1654,12 @@ export default function DashboardPage() {
           </div>
         </div>
       </aside>
+
+      <Buscador
+        abierto={buscando}
+        alCerrar={() => setBuscando(false)}
+        alIr={irA}
+      />
 
       <Guia
         candidatas={guia.candidatas}

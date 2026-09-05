@@ -2548,3 +2548,122 @@
 }
 .pubp__f{ display:flex; flex-direction:column; gap:var(--s3); }
 .pubp__acc{ display:flex; gap:var(--s2); }
+
+/* ============================================================
+   BUSCAR UN AJUSTE
+   Once bloques y casi cien controles. Es más de lo que ofrece nadie
+   y no servía de nada: para cambiar «el degradado del nombre» había
+   que saber de antemano que vive en Bloques → Nombre → Color. Una
+   opción que no se encuentra no existe.
+   ============================================================ */
+.dash__buscar{
+  width:100%;
+  display:flex; align-items:center; gap:9px;
+  margin-bottom:var(--s3);
+  padding:9px 10px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--surface-2);
+  color:var(--text-muted);
+  font-family:inherit; font-size:var(--t2);
+  text-align:left;
+  cursor:pointer;
+  transition:border-color var(--transition-fast), color var(--transition-fast);
+}
+.dash__buscar:hover{ border-color:var(--border-strong); color:var(--text-primary); }
+.dash__buscar svg{ width:15px; height:15px; flex:none; }
+/* El atajo, a la vista. Un Ctrl+K que no se anuncia lo usa quien ya
+   sabía que existe — o sea, nadie. */
+.dash__buscar span{ flex:1; }
+.dash__buscar kbd{
+  flex:none;
+  padding:2px 6px;
+  border:1px solid var(--border);
+  border-radius:5px;
+  background:var(--surface);
+  font-family:var(--font-mono, ui-monospace, monospace);
+  font-size:var(--t1);
+  color:var(--text-faint, var(--text-muted));
+}
+
+.busc{
+  padding:0; border:0; background:transparent;
+  color:var(--text-primary);
+  width:min(560px, calc(100vw - 32px));
+  /* Arriba y no al centro: la lista crece hacia abajo y con `auto` la
+     caja entera bailaba en vertical con cada tecla. */
+  margin:12vh auto auto;
+  overflow:visible;
+}
+.busc::backdrop{ background:rgba(0,0,0,.62); backdrop-filter:blur(3px); }
+
+.busc__caja{
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-lg);
+  background:var(--surface);
+  box-shadow:0 24px 60px -20px rgba(0,0,0,.7);
+  overflow:hidden;
+}
+
+.busc__campo{
+  display:flex; align-items:center; gap:10px;
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+}
+.busc__campo svg{ width:17px; height:17px; flex:none; color:var(--text-muted); }
+.busc__campo input{
+  flex:1;
+  border:0; background:transparent; outline:none;
+  color:var(--text-primary);
+  font-family:inherit; font-size:var(--t4);
+}
+.busc__campo input::placeholder{ color:var(--text-faint, var(--text-muted)); }
+
+.busc__l{
+  list-style:none; margin:0; padding:6px;
+  max-height:min(48vh, 380px);
+  overflow-y:auto;
+}
+.busc__it{
+  width:100%;
+  display:flex; align-items:baseline; gap:10px;
+  padding:9px 10px;
+  border:0; border-radius:var(--radius-md);
+  background:transparent;
+  color:inherit;
+  font-family:inherit;
+  text-align:left;
+  cursor:pointer;
+}
+.busc__it.on{ background:var(--surface-3, var(--surface-2)); }
+.busc__t{ font-size:var(--t3); }
+/* La ruta a la derecha y apagada: dice a dónde va a saltar sin competir
+   con el nombre, que es lo que se está leyendo. */
+.busc__d{
+  margin-left:auto; flex:none;
+  font-family:var(--font-mono, ui-monospace, monospace);
+  font-size:var(--t1);
+  color:var(--text-muted);
+}
+
+.busc__nada{
+  margin:0; padding:18px 16px;
+  color:var(--text-muted);
+  font-size:var(--t2); line-height:1.5;
+}
+
+.busc__pie{
+  padding:8px 14px;
+  border-top:1px solid var(--border);
+  color:var(--text-faint, var(--text-muted));
+  font-size:var(--t1);
+}
+.busc__pie kbd{
+  display:inline-block;
+  min-width:18px; padding:1px 5px; margin-right:3px;
+  border:1px solid var(--border);
+  border-radius:4px;
+  background:var(--surface-2);
+  font-family:var(--font-mono, ui-monospace, monospace);
+  text-align:center;
+}
