@@ -23,10 +23,15 @@
 /* Los textos NO se arman aqui. Salen del mismo sitio que los de la
    previsualizacion del editor, para que no puedan decir cosas distintas:
    una previa que miente es peor que no tener ninguna.
-   Import relativo y no `@/`: el runtime del borde no tiene alias. */
+   Import relativo y no `@/`: el runtime del borde no tiene alias. Y CON
+   extension, aunque el fichero sea `.ts`: esta funcion no la compila Vite
+   —que resuelve con `moduleResolution: bundler` y no la necesita— sino
+   Vercel, con las reglas de ESM de Node, donde un import relativo sin
+   extension es un error. Salia en rojo en cada despliegue desde que este
+   fichero dejo de armar sus propios textos. */
 import {
   NOMBRE_SITIO, linea, tituloTarjeta, descripcionTarjeta, imagenTarjeta,
-} from '../src/lib/tarjeta';
+} from '../src/lib/tarjeta.js';
 
 export const config = { runtime: 'edge' };
 
