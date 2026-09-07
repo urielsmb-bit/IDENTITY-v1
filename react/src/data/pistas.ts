@@ -43,7 +43,7 @@ export const PISTAS: Pista[] = [
   /* ---------------- Perfil ---------------- */
   {
     id: 'avatar',
-    seccion: 'overview',
+    seccion: 'design',
     ancla: 'avatar',
     titulo: 'Empieza por tu cara',
     texto: 'Suelta una imagen aquí o pulsa para elegirla. Si subes un GIF se queda animado.',
@@ -53,7 +53,7 @@ export const PISTAS: Pista[] = [
   },
   {
     id: 'fondo',
-    seccion: 'overview',
+    seccion: 'design',
     ancla: 'fondo',
     titulo: 'El fondo también puede ser vídeo',
     texto: 'Suelta un vídeo y se reproduce en bucle detrás de todo. Se aloja solo, tú no haces nada.',
@@ -63,8 +63,8 @@ export const PISTAS: Pista[] = [
   },
   {
     id: 'usuario',
-    seccion: 'overview',
-    ancla: 'usuario',
+    seccion: 'design',
+    ancla: 'pieza-handle',
     titulo: 'Esta es tu dirección',
     texto: 'Es el enlace que vas a compartir. Puedes cambiarlo cuando quieras, pero los enlaces viejos dejan de valer.',
     cuando: (p) => !!p.avatarUrl,
@@ -75,7 +75,7 @@ export const PISTAS: Pista[] = [
   /* ---------------- Bloques ---------------- */
   {
     id: 'bloques',
-    seccion: 'blocks',
+    seccion: 'design',
     ancla: 'bloques',
     titulo: 'Enciende sólo lo que uses',
     texto: 'El ojo de cada bloque lo muestra o lo esconde. Pulsa el bloque para abrir sus ajustes.',
@@ -86,7 +86,7 @@ export const PISTAS: Pista[] = [
   },
   {
     id: 'discord-vivo',
-    seccion: 'blocks',
+    seccion: 'design',
     ancla: 'bloques',
     titulo: 'Tu Discord, en vivo',
     texto: 'Enciende el bloque de Discord y tu estado sale solo: a qué juegas, qué escuchas, si estás conectado.',
@@ -103,8 +103,8 @@ export const PISTAS: Pista[] = [
     id: 'formato',
     seccion: 'design',
     ancla: 'formato',
-    titulo: 'Tres puntos de partida',
-    texto: 'Elige el que más se te parezca y luego cámbialo entero. No te casas con ninguno.',
+    titulo: 'Cinco puntos de partida',
+    texto: 'Cada plantilla trae la composición entera ya medida: el ancho, los huecos y el tamaño de cada bloque. Elige la que más se te parezca; cambiarla no toca nada de lo que has escrito.',
     cuando: siempre,
     hecha: nunca,
     orden: 1,

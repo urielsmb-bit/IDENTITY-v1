@@ -6,6 +6,7 @@ import {
   ENTER_FX, NAME_WEIGHTS, NAME_CASES, CURSORS, PARTICLES, STATUS_STATES,
   BLOCK_SURFACES, BLOCK_ANIMS, FONTS, ANIM_DIRS, ANIM_EASINGS, TRAIL_FX,
 } from '@/data/themes';
+import { BASES_VALIDAS } from '@/data/plantillasBase';
 
 /**
  * Catálogos que `validar.perfil` consulta para decidir qué valores son
@@ -22,6 +23,11 @@ export const CATALOGOS = {
   MUSIC_STYLES, BLOCK_STYLES, LAYOUT_MODES, STACK_POS, WIDTH_MODES, HOVER_FX,
   ENTER_FX, NAME_WEIGHTS, NAME_CASES, CURSORS, PARTICLES, STATUS_STATES,
   BLOCK_SURFACES, BLOCK_ANIMS, FONTS, ANIM_DIRS, ANIM_EASINGS, TRAIL_FX,
+  /* Las plantillas de arranque no viven en `themes.ts` porque no son un
+     aspecto suelto sino una composicion entera, pero el saneado necesita
+     su lista igual que la de los temas: sin ella, `base` caeria siempre al
+     vacio y el editor volveria a enseñar la bienvenida en cada carga. */
+  BASES: BASES_VALIDAS,
 };
 
 /**

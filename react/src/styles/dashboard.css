@@ -2043,6 +2043,12 @@
    la red en otra pestaña en mitad de la edición. */
 .muestra .pf-social{ pointer-events:none; }
 
+/* Un pie de la muestra: donde se toca lo que aqui solo se ve. */
+.muestra__pie{
+  margin:8px 0 0;
+  font-size:var(--t1); color:var(--text-muted);
+}
+
 .muestra__vacio{
   margin:10px 0 0;
   padding:14px;
@@ -2667,3 +2673,408 @@
   font-family:var(--font-mono, ui-monospace, monospace);
   text-align:center;
 }
+
+/* ---- las cinco plantillas de arranque ------------------------------- */
+/* No son `.cards`: aquellas eligen UNA propiedad —una forma de avatar, un
+   cursor— y les basta un icono de 54px con su nombre debajo. Aqui se elige
+   una composicion entera, y lo que hay que ver es el dibujo: la caja, donde
+   cae la foto, si los bloques llevan cajita propia. Por eso el dibujo manda
+   y ocupa el ancho, y el texto va debajo explicando para quien es. */
+.plbase{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(148px, 1fr));
+  gap:8px;
+}
+.plbase__it{
+  display:flex; flex-direction:column; gap:7px;
+  padding:10px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--bg-primary);
+  color:var(--text-muted);
+  text-align:left; cursor:pointer;
+  transition:border-color var(--transition-fast), background var(--transition-fast),
+             color var(--transition-fast), transform var(--transition-fast);
+}
+.plbase__it:hover{
+  border-color:var(--border-strong);
+  background:var(--surface-2);
+  color:var(--text-secondary);
+  transform:translateY(-1px);
+}
+.plbase__it:active{ transform:scale(.985); }
+/* Blanco es lo ELEGIDO, ambar es donde esta el teclado: la misma regla que
+   el resto del editor, para que una plantilla marcada se lea igual que una
+   opcion marcada en cualquier otro sitio. */
+.plbase__it.on{
+  border-color:var(--accent);
+  background:var(--accent-soft);
+  color:var(--accent);
+}
+.plbase__fig{
+  display:block; width:100%;
+  border-radius:calc(var(--radius-md) - 4px);
+  background:var(--surface-2);
+  color:currentColor;
+}
+.plbase__it.on .plbase__fig{ background:transparent; }
+.plbase__fig svg{ display:block; width:100%; height:auto; }
+.plbase__n{
+  font-size:var(--t2); font-weight:600;
+  color:var(--text-secondary);
+}
+.plbase__it.on .plbase__n{ color:var(--text-primary); }
+/* «modificada» es una aclaracion, no un aviso: va en el tono de las notas
+   al pie, no en el del texto que la precede. */
+.plbase__n em{
+  font-style:normal; font-weight:400;
+  color:var(--text-muted);
+}
+.plbase__d{
+  font-size:var(--t1); line-height:1.4;
+  color:var(--text-muted);
+}
+
+/* En la bienvenida hay sitio de sobra —ocupa el editor entero— asi que el
+   dibujo se ve al tamano al que esta pensado. */
+.plbase--grande{ grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:12px; }
+.plbase--grande .plbase__it{ padding:13px; gap:9px; }
+.plbase--grande .plbase__n{ font-size:var(--t3); }
+.plbase--grande .plbase__d{ font-size:var(--t2); }
+
+.bienv__salir{
+  margin-top:var(--s5);
+  font-size:var(--t2); color:var(--text-muted);
+}
+
+/* ---- bloques: encender, apagar, y el engranaje para lo fino ---------- */
+/* La rejilla de baldosas se queda para otras listas; esta va en columna
+   porque ahora hay DOS montones —lo puesto y lo que se puede anadir— y en
+   dos columnas de baldosas no se distingue donde acaba uno y empieza el
+   otro. Ademas cada fila tiene dos acciones, y una fila ancha tiene sitio
+   para las dos sin apretarlas. */
+.blist--v{ display:flex; flex-direction:column; gap:6px; }
+.blq{
+  display:flex; align-items:stretch; gap:0;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--bg-primary);
+  overflow:hidden;
+  transition:border-color var(--transition-fast), background var(--transition-fast);
+}
+.blq:hover{ border-color:var(--border-strong); background:var(--surface-2); }
+/* La tarjeta ENTERA es el interruptor. Antes habia que entrar al editor
+   avanzado del bloque y buscar dentro una casilla llamada «visible». */
+.blq__sw{
+  flex:1; min-width:0;
+  display:grid; grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center; gap:11px;
+  padding:11px 13px;
+  border:0; background:none; color:inherit;
+  text-align:left; cursor:pointer;
+}
+.blq__ico{
+  display:grid; place-items:center;
+  width:30px; height:30px; flex:none;
+  border-radius:9px;
+  background:var(--surface-3);
+  color:var(--accent);
+}
+.blq__ico svg{ width:18px; height:18px; display:block; }
+.blq__txt{ min-width:0; display:grid; gap:2px; }
+.blq__n{ font-size:var(--t2); font-weight:600; color:var(--text-primary); }
+.blq__d{
+  font-size:var(--t1); line-height:1.35; color:var(--text-muted);
+  display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+/* El signo dice que va a pasar si pulsas, no en que estado estas: el estado
+   ya lo dice el monton en el que esta la fila. */
+.blq__acc{
+  display:grid; place-items:center;
+  width:24px; height:24px; flex:none;
+  border-radius:100px;
+  color:var(--text-muted);
+}
+.blq__acc svg{ width:15px; height:15px; display:block; }
+.blq__sw:hover .blq__acc{ color:var(--text-primary); background:var(--surface-3); }
+
+.blq.is-off{ border-style:dashed; }
+.blq.is-off .blq__ico{ background:transparent; color:var(--text-faint); }
+.blq.is-off .blq__n{ color:var(--text-secondary); font-weight:500; }
+
+/* El engranaje: la puerta al editor de siempre, con sus treinta mandos.
+   Va separado por una linea para que se lea como OTRA accion y no como el
+   borde derecho del interruptor. */
+.blq__cfg{
+  flex:none;
+  display:grid; place-items:center;
+  width:44px;
+  border:0; border-left:1px solid var(--border);
+  background:none; color:var(--text-muted);
+  cursor:pointer;
+  transition:color var(--transition-fast), background var(--transition-fast);
+}
+.blq__cfg svg{ width:17px; height:17px; display:block; }
+.blq__cfg:hover{ color:var(--text-primary); background:var(--surface-3); }
+
+/* ---- las piezas del perfil ------------------------------------------ */
+/* Cada fila enseña SU contenido, no una descripcion de el: el nombre que
+   hay puesto, los iconos que hay puestos, la pista que hay puesta. Una
+   lista que dice «Biografia · El parrafo que cuenta quien eres» obliga a
+   abrir la pieza para saber que pone hoy. */
+.pzas{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+.pza{
+  /* En fila los tres mandos, y el contenido desplegado debajo ocupando el
+     ancho entero: por eso `wrap` y no un `flex` a secas. */
+  display:flex; align-items:stretch; flex-wrap:wrap;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--bg-primary);
+  overflow:hidden;
+  transition:border-color var(--transition-fast), background var(--transition-fast);
+}
+.pza:hover{ border-color:var(--border-strong); background:var(--surface-2); }
+
+/* El ojo. Es lo primero de la fila porque es la pregunta que se contesta
+   antes de ninguna otra: ¿esto se ve o no se ve? */
+.pza__ojo{
+  flex:none; width:42px;
+  display:grid; place-items:center;
+  border:0; border-right:1px solid var(--border);
+  background:none; color:var(--accent);
+  cursor:pointer;
+  transition:color var(--transition-fast), background var(--transition-fast);
+}
+.pza__ojo svg{ width:17px; height:17px; display:block; }
+.pza__ojo:hover{ background:var(--surface-3); }
+
+.pza__cuerpo{
+  flex:1; min-width:0;
+  /* Tres columnas: el icono, el texto y la flecha de abrir. Con dos, la
+     flecha se caia a una segunda fila debajo del icono. */
+  display:grid; grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center; gap:11px;
+  padding:10px 13px;
+  border:0; background:none; color:inherit;
+  text-align:left; cursor:pointer;
+}
+.pza__ico{
+  display:grid; place-items:center;
+  width:30px; height:30px; flex:none;
+  border-radius:9px;
+  background:var(--surface-3);
+  color:var(--text-secondary);
+}
+.pza__ico svg{ width:18px; height:18px; display:block; }
+/* La tarjeta no lleva icono de trazo sino el dibujo de su propia caja:
+   ensena de que superficie es sin tener que leerlo. */
+.pza__ico--dib{ width:44px; height:30px; border-radius:7px; }
+.pza__ico--dib svg{ width:34px; height:auto; }
+
+.pza__txt{ min-width:0; display:grid; gap:2px; }
+.pza__n{
+  font-family:var(--font-mono);
+  font-size:var(--t1); font-weight:500;
+  letter-spacing:.1em; text-transform:uppercase;
+  color:var(--text-muted);
+}
+/* Lo que hay puesto, en el tamano del contenido y no en el de una
+   etiqueta: es lo que se viene a mirar. */
+.pza__v{
+  font-size:var(--t2); color:var(--text-primary);
+  min-width:0;
+  display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical;
+  overflow:hidden; overflow-wrap:anywhere;
+}
+.pza__nombre{ font-weight:600; }
+.pza__mono{ font-family:var(--font-mono); }
+.pza__parrafo{ color:var(--text-secondary); }
+.pza__vacio{ color:var(--text-faint); font-style:italic; }
+
+/* Los iconos de verdad —las redes que tienes, las insignias que tienes—
+   en pequeno y en fila. */
+.pza__iconos{ display:flex; align-items:center; gap:7px; color:var(--text-secondary); }
+.pza__iconos i{ display:block; }
+.pza__iconos svg{ width:15px; height:15px; display:block; }
+.pza__iconos em{ font-style:normal; font-size:var(--t1); color:var(--text-muted); }
+
+.pza.is-off{ border-style:dashed; }
+.pza.is-off .pza__ojo{ color:var(--text-faint); }
+.pza.is-off .pza__ico{ background:transparent; color:var(--text-faint); }
+.pza.is-off .pza__v{ color:var(--text-muted); }
+
+/* El engranaje: la puerta a los ajustes de ESA pieza. Separado por una
+   linea para que se lea como otra accion y no como el borde de la fila. */
+.pza__cfg{
+  flex:none; width:44px;
+  display:grid; place-items:center;
+  border:0; border-left:1px solid var(--border);
+  background:none; color:var(--text-muted);
+  cursor:pointer;
+  transition:color var(--transition-fast), background var(--transition-fast);
+}
+.pza__cfg svg{ width:17px; height:17px; display:block; }
+.pza__cfg:hover{ color:var(--text-primary); background:var(--surface-3); }
+
+/* El avatar y el fondo son imagenes: su control es la caja donde se
+   sueltan, y el engranaje se le posa encima en una esquina. */
+.pza-fila{ margin-bottom:var(--s3); }
+.pza-caja{ position:relative; flex:1; min-width:0; display:flex; }
+.pza-caja > *{ flex:1; min-width:0; }
+.pza__cfg--flota{
+  position:absolute; top:6px; right:6px;
+  width:30px; height:30px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:var(--bg-primary);
+  z-index:1;
+}
+.pza__cfg--flota:hover{ border-color:var(--border-strong); }
+
+/* ---- el panel de ajustes de una pieza, encima --------------------- */
+.ovl{
+  padding:0; border:0; background:none;
+  max-width:none; max-height:none;
+  width:100%; height:100%;
+  color:var(--text-primary);
+}
+/* El velo es suave a proposito: detras esta la vista previa en vivo, y
+   oscurecerla del todo seria apagar lo unico que hay que mirar mientras
+   se toca un color. */
+.ovl::backdrop{ background:rgba(0,0,0,.38); }
+.ovl__caja{
+  /* Pegado a la IZQUIERDA, encima del editor, y a toda la altura. A la
+     derecha tapaba la vista previa, que es justo lo que hay que estar
+     mirando mientras se cambia el color de una pieza: se ajustaba a
+     ciegas y habia que cerrar para ver el resultado. En movil ocupa todo,
+     que es lo unico que cabe. */
+  position:fixed; inset:0 auto 0 0;
+  width:min(540px, 100%);
+  display:flex; flex-direction:column;
+  background:var(--bg-secondary, var(--bg-primary));
+  border-right:1px solid var(--border);
+  box-shadow:24px 0 60px rgba(0,0,0,.45);
+  animation:ovl-entra .22s var(--ease-out, ease-out);
+}
+/* Solo el desplazamiento, sin opacidad. Una animacion se puede quedar a
+   medias —el navegador las frena en una pestaña que no esta pintando— y
+   con la opacidad dentro eso deja el panel translucido para siempre, con
+   el editor transparentandose por debajo. Frenada a medias, esta solo
+   deja el panel unos pixeles corrido. */
+@keyframes ovl-entra{ from{ transform:translateX(-24px); } }
+@media (prefers-reduced-motion:reduce){ .ovl__caja{ animation:none; } }
+
+.ovl__enc{
+  display:flex; align-items:flex-start; gap:12px;
+  padding:16px 18px;
+  border-bottom:1px solid var(--border);
+}
+.ovl__txt{ flex:1; min-width:0; }
+.ovl__t{ margin:0; font-size:var(--t4); font-weight:600; }
+.ovl__d{ margin:3px 0 0; font-size:var(--t2); color:var(--text-muted); }
+.ovl__x{
+  flex:none;
+  display:grid; place-items:center;
+  width:32px; height:32px;
+  border:1px solid var(--border); border-radius:8px;
+  background:none; color:var(--text-secondary);
+  cursor:pointer;
+  transition:color var(--transition-fast), background var(--transition-fast),
+             border-color var(--transition-fast);
+}
+.ovl__x svg{ width:16px; height:16px; display:block; }
+.ovl__x:hover{ color:var(--text-primary); background:var(--surface-3); border-color:var(--border-strong); }
+
+.ovl__cuerpo{
+  flex:1; min-height:0;
+  overflow-y:auto; overscroll-behavior:contain;
+  padding:16px 18px 28px;
+}
+
+/* ---- elegir tipografia viendola ------------------------------------- */
+/* Cada opcion escrita con su propia fuente. Era un `<select>`, y un
+   desplegable nativo enseña nombres: «Bastliga» o «Chiikawa» no dicen nada
+   hasta que se ven escritos. */
+.fnts{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));
+  gap:6px;
+}
+/* El rotulo de grupo ocupa la fila entera, para que parta la rejilla. */
+.fnts__g{
+  grid-column:1 / -1;
+  margin-top:var(--s2);
+  font-family:var(--font-mono);
+  font-size:var(--t1); font-weight:500;
+  letter-spacing:.12em; text-transform:uppercase;
+  color:var(--text-muted);
+}
+.fnts__g:first-of-type{ margin-top:0; }
+.fnt{
+  display:grid; place-items:center;
+  min-height:52px;
+  padding:8px 10px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--bg-primary);
+  color:var(--text-secondary);
+  cursor:pointer;
+  transition:border-color var(--transition-fast), background var(--transition-fast),
+             color var(--transition-fast);
+}
+.fnt:hover{ border-color:var(--border-strong); background:var(--surface-2); color:var(--text-primary); }
+.fnt.on{ border-color:var(--accent); background:var(--accent-soft); color:var(--text-primary); }
+/* La muestra. `font-size` generoso porque una decorativa a 12px es una
+   mancha; y recortada, que hay nombres largos y la rejilla es estrecha. */
+.fnt__m{
+  font-size:19px; line-height:1.15;
+  max-width:100%;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+
+/* ---- el contenido de una pieza, desplegado en su fila -------------- */
+/* Pulsar la fila abre lo que esa pieza DICE. La flecha lo anuncia y gira
+   al abrirse; sin ella la fila no parece que se pueda abrir. */
+.pza__caret{
+  display:grid; place-items:center;
+  width:20px; flex:none;
+  color:var(--text-faint);
+  transition:transform var(--transition-fast), color var(--transition-fast);
+}
+.pza__caret svg{ width:14px; height:14px; display:block; }
+.pza__cuerpo[aria-expanded="true"] .pza__caret{ transform:rotate(90deg); color:var(--text-secondary); }
+.pza__cuerpo:hover .pza__caret{ color:var(--text-secondary); }
+
+.pza__abre{
+  flex-basis:100%;
+  padding:4px 14px 14px;
+  border-top:1px solid var(--border);
+  background:var(--surface-2);
+}
+/* Dentro va el editor de la pieza recortado a su contenido: sin el aire
+   que se da a si mismo cuando ocupa un panel entero. */
+.pza__abre .grupo{ padding-top:0; margin-bottom:0; border-top:0; }
+.pza__abre .f:last-child,
+.pza__abre .sw-row:last-child{ margin-bottom:0; }
+
+/* ---- que insignias se enseñan ------------------------------------- */
+/* Ganarlas las decide el servidor; enseñarlas, su dueño. Se pintan con la
+   misma clase que en el perfil —`.pf-badge`— para que lo que se elige sea
+   exactamente lo que se va a ver, con su color de rareza y todo. */
+.insg{ display:flex; flex-wrap:wrap; gap:7px; }
+.insg__it{
+  padding:4px;
+  border:1px solid var(--border);
+  border-radius:100px;
+  background:none;
+  cursor:pointer;
+  /* Apagada: en gris y a media luz, para que se lea «esta no sale» sin
+     tener que quitarla de la lista. */
+  opacity:.42; filter:grayscale(1);
+  transition:opacity var(--transition-fast), filter var(--transition-fast),
+             border-color var(--transition-fast);
+}
+.insg__it:hover{ border-color:var(--border-strong); opacity:.7; }
+.insg__it.on{ opacity:1; filter:none; border-color:var(--accent); }
+.insg__it .pf-badge{ pointer-events:none; }

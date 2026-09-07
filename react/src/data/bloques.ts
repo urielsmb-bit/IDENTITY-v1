@@ -52,6 +52,11 @@ export type ControlId =
   | 'portadaMusica'
   | 'posAvatar'
   | 'formaAvatar'
+  | 'tamAvatar'
+  | 'bordeAvatar'
+  | 'brilloAvatar'
+  | 'ubicacion'
+  | 'pronombres'
   | 'animacion'
   | 'heredarCaja'
   | 'discordId'
@@ -114,11 +119,25 @@ const COLOR_NOMBRE: GrupoControles = {
  *  propia forma. La caja es opcional, y por defecto no la hay. */
 const FORMA_REDES: GrupoControles = {
   titulo: 'Forma de los iconos',
-  controles: ['estiloRedes', 'monoRedes', 'listaRedes'],
+  controles: ['estiloRedes', 'monoRedes'],
 };
 const FORMA_INSIGNIAS: GrupoControles = {
   titulo: 'Forma de las insignias',
-  controles: ['estiloInsignias', 'listaInsignias'],
+  controles: ['estiloInsignias'],
+};
+
+/* El CONTENIDO de estas dos piezas es su lista: que redes tienes puestas y
+   que insignias quieres enseñar. Estaba metido dentro de «forma», entre el
+   estilo del icono y el monocromo, o sea entre ajustes de aspecto; y el
+   primer grupo de la pieza era solo «mostrar u ocultar». Aqui abajo, cada
+   pieza abre por su contenido, como todas las demas. */
+const LISTA_REDES: GrupoControles = {
+  titulo: 'Tus redes',
+  controles: ['listaRedes', 'visible'],
+};
+const LISTA_INSIGNIAS: GrupoControles = {
+  titulo: 'Cuáles se ven',
+  controles: ['listaInsignias', 'visible'],
 };
 
 /** Para las líneas pequeñas: no piden fuente ni caja, pero sí poder
@@ -143,8 +162,12 @@ export const BLOQUES: DefBloque[] = [
     // suyo movía cosas que no son suyas.
     grupos: [
       soloVisible,
-      { titulo: 'Forma y sitio', controles: ['formaAvatar', 'posAvatar', 'marcoDiscord'] },
-      RESPLANDOR,
+      { titulo: 'Forma y sitio', controles: ['formaAvatar', 'tamAvatar', 'posAvatar', 'marcoDiscord'] },
+      /* El tamaño, el borde y el brillo del avatar vivian en «Diseño», en
+         medio de los mandos de la tarjeta, y el editor del avatar no los
+         tenia: se entraba a configurar el avatar y no se podia ni hacerlo
+         mas grande. Son suyos y estan con lo suyo. */
+      { titulo: 'Borde y resplandor', controles: ['bordeAvatar', 'brilloAvatar', 'halo'] },
       ENTRADA,
     ],
   },
@@ -170,7 +193,13 @@ export const BLOQUES: DefBloque[] = [
     descripcion: 'La línea de oficio, ciudad y pronombres.',
     icono: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
     campoTexto: 'title',
-    grupos: [conTexto(), TIPOGRAFIA, COLOR, COMPOSICION, ENTRADA],
+    /* La linea entera, no solo el oficio. La ciudad y los pronombres se
+       pintan en este bloque y se escribian en otra seccion; los
+       pronombres, en ninguna. */
+    grupos: [
+      { titulo: 'Texto', controles: ['texto', 'ubicacion', 'pronombres', 'visible'] },
+      TIPOGRAFIA, COLOR, COMPOSICION, ENTRADA,
+    ],
   },
   {
     id: 'joined',
@@ -204,14 +233,14 @@ export const BLOQUES: DefBloque[] = [
     nombre: 'Insignias',
     descripcion: 'Las insignias que has desbloqueado.',
     icono: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 3 8l9 14 9-14-9-6Z"/><path d="M3 8h18M9 8l3 14M15 8l-3 14"/></svg>`,
-    grupos: [soloVisible, FORMA_INSIGNIAS, CAJA, RESPLANDOR, COMPOSICION, ENTRADA],
+    grupos: [LISTA_INSIGNIAS, FORMA_INSIGNIAS, CAJA, RESPLANDOR, COMPOSICION, ENTRADA],
   },
   {
     id: 'socials',
     nombre: 'Redes',
     descripcion: 'Los iconos de tus redes enlazadas.',
     icono: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13.5a4 4 0 0 0 5.7.3l2.6-2.6a4 4 0 0 0-5.7-5.7l-1.5 1.5"/><path d="M14 10.5a4 4 0 0 0-5.7-.3l-2.6 2.6a4 4 0 0 0 5.7 5.7l1.5-1.5"/></svg>`,
-    grupos: [soloVisible, FORMA_REDES, CAJA, RESPLANDOR, COMPOSICION, ENTRADA],
+    grupos: [LISTA_REDES, FORMA_REDES, CAJA, RESPLANDOR, COMPOSICION, ENTRADA],
   },
   {
     id: 'music',

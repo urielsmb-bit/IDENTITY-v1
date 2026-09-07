@@ -41,6 +41,45 @@ function L(children: ReactNode) {
 /** El marco de la tarjeta, para los dibujos que representan una pieza dentro. */
 const marco = <rect x="3" y="3" width="48" height="28" rx="2.5" strokeWidth="1.4" opacity=".3" />;
 
+/**
+ * Lienzo ancho, solo para las plantillas de arranque.
+ *
+ * Las demas opciones dibujan UNA cosa —una forma de avatar, un tipo de
+ * caja— y en 54x34 se ven de sobra. Una plantilla es una composicion
+ * entera: la caja, el avatar, el nombre, la biografia y una fila de
+ * iconos. Comprimir eso en el lienzo pequeño daba cinco manchas que se
+ * parecian entre si, que es justo lo contrario de para lo que esta el
+ * dibujo. Proporcion de tarjeta, para que se lea como un perfil.
+ */
+function W(children: ReactNode) {
+  return (
+    <svg
+      viewBox="0 0 100 64"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {children}
+    </svg>
+  );
+}
+
+/** Una raya de texto. Se repiten tanto que a mano eran ilegibles. */
+const raya = (x: number, y: number, w: number, o = 1) => (
+  <rect x={x} y={y} width={w} height="3.4" rx="1.7" fill="currentColor" stroke="none" opacity={o} />
+);
+
+/** La fila de iconos de redes: tres puntos. */
+const puntos = (cx: number, y: number) => (
+  <>
+    <circle cx={cx - 7} cy={y} r="2.4" fill="currentColor" stroke="none" opacity=".75" />
+    <circle cx={cx} cy={y} r="2.4" fill="currentColor" stroke="none" opacity=".75" />
+    <circle cx={cx + 7} cy={y} r="2.4" fill="currentColor" stroke="none" opacity=".75" />
+  </>
+);
+
 /* ---------------------------------------------------------------- */
 
 export const DIBUJOS: Record<string, Record<string, ReactNode>> = {
@@ -481,6 +520,60 @@ export const DIBUJOS: Record<string, Record<string, ReactNode>> = {
         <rect x="12" y="8" width="26" height="6" rx="1.5" fill="currentColor" stroke="none" opacity=".45" />
         <rect x="18" y="15" width="26" height="6" rx="1.5" fill="currentColor" stroke="none" />
         <rect x="9" y="22" width="26" height="6" rx="1.5" fill="currentColor" stroke="none" opacity=".65" />
+      </>,
+    ),
+  },
+  /* ---- las cinco plantillas de arranque ---- */
+  /* Cada una dibuja SU composicion: donde va la foto, de que ancho es la
+     caja, si los bloques llevan cajita propia. Se elige mirando, que es lo
+     que hace que no haga falta leerse las cinco descripciones. */
+  BASES: {
+    clasica: W(
+      <>
+        <rect x="26" y="5" width="48" height="54" rx="6" fill="currentColor" fillOpacity=".12" strokeWidth="1.2" opacity=".85" />
+        <circle cx="50" cy="19" r="7" fill="currentColor" stroke="none" />
+        {raya(36, 31, 28)}
+        {raya(40, 39, 20, 0.5)}
+        {puntos(50, 51)}
+      </>,
+    ),
+    compacta: W(
+      <>
+        <rect x="33" y="7" width="34" height="50" rx="7" fill="currentColor" fillOpacity=".45" stroke="none" />
+        <circle cx="50" cy="19" r="5.5" fill="currentColor" stroke="none" />
+        {raya(39, 29, 22)}
+        {raya(43, 36, 14, 0.5)}
+        {puntos(50, 47)}
+      </>,
+    ),
+    retrato: W(
+      <>
+        <rect x="9" y="13" width="82" height="38" rx="5" fill="currentColor" fillOpacity=".12" strokeWidth="1.2" opacity=".85" />
+        <rect x="17" y="21" width="21" height="21" rx="6" fill="currentColor" stroke="none" />
+        {raya(45, 22, 30)}
+        {raya(45, 29, 20, 0.5)}
+        {raya(45, 36, 24, 0.35)}
+        {puntos(52, 45)}
+      </>,
+    ),
+    minima: W(
+      <>
+        {/* Sin caja: el borde punteado solo dice donde acaba el diseño. */}
+        <rect x="24" y="4" width="52" height="56" rx="6" strokeWidth="1.1" strokeDasharray="3 4" opacity=".3" />
+        <circle cx="50" cy="18" r="6" fill="currentColor" stroke="none" />
+        {raya(33, 31, 34)}
+        {raya(41, 40, 18, 0.45)}
+        {puntos(50, 51)}
+      </>,
+    ),
+    vitrina: W(
+      <>
+        <rect x="6" y="3" width="88" height="58" rx="6" fill="currentColor" fillOpacity=".1" strokeWidth="1.2" opacity=".85" />
+        <circle cx="50" cy="14" r="6" fill="currentColor" stroke="none" />
+        {raya(38, 24, 24)}
+        {/* Y aqui esta lo suyo: cada bloque en su propia cajita. */}
+        <rect x="13" y="32" width="74" height="10" rx="3" fill="currentColor" fillOpacity=".3" strokeWidth="1" opacity=".8" />
+        <rect x="13" y="45" width="74" height="10" rx="3" fill="currentColor" fillOpacity=".3" strokeWidth="1" opacity=".8" />
       </>,
     ),
   },

@@ -128,7 +128,9 @@ const FORMAS: Record<string, any> = {
   gallery: { url: 'medio', alt: TOPE.corto, caption: TOPE.medio },
   tags: null,
   blocksOff: null,
-  blockOrder: null
+  blockOrder: null,
+  /* Ids sueltos, sin forma: se limpian como `tags`. */
+  badgesOff: null
 };
 
 function limpiarColeccion(clave: string, lista: any[]): any[] {
@@ -264,6 +266,11 @@ function esquema(ID: any) {
     musicStyle: (v: any) => deLista(v, ids(ID?.MUSIC_STYLES), 'compact'),
     badgeStyle: (v: any) => deLista(v, ids(ID?.BADGE_STYLES), 'plain'),
     blockStyle: (v: any) => deLista(v, ids(ID?.BLOCK_STYLES), 'inherit'),
+    /* La plantilla de arranque. El valor por defecto es el vacio —«aun no ha
+       elegido»— y no una plantilla concreta: si un id desconocido cayera en
+       «Clásica», un perfil saneado se llevaria una plantilla que su dueño no
+       eligio, y ademas se perderia el aviso de que hay algo que no cuadra. */
+    base: (v: any) => deLista(v, ids(ID?.BASES), ''),
     layoutMode: (v: any) => deLista(v, ids(ID?.LAYOUT_MODES), 'stack'),
     stackPos: (v: any) => deLista(v, ids(ID?.STACK_POS), 'center'),
     widthMode: (v: any) => deLista(v, ids(ID?.WIDTH_MODES), 'fixed'),

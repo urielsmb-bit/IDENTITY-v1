@@ -37,7 +37,11 @@ import { PanelInsignias } from '@/components/dashboard/PanelInsignias';
 import { PublicarPlantilla } from '@/components/dashboard/PublicarPlantilla';
 import { useInsignias } from '@/hooks/useInsignias';
 import { DIBUJOS } from '@/components/dashboard/dibujos';
-import { BLOQUES, BLOQUE_POR_ID, type DefBloque, BLOQUES_APAGADOS_POR_DEFECTO } from '@/data/bloques';
+import { BLOQUE_POR_ID, type DefBloque, BLOQUES_APAGADOS_POR_DEFECTO } from '@/data/bloques';
+import { BASE_PERSONALIZADA } from '@/data/plantillasBase';
+import { ElegirPlantilla } from '@/components/dashboard/ElegirPlantilla';
+import { Piezas } from '@/components/dashboard/Piezas';
+import { Overlay } from '@/components/ui/Overlay';
 import { safeMedia } from '@/lib/utils';
 import * as backend from '@/lib/backend';
 import { hasBackend } from '@/lib/supabase';
@@ -118,56 +122,6 @@ const OPACIDAD_SUPERFICIE: Record<string, number> = {
   glow: 55,
 };
 
-/**
- * Formatos del perfil.
- *
- * No son un motor de layout aparte: cada uno aplica una combinación de
- * campos que ya existen. "Split" es la posición de avatar "al lado", y
- * "Minimal" quita la caja. Guardar además un campo `formato` habría creado
- * dos fuentes de verdad para lo mismo.
- */
-const FORMATOS = [
-  {
-    id: 'normal' as const,
-    name: 'Normal',
-    ajustes: { avPos: 'center', align: 'center' },
-    dibujo: (
-      <svg viewBox="0 0 54 34" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-        <circle cx="27" cy="8" r="5" fill="currentColor" stroke="none" />
-        <path d="M15 19h24M11 25h32M19 31h16" />
-      </svg>
-    ),
-  },
-  {
-    id: 'split' as const,
-    name: 'Split',
-    // No toca `align`: Split solo pega la cabecera al avatar; el resto
-    // del perfil se queda como estuviera, normalmente centrado.
-    ajustes: { avPos: 'side' },
-    dibujo: (
-      <svg viewBox="0 0 54 34" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-        <circle cx="12" cy="13" r="6" fill="currentColor" stroke="none" />
-        <path d="M25 10h18M25 17h13" />
-        <path d="M6 28h42" opacity=".55" />
-      </svg>
-    ),
-  },
-  {
-    id: 'minimal' as const,
-    name: 'Minimal',
-    ajustes: { avPos: 'center', align: 'center', surface: 'none' },
-    dibujo: (
-      <svg viewBox="0 0 54 34" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-        <circle cx="27" cy="7" r="4" fill="currentColor" stroke="none" />
-        <path d="M18 16h18" />
-        <rect x="13" y="23" width="8" height="7" rx="2" fill="currentColor" stroke="none" />
-        <rect x="23" y="23" width="8" height="7" rx="2" fill="currentColor" stroke="none" />
-        <rect x="33" y="23" width="8" height="7" rx="2" fill="currentColor" stroke="none" />
-      </svg>
-    ),
-  },
-];
-
 /* Iconos de trazo, no emoji. Un emoji lo dibuja el sistema operativo: cambia
    de forma y de color en cada aparato, no hereda el color del tema y no se
    le puede dar resplandor. Estos son nuestros y se comportan. */
@@ -209,10 +163,21 @@ const VISTAS = [
   },
 ];
 
+/**
+ * Las secciones del editor.
+ *
+ * Eran seis y ahora son cuatro. «Perfil» y «Bloques» no se han quitado:
+ * se han fundido con «Diseño», porque las tres editaban lo mismo desde
+ * tres sitios —el contenido de una pieza, si se ve, y como se ve— y
+ * ninguna se explicaba sin las otras dos.
+ */
 const SECTIONS = [
-  { id: 'overview', name: 'Perfil', desc: 'Tu foto, tu fondo y quién eres.', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>` },
-  { id: 'design', name: 'Diseño', desc: 'Tema, colores, tipografía y forma de la tarjeta.', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 20 4"/><path d="M4 20h6"/><path d="M4 20v-6"/><path d="M14 4h6v6"/></svg>` },
-  { id: 'blocks', name: 'Bloques', desc: 'Qué piezas aparecen en tu perfil y en qué orden.', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>` },
+  { id: 'design', name: 'Diseño', desc: 'Tu foto, tus textos y el aspecto de cada pieza.', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 20 4"/><path d="M4 20h6"/><path d="M4 20v-6"/><path d="M14 4h6v6"/></svg>` },
+  /* Sin `desc`: «Bloques» trae su propio encabezado, porque el suyo
+     nombra la plantilla que esta colocando las piezas y eso cambia
+     segun el perfil. Es el mismo trato que tienen los otros paneles
+     que se encabezan solos. Ademas el de aqui decia «y en que orden»,
+     y el orden no se toca en esta seccion: lo pone la plantilla. */
   { id: 'links', name: 'Redes & Enlaces', desc: 'Adónde lleva tu perfil: redes, enlaces y contacto.', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13.5a4 4 0 0 0 5.7.3l2.6-2.6a4 4 0 0 0-5.7-5.7l-1.5 1.5"/><path d="M14 10.5a4 4 0 0 0-5.7-.3l-2.6 2.6a4 4 0 0 0 5.7 5.7l1.5-1.5"/></svg>` },
   { id: 'badges', name: 'Badges', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 3 8l9 14 9-14-9-6Z"/><path d="M3 8h18M9 8l3 14M15 8l-3 14"/></svg>` },
   { id: 'settings', name: 'Ajustes', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"/></svg>` },
@@ -319,6 +284,11 @@ function createBlankProfile(username = 'usuario'): Profile {
     projects: [],
     gallery: [],
     tags: ['developer'],
+    /* Sin plantilla todavia. Es lo que hace que lo primero que vea quien
+       acaba de crear su perfil sea la pantalla para elegir una, y no un
+       editor con seis secciones y ciento y pico mandos. En cuanto elige,
+       aqui queda su id; si prefiere empezar en blanco, `personal`. */
+    base: '',
     blocksOff: [...BLOQUES_APAGADOS_POR_DEFECTO],
     blockOrder: [],
     canvasH: null,
@@ -381,8 +351,17 @@ export default function DashboardPage() {
   const [activeNetGroup, setActiveNetGroup] = useState('all');
   /** Fila cuyo selector de icono está abierto. null = ninguno. */
   const [iconoAbierto, setIconoAbierto] = useState<number | null>(null);
-  /** Bloque abierto en su editor. null = la lista. */
-  const [bloqueAbierto, setBloqueAbierto] = useState<DefBloque | null>(null);
+  /**
+   * La pieza cuyos ajustes estan abiertos encima. null = ninguna.
+   *
+   * Es un id y no un objeto porque no todas las piezas son bloques: el
+   * fondo y la tarjeta tambien tienen los suyos y no estan en `BLOQUES`.
+   * De aqui sale `defAbierto`, que es el bloque cuando lo hay.
+   */
+  const [pieza, setPieza] = useState<string | null>(null);
+  const cerrarPieza = useCallback(() => setPieza(null), []);
+  /** El bloque abierto, si la pieza abierta es uno. */
+  const defAbierto = pieza ? BLOQUE_POR_ID[pieza] ?? null : null;
   const [buscando, setBuscando] = useState(false);
 
   /* Las insignias de verdad, para que la vista previa enseñe lo mismo que
@@ -421,6 +400,21 @@ export default function DashboardPage() {
       p = createBlankProfile(claimParam || 'mi_perfil');
       store.save(p);
       store.setMine(p.username);
+    } else if (p.base === undefined) {
+      /* Un perfil que YA existia es de antes de que hubiera plantillas: su
+         diseño es suyo y no sale de ninguna. Se marca como personalizado
+         aqui mismo, porque el vacio significa «todavia no ha elegido» y eso
+         le plantaria encima la pantalla de bienvenida a alguien que lleva
+         meses con su perfil hecho.
+
+         Se mira si el campo EXISTE, no si tiene valor. Un perfil recien
+         creado trae `base: ''` a proposito —«aun no ha elegido»— y este
+         efecto vuelve a correr en cuanto se guarda: con `!p.base` lo
+         encontraba en el almacen, lo tomaba por antiguo y le ponia
+         `personal`, o sea que la bienvenida no llegaba a verse NUNCA. Sin
+         el campo es que es anterior a las plantillas; con el campo vacio es
+         que le toca elegir. */
+      p = { ...p, base: BASE_PERSONALIZADA };
     }
 
     cuentaMontada.current = idCuenta;
@@ -581,9 +575,10 @@ export default function DashboardPage() {
   /** Saltar a lo que se eligio en el buscador. */
   const irA = useCallback((r: { seccion: string; bloque?: DefBloque }) => {
     setSection(r.seccion);
-    /* El bloque, si lo hay. Y `null` si no: quedarse el anterior abierto
-       al saltar a otra seccion enseña el panel equivocado. */
-    setBloqueAbierto(r.bloque ?? null);
+    /* Y se abre su pieza, si el destino es una. `null` si no: dejar
+       abierto el overlay anterior al saltar a otro sitio enseña los
+       ajustes de algo que ya no viene a cuento. */
+    setPieza(r.bloque?.id ?? null);
   }, [setSection]);
 
   const cuentaDiscord = useCuentaDiscordDeLaSesion();
@@ -620,13 +615,6 @@ export default function DashboardPage() {
     [profile?.socials, update],
   );
 
-  const formatoActual: 'normal' | 'split' | 'minimal' =
-    profile?.avPos === 'side'
-      ? 'split'
-      : profile?.surface === 'none'
-        ? 'minimal'
-        : 'normal';
-
   const vimeoActivo = profile?.bgType === 'video' && esVimeo(profile.bgValue);
   /** El zoom del fondo solo tiene sentido si hay algo que encuadrar. */
   const esMedia = profile?.bgType === 'image' || profile?.bgType === 'video';
@@ -639,9 +627,6 @@ export default function DashboardPage() {
   const { info: fichaVimeo, estado: estadoVimeo } = useVimeo(urlVimeo, (d) => {
     if (d.ratio !== profile?.bgRatio) updateField('bgRatio', d.ratio);
   });
-
-  /** El tamaño del avatar se guarda en px (40–240). El control va en %. */
-  const avatarPct = Math.round((profile?.avSize ?? 112) / 2.4);
 
   const nombreSuperficie = useMemo(
     () => SURFACES.find((s) => s.id === profile?.surface)?.name ?? 'la superficie',
@@ -694,7 +679,7 @@ export default function DashboardPage() {
                 style={{ justifyContent: 'flex-start', textAlign: 'left', gap: '10px' }}
                 onClick={() => {
                   setSection(sec.id);
-                  setBloqueAbierto(null);
+                  setPieza(null);
                 }}
               >
                 <span
@@ -746,6 +731,47 @@ export default function DashboardPage() {
             delante, ni al reves. `reintentarCon` la seccion hace que el
             fallo se cure solo al cambiar de seccion. */}
         <Frontera donde="el editor" reintentarCon={section}>
+        {/* ── El primer dia ─────────────────────────────────────
+            Quien acaba de crear su perfil no se encuentra el editor entero
+            de golpe: se encuentra cinco diseños y elige uno. La vista
+            previa de al lado va cambiando con cada tarjeta, asi que se
+            elige VIENDO, no leyendo cinco descripciones.
+
+            No es un tutorial que se pueda ignorar ni un paso que se guarde
+            aparte: mientras `base` este vacio no hay plantilla elegida, y
+            en cuanto hay una esta pantalla no vuelve a salir. */}
+        {!profile.base ? (
+          <div className="dash__seccion bienv">
+            <header className="dash__enc">
+              <h2 className="dash__h2">Empieza por aquí</h2>
+              <p className="dash__sub">
+                Elige cómo quieres que se vea tu perfil. Las cinco están ya
+                medidas para que se vean bien en un móvil y en un monitor, así
+                que no tienes que ajustar nada: después solo enciendes los
+                bloques que quieras y la plantilla los coloca.
+              </p>
+            </header>
+
+            <ElegirPlantilla
+              profile={profile}
+              update={update}
+              variante="bienvenida"
+              alElegir={() => setSection('design')}
+            />
+
+            <p className="bienv__salir">
+              Puedes cambiarla cuando quieras desde Diseño.{' '}
+              <button
+                type="button"
+                className="miga__volver"
+                onClick={() => update({ base: BASE_PERSONALIZADA })}
+              >
+                O empezar en blanco y montarlo tú.
+              </button>
+            </p>
+          </div>
+        ) : (
+        <>
         {/* Las secciones entraban directas en los controles: el primer
             elemento de «Diseño» era un rotulo que ponia «Fondo», y desde
             ahi no se sabia ni en que seccion estabas ni para que servia.
@@ -763,589 +789,492 @@ export default function DashboardPage() {
           ) : null;
         })()}
         {/* SECTION: Overview / Identidad */}
-        {section === 'overview' && (
+        {/* SECTION: Diseño ─ el editor entero ────────────────────────
+            Aqui estaba solo el aspecto de la tarjeta, y lo que ERES —tu
+            foto, tu nombre, tu biografia— vivia en «Perfil», y que piezas
+            enseñabas en «Bloques». Tres sitios para una sola cosa: tu
+            perfil. Y el reparto no lo entendia nadie, porque no existe:
+            cambiar tu nombre y cambiar el tamaño de tu nombre son la misma
+            tarea vista dos veces.
+
+            Ahora hay una lista de piezas, cada una enseñando lo que tiene
+            puesto, y sus ajustes se abren ENCIMA. Tocar una pieza no te
+            saca de donde estabas. */}
+        {section === 'design' && (
           <div className="dash__seccion">
-            {/* Lo primero que se ve al entrar, y a propósito: contesta «¿qué
-                me falta?» antes de que haya que buscarlo control por
-                control. Cada línea salta a donde se arregla. */}
+            {/* Lo primero: que le falta al perfil. Cada linea salta a
+                donde se arregla. */}
             <Progreso profile={profile} irA={irA} />
 
-            {/* Los dos en fila: cada caja ocupaba el ancho entero y había
-                que hacer scroll para ver el segundo. */}
-            <div className="f-row">
-              <SubirMedio
-                guia="avatar"
-                titulo="Avatar"
-                destino="avatar"
-                lado={512}
-                maxAnimadoMB={2}
-                value={profile.avatarUrl || ''}
-                onChange={(r) => updateField('avatarUrl', r.url)}
-              />
-
-              <SubirFondo
-                guia="fondo"
-                titulo="Fondo"
-                previa={
-                  vimeoActivo
-                    ? fichaVimeo?.miniatura
-                    : profile.bgType === 'image'
-                      ? profile.bgValue
-                      : ''
-                }
-                onSubido={(r) =>
-                  update(
-                    r.tipo === 'video'
-                      ? { bgType: 'video', bgValue: r.url, bgRatio: r.ratio }
-                      : { bgType: 'image', bgValue: r.url },
-                  )
-                }
-                anterior={profile.bgValue || ''}
-                onQuitar={() => {
-                  /* El archivo se va del cubo, no solo del perfil. Antes
-                     esto dejaba el fichero arriba para siempre, y como
-                     hay un tope de ocho por cuenta, quien probaba varios
-                     formatos acababa bloqueado con un aviso que decia
-                     «Borra alguno antes de subir otro» sin que existiera
-                     ninguna forma de borrar ninguno.
-
-                     Si el fondo es de Vimeo esto no hace nada: el video
-                     vive en la cuenta de Vimeo de su dueño y borrarlo de
-                     ahi es otra decision, no la de quitarlo del perfil. */
-                  void backend.borrarMedioPorUrl(profile.bgValue || '');
-                  update({ bgType: 'none', bgValue: '' });
-                }}
-              />
-            </div>
-
-            {esMedia && (
-              <Deslizador
-                label="Tamaño del fondo"
-                desc="Acerca la imagen o el vídeo y recorta por los bordes"
-                sufijo="%"
-                min={100}
-                max={300}
-                step={5}
-                value={profile.bgScale ?? 100}
-                onChange={(v) => updateField('bgScale', v)}
-              />
-            )}
-
-            <Campo
-              label="…o pegar un enlace de Vimeo"
-              valor={vimeoActivo ? `ID ${idVimeo(profile.bgValue)}` : undefined}
-            >
-              <input
-                type="url"
-                className="inp"
-                placeholder="https://vimeo.com/123456789"
-                value={profile.bgType === 'video' ? profile.bgValue || '' : ''}
-                onChange={(e) => {
-                  const url = e.target.value.trim();
-                  update(
-                    url
-                      ? { bgType: 'video', bgValue: url }
-                      : { bgType: 'gradient', bgValue: '' },
-                  );
-                }}
-              />
-              {profile.bgType === 'video' && profile.bgValue && !vimeoActivo && (
-                <p className="drop__err" role="alert">
-                  No reconozco ese enlace de Vimeo.
-                </p>
-              )}
-              {vimeoActivo && estadoVimeo === 'error' && (
-                <p className="drop__err" role="alert">
-                  Vimeo no da la ficha de ese vídeo. Si es privado, copia el
-                  enlace completo con su código; si no, comprueba que se puede
-                  incrustar.
-                </p>
-              )}
-              {vimeoActivo && (
-                <p className="vimeo__ficha">
-                  {estadoVimeo === 'cargando' && 'Leyendo el vídeo…'}
-                  {estadoVimeo === 'listo' && fichaVimeo && (
-                    <>
-                      {fichaVimeo.titulo || 'Sin título'} ·{' '}
-                      <b>{proporcionVimeo(fichaVimeo.ratio)}</b>
-                      {Math.abs(fichaVimeo.ratio - 16 / 9) > 0.05 && (
-                        <>
-                          {' '}
-                          — no es 16:9, así que el fondo se recorta por los
-                          lados para cubrir la pantalla.
-                        </>
-                      )}
-                    </>
-                  )}
-                </p>
-              )}
+            <Campo label="Plantilla" guia="formato">
+              <ElegirPlantilla profile={profile} update={update} />
             </Campo>
 
-            <section className="grupo">
-              <h3 className="grupo__t">Fondo</h3>
-              {esMedia && (
-                <>
-                  <Deslizador
-                    label="Opacidad del fondo"
-                    sufijo="%"
-                    min={0}
-                    max={100}
-                    value={profile.bgOpacity ?? 100}
-                    onChange={(v) => updateField('bgOpacity', v)}
-                  />
-                  <Deslizador
-                    label="Desenfoque del fondo"
-                    sufijo="px"
-                    min={0}
-                    max={40}
-                    value={profile.bgBlur ?? 0}
-                    onChange={(v) => updateField('bgBlur', v)}
-                  />
-                </>
-              )}
+            <h3 className="grupo__t">Tus piezas</h3>
+            <p className="dash__sub">
+              El ojo la enciende o la apaga. El engranaje abre todos sus
+              ajustes: su letra, su color, su caja y dónde se coloca.
+            </p>
 
-              <Deslizador
-                label="Viñeta"
-                desc="Oscurece los bordes para que la tarjeta destaque"
-                sufijo="%"
-                min={0}
-                max={100}
-                value={profile.vignette ?? 0}
-                onChange={(v) => updateField('vignette', v)}
-              />
-              <Campo label="Partículas">
-                <Tarjetas
-                  opciones={PARTICLES}
-                  dibujos={DIBUJOS.PARTICLES}
-                  value={profile.particles || 'none'}
-                  onChange={(v) => updateField('particles', v)}
+            <Piezas
+              profile={profile}
+              update={update}
+              onAbrir={setPieza}
+              insignias={insigniasGanadasDelPerfil}
+              cajaAvatar={
+                <SubirMedio
+                  guia="avatar"
+                  titulo="Avatar"
+                  destino="avatar"
+                  lado={512}
+                  maxAnimadoMB={2}
+                  value={profile.avatarUrl || ''}
+                  onChange={(r) => updateField('avatarUrl', r.url)}
                 />
-              </Campo>
-            </section>
+              }
+              cajaFondo={
+                <SubirFondo
+                  guia="fondo"
+                  titulo="Fondo"
+                  previa={
+                    vimeoActivo
+                      ? fichaVimeo?.miniatura
+                      : profile.bgType === 'image'
+                        ? profile.bgValue
+                        : ''
+                  }
+                  onSubido={(r) =>
+                    update(
+                      r.tipo === 'video'
+                        ? { bgType: 'video', bgValue: r.url, bgRatio: r.ratio }
+                        : { bgType: 'image', bgValue: r.url },
+                    )
+                  }
+                  anterior={profile.bgValue || ''}
+                  onQuitar={() => {
+                    /* El archivo se va del cubo, no solo del perfil. Antes
+                       esto dejaba el fichero arriba para siempre, y como
+                       hay un tope de ocho por cuenta, quien probaba varios
+                       formatos acababa bloqueado con un aviso que decia
+                       «Borra alguno antes de subir otro» sin que existiera
+                       ninguna forma de borrar ninguno.
 
-            <div className="f-row">
-              <Campo label="Nombre visible">
-                <input
-                  type="text"
-                  className="inp"
-                  placeholder="Tu nombre"
-                  value={profile.name}
-                  onChange={(e) => updateField('name', e.target.value)}
+                       Si el fondo es de Vimeo esto no hace nada: el video
+                       vive en la cuenta de Vimeo de su dueño y borrarlo de
+                       ahi es otra decision, no la de quitarlo del perfil. */
+                    void backend.borrarMedioPorUrl(profile.bgValue || '');
+                    update({ bgType: 'none', bgValue: '' });
+                  }}
                 />
-              </Campo>
+              }
+            />
 
-              <Campo label="Nombre de usuario" guia="usuario">
-                <div className="f-pre">
-                  <span>@</span>
-                  <input
-                    type="text"
-                    className="inp"
-                    placeholder="usuario"
-                    value={profile.username}
-                    onChange={(e) =>
-                      updateField(
-                        'username',
-                        e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''),
-                      )
-                    }
-                  />
-                </div>
-              </Campo>
-            </div>
-
-            <Campo label="Oficio">
-              <input
-                type="text"
-                className="inp"
-                placeholder="Ej: Diseñador gráfico"
-                value={profile.title || ''}
-                onChange={(e) => updateField('title', e.target.value)}
-              />
-            </Campo>
-
-            <Campo label="Ubicación">
-              <input
-                type="text"
-                className="inp"
-                placeholder="Ej: Ciudad de México"
-                value={profile.location || ''}
-                onChange={(e) => updateField('location', e.target.value)}
-              />
-            </Campo>
-
-            <Campo label="Biografía" valor={`${(profile.bio || '').length}/1200`}>
-              <textarea
-                className="ta"
-                rows={3}
-                placeholder="Cuéntanos sobre ti…"
-                value={profile.bio || ''}
-                onChange={(e) => updateField('bio', e.target.value)}
-              />
-            </Campo>
-
-            {/* Justo debajo del nombre, la foto y la biografía, que es de
-                donde sale. Cambias algo arriba y lo ves aquí: hasta ahora
-                se publicaba a ciegas y la única forma de saber qué salía
-                era pegar el enlace en algún sitio y mirar. */}
+            {/* Justo debajo de las piezas de las que sale. Cambias algo
+                arriba y lo ves aqui: hasta ahora se publicaba a ciegas y la
+                unica forma de saber que salia era pegar el enlace en algun
+                sitio y mirar. */}
             <Campo label="Al compartir tu enlace">
               <TarjetaCompartir profile={profile} />
             </Campo>
-          </div>
-        )}
 
-        {/* SECTION: Design / Diseño */}
-        {section === 'design' && (
-          <div className="dash__seccion">
-            <h2 className="dash__h2">Diseño · Controles</h2>
+            <PublicarPlantilla profile={profile} />
 
-            <Campo label="Tipo de superficie">
-              <Tarjetas
-                opciones={SURFACES}
-                  dibujos={DIBUJOS.SURFACES}
-                value={profile.surface || 'none'}
-                onChange={(v) => updateField('surface', v)}
-              />
-            </Campo>
-
-            {/* Los ajustes finos sólo tienen sentido si hay caja que ajustar. */}
-            {profile.surface && profile.surface !== 'none' && (
-              <Subpanel titulo={`Configuración de ${nombreSuperficie}`}>
-                <ColorRGB
-                  label="Color RGB"
-                  value={profile.sColor || ''}
-                  porDefecto={COLOR_SUPERFICIE[profile.surface] ?? '#FFFFFF'}
-                  onChange={(hex) => updateField('sColor', hex)}
+            {/* ── Los ajustes de cada pieza, encima ──────────────── */}
+            <Overlay
+              abierto={pieza === 'fondo'}
+              alCerrar={cerrarPieza}
+              titulo="Fondo"
+              desc="La imagen, el vídeo o el color que hay detrás de todo."
+            >
+              <Campo
+                label="…o pegar un enlace de Vimeo"
+                valor={vimeoActivo ? `ID ${idVimeo(profile.bgValue)}` : undefined}
+              >
+                <input
+                  type="url"
+                  className="inp"
+                  placeholder="https://vimeo.com/123456789"
+                  value={profile.bgType === 'video' ? profile.bgValue || '' : ''}
+                  onChange={(e) => {
+                    const url = e.target.value.trim();
+                    update(
+                      url
+                        ? { bgType: 'video', bgValue: url }
+                        : { bgType: 'gradient', bgValue: '' },
+                    );
+                  }}
                 />
+                {profile.bgType === 'video' && profile.bgValue && !vimeoActivo && (
+                  <p className="drop__err" role="alert">
+                    No reconozco ese enlace de Vimeo.
+                  </p>
+                )}
+                {vimeoActivo && estadoVimeo === 'error' && (
+                  <p className="drop__err" role="alert">
+                    Vimeo no da la ficha de ese vídeo. Si es privado, copia el
+                    enlace completo con su código; si no, comprueba que se puede
+                    incrustar.
+                  </p>
+                )}
+                {vimeoActivo && (
+                  <p className="vimeo__ficha">
+                    {estadoVimeo === 'cargando' && 'Leyendo el vídeo…'}
+                    {estadoVimeo === 'listo' && fichaVimeo && (
+                      <>
+                        {fichaVimeo.titulo || 'Sin título'} ·{' '}
+                        <b>{proporcionVimeo(fichaVimeo.ratio)}</b>
+                        {Math.abs(fichaVimeo.ratio - 16 / 9) > 0.05 && (
+                          <>
+                            {' '}
+                            — no es 16:9, así que el fondo se recorta por los
+                            lados para cubrir la pantalla.
+                          </>
+                        )}
+                      </>
+                    )}
+                  </p>
+                )}
+              </Campo>
 
+              {esMedia && (
                 <Deslizador
-                  label="Opacidad"
+                  label="Tamaño del fondo"
+                  desc="Acerca la imagen o el vídeo y recorta por los bordes"
                   sufijo="%"
-                  min={0}
-                  max={100}
-                  value={profile.sOpacity ?? OPACIDAD_SUPERFICIE[profile.surface] ?? 60}
-                  onChange={(v) => updateField('sOpacity', v)}
+                  min={100}
+                  max={300}
+                  step={5}
+                  value={profile.bgScale ?? 100}
+                  onChange={(v) => updateField('bgScale', v)}
                 />
+              )}
 
-                <Interruptor
-                  label="Agregar borde"
-                  on={profile.sBorderOn !== false}
-                  onChange={(v) => updateField('sBorderOn', v)}
-                />
-
-                {profile.sBorderOn !== false && (
+              <section className="grupo">
+                <h3 className="grupo__t">Fondo</h3>
+                {esMedia && (
                   <>
-                    <ColorRGB
-                      label="Borde"
-                      value={profile.sBorderColor || ''}
-                      porDefecto="#FFFFFF"
-                      onChange={(hex) => updateField('sBorderColor', hex)}
+                    <Deslizador
+                      label="Opacidad del fondo"
+                      sufijo="%"
+                      min={0}
+                      max={100}
+                      value={profile.bgOpacity ?? 100}
+                      onChange={(v) => updateField('bgOpacity', v)}
                     />
                     <Deslizador
-                      label="Grosor"
+                      label="Desenfoque del fondo"
                       sufijo="px"
                       min={0}
-                      max={12}
-                      value={profile.sBorderW ?? 1}
-                      onChange={(v) => updateField('sBorderW', v)}
+                      max={40}
+                      value={profile.bgBlur ?? 0}
+                      onChange={(v) => updateField('bgBlur', v)}
                     />
                   </>
                 )}
 
-                {profile.surface === 'glass' && (
-                  <Deslizador
-                    label="Desenfoque"
-                    sufijo="px"
-                    min={0}
-                    max={60}
-                    value={profile.sBlur ?? 22}
-                    onChange={(v) => updateField('sBlur', v)}
+                <Deslizador
+                  label="Viñeta"
+                  desc="Oscurece los bordes para que la tarjeta destaque"
+                  sufijo="%"
+                  min={0}
+                  max={100}
+                  value={profile.vignette ?? 0}
+                  onChange={(v) => updateField('vignette', v)}
+                />
+                <Campo label="Partículas">
+                  <Tarjetas
+                    opciones={PARTICLES}
+                    dibujos={DIBUJOS.PARTICLES}
+                    value={profile.particles || 'none'}
+                    onChange={(v) => updateField('particles', v)}
                   />
-                )}
+                </Campo>
+              </section>
+            </Overlay>
 
-                {profile.surface === 'glow' && (
-                  <Deslizador
-                    label="Intensidad del halo"
-                    min={0}
-                    max={100}
-                    value={profile.sGlow ?? 40}
-                    onChange={(v) => updateField('sGlow', v)}
-                  />
-                )}
-              </Subpanel>
-            )}
-
-            <Deslizador
-              label="Ancho de la superficie"
-              sufijo="%"
-              min={10}
-              max={100}
-              value={profile.sWidthPct ?? 50}
-              onChange={(v) => updateField('sWidthPct', v)}
-            />
-
-            <Deslizador
-              label="Alto de la superficie"
-              desc={
-                modoLibre
-                  ? '0 = el alto que se tomó del diseño al entrar en la rejilla'
-                  : '0 = el alto que pida el contenido'
-              }
-              sufijo="px"
-              min={0}
-              max={1400}
-              step={10}
-              value={profile.sHeightPx ?? 0}
-              onChange={(v) => updateField('sHeightPx', v || null)}
-            />
-
-            <Deslizador
-              label="Radio de las esquinas"
-              sufijo="px"
-              min={0}
-              max={40}
-              value={profile.radius ?? 18}
-              onChange={(v) => updateField('radius', v)}
-            />
-
-            {/* Estaba en «Perfil», entre la foto y el nombre, y ahi
-                desentonaba: esa seccion es lo que ERES —tu foto, tu fondo,
-                tu nombre— y esto es como se ve. Ademas era el unico sitio
-                del editor donde se podia tocar, asi que en vez de quitarlo
-                se trae aqui, con los demas mandos de aspecto. */}
-            <Deslizador
-              label="Tamaño del avatar"
-              sufijo="%"
-              min={20}
-              max={100}
-              value={avatarPct}
-              onChange={(pct) => updateField('avSize', Math.round(pct * 2.4))}
-            />
-
-            <Campo label="Formato" guia="formato">
-              <Tarjetas
-                opciones={FORMATOS}
-                value={formatoActual}
-                onChange={(v) => {
-                  const f = FORMATOS.find((x) => x.id === v);
-                  if (!f) return;
-                  // "Minimal" fija la superficie; los otros dos no la tocan,
-                  // para no borrar la caja que se acabe de configurar.
-                  update(f.ajustes as Partial<Profile>);
-                }}
-              />
-            </Campo>
-
-            <Campo
-              guia="libre"
-              label="Colocación de los bloques"
-              valor={profile.layoutMode === 'free' ? 'arrastrando' : 'en columna'}
+            <Overlay
+              abierto={pieza === 'tarjeta'}
+              alCerrar={cerrarPieza}
+              titulo="La tarjeta"
+              desc="La caja que envuelve a todas las piezas, y cómo se mueve el perfil."
             >
-              <Tarjetas
-                opciones={LAYOUT_MODES}
-                  dibujos={DIBUJOS.LAYOUT_MODES}
-                value={profile.layoutMode || 'stack'}
-                onChange={(v) => {
-                  // Al entrar en el lienzo se siembran las coordenadas
-                  // midiendo el diseño que hay AHORA. Sin esto, todas las
-                  // piezas caerían en 0,0 amontonadas: en el lienzo cada una
-                  // se coloca sola, no fluye detrás de la anterior.
-                  if (v === 'free') {
-                    const { pos, canvasH } = sembrarLienzo(profile);
-                    update({ layoutMode: v, pos, canvasH });
-                  } else {
-                    updateField('layoutMode', v);
-                  }
-                }}
-              />
-            </Campo>
-            {profile.layoutMode === 'free' && (
-              <p className="dash__pista">
-                Arrastra los bloques en la vista previa para moverlos, tira del
-                borde derecho para cambiar su ancho, y púlsalos para abrir sus
-                ajustes.
-              </p>
-            )}
-
-            <section className="grupo" data-guia="movimiento">
-              <h3 className="grupo__t">Movimiento</h3>
-              {/* El mismo panel que tiene cada pieza, aplicado a la
-                  superficie entera. Un solo componente para los dos. */}
-              <PanelAnimacion
-                destino=".pf-stack"
-                catalogo={ENTER_FX}
-                queEs="la superficie"
-                estilo={{
-                  anim: profile.enterFx,
-                  animDir: profile.enterDir,
-                  animMs: profile.enterMs,
-                  animDelay: profile.enterDelay,
-                  animI: profile.enterI,
-                  animE: profile.enterE,
-                }}
-                set={(k, v) => {
-                  const mapa: Record<string, string> = {
-                    anim: 'enterFx',
-                    animDir: 'enterDir',
-                    animMs: 'enterMs',
-                    animDelay: 'enterDelay',
-                    animI: 'enterI',
-                    animE: 'enterE',
-                  };
-                  updateField(mapa[k] as keyof Profile, v as never);
-                }}
-              />
-              <Campo label="Cursor" guia="cursor">
+              <Campo label="Tipo de superficie">
                 <Tarjetas
-                  opciones={CURSORS}
-                  dibujos={DIBUJOS.CURSORS}
-                  value={profile.cursor || 'default'}
-                  onChange={(v) => updateField('cursor', v)}
+                  opciones={SURFACES}
+                    dibujos={DIBUJOS.SURFACES}
+                  value={profile.surface || 'none'}
+                  onChange={(v) => updateField('surface', v)}
                 />
               </Campo>
 
-              {/* Con imagen propia manda la imagen, sea cual sea el tipo. */}
-              <SubirMedio
-                titulo="Imagen del cursor"
-                destino="cursor"
-                lado={128}
-                maxAnimadoMB={1}
-                value={profile.cursorImg || ''}
-                onChange={(r) => updateField('cursorImg', r.url)}
-              />
+              {/* Los ajustes finos sólo tienen sentido si hay caja que ajustar. */}
+              {profile.surface && profile.surface !== 'none' && (
+                <Subpanel titulo={`Configuración de ${nombreSuperficie}`}>
+                  <ColorRGB
+                    label="Color RGB"
+                    value={profile.sColor || ''}
+                    porDefecto={COLOR_SUPERFICIE[profile.surface] ?? '#FFFFFF'}
+                    onChange={(hex) => updateField('sColor', hex)}
+                  />
 
-              {profile.cursorImg && (
-                <Deslizador
-                  label="Tamaño del cursor"
-                  sufijo="px"
-                  min={12}
-                  max={96}
-                  step={2}
-                  value={profile.cursorSize ?? 32}
-                  onChange={(v) => updateField('cursorSize', v)}
-                />
+                  <Deslizador
+                    label="Opacidad"
+                    sufijo="%"
+                    min={0}
+                    max={100}
+                    value={profile.sOpacity ?? OPACIDAD_SUPERFICIE[profile.surface] ?? 60}
+                    onChange={(v) => updateField('sOpacity', v)}
+                  />
+
+                  <Interruptor
+                    label="Agregar borde"
+                    on={profile.sBorderOn !== false}
+                    onChange={(v) => updateField('sBorderOn', v)}
+                  />
+
+                  {profile.sBorderOn !== false && (
+                    <>
+                      <ColorRGB
+                        label="Borde"
+                        value={profile.sBorderColor || ''}
+                        porDefecto="#FFFFFF"
+                        onChange={(hex) => updateField('sBorderColor', hex)}
+                      />
+                      <Deslizador
+                        label="Grosor"
+                        sufijo="px"
+                        min={0}
+                        max={12}
+                        value={profile.sBorderW ?? 1}
+                        onChange={(v) => updateField('sBorderW', v)}
+                      />
+                    </>
+                  )}
+
+                  {profile.surface === 'glass' && (
+                    <Deslizador
+                      label="Desenfoque"
+                      sufijo="px"
+                      min={0}
+                      max={60}
+                      value={profile.sBlur ?? 22}
+                      onChange={(v) => updateField('sBlur', v)}
+                    />
+                  )}
+
+                  {profile.surface === 'glow' && (
+                    <Deslizador
+                      label="Intensidad del halo"
+                      min={0}
+                      max={100}
+                      value={profile.sGlow ?? 40}
+                      onChange={(v) => updateField('sGlow', v)}
+                    />
+                  )}
+                </Subpanel>
               )}
 
               <Deslizador
-                label="Estela"
-                desc="Cuántas motas deja al pasar. 0 = ninguna."
-                min={0}
-                max={12}
-                value={
-                  profile.cursorTrail ??
-                  (profile.cursor === 'dot' || profile.cursor === 'blade' ? 5 : 0)
+                label="Ancho de la superficie"
+                sufijo="%"
+                min={10}
+                max={100}
+                value={profile.sWidthPct ?? 50}
+                onChange={(v) => updateField('sWidthPct', v)}
+              />
+
+              <Deslizador
+                label="Alto de la superficie"
+                desc={
+                  modoLibre
+                    ? '0 = el alto que se tomó del diseño al entrar en la rejilla'
+                    : '0 = el alto que pida el contenido'
                 }
-                onChange={(v) => updateField('cursorTrail', v)}
+                sufijo="px"
+                min={0}
+                max={1400}
+                step={10}
+                value={profile.sHeightPx ?? 0}
+                onChange={(v) => updateField('sHeightPx', v || null)}
               />
 
-              {(profile.cursorTrail ?? 0) > 0 && (
-                <Campo label="Tipo de estela">
-                  <Tarjetas
-                    opciones={TRAIL_FX}
-                  dibujos={DIBUJOS.TRAIL_FX}
-                    value={profile.cursorTrailFx || 'chispas'}
-                    onChange={(v) => updateField('cursorTrailFx', v)}
-                  />
-                </Campo>
-              )}
-              <Interruptor
-                label="Inclinación 3D"
-                desc="La tarjeta sigue al ratón"
-                on={!!profile.tilt}
-                onChange={(v) => updateField('tilt', v)}
+              <Deslizador
+                label="Radio de las esquinas"
+                sufijo="px"
+                min={0}
+                max={40}
+                value={profile.radius ?? 18}
+                onChange={(v) => updateField('radius', v)}
               />
-              <div data-guia="portada">
-                <Interruptor
-                  label="Pantalla de entrada"
-                  desc="Pantalla negra hasta que el visitante hace clic; entonces entra todo el perfil"
-                  on={!!profile.gate}
-                  onChange={(v) => updateField('gate', v)}
+
+              
+              <Campo
+                guia="libre"
+                label="Colocación de los bloques"
+                valor={profile.layoutMode === 'free' ? 'arrastrando' : 'en columna'}
+              >
+                <Tarjetas
+                  opciones={LAYOUT_MODES}
+                    dibujos={DIBUJOS.LAYOUT_MODES}
+                  value={profile.layoutMode || 'stack'}
+                  onChange={(v) => {
+                    // Al entrar en el lienzo se siembran las coordenadas
+                    // midiendo el diseño que hay AHORA. Sin esto, todas las
+                    // piezas caerían en 0,0 amontonadas: en el lienzo cada una
+                    // se coloca sola, no fluye detrás de la anterior.
+                    if (v === 'free') {
+                      const { pos, canvasH } = sembrarLienzo(profile);
+                      update({ layoutMode: v, pos, canvasH });
+                    } else {
+                      updateField('layoutMode', v);
+                    }
+                  }}
                 />
-              </div>
-              {profile.gate && (
-                <Campo label="Texto de la pantalla">
-                  <input
-                    type="text"
-                    className="inp"
-                    maxLength={40}
-                    placeholder="Toca para entrar"
-                    value={profile.gateText || ''}
-                    onChange={(e) => updateField('gateText', e.target.value)}
+              </Campo>
+              {profile.layoutMode === 'free' && (
+                <p className="dash__pista">
+                  Arrastra los bloques en la vista previa para moverlos, tira del
+                  borde derecho para cambiar su ancho, y púlsalos para abrir sus
+                  ajustes.
+                </p>
+              )}
+
+              <section className="grupo" data-guia="movimiento">
+                <h3 className="grupo__t">Movimiento</h3>
+                {/* El mismo panel que tiene cada pieza, aplicado a la
+                    superficie entera. Un solo componente para los dos. */}
+                <PanelAnimacion
+                  destino=".pf-stack"
+                  catalogo={ENTER_FX}
+                  queEs="la superficie"
+                  estilo={{
+                    anim: profile.enterFx,
+                    animDir: profile.enterDir,
+                    animMs: profile.enterMs,
+                    animDelay: profile.enterDelay,
+                    animI: profile.enterI,
+                    animE: profile.enterE,
+                  }}
+                  set={(k, v) => {
+                    const mapa: Record<string, string> = {
+                      anim: 'enterFx',
+                      animDir: 'enterDir',
+                      animMs: 'enterMs',
+                      animDelay: 'enterDelay',
+                      animI: 'enterI',
+                      animE: 'enterE',
+                    };
+                    updateField(mapa[k] as keyof Profile, v as never);
+                  }}
+                />
+                <Campo label="Cursor" guia="cursor">
+                  <Tarjetas
+                    opciones={CURSORS}
+                    dibujos={DIBUJOS.CURSORS}
+                    value={profile.cursor || 'default'}
+                    onChange={(v) => updateField('cursor', v)}
                   />
                 </Campo>
+
+                {/* Con imagen propia manda la imagen, sea cual sea el tipo. */}
+                <SubirMedio
+                  titulo="Imagen del cursor"
+                  destino="cursor"
+                  lado={128}
+                  maxAnimadoMB={1}
+                  value={profile.cursorImg || ''}
+                  onChange={(r) => updateField('cursorImg', r.url)}
+                />
+
+                {profile.cursorImg && (
+                  <Deslizador
+                    label="Tamaño del cursor"
+                    sufijo="px"
+                    min={12}
+                    max={96}
+                    step={2}
+                    value={profile.cursorSize ?? 32}
+                    onChange={(v) => updateField('cursorSize', v)}
+                  />
+                )}
+
+                <Deslizador
+                  label="Estela"
+                  desc="Cuántas motas deja al pasar. 0 = ninguna."
+                  min={0}
+                  max={12}
+                  value={
+                    profile.cursorTrail ??
+                    (profile.cursor === 'dot' || profile.cursor === 'blade' ? 5 : 0)
+                  }
+                  onChange={(v) => updateField('cursorTrail', v)}
+                />
+
+                {(profile.cursorTrail ?? 0) > 0 && (
+                  <Campo label="Tipo de estela">
+                    <Tarjetas
+                      opciones={TRAIL_FX}
+                    dibujos={DIBUJOS.TRAIL_FX}
+                      value={profile.cursorTrailFx || 'chispas'}
+                      onChange={(v) => updateField('cursorTrailFx', v)}
+                    />
+                  </Campo>
+                )}
+                <Interruptor
+                  label="Inclinación 3D"
+                  desc="La tarjeta sigue al ratón"
+                  on={!!profile.tilt}
+                  onChange={(v) => updateField('tilt', v)}
+                />
+                <div data-guia="portada">
+                  <Interruptor
+                    label="Pantalla de entrada"
+                    desc="Pantalla negra hasta que el visitante hace clic; entonces entra todo el perfil"
+                    on={!!profile.gate}
+                    onChange={(v) => updateField('gate', v)}
+                  />
+                </div>
+                {profile.gate && (
+                  <Campo label="Texto de la pantalla">
+                    <input
+                      type="text"
+                      className="inp"
+                      maxLength={40}
+                      placeholder="Toca para entrar"
+                      value={profile.gateText || ''}
+                      onChange={(e) => updateField('gateText', e.target.value)}
+                    />
+                  </Campo>
+                )}
+              </section>
+
+              {/* Publicar la plantilla se hacia SOLO en la pagina de
+                  plantillas, y ahi no llega nadie con el diseño recien
+                  terminado: se termina aqui. El sitio donde acabas de
+                  decidir como se ve tu perfil es el sitio donde tiene
+                  sentido ofrecerte compartirlo. */}
+            </Overlay>
+
+            {/* Y el de la pieza que se haya abierto. `EditorBloque` entero,
+                el mismo de siempre, sin su cabecera: el titulo y la salida
+                los pone el overlay. */}
+            <Overlay
+              abierto={!!defAbierto}
+              alCerrar={cerrarPieza}
+              titulo={defAbierto?.nombre ?? ''}
+              desc={defAbierto?.descripcion}
+            >
+              {defAbierto && (
+                <EditorBloque
+                  compacto
+                  def={defAbierto}
+                  profile={profile}
+                  update={update}
+                  onVolver={cerrarPieza}
+                />
               )}
-            </section>
-
-            {/* Publicar la plantilla se hacia SOLO en la pagina de
-                plantillas, y ahi no llega nadie con el diseño recien
-                terminado: se termina aqui. El sitio donde acabas de
-                decidir como se ve tu perfil es el sitio donde tiene
-                sentido ofrecerte compartirlo. */}
-            <PublicarPlantilla profile={profile} />
+            </Overlay>
           </div>
-        )}
-
-        {/* SECTION: Blocks / Bloques */}
-        {section === 'blocks' && (
-          bloqueAbierto ? (
-            <EditorBloque
-              def={bloqueAbierto}
-              profile={profile}
-              update={update}
-              onVolver={() => setBloqueAbierto(null)}
-            />
-          ) : (
-            <div className="dash__seccion">
-              <h2 className="dash__h2">Bloques</h2>
-              <p className="dash__sub">
-                Cada pieza del perfil se edita por separado. Las opciones cambian
-                según el bloque.
-              </p>
-
-              <ul className="blist" data-guia="bloques">
-                {BLOQUES.map((b) => {
-                  const oculto = (profile.blocksOff ?? []).includes(b.id);
-                  return (
-                    <li key={b.id}>
-                      <button
-                        type="button"
-                        className={`blist__it${oculto ? ' is-off' : ''}`}
-                        onClick={() => setBloqueAbierto(b)}
-                      >
-                        <span
-                          className="blist__ico"
-                          aria-hidden="true"
-                          dangerouslySetInnerHTML={{ __html: b.icono }}
-                        />
-                        <span className="blist__txt">
-                          <span className="blist__n">{b.nombre}</span>
-                          <span className="blist__d">{b.descripcion}</span>
-                        </span>
-                        {/* Un ojo tachado, no la palabra «oculto»: se
-                            entiende sin leer y no ocupa una esquina. */}
-                        <span className="blist__ojo" title={oculto ? 'Oculto' : 'Visible'}>
-                          {oculto ? (
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                 strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M3 3l18 18" />
-                              <path d="M10.6 6.2A9.9 9.9 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-3.2 3.9" />
-                              <path d="M6.6 6.7A17.3 17.3 0 0 0 2 12s3.6 6 10 6a9.7 9.7 0 0 0 4-.8" />
-                              <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
-                            </svg>
-                          ) : (
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                 strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" />
-                              <circle cx="12" cy="12" r="3" />
-                            </svg>
-                          )}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          )
         )}
 
         {/* SECTION: Links & Socials */}
@@ -1571,6 +1500,8 @@ export default function DashboardPage() {
             reiniciarGuia={guia.reiniciar}
           />
         )}
+        </>
+        )}
         </Frontera>
       </main>
 
@@ -1652,12 +1583,11 @@ export default function DashboardPage() {
                 profile={profile}
                 update={update}
                 vista={viewport}
-                seleccionado={bloqueAbierto?.id ?? null}
+                seleccionado={pieza}
                 onAbrirBloque={(id) => {
-                  const def = BLOQUE_POR_ID[id];
-                  if (!def) return;
-                  setSection('blocks');
-                  setBloqueAbierto(def);
+                  if (!BLOQUE_POR_ID[id]) return;
+                  setSection('design');
+                  setPieza(id);
                 }}
               >
                 <ProfileView profile={profile} insignias={insigniasGanadasDelPerfil} preview={true} editando />

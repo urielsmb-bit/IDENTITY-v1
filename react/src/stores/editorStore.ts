@@ -124,7 +124,7 @@ function historial(state: EditorState, profile: Profile, key: string | null) {
 
 export const useEditorStore = create<EditorState>((set, get) => ({
   profile: null,
-  section: 'overview',
+  section: 'design',
   dirty: false,
   viewport: 'desktop',
   mode: 'simple',
@@ -141,7 +141,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       dirty: false,
       history: [snapshot],
       historyIndex: 0,
-      section: 'overview',
+      section: 'design',
       selectedBlock: null,
       lastPushAt: 0,
       lastPushKey: null,
@@ -213,7 +213,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   reset: () => set({
     profile: null,
-    section: 'overview',
+    section: 'design',
     dirty: false,
     viewport: 'desktop',
     mode: 'simple',

@@ -385,6 +385,16 @@ export function ProfileView({
     [insigniasDadas, p.joined, p.views, p.nota, p.numNotas],
   );
 
+  /* Y de esas, las que su dueño quiere enseñar. Ganarlas las decide el
+     servidor; enseñarlas, él. Se filtra aqui y no en el calculo de arriba
+     para que lo que se GANA siga siendo lo que se gana —de ahi salen el
+     recuento y el panel de insignias— y lo que cambie sea solo lo que se
+     pinta. */
+  const insigniasVistas = useMemo(() => {
+    const off = new Set(p.badgesOff ?? []);
+    return off.size ? insignias.filter((id) => !off.has(id)) : insignias;
+  }, [insignias, p.badgesOff]);
+
   // ── Estilo y visibilidad por bloque ──────────────────────
   // `blocksOff` guarda lo oculto, no lo visible: así un bloque nuevo
   // aparece en los perfiles que ya existían en vez de faltar.
@@ -706,9 +716,16 @@ export function ProfileView({
     if (b.glow != null) vars['--b-glow'] = String(b.glow);
     if (b.mt != null) vars['--b-mt'] = `${b.mt}px`;
     if (b.font) vars['--b-font'] = fontStack(b.font);
-    // El color de la pieza se aplica redefiniendo el token, para que
-    // alcance también a lo que solo lo hereda.
-    if (b.color) vars['--p-text'] = b.color;
+    /* El color de la pieza. Se hacen las dos cosas a la vez y hace falta:
+       redefinir `--p-text` alcanza a todo lo que hereda del token, y
+       `--b-color` es lo que leen las reglas que pintan las piezas que NO
+       usan ese token —el @usuario, el oficio, la fecha y las visitas van
+       en `--p-dim`, asi que el selector de color no las tocaba y parecia
+       roto justo en la mitad de los bloques que lo ofrecen—. */
+    if (b.color) {
+      vars['--p-text'] = b.color;
+      vars['--b-color'] = b.color;
+    }
     if (b.halo) vars['--halo'] = b.halo;
     // Colores propios de la caja del bloque. Sin esto, «heredar el estilo de
     // la superficie» copiaba los numeros pero el color seguia saliendo del
@@ -1038,14 +1055,14 @@ export function ProfileView({
               carrusel de la portada y en las miniaturas de plantillas
               —perfiles de otra gente— donde un «tus insignias» dirigido al
               visitante no significa nada. */}
-          {ver('badges') && editando && insignias.length === 0 && (
+          {ver('badges') && editando && insigniasVistas.length === 0 && (
             <div className="pf-badges pf-badges--vacio" {...bloque('badges')}>
               <span>Tus insignias saldrán aquí en cuanto ganes la primera.</span>
             </div>
           )}
-          {ver('badges') && insignias.length > 0 && (
+          {ver('badges') && insigniasVistas.length > 0 && (
             <div className="pf-badges" data-style={p.badgeStyle || 'plain'} {...bloque('badges')}>
-              {insignias.slice(0, 8).map((bId) => {
+              {insigniasVistas.slice(0, 8).map((bId) => {
                 const b = getBadge(bId);
                 if (!b) return null;
                 return (

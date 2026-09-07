@@ -37,20 +37,20 @@ const PASOS: Paso[] = [
     id: 'avatar',
     texto: 'Pon tu foto',
     hecho: (p) => !!p.avatarUrl,
-    seccion: 'overview',
+    seccion: 'design',
   },
   {
     id: 'bio',
     texto: 'Di quién eres',
     // El oficio vale igual que la biografia: las dos contestan lo mismo.
     hecho: (p) => !!(p.bio?.trim() || p.title?.trim()),
-    seccion: 'overview',
+    seccion: 'design',
   },
   {
     id: 'fondo',
     texto: 'Elige un fondo',
     hecho: (p) => (p.bgType || 'none') !== 'none',
-    seccion: 'overview',
+    seccion: 'design',
   },
   {
     id: 'redes',
@@ -62,7 +62,7 @@ const PASOS: Paso[] = [
     id: 'discord',
     texto: 'Conecta tu Discord',
     hecho: (p) => !!p.discordId,
-    seccion: 'blocks',
+    seccion: 'design',
     bloque: 'discord',
   },
 ];

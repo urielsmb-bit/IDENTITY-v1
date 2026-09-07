@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { acotarCanal, hexARgb, rgbAHex, type Rgb } from '@/lib/color';
+import { FONTS } from '@/data/themes';
 
 /**
  * Controles del editor.
@@ -171,6 +172,55 @@ export function Tarjetas<T extends string>({
           <span className="card__n">{o.name}</span>
         </button>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Elegir tipografía viéndola.
+ *
+ * Esto era un `<select>`. Un desplegable nativo enseña los nombres, y un
+ * nombre no es una letra: «Bastliga», «Chiikawa» o «Video» no le dicen nada
+ * a nadie hasta que se ven escritos. Con 37 fuentes eso son 37 pruebas de
+ * ensayo y error, cerrando y abriendo la lista una por una.
+ *
+ * Aquí cada opción está escrita CON su propia fuente, así que elegir es
+ * mirar. Sigue en dos grupos —las de texto y las decorativas— porque son
+ * dos intenciones distintas y mezclarlas hace la rejilla ilegible.
+ */
+export function SelectorFuente({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const opcion = (id: string, nombre: string, stack?: string) => (
+    <button
+      key={id || 'perfil'}
+      type="button"
+      className={`fnt${value === id ? ' on' : ''}`}
+      aria-pressed={value === id}
+      onClick={() => onChange(id)}
+      title={nombre}
+    >
+      <span className="fnt__m" style={stack ? { fontFamily: stack } : undefined}>
+        {nombre}
+      </span>
+    </button>
+  );
+
+  return (
+    <div className="fnts" role="group" aria-label="Fuente">
+      {/* La del perfil va la primera y sin muestra propia: es «no elijas
+          ninguna», no una fuente mas. */}
+      {opcion('', 'La del perfil')}
+
+      <span className="fnts__g">De texto</span>
+      {FONTS.filter((f) => f.grupo !== 'deco').map((f) => opcion(f.id, f.name, f.stack))}
+
+      <span className="fnts__g">Decorativas</span>
+      {FONTS.filter((f) => f.grupo === 'deco').map((f) => opcion(f.id, f.name, f.stack))}
     </div>
   );
 }

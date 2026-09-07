@@ -7,7 +7,6 @@ import {
   BADGE_STYLES,
   BLOCK_ANIMS,
   BLOCK_SURFACES,
-  FONTS,
   SOCIAL_STYLES,
 } from '@/data/themes';
 import { NETS } from '@/data/nets';
@@ -15,7 +14,7 @@ import { getBadge } from '@/data/badges';
 import { insigniasGanadas } from '@/lib/insignias';
 import { safeUrl } from '@/lib/utils';
 import { idYouTube } from '@/lib/music';
-import { Campo, ColorRGB, Deslizador, Interruptor, Pastillas, Tarjetas } from './Controles';
+import { Campo, ColorRGB, Deslizador, Interruptor, Pastillas, SelectorFuente, Tarjetas } from './Controles';
 import { DIBUJOS } from './dibujos';
 import { PanelAnimacion } from './PanelAnimacion';
 import { useDiscord, useIdDiscordDeLaSesion, useCuentaDiscordDeLaSesion } from '@/hooks/useDiscord';
@@ -28,6 +27,17 @@ interface EditorBloqueProps {
   profile: Profile;
   onVolver: () => void;
   update: (partial: Partial<Profile>) => void;
+  /** Dentro de un overlay, que ya pone el nombre de la pieza y su salida:
+   *  repetirlos aqui daria dos titulos y dos formas de cerrar. */
+  compacto?: boolean;
+  /**
+   * Solo el primer grupo: lo que la pieza DICE, no como se ve.
+   *
+   * Es lo que se abre al pulsar una pieza en la lista —el nombre que se
+   * lee, tu @usuario, que insignias enseñas— sin sacar a nadie de donde
+   * estaba. Lo demas sigue entero detras del engranaje.
+   */
+  soloContenido?: boolean;
 }
 
 const ALINEACIONES = [
@@ -69,6 +79,9 @@ function MuestraRedes({ profile }: { profile: Profile }) {
       </p>
     );
   }
+  /* La muestra las ENSEÑA; añadirlas y quitarlas es otra pantalla, con
+     sesenta logos y un campo de direccion por cada uno. Decir donde esta
+     cuesta una linea y ahorra el «vale, ¿y esto dónde se toca?». */
   return (
     <div className="muestra">
       <div
@@ -97,11 +110,23 @@ function MuestraRedes({ profile }: { profile: Profile }) {
           );
         })}
       </div>
+      {/* La muestra las ENSEÑA; añadirlas y quitarlas es otra pantalla, con
+          sesenta logos y una direccion por cada uno. Decir donde esta cuesta
+          una linea y ahorra el «vale, ¿y esto dónde se toca?». */}
+      <p className="muestra__pie">
+        Las añades y las quitas en «Redes &amp; Enlaces».
+      </p>
     </div>
   );
 }
 
-function MuestraInsignias({ profile }: { profile: Profile }) {
+function MuestraInsignias({
+  profile,
+  update,
+}: {
+  profile: Profile;
+  update: (partial: Partial<Profile>) => void;
+}) {
   /* El mismo calculo que el perfil publico. Antes esta muestra leia
      `profile.badges`, y por eso ensenaba las que uno se habia puesto a si
      mismo aunque el perfil ya no las pintara: dos verdades distintas para
@@ -119,20 +144,42 @@ function MuestraInsignias({ profile }: { profile: Profile }) {
       </p>
     );
   }
+
+  /* Esto era solo un escaparate: enseñaba las insignias y no dejaba tocar
+     ninguna, asi que las ganadas salian TODAS en el perfil, quisieras o
+     no. Ganarlas las decide el servidor —eso no se negocia, si no una
+     insignia no valdria nada— pero enseñarlas es tuyo. Se guarda lo
+     apagado, no lo encendido: la que ganes mañana sale sola. */
+  const off = new Set(profile.badgesOff ?? []);
+  const alternar = (id: string) => {
+    const n = new Set(off);
+    if (n.has(id)) n.delete(id);
+    else n.add(id);
+    update({ badgesOff: [...n] });
+  };
+
   return (
-    <div className="muestra">
-      <div className="pf-badges" data-style={profile.badgeStyle || 'plain'}>
-        {insignias.slice(0, 8).map((id) => {
-          const b = getBadge(id);
-          if (!b) return null;
-          return (
-            <span key={id} className="pf-badge" data-rare={b.rare} title={b.label}>
+    <div className="insg" role="group" aria-label="Insignias que se ven">
+      {insignias.map((id) => {
+        const b = getBadge(id);
+        if (!b) return null;
+        const on = !off.has(id);
+        return (
+          <button
+            key={id}
+            type="button"
+            className={`insg__it${on ? ' on' : ''}`}
+            aria-pressed={on}
+            onClick={() => alternar(id)}
+            title={on ? `Ocultar ${b.label}` : `Enseñar ${b.label}`}
+          >
+            <span className="pf-badge" data-rare={b.rare}>
               <i aria-hidden="true" dangerouslySetInnerHTML={{ __html: b.icon }} />
               <b>{b.label}</b>
             </span>
-          );
-        })}
-      </div>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -342,7 +389,14 @@ function GuardarCuenta({
  * declara. Añadir un control a un bloque es tocar `data/bloques.ts`, no este
  * archivo; y añadir un tipo de control nuevo es tocar solo el `switch`.
  */
-export function EditorBloque({ def, profile, onVolver, update }: EditorBloqueProps) {
+export function EditorBloque({
+  def,
+  profile,
+  onVolver,
+  update,
+  compacto,
+  soloContenido,
+}: EditorBloqueProps) {
   const estilo: BlockStyle = profile.bstyle?.[def.id] ?? {};
   const ocultos = profile.blocksOff ?? [];
   const visible = !ocultos.includes(def.id);
@@ -408,29 +462,7 @@ export function EditorBloque({ def, profile, onVolver, update }: EditorBloquePro
       case 'fuente':
         return (
           <Campo key={id} label="Fuente">
-            <select
-              className="sel"
-              value={estilo.font || ''}
-              onChange={(e) => setEstilo('font', e.target.value)}
-            >
-              <option value="">La del perfil</option>
-              {/* Dos grupos: 37 nombres en una lista plana no se
-                  recorren, y las decorativas son otra intención. */}
-              <optgroup label="De texto">
-                {FONTS.filter((f) => f.grupo !== 'deco').map((f) => (
-                  <option key={f.id} value={f.id} style={{ fontFamily: f.stack }}>
-                    {f.name}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Decorativas">
-                {FONTS.filter((f) => f.grupo === 'deco').map((f) => (
-                  <option key={f.id} value={f.id} style={{ fontFamily: f.stack }}>
-                    {f.name}
-                  </option>
-                ))}
-              </optgroup>
-            </select>
+            <SelectorFuente value={estilo.font || ''} onChange={(v) => setEstilo('font', v)} />
           </Campo>
         );
 
@@ -840,6 +872,76 @@ export function EditorBloque({ def, profile, onVolver, update }: EditorBloquePro
           </Campo>
         );
 
+      case 'tamAvatar':
+        /* Se guarda en px (40..240) y se enseña en %: nadie tiene una idea
+           de cuanto es 112px de avatar, y en cambio «el 47%» se entiende
+           contra el resto de la tarjeta. Es la misma cuenta que hacia el
+           deslizador que vivia en Diseño. */
+        return (
+          <Deslizador
+            key={id}
+            label="Tamaño"
+            sufijo="%"
+            min={20}
+            max={100}
+            value={Math.round((profile.avSize ?? 112) / 2.4)}
+            onChange={(pct) => update({ avSize: Math.round(pct * 2.4) })}
+          />
+        );
+
+      case 'bordeAvatar':
+        return (
+          <Interruptor
+            key={id}
+            label="Borde"
+            desc="Un aro del color del tema alrededor de la foto"
+            on={!!profile.avBorder}
+            onChange={(v) => update({ avBorder: v })}
+          />
+        );
+
+      case 'brilloAvatar':
+        return (
+          <Interruptor
+            key={id}
+            /* «Resplandor» a secas ya lo usa el control `halo`, que
+               tambien vive en este bloque: dos filas seguidas con el mismo
+               nombre y distinto interruptor no se pueden distinguir. */
+            label="Luz de la foto"
+            desc="La foto ilumina lo que tiene detrás"
+            on={!!profile.avGlow}
+            onChange={(v) => update({ avGlow: v })}
+          />
+        );
+
+      case 'ubicacion':
+        return (
+          <Campo key={id} label="Ciudad">
+            <input
+              type="text"
+              className="inp"
+              placeholder="Ej: Ciudad de México"
+              maxLength={80}
+              value={profile.location || ''}
+              onChange={(e) => update({ location: e.target.value })}
+            />
+          </Campo>
+        );
+
+      case 'pronombres':
+        return (
+          <Campo key={id} label="Pronombres">
+            <input
+              type="text"
+              className="inp"
+              placeholder="Ej: él, ella, elle"
+              maxLength={24}
+              value={profile.pronouns || ''}
+              onChange={(e) => update({ pronouns: e.target.value })}
+            />
+          </Campo>
+        );
+
       case 'formaAvatar':
         return (
           <Campo key={id} label="Forma">
@@ -914,7 +1016,7 @@ export function EditorBloque({ def, profile, onVolver, update }: EditorBloquePro
         return <MuestraRedes key={id} profile={profile} />;
 
       case 'listaInsignias':
-        return <MuestraInsignias key={id} profile={profile} />;
+        return <MuestraInsignias key={id} profile={profile} update={update} />;
 
       case 'margen':
         return (
@@ -976,26 +1078,30 @@ export function EditorBloque({ def, profile, onVolver, update }: EditorBloquePro
     : def.grupos;
 
   return (
-    <div className="dash__seccion">
-      <nav className="miga">
-        <button type="button" className="miga__volver" onClick={onVolver}>
-          ← Bloques
-        </button>
-        <span className="miga__sep">›</span>
-        <span className="miga__aqui">{def.nombre}</span>
-      </nav>
+    <div className={compacto ? '' : 'dash__seccion'}>
+      {!compacto && (
+        <>
+          <nav className="miga">
+            <button type="button" className="miga__volver" onClick={onVolver}>
+              ← Bloques
+            </button>
+            <span className="miga__sep">›</span>
+            <span className="miga__aqui">{def.nombre}</span>
+          </nav>
 
-      <h2 className="dash__h2">Editor de {def.nombre}</h2>
-      <p className="dash__sub">{def.descripcion}</p>
+          <h2 className="dash__h2">Editor de {def.nombre}</h2>
+          <p className="dash__sub">{def.descripcion}</p>
+        </>
+      )}
 
-      {gruposVisibles.map((grupo) => {
+      {(soloContenido ? gruposVisibles.slice(0, 1) : gruposVisibles).map((grupo) => {
         const controles = grupo.controles.filter(
           (c) => !(dependeDeCaja.includes(c) && !hayCaja),
         );
         if (controles.length === 0) return null;
         return (
           <section className="grupo" key={grupo.titulo}>
-            <h3 className="grupo__t">{grupo.titulo}</h3>
+            {!soloContenido && <h3 className="grupo__t">{grupo.titulo}</h3>}
             {controles.map(control)}
           </section>
         );

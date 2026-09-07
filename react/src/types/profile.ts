@@ -282,6 +282,29 @@ export interface Profile {
    *  nuevo aparece solo en los perfiles que ya existen. */
   blocksOff: string[];
 
+  /**
+   * Insignias que has ganado pero prefieres no enseñar.
+   *
+   * Igual que `blocksOff`, guarda lo OCULTO y no lo visible: la que ganes
+   * mañana sale sola, sin tener que volver aquí a encenderla. Ganarlas no
+   * es opcional —las calcula el servidor— pero enseñarlas sí.
+   */
+  badgesOff?: string[];
+
+  /**
+   * Plantilla de arranque elegida: un id de `PLANTILLAS_BASE`.
+   *
+   * Vacío = todavía no ha elegido ninguna, y por eso al entrar al editor lo
+   * primero que ve es la pantalla para elegirla. `'personal'` = el diseño ya
+   * no es el de ninguna plantilla, que es lo normal en cuanto alguien lo
+   * trabaja, y también lo que se le pone a los perfiles anteriores a que las
+   * plantillas existieran para no plantarles una bienvenida encima.
+   *
+   * No manda sobre nada: el aspecto sigue estando en los campos de siempre.
+   * Esto solo recuerda de dónde salió.
+   */
+  base?: string;
+
   /* collections */
   socials: SocialLink[];
   links: LinkItem[];

@@ -2451,10 +2451,22 @@
    que un perfil que no los use se ve exactamente igual. */
 .pf .pf-stack > [style*="--b-mt"]{ margin-top:var(--b-mt); }
 .pf .pf-stack > [style*="--b-case"]{ text-transform:var(--b-case); }
+/* Y a las piezas que fijan la suya propia. `text-transform` se hereda, asi
+   que ponerlo en el bloque bastaba... salvo en las que lo declaran ellas
+   —el nombre lo saca de `--u-nameCase`— y esas ganaban siempre: el mando
+   «Caja del texto» no hacia nada justo donde mas se usa. */
+.pf .pf-stack > [style*="--b-case"] :is(.pf-name, .pf-handle, .pf-title, .pf-joined, .pf-views){
+  text-transform:var(--b-case);
+}
 
-/* Alineación propia de una pieza. Manda sobre la del perfil, para poder
-   centrar las redes en un perfil alineado a la izquierda, por ejemplo. */
-.pf .pf-stack > [style*="--b-align"]{ text-align:var(--b-align); }
+/* Color propio de una pieza.
+   Redefinir `--p-text` alcanza a lo que hereda del token, pero el
+   @usuario, el oficio, la fecha y las visitas van en `--p-dim` —son la
+   letra apagada del perfil— y no se enteraban: el selector de color
+   aparecia en su editor y no cambiaba nada. */
+.pf .pf-stack > [style*="--b-color"] :is(.pf-name, .pf-handle, .pf-title, .pf-joined, .pf-views, .pf-bio){
+  color:var(--b-color);
+}
 
 /* En "Nombre al lado" la cabecera va pegada al avatar aunque el perfil
    esté centrado: centrarla en el hueco que deja el avatar la dejaría
@@ -2465,6 +2477,21 @@
   text-align:left;
   align-items:flex-start;
   --u-just:flex-start;
+}
+
+/* Alineación propia de una pieza. Manda sobre la del perfil —y sobre la
+   que impone «Nombre al lado», por eso va DESPUES—: es una decisión
+   explícita de su dueño y no puede perder contra una regla de formato.
+
+   Las dos propiedades hacen falta. El nombre, el @usuario, el oficio y la
+   fecha viven dentro de un `.pf-idblock`, que es una columna flexible: ahí
+   la caja de cada línea se coloca con `align-items` y `text-align` solo
+   mueve el texto DENTRO de una caja que ya está encogida a su contenido.
+   O sea que con `text-align` a secas el mando no movía nada visible en
+   cuatro de los seis bloques que lo ofrecen. */
+.pf .pf-stack > [style*="--b-align"]{
+  text-align:var(--b-align);
+  align-items:var(--u-just);
 }
 
 /* Espaciado entre letras por pieza. La segunda regla hace falta porque

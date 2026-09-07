@@ -72,6 +72,11 @@ const CONTROL: Record<ControlId, Ficha> = {
 
   posAvatar: { nombre: 'Posición del avatar', alias: ['foto', 'al lado', 'arriba'] },
   formaAvatar: { nombre: 'Forma del avatar', alias: ['foto', 'redondo', 'cuadrado'] },
+  tamAvatar: { nombre: 'Tamaño del avatar', alias: ['foto grande', 'foto pequeña', 'agrandar'] },
+  bordeAvatar: { nombre: 'Borde del avatar', alias: ['aro', 'contorno', 'marco'] },
+  brilloAvatar: { nombre: 'Resplandor del avatar', alias: ['halo', 'brillo', 'glow'] },
+  ubicacion: { nombre: 'Ciudad', alias: ['ubicación', 'dónde vives', 'país', 'lugar'] },
+  pronombres: { nombre: 'Pronombres', alias: ['él', 'ella', 'elle', 'género'] },
 
   animacion: { nombre: 'Animación de entrada', alias: ['aparecer', 'entrada', 'transición'] },
 
@@ -81,9 +86,18 @@ const CONTROL: Record<ControlId, Ficha> = {
 
 /** Las secciones del editor, para poder saltar a ellas por su nombre. */
 const SECCIONES: Array<{ id: string; nombre: string; alias: string[] }> = [
-  { id: 'overview', nombre: 'Perfil', alias: ['foto', 'avatar', 'fondo', 'vídeo', 'quién eres'] },
-  { id: 'design', nombre: 'Diseño', alias: ['tema', 'colores', 'partículas', 'cursor', 'tipografía'] },
-  { id: 'blocks', nombre: 'Bloques', alias: ['piezas', 'orden', 'lienzo', 'colocar'] },
+  /* «Perfil» y «Bloques» se fundieron con «Diseño», asi que sus palabras
+     —foto, fondo, piezas, colocar— se vienen con el: quien las escriba
+     sigue llegando a donde estan sus cosas. */
+  {
+    id: 'design',
+    nombre: 'Diseño',
+    alias: [
+      'tema', 'colores', 'partículas', 'cursor', 'tipografía',
+      'foto', 'avatar', 'fondo', 'vídeo', 'quién eres',
+      'piezas', 'bloques', 'orden', 'lienzo', 'colocar',
+    ],
+  },
   { id: 'links', nombre: 'Redes & Enlaces', alias: ['instagram', 'tiktok', 'enlaces', 'contacto'] },
   { id: 'badges', nombre: 'Badges', alias: ['insignias', 'logros', 'verificado'] },
   { id: 'settings', nombre: 'Ajustes', alias: ['cuenta', 'contraseña', 'correo', 'privacidad', 'borrar'] },
@@ -137,8 +151,8 @@ export const INDICE: Resultado[] = (() => {
     out.push({
       clave: `blq:${b.id}`,
       titulo: b.nombre,
-      ruta: 'Bloques',
-      seccion: 'blocks',
+      ruta: 'Piezas',
+      seccion: 'design',
       bloque: b,
       alias: [],
       aguja: sinTildes(`${b.nombre} ${b.descripcion}`),
@@ -157,8 +171,8 @@ export const INDICE: Resultado[] = (() => {
         out.push({
           clave: `ctl:${b.id}:${id}`,
           titulo: f.nombre,
-          ruta: `Bloques · ${b.nombre}`,
-          seccion: 'blocks',
+          ruta: `Piezas · ${b.nombre}`,
+          seccion: 'design',
           bloque: b,
           alias: (f.alias ?? []).map(sinTildes),
           aguja: sinTildes(`${f.nombre} ${(f.alias ?? []).join(' ')} ${b.nombre} ${g.titulo}`),
