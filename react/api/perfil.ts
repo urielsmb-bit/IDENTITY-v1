@@ -226,12 +226,20 @@ export default async function handler(req: Request): Promise<Response> {
     /* Fila que no se deja convertir: se pide por la red y ya. */
   }
 
-  /* Se SUSTITUYEN el titulo y la descripcion del cascaron. Añadir los nuevos
-     sin quitar los viejos deja dos de cada, y cual gana lo decide cada robot
-     por su cuenta: la mitad enseñaria el titulo generico. */
+  /* Se SUSTITUYE lo que ya trae el cascaron. Añadir los nuevos sin quitar
+     los viejos deja dos de cada, y cual gana lo decide cada robot por su
+     cuenta: la mitad enseñaria el titulo generico.
+
+     Y eso llego a pasar. El cascaron no tenia etiquetas `og:` cuando esto
+     se escribio; se le pusieron unas por defecto despues —para que la
+     portada tambien tuviera tarjeta— y desde entonces cada perfil salia
+     con DOS `og:title`: el suyo y «IDENTITY — Tu identidad, en linea».
+     Por eso ahora se barren todas las `og:` y `twitter:` en vez de sólo
+     las dos que habia el primer dia. */
   const salida = html
     .replace(/<title>[\s\S]*?<\/title>\s*/i, '')
     .replace(/<meta\s+name="description"[^>]*>\s*/i, '')
+    .replace(/<meta\s+(?:property|name)="(?:og|twitter):[^"]*"[^>]*>\s*/gi, '')
     .replace('</head>', `  ${etiquetas}${precarga}\n</head>`);
 
   return respuesta(salida, 300);
