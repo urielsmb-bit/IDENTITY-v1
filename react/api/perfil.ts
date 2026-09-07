@@ -20,9 +20,15 @@
  * Si algo falla se devuelve el cascaron sin tocar. Una vista previa pobre es
  * un problema; una pagina que no carga es otro mucho mayor.
  */
-export const config = { runtime: 'edge' };
+/* Los textos NO se arman aqui. Salen del mismo sitio que los de la
+   previsualizacion del editor, para que no puedan decir cosas distintas:
+   una previa que miente es peor que no tener ninguna.
+   Import relativo y no `@/`: el runtime del borde no tiene alias. */
+import {
+  NOMBRE_SITIO, linea, tituloTarjeta, descripcionTarjeta, imagenTarjeta,
+} from '../src/lib/tarjeta';
 
-const NOMBRE_SITIO = 'IDENTITY';
+export const config = { runtime: 'edge' };
 
 const ESCAPES: Record<string, string> = {
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -36,11 +42,6 @@ const ESCAPES: Record<string, string> = {
  */
 function esc(v: unknown): string {
   return String(v ?? '').replace(/[&<>"']/g, (c) => ESCAPES[c] as string);
-}
-
-/** Una linea, sin saltos y sin pasarse de largo: es para una tarjeta. */
-function linea(v: unknown, max: number): string {
-  return String(v ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
 }
 
 /* El cascaron no cambia dentro de un despliegue, asi que se pide una vez por
@@ -158,18 +159,18 @@ export default async function handler(req: Request): Promise<Response> {
 
   const ap = (fila.apariencia as Record<string, unknown>) ?? {};
 
-  const nombre = linea(ap.name, 60) || usuario;
-  const oficio = linea(ap.title, 60);
-  const bio = linea(ap.bio, 160);
-
-  const titulo = `${nombre} (@${usuario}) · ${NOMBRE_SITIO}`;
-  const descripcion = bio || oficio || `El perfil de @${usuario} en ${NOMBRE_SITIO}.`;
-
-  /* Solo vale un avatar que este en la red. `media:` apunta al almacen del
-     propio navegador —esa foto nunca sale de su maquina—, asi que como
-     imagen de una tarjeta no existe. */
-  const avatar = String(ap.avatarUrl ?? '');
-  const imagen = /^https:\/\//i.test(avatar) ? avatar.slice(0, 500) : '';
+  /* Los tres, de `tarjeta.ts`. La previsualizacion del editor llama a estas
+     mismas funciones, asi que lo que te enseña antes de compartir es
+     literalmente lo que va a leer Discord. */
+  const datos = {
+    username: usuario,
+    name: linea(ap.name, 60),
+    title: linea(ap.title, 60),
+    bio: linea(ap.bio, 160),
+  };
+  const titulo = tituloTarjeta(datos);
+  const descripcion = descripcionTarjeta(datos);
+  const imagen = imagenTarjeta(ap.avatarUrl);
 
   const enlace = `${origen}/u/${usuario}`;
 

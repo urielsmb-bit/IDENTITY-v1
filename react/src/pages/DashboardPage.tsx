@@ -29,6 +29,8 @@ import { SubirFondo } from '@/components/dashboard/SubirFondo';
 import { AjustesCuenta } from '@/components/dashboard/AjustesCuenta';
 import { Guia } from '@/components/dashboard/Guia';
 import { Buscador } from '@/components/dashboard/Buscador';
+import { Progreso } from '@/components/dashboard/Progreso';
+import { TarjetaCompartir } from '@/components/dashboard/TarjetaCompartir';
 import { Frontera } from '@/components/layout/Frontera';
 import { useGuia } from '@/hooks/useGuia';
 import { PanelInsignias } from '@/components/dashboard/PanelInsignias';
@@ -763,6 +765,11 @@ export default function DashboardPage() {
         {/* SECTION: Overview / Identidad */}
         {section === 'overview' && (
           <div className="dash__seccion">
+            {/* Lo primero que se ve al entrar, y a propósito: contesta «¿qué
+                me falta?» antes de que haya que buscarlo control por
+                control. Cada línea salta a donde se arregla. */}
+            <Progreso profile={profile} irA={irA} />
+
             {/* Los dos en fila: cada caja ocupaba el ancho entero y había
                 que hacer scroll para ver el segundo. */}
             <div className="f-row">
@@ -974,6 +981,14 @@ export default function DashboardPage() {
                 value={profile.bio || ''}
                 onChange={(e) => updateField('bio', e.target.value)}
               />
+            </Campo>
+
+            {/* Justo debajo del nombre, la foto y la biografía, que es de
+                donde sale. Cambias algo arriba y lo ves aquí: hasta ahora
+                se publicaba a ciegas y la única forma de saber qué salía
+                era pegar el enlace en algún sitio y mirar. */}
+            <Campo label="Al compartir tu enlace">
+              <TarjetaCompartir profile={profile} />
             </Campo>
           </div>
         )}
