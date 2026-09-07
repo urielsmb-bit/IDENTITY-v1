@@ -304,37 +304,27 @@ function CampoDiscord({
         </p>
       )}
 
-      {/* Opcional, y se dice que lo es.
-          Esto era un aviso rojo que empezaba por «Falta un paso», o sea que
-          leia como un error y como un requisito. No lo es: tu etiqueta, tu
-          nombre y tu avatar ya salen sin esto. Lo unico que añade Lanyard es
-          lo que cambia en vivo, y es lo unico que Discord no deja leer de
-          ninguna otra forma sin montar un bot propio. */}
-      {error === 'sin-lanyard' && (
-        <div className="drop__nota">
-          <p style={{ margin: 0 }}>
-            Tu etiqueta y tu avatar ya se ven en el perfil. Si además quieres
-            que se vea <b>en vivo</b> tu estado y a qué estás jugando, eso lo
-            publica Lanyard, y sólo de quien esté en su servidor.
-          </p>
-          <a
-            className="btn btn--sm btn--ghost dc__unir"
-            href="https://discord.gg/lanyard"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Entrar en el servidor de Lanyard ↗
-          </a>
-          <p className="f__d" style={{ margin: 0 }}>
-            Es opcional. Si entras, esto se conecta solo, sin recargar.
-          </p>
-        </div>
-      )}
+      {/* El bloque está TERMINADO sin nada más: tu avatar, tu nombre y tu
+          etiqueta salen en el perfil en cuanto conectas la cuenta, que es
+          para lo que la conectas.
 
-      {error === 'sin-conexion' && (
-        <p className="drop__err" role="alert">
-          No se pudo conectar con Lanyard. Puede ser cosa suya; inténtalo en un
-          rato.
+          Aquí había una caja con un párrafo y un botón «Entrar en el
+          servidor de Lanyard». Ocupaba el panel entero y se leía como un
+          paso que falta —el sitio te pide que te metas en el servidor de
+          un tercero para que TU bloque funcione—, cuando funciona ya. Lo
+          que añade ese servidor es el estado en vivo y a qué juegas, que
+          es lo único que Discord no deja leer de otra forma sin montar un
+          bot propio. Cabe en una línea al pie, no en una caja con acción.
+
+          Y si Lanyard no contesta tampoco se dice: no falta nada. */}
+      {error === 'sin-lanyard' && (
+        <p className="f__d" style={{ marginBottom: 0 }}>
+          ¿Quieres que además se vea en vivo tu estado y a qué estás jugando?
+          Eso lo publica{' '}
+          <a href="https://discord.gg/lanyard" target="_blank" rel="noopener noreferrer">
+            Lanyard
+          </a>
+          , de quien esté en su servidor. Es opcional y se conecta solo.
         </p>
       )}
 

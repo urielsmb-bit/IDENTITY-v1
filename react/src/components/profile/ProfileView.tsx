@@ -1009,6 +1009,21 @@ export function ProfileView({
                     </b>
                   )}
                 </span>
+                {/* Sin presencia en vivo, la etiqueta.
+
+                    Aqui no habia NADA: el widget se quedaba en una barra
+                    ancha con un avatar y un nombre, y tres cuartos de la
+                    caja vacios. Se leia como algo a medio cargar.
+
+                    Y es justo lo que se viene a buscar en un perfil: la
+                    etiqueta con la que agregarte. Solo cuando no hay
+                    presencia, porque con ella este renglon es el estado y
+                    repetir el nombre de la persona debajo de su nombre no
+                    dice nada. */}
+                {!discord && dcUsuario && (
+                  <span className="pf-dc__s">@{dcUsuario}</span>
+                )}
+
                 {/* Estado y actividad son dos lineas, no una. Antes se
                     pisaban: jugando desaparecia el estado, y sin jugar salia
                     el estado donde deberia ir la actividad. */}
