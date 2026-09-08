@@ -107,6 +107,12 @@ interface Fila {
   cancion_artista: string;
   cancion_portada: string;
   cancion_id: string;
+  /* Datos de la CUENTA, no del momento: los rellena `delUsuario` en la
+     foto inicial. Opcionales para poder omitirlos si Discord no contesta,
+     en vez de escribir vacio encima de lo que ya habia. */
+  tag?: string;
+  tag_icono?: string;
+  deco?: string;
   actualizado: string;
 }
 
@@ -159,6 +165,68 @@ function aFila(p: Presencia, ahora: string): Fila | null {
 }
 
 /** Se conecta, recoge las presencias del servidor y cierra. */
+interface DelUsuario {
+  tag: string;
+  tag_icono: string;
+  deco: string;
+}
+
+/**
+ * Lo que el bot puede saber de alguien SIN su token de OAuth.
+ *
+ * La etiqueta de servidor y el marco de Nitro no viajan en la presencia:
+ * van en el usuario, no en el estado. Hasta ahora se copiaban al enlazar
+ * la cuenta —lo que obliga a volver a conectar Discord cada vez que
+ * aparece un campo nuevo, y ya ha pasado dos veces—. El bot puede
+ * pedirlas el mismo, y ademas se refrescan solas.
+ *
+ * Cada identificador se comprueba antes de meterlo en una direccion: una
+ * barra ahi dentro apuntaria la imagen a otro sitio.
+ */
+async function delUsuario(token: string, id: string): Promise<DelUsuario | null> {
+  try {
+    const r = await fetch(`https://discord.com/api/v10/users/${id}`, {
+      headers: { Authorization: `Bot ${token}` },
+    });
+    if (!r.ok) return null;
+    const u = (await r.json()) as {
+      avatar_decoration_data?: { asset?: unknown };
+      primary_guild?: {
+        tag?: unknown;
+        badge?: unknown;
+        identity_guild_id?: unknown;
+        identity_enabled?: unknown;
+      };
+    };
+
+    const out: DelUsuario = { tag: '', tag_icono: '', deco: '' };
+
+    const asset = u.avatar_decoration_data?.asset;
+    if (typeof asset === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(asset)) {
+      out.deco =
+        `https://cdn.discordapp.com/avatar-decoration-presets/${asset}.png?size=160&passthrough=true`;
+    }
+
+    const pg = u.primary_guild;
+    /* Apagada no se enseña: quien la tiene puesta pero desactivada no la
+       lleva, y no somos nosotros quien para ponersela. */
+    if (pg?.identity_enabled !== false && typeof pg?.tag === 'string') {
+      out.tag = pg.tag.slice(0, 8);
+      const g = pg.identity_guild_id;
+      const b = pg.badge;
+      if (
+        typeof g === 'string' && /^\d{17,20}$/.test(g) &&
+        typeof b === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(b)
+      ) {
+        out.tag_icono = `https://cdn.discordapp.com/guild-tag-badges/${g}/${b}.png?size=32`;
+      }
+    }
+    return out;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Cuantas sesiones nuevas le quedan hoy al bot.
  *
@@ -415,6 +483,24 @@ Deno.serve(async (req) => {
     const filas = presencias.map((x) => aFila(x, ahora)).filter((f): f is Fila => f !== null);
     if (filas.length === 0 && !inicial) return;
 
+    /* La etiqueta y el marco, preguntados al propio Discord. Solo en la
+       foto inicial: son datos de la cuenta, no del momento, y no cambian
+       cada vez que alguien pasa de cancion. Una peticion por persona
+       presente, y son pocas.
+
+       Si la peticion falla se deja el campo FUERA de la fila en vez de
+       escribir vacio: un tropiezo de red no puede borrarle a nadie su
+       etiqueta hasta la siguiente vuelta. */
+    if (inicial) {
+      const extras = await Promise.all(
+        filas.map((f) => delUsuario(token, f.discord_id)),
+      );
+      extras.forEach((e, i) => {
+        if (!e) return;
+        Object.assign(filas[i]!, e);
+      });
+    }
+
     if (filas.length > 0) {
       let { error } = await db.from('presencia').upsert(filas, { onConflict: 'discord_id' });
 
@@ -424,9 +510,14 @@ Deno.serve(async (req) => {
          la presencia se congelaria. Si la base dice que no la conoce, se
          reintenta sin ella: el estado se sigue guardando y lo unico que
          falta es poder REPRODUCIR lo que suena. */
-      if (error && (error.code === 'PGRST204' || /cancion_id/.test(error.message))) {
-        console.warn('discord-presencia · sin columna cancion_id; falta aplicar la 0020');
-        const sinId = filas.map(({ cancion_id: _omitido, ...resto }) => resto);
+      if (
+        error &&
+        (error.code === 'PGRST204' || /cancion_id|tag|deco/.test(error.message))
+      ) {
+        console.warn('discord-presencia · faltan columnas de la 0020; se escribe sin ellas');
+        const sinId = filas.map(
+          ({ cancion_id: _a, tag: _b, tag_icono: _c, deco: _d, ...resto }) => resto,
+        );
         ({ error } = await db.from('presencia').upsert(sinId, { onConflict: 'discord_id' }));
       }
 

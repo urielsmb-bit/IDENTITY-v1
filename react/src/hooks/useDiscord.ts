@@ -167,12 +167,21 @@ export function useDiscord(id: string | undefined, activo = true) {
         usuario: '',
         mostrar: '',
         avatar: '',
-        decoracion: '',
+        /* El marco y la etiqueta ya NO vienen del enlace de OAuth: los
+           lee el bot de `/users/{id}` y los deja aqui. Asi se refrescan
+           solos —cambias de etiqueta y cambia— y nadie tiene que volver a
+           conectar Discord cada vez que aparece un campo nuevo.
+           
+           Si la fila todavia no los trae (migracion 0020 sin aplicar),
+           llegan vacios y el perfil tira de los suyos guardados. */
+        decoracion: String(data.deco ?? ''),
         estado,
         estadoNombre: NOMBRE_ESTADO[estado] ?? NOMBRE_ESTADO.offline!,
         actividad: String(data.actividad ?? ''),
         detalle: String(data.detalle ?? ''),
-        guild: null,
+        guild: data.tag
+          ? { tag: String(data.tag), icono: String(data.tag_icono ?? '') }
+          : null,
         cancion: data.cancion_titulo
           ? {
               titulo: String(data.cancion_titulo),

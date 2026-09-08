@@ -27,3 +27,22 @@ alter table public.presencia
 
 comment on column public.presencia.cancion_id is
   'Id de la pista en Spotify (`sync_id` de la actividad de Discord). Vacio si no hay nada sonando. Solo el id: la URL se arma al pintar.';
+
+
+-- ---- y lo que el BOT puede leer por su cuenta ---------------
+-- La etiqueta de servidor y el marco de Nitro no vienen en la presencia:
+-- van en el USUARIO, no en el estado. Hasta ahora se copiaban al enlazar
+-- la cuenta con el token de OAuth — lo que obliga a volver a conectar
+-- Discord cada vez que aparece un campo nuevo, y ya ha pasado dos veces.
+--
+-- Pero el bot puede pedirlas el mismo: `GET /users/{id}` con su token
+-- devuelve el usuario entero, y el bot ya sabe quien esta en el servidor.
+-- Guardandolas aqui se refrescan solas —si cambias de etiqueta, cambia—
+-- y nadie tiene que volver a enlazar nada nunca mas.
+alter table public.presencia
+  add column if not exists tag       text not null default '',
+  add column if not exists tag_icono text not null default '',
+  add column if not exists deco      text not null default '';
+
+comment on column public.presencia.tag is
+  'Etiqueta de servidor de Discord (`primary_guild.tag`). La lee el bot, no el enlace de OAuth.';
