@@ -369,7 +369,7 @@ function GuardarCuenta({
   /* El marco de Nitro. Se pregunta a Discord con el token del propio
      enlace y se guarda aqui, porque quien visita el perfil no tiene ese
      token: sin esto el marco solo se veia estando en Lanyard. */
-  const deco = useDecoracionDeLaSesion();
+  const extras = useDecoracionDeLaSesion();
   /* Y de paso, al servidor donde el bot puede ver tu estado. Va aqui
      porque es el mismo momento —y el mismo token— que el marco. */
   useEntrarEnElServidor();
@@ -381,12 +381,19 @@ function GuardarCuenta({
     if (usuario && profile.discordUser !== usuario) cambios.discordUser = usuario;
     if (mostrar && profile.discordName !== mostrar) cambios.discordName = mostrar;
     if (avatar && profile.discordAvatar !== avatar) cambios.discordAvatar = avatar;
-    if (deco && profile.discordDecoUrl !== deco) cambios.discordDecoUrl = deco;
+    if (extras.deco && profile.discordDecoUrl !== extras.deco) {
+      cambios.discordDecoUrl = extras.deco;
+    }
+    if (extras.tag && profile.discordTag !== extras.tag) cambios.discordTag = extras.tag;
+    if (extras.tagIcono && profile.discordTagIcono !== extras.tagIcono) {
+      cambios.discordTagIcono = extras.tagIcono;
+    }
     if (Object.keys(cambios).length > 0) update(cambios);
   }, [
-    id, usuario, mostrar, avatar, deco, update,
+    id, usuario, mostrar, avatar, update,
+    extras.deco, extras.tag, extras.tagIcono,
     profile.discordId, profile.discordUser, profile.discordName, profile.discordAvatar,
-    profile.discordDecoUrl,
+    profile.discordDecoUrl, profile.discordTag, profile.discordTagIcono,
   ]);
   return null;
 }

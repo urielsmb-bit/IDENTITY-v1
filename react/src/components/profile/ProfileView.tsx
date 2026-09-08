@@ -1103,14 +1103,28 @@ export function ProfileView({
                       no tiene por que tenerlo. Se sigue guardando porque es
                       el nombre de recambio para quien no tenga uno puesto. */}
                   {dcNombre || dcUsuario}
-                  {/* La etiqueta de servidor. Lanyard ya la mandaba en
-                      `primary_guild` y no la leia nadie. */}
-                  {discord?.guild && (
-                    <b className="pf-dc__gt" title={`Servidor: ${discord.guild.tag}`}>
-                      {discord.guild.icono && (
-                        <img src={discord.guild.icono} alt="" aria-hidden="true" />
+                  {/* La etiqueta de servidor: esas dos a cuatro letras
+                      que se llevan al lado del nombre.
+
+                      Sale del PERFIL, no de la presencia. La mandaba
+                      Lanyard y al quitarlo se perdio, porque la presencia
+                      de la pasarela no la trae: va en el usuario, no en el
+                      estado. Ahora se copia de Discord al enlazar la
+                      cuenta, igual que el marco y por lo mismo — quien
+                      visita tu perfil no tiene tu token para preguntarla. */}
+                  {(discord?.guild?.tag || p.discordTag) && (
+                    <b
+                      className="pf-dc__gt"
+                      title={`Servidor: ${discord?.guild?.tag || p.discordTag}`}
+                    >
+                      {(discord?.guild?.icono || p.discordTagIcono) && (
+                        <img
+                          src={discord?.guild?.icono || p.discordTagIcono}
+                          alt=""
+                          aria-hidden="true"
+                        />
                       )}
-                      {discord.guild.tag}
+                      {discord?.guild?.tag || p.discordTag}
                     </b>
                   )}
                 </span>

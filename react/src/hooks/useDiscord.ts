@@ -269,12 +269,22 @@ export function useCuentaDiscordDeLaSesion(): CuentaDiscord {
  * Si no hay token, si Discord no contesta o si la cuenta no lleva marco, no
  * pasa nada: se queda sin marco, que es como estaba.
  */
-export function useDecoracionDeLaSesion(): string {
+export interface ExtrasDiscord {
+  /** Marco de Nitro alrededor del avatar. */
+  deco: string;
+  /** La etiqueta de servidor: esas dos a cuatro letras que se llevan al
+   *  lado del nombre. */
+  tag: string;
+  /** El escudito que la acompaña. */
+  tagIcono: string;
+}
+
+export function useDecoracionDeLaSesion(): ExtrasDiscord {
   const token = useAuthStore((s) => s.session?.provider_token ?? '');
   const hayDiscord = useAuthStore((s) =>
     !!s.user?.identities?.some((i) => i.provider === 'discord'),
   );
-  const [deco, setDeco] = useState('');
+  const [extras, setExtras] = useState<ExtrasDiscord>({ deco: '', tag: '', tagIcono: '' });
 
   useEffect(() => {
     if (!token || !hayDiscord) return;
@@ -286,16 +296,45 @@ export function useDecoracionDeLaSesion(): string {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!r.ok) return;
-        const j = (await r.json()) as { avatar_decoration_data?: { asset?: unknown } };
+        const j = (await r.json()) as {
+          avatar_decoration_data?: { asset?: unknown };
+          /* La etiqueta de servidor. Antes la mandaba Lanyard y al quitarlo
+             se perdio, porque la presencia de la pasarela NO la trae: va
+             en el usuario, no en el estado. Aqui si esta. */
+          primary_guild?: {
+            tag?: unknown;
+            badge?: unknown;
+            identity_guild_id?: unknown;
+            identity_enabled?: unknown;
+          };
+        };
+        if (!vivo) return;
+
+        const salida: ExtrasDiscord = { deco: '', tag: '', tagIcono: '' };
+
+        /* Cada identificador se comprueba antes de meterlo en una
+           direccion: llegan de fuera, y una barra o dos puntos ahi dentro
+           apuntarian la imagen a otro sitio. */
         const asset = j?.avatar_decoration_data?.asset;
-        /* El identificador se comprueba antes de meterlo en una direccion:
-           llega de fuera, y una barra o dos puntos ahi dentro apuntarian la
-           imagen a otro sitio. */
-        if (vivo && typeof asset === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(asset)) {
-          setDeco(
-            `https://cdn.discordapp.com/avatar-decoration-presets/${asset}.png?size=160&passthrough=true`,
-          );
+        if (typeof asset === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(asset)) {
+          salida.deco =
+            `https://cdn.discordapp.com/avatar-decoration-presets/${asset}.png?size=160&passthrough=true`;
         }
+
+        const pg = j?.primary_guild;
+        if (pg?.identity_enabled !== false && typeof pg?.tag === 'string') {
+          salida.tag = pg.tag.slice(0, 8);
+          const g = pg.identity_guild_id;
+          const b = pg.badge;
+          if (
+            typeof g === 'string' && /^\d{17,20}$/.test(g) &&
+            typeof b === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(b)
+          ) {
+            salida.tagIcono = `https://cdn.discordapp.com/guild-tag-badges/${g}/${b}.png?size=32`;
+          }
+        }
+
+        setExtras(salida);
       } catch {
         /* Sin marco, igual que antes. No es un fallo que contarle a nadie. */
       }
@@ -306,7 +345,7 @@ export function useDecoracionDeLaSesion(): string {
     };
   }, [token, hayDiscord]);
 
-  return deco;
+  return extras;
 }
 
 /**

@@ -268,6 +268,17 @@ export interface Profile {
    * marco solo se veria estando en el servidor de Lanyard.
    */
   discordDecoUrl?: string;
+  /**
+   * La etiqueta de servidor de Discord: esas dos a cuatro letras que se
+   * llevan al lado del nombre, con su escudito.
+   *
+   * Se guardan por lo mismo que el marco: NO vienen en la presencia —van
+   * en el usuario, no en el estado— asi que la unica forma de saberlas es
+   * preguntarselo a Discord con el token del enlace, y quien visita tu
+   * perfil no lo tiene.
+   */
+  discordTag?: string;
+  discordTagIcono?: string;
 
   /* background */
   bgType: 'none' | 'color' | 'gradient' | 'image' | 'video';

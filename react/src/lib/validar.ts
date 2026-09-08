@@ -339,6 +339,13 @@ function esquema(ID: any) {
       const s = String(v ?? '').trim().slice(0, 300);
       return /^https:\/\/cdn\.discordapp\.com\/[\w./-]+(\?[\w=&.-]*)?$/.test(s) ? s : '';
     },
+    /* La etiqueta de servidor: cuatro letras como mucho, y su escudo del
+       CDN de Discord como todo lo demas. */
+    discordTag: (v: any) => texto(v, 8),
+    discordTagIcono: (v: any) => {
+      const s = String(v ?? '').trim().slice(0, 300);
+      return /^https:\/\/cdn\.discordapp\.com\/[\w./-]+(\?[\w=&.-]*)?$/.test(s) ? s : '';
+    },
     /* El marco, con la misma regla y por el mismo motivo. */
     discordDecoUrl: (v: any) => {
       const s = String(v ?? '').trim().slice(0, 300);
