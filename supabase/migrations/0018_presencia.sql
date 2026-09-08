@@ -56,6 +56,17 @@ comment on table public.presencia is
 create index if not exists presencia_actualizado_idx
   on public.presencia (actualizado);
 
+-- ---- el permiso de tabla, que RLS NO sustituye ------------
+-- Se me habia olvidado y la lectura fallaba con 42501 antes de llegar
+-- siquiera a la politica. Son dos porteros en serie: primero el GRANT de
+-- Postgres —¿puede este rol tocar la tabla?— y solo despues la politica
+-- de RLS —¿que filas?—. Una politica `using (true)` sobre una tabla sin
+-- grant no deja pasar a nadie.
+--
+-- `anon` porque un perfil lo abre cualquiera, sin sesion. Solo SELECT:
+-- escribir sigue siendo cosa de la funcion de borde.
+grant select on public.presencia to anon, authenticated;
+
 alter table public.presencia enable row level security;
 
 -- LEER: cualquiera. Es lo que pinta un perfil publico, y no hay nada

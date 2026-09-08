@@ -33,8 +33,10 @@
 // significa no aparecer: Discord no manda a los desconectados.
 //
 // Desplegar:  supabase functions deploy discord-presencia
-// Secretos:   DISCORD_BOT_TOKEN, DISCORD_GUILD_ID
-// Llamarla:   cada minuto, con la clave de servicio en la cabecera.
+// Secretos:   DISCORD_BOT_TOKEN, DISCORD_GUILD_ID, CRON_SECRET
+// Llamarla:   cada minuto, con dos cabeceras — `Authorization` con una
+//             clave del proyecto (la pide la pasarela) y `x-cron-secret`
+//             con el secreto de arriba (la pedimos nosotros).
 // ============================================================
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
@@ -132,6 +134,11 @@ function tomarFoto(token: string, guild: string): Promise<Presencia[]> {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(PASARELA);
     let acabado = false;
+    /* En qué servidores está el bot de verdad. Se apunta para poder
+       decirlo cuando la foto no llega: «no llegó a tiempo» no lleva a
+       ninguna parte, y el fallo casi siempre es que el id del servidor no
+       es ese o que el bot no está dentro. */
+    const donde = new Set<string>();
 
     const acabar = (fn: () => void) => {
       if (acabado) return;
@@ -146,7 +153,16 @@ function tomarFoto(token: string, guild: string): Promise<Presencia[]> {
     };
 
     const reloj = setTimeout(
-      () => acabar(() => reject(new Error('la pasarela no mandó la foto a tiempo'))),
+      () =>
+        acabar(() =>
+          reject(
+            new Error(
+              donde.size
+                ? `el bot no ve el servidor ${guild}. Está en: ${[...donde].join(', ')}`
+                : 'el bot no está en ningún servidor todavía',
+            ),
+          ),
+        ),
       ESPERA_MS,
     );
 
@@ -169,6 +185,15 @@ function tomarFoto(token: string, guild: string): Promise<Presencia[]> {
         }));
         return;
       }
+
+      /* READY trae la lista de servidores del bot, y cada GUILD_CREATE
+         confirma uno. Los dos sirven para saber dónde está. */
+      if (m.t === 'READY' && Array.isArray(m.d?.guilds)) {
+        for (const g of m.d.guilds as Array<{ id?: string }>) {
+          if (g?.id) donde.add(g.id);
+        }
+      }
+      if (m.t === 'GUILD_CREATE' && typeof m.d?.id === 'string') donde.add(m.d.id);
 
       if (m.t === 'GUILD_CREATE' && m.d?.id === guild) {
         const p = Array.isArray(m.d.presences) ? (m.d.presences as Presencia[]) : [];
@@ -195,16 +220,30 @@ function tomarFoto(token: string, guild: string): Promise<Presencia[]> {
 }
 
 Deno.serve(async (req) => {
-  /* Esto no lo llama un navegador: lo llama un cron con la clave de
-     servicio. Sin CORS y sin más puerta que esa. */
-  const servicio = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-  const dado = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
-  if (!servicio || dado !== servicio) {
+  /* Esto no lo llama un navegador: lo llama un cron. Y la puerta es un
+     secreto NUESTRO en su propia cabecera, no la clave de servicio.
+     
+     Dos motivos. Uno: `Authorization` ya la mira la pasarela de Supabase
+     —tiene que llevar una clave válida del proyecto o la petición no
+     llega hasta aquí—, así que esa cabecera no es nuestra para usarla de
+     contraseña. Y dos: la clave que la pasarela acepta es la pública del
+     navegador, que está en el frontend de cualquiera; con eso solo, esto
+     lo dispararía quien quisiera.
+     
+     Se probó comparando contra `SUPABASE_SERVICE_ROLE_KEY` y no valía:
+     Supabase está migrando de claves —hay cuatro en el proyecto— y lo que
+     inyecta bajo ese nombre no es lo que devuelve el CLI. Un secreto
+     propio no depende de esa migración. */
+  const esperado = Deno.env.get('CRON_SECRET') ?? '';
+  const dado = req.headers.get('x-cron-secret') ?? '';
+  if (!esperado || dado !== esperado) {
     return new Response('no', { status: 401 });
   }
 
-  const token = Deno.env.get('DISCORD_BOT_TOKEN') ?? '';
-  const guild = Deno.env.get('DISCORD_GUILD_ID') ?? '';
+  /* `.trim()` porque estos se pegan a mano y un salto de línea al final
+     no se ve, pero convierte el id en otro id. */
+  const token = (Deno.env.get('DISCORD_BOT_TOKEN') ?? '').trim();
+  const guild = (Deno.env.get('DISCORD_GUILD_ID') ?? '').trim();
   if (!token || !guild) {
     return Response.json({ ok: false, motivo: 'sin-bot' }, { status: 200 });
   }
