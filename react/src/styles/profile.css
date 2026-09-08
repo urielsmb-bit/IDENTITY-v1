@@ -902,7 +902,21 @@
    suspensivos, pero son elementos en linea y ahi text-overflow no
    se aplica: el texto se derramaba sobre los controles
    (scrollWidth 127 dentro de 16px). El recorte va en la caja. */
-.pf-music__meta{ flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+/* El titulo y el artista son dos `span` seguidos, y sueltos en linea se
+   pegaban: salia «Pista de pruebaLATENIGHT», sin espacio ni separacion.
+   Ademas el `text-overflow:ellipsis` de cada uno no hacia NADA —recortar
+   pide una caja de bloque— asi que un titulo largo no se cortaba con
+   puntos suspensivos: empujaba al artista fuera de la vista.
+
+   En columna las dos cosas se arreglan solas: cada uno es su propia
+   linea y cada uno se recorta por su cuenta. `min-width:0` es lo que le
+   permite encogerse dentro de la fila de la musica; sin el, un titulo
+   largo estira la caja y desborda en vez de recortarse. */
+.pf-music__meta{
+  flex:1; min-width:0;
+  display:flex; flex-direction:column; justify-content:center;
+  overflow:hidden;
+}
 .pf-music__t{ font-size:var(--t2); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .pf-music__a{ font-size:var(--t1); color:var(--p-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .pf-music__viz{ display:flex; align-items:flex-end; gap:2.5px; height:22px; flex:none; }
@@ -2463,6 +2477,20 @@
 
 /* En la cabecera las insignias compiten por el ancho con el avatar, así
    que van en versión pequeña. */
+/* Las visitas son una linea `inline-flex`: se colocan con `align-self`,
+   y aqui la pila es un bloque —lo pide el float del avatar— donde
+   `align-self` no coloca nada. O sea que en esta composicion la
+   alineacion propia de la pieza se quedaba muerta y el contador se
+   quedaba pegado a la izquierda dijera lo que dijera el editor.
+
+   De bloque y con `justify-content` hace lo que se le pide, y con
+   `flex-start` por defecto se queda donde estaba para quien no toque
+   nada. */
+.pf[data-avpos="side"] .pf-stack > .pf-views{
+  display:flex;
+  justify-content:var(--u-just, flex-start);
+}
+
 .pf[data-avpos="side"] .pf-badges{ gap:5px; }
 .pf[data-avpos="side"] .pf-badge{ padding:3px 8px 3px 6px; font-size:var(--t1); gap:4px; }
 .pf[data-avpos="side"] .pf-badge i svg{ width:1em; height:1em; }

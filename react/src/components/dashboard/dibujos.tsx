@@ -552,17 +552,17 @@ export const DIBUJOS: Record<string, Record<string, ReactNode>> = {
         {puntos(50, 47)}
       </>,
     ),
-    /* Ficha: esquinas casi rectas —mas documento que aplicacion— y el
-       nombre con remates, que es lo unico que la serif deja ver a este
-       tamaño. */
+    /* Ficha: ancha y con la cabecera EN HORIZONTAL —la foto a un lado y
+       el nombre al lado, no encima—, mas la cajita de la musica debajo.
+       Es lo unico que hay que ver para saber en que se diferencia. */
     retrato: W(
       <>
-        <rect x="9" y="13" width="82" height="38" rx="2" fill="currentColor" fillOpacity=".12" strokeWidth="1.2" opacity=".85" />
-        <rect x="17" y="21" width="21" height="21" rx="6" fill="currentColor" stroke="none" />
-        {raya(45, 22, 30)}
-        {raya(45, 29, 20, 0.5)}
-        {raya(45, 36, 24, 0.35)}
-        {puntos(52, 45)}
+        <rect x="8" y="9" width="84" height="46" rx="7" fill="currentColor" fillOpacity=".12" strokeWidth="1.2" opacity=".85" />
+        <circle cx="24" cy="22" r="7.5" fill="currentColor" stroke="none" />
+        {raya(36, 17, 28)}
+        {raya(36, 24, 17, 0.5)}
+        <rect x="15" y="33" width="70" height="10" rx="3.5" fill="currentColor" fillOpacity=".3" strokeWidth="1" opacity=".8" />
+        {puntos(50, 49)}
       </>,
     ),
     minima: W(
@@ -570,10 +570,10 @@ export const DIBUJOS: Record<string, Record<string, ReactNode>> = {
         {/* Sin caja: el borde punteado solo dice donde acaba el diseño. */}
         <rect x="24" y="4" width="52" height="56" rx="6" strokeWidth="1.1" strokeDasharray="3 4" opacity=".3" />
         <circle cx="50" cy="16" r="6" fill="currentColor" stroke="none" />
-        {/* El nombre ENORME: es la composicion entera. */}
-        <rect x="22" y="28" width="56" height="9" rx="4.5" fill="currentColor" stroke="none" />
-        {raya(41, 43, 18, 0.45)}
-        {puntos(50, 54)}
+        {/* El nombre grande, y debajo la unica pieza con caja. */}
+        <rect x="24" y="26" width="52" height="8" rx="4" fill="currentColor" stroke="none" />
+        <rect x="26" y="39" width="48" height="9" rx="4" fill="currentColor" fillOpacity=".3" strokeWidth="1" opacity=".8" />
+        {puntos(50, 55)}
       </>,
     ),
     vitrina: W(

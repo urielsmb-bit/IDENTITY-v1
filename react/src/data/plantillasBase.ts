@@ -150,81 +150,105 @@ export const PLANTILLAS_BASE: PlantillaBase[] = [
   {
     id: 'retrato',
     nombre: 'Ficha',
-    descripcion: 'La foto a un lado y el texto al otro, en serif. Se lee como la ficha de un libro.',
-    bloques: ['avatar', 'name', 'handle', 'meta', 'bio', 'socials'],
+    descripcion: 'La foto a un lado y el nombre al lado, ancha. La musica y Discord van en su propia cajita.',
+    bloques: ['avatar', 'name', 'handle', 'discord', 'socials', 'music', 'views'],
     ajustes: {
       ...SEGURO,
       surface: 'glass',
-      sWidthPct: 62,          // ≈570px: las dos columnas caben sin montarse
-      sOpacity: 11,
-      sBlur: 18,
+      sWidthPct: 64,          // ≈589px: la cabecera necesita sitio para dos columnas
+      sOpacity: 10,
+      sBlur: 26,
       sBorderOn: true,
       sBorderW: 1,
-      radius: 12,             // esquinas casi rectas: mas documento que app
-      gap: 12,
-      pad: null,
+      radius: 26,
+      gap: 16,
+      pad: 22,
+      /* Texto a la izquierda y foto al lado: la cabecera se lee en
+         horizontal —foto, nombre, @usuario— en vez de en una columna
+         centrada. Es lo unico que distingue de verdad a esta plantilla. */
       align: 'left',
       avPos: 'side',
-      avShape: 'rounded',
-      avSize: 100,
-      avBorder: false,
+      avShape: 'circle',
+      avSize: 84,
+      avBorder: true,
       avGlow: false,
-      blockStyle: 'inherit',
-      socialStyle: 'icons',
+      /* Las cajas de dentro —Discord, la musica— en cristal, pero el
+         nombre y las redes sueltos: si TODO lleva caja, la cabecera deja
+         de leerse como cabecera y la tarjeta se vuelve una lista. */
+      blockStyle: 'glass',
+      socialStyle: 'glow',
       glowName: false,
-      glowSocials: false,
-      badgeStyle: 'plain',
+      glowSocials: true,
+      badgeStyle: 'icons',
       musicStyle: 'compact',
-      iconSize: 19,
-      font: 'manrope',
-      /* Serif solo en el nombre. Es lo unico que hace que esto se lea como
-         una ficha y no como otra tarjeta mas. */
-      fontDisplay: 'serif',
+      iconSize: 26,
+      font: 'inter',
+      fontDisplay: 'space',
     },
     cajas: {
-      bio: { align: 'left' },
+      /* Los bloques de la cabecera se ciñen al hueco que deja la foto, asi
+         que el nombre grande no parte: son dos o tres palabras. */
+      name: { size: 108 },
+      handle: { size: 104 },
+      bio: { align: 'left', size: 95 },
       meta: { align: 'left' },
-      socials: { align: 'left' },
       badges: { align: 'left' },
-      views: { align: 'left' },
-      name: { size: 96 },
+      discord: { rad: 16 },
+      music: { rad: 16 },
+      /* Las redes SI van centradas, aunque el resto vaya a la izquierda:
+         son la fila de abajo, y una fila de iconos pegada a un lado deja
+         un hueco muerto que se lee como un fallo. */
+      socials: { align: 'center', mt: 6 },
+      /* Las visitas, pequeñas y al otro extremo: es un dato de servicio,
+         no contenido. */
+      views: { align: 'right', size: 84 },
     },
   },
   {
     id: 'minima',
     nombre: 'Mínima',
-    descripcion: 'Sin caja: el nombre enorme flotando sobre tu fondo. Cuanto mejor sea la imagen, mejor queda.',
-    bloques: ['avatar', 'name', 'socials'],
+    descripcion: 'Sin caja: la foto, el nombre y poco mas, sueltos sobre tu fondo. Cuanto mejor sea la imagen, mejor queda.',
+    bloques: ['avatar', 'name', 'discord', 'socials'],
     ajustes: {
       ...SEGURO,
       surface: 'none',
       sWidthPct: 50,
       sBorderOn: false,
       radius: 0,
-      gap: 22,
+      gap: 18,
       pad: 0,
       align: 'center',
       avPos: 'center',
       avShape: 'circle',
-      avSize: 88,
+      avSize: 108,
       avBorder: false,
       avGlow: true,
-      blockStyle: 'transparent',
-      socialStyle: 'icons',
+      /* Las piezas que SI llevan caja —Discord, la musica— se quedan con
+         la suya, en cristal. Con `transparent` se disolvian en el fondo:
+         sin tarjeta detras que las contenga, un widget sin caja no se lee
+         como una pieza, se lee como texto suelto encima de la foto. */
+      blockStyle: 'glass',
+      socialStyle: 'glow',
       glowName: true,
       glowSocials: true,
       badgeStyle: 'icons',
-      musicStyle: 'transparent',
-      iconSize: 25,
+      musicStyle: 'compact',
+      iconSize: 26,
       font: 'inter',
-      /* Anton. Sin caja detras, el nombre ES la composicion: con una
-         tipografia de texto normal esto se queda en un perfil desnudo en
-         vez de en una portada. */
-      fontDisplay: 'display',
+      /* Bold ancha, no una display condensada: el nombre manda por tamaño
+         y por peso, y una condensada a este cuerpo se lee como un cartel
+         y le quita el sitio a todo lo demas. */
+      fontDisplay: 'space',
     },
     cajas: {
-      name: { size: 145 },
+      name: { size: 124 },
       bio: { size: 95, mt: 2 },
+      /* Mas anchas que su contenido a proposito: pegadas al texto, sin
+         tarjeta detras que las sostenga, las cajas se leen como una
+         etiqueta suelta en vez de como una pieza del perfil. */
+      discord: { w: 70, rad: 18 },
+      music: { w: 70, rad: 18 },
+      socials: { mt: 4 },
     },
   },
   {
