@@ -463,6 +463,29 @@ Deno.serve(async (req) => {
   }
 
   const pideLimites = new URL(req.url).searchParams.has('limites');
+
+  /* Diagnostico: que devuelve de verdad Discord de una persona. Solo las
+     CLAVES y el bloque de la etiqueta, no el usuario entero — esto es
+     para saber si un campo llega, no para volcar datos de nadie. */
+  const quienDebug = new URL(req.url).searchParams.get('usuario') ?? '';
+  if (/^\d{17,20}$/.test(quienDebug)) {
+    const r = await fetch(`https://discord.com/api/v10/users/${quienDebug}`, {
+      headers: { Authorization: `Bot ${token}` },
+    });
+    if (!r.ok) {
+      return Response.json({ ok: false, http: r.status }, { status: 200 });
+    }
+    const u = (await r.json()) as Record<string, unknown>;
+    return Response.json(
+      {
+        ok: true,
+        claves: Object.keys(u),
+        primary_guild: u.primary_guild ?? null,
+        avatar_decoration_data: u.avatar_decoration_data ?? null,
+      },
+      { status: 200 },
+    );
+  }
   /* La ventana se puede acortar para probar sin esperar dos minutos. */
   const ventana = Math.min(
     VENTANA_MS,
