@@ -498,8 +498,8 @@
 
 /* --- widget de Discord --- */
 .pf-dc{
-  display:flex; align-items:center; gap:11px;
-  padding:9px 14px 9px 10px;
+  display:flex; align-items:center; gap:12px;
+  padding:10px 12px 10px 10px;
   border:1px solid var(--p-line);
   border-radius:var(--p-chip-r);
   background:var(--p-surface-2);
@@ -522,9 +522,13 @@
   background:var(--st,#747F8D);
   border:2.5px solid var(--p-bg);
 }
+/* El nombre manda: es la unica linea que se lee entera de un vistazo,
+   asi que sube de tamaño y las otras dos bajan. Antes las tres pesaban
+   igual y el bloque se leia como un parrafo. */
 .pf-dc__u{
   display:flex; align-items:center; gap:6px;
-  font-size:var(--t2); font-weight:600; color:var(--p-text);
+  font-size:var(--t3); font-weight:650; color:var(--p-text);
+  line-height:1.25;
 }
 .pf-dc__bd{ font-size:var(--t1); opacity:.85; }
 /* La columna de texto no se encoge por debajo de su contenido: sin esto, la
@@ -545,14 +549,61 @@
 .pf-dc__gt img{ width:14px; height:14px; display:block; flex:none; }
 /* La caratula de lo que suena. `flex:none` por lo de siempre: en una fila
    flex una imagen se deja encoger por debajo de su contenido. */
+/* La caratula. Un poco mas grande y mas redonda: es lo unico con color
+   de toda la caja y se estaba comportando como una miniatura de fichero.
+   El aire de la izquierda la separa del texto en vez de dejarla pegada
+   al borde derecho. */
 .pf-dc__disco{
-  width:38px; height:38px; flex:none;
+  width:42px; height:42px; flex:none;
   margin-left:auto;
-  border-radius:6px; overflow:hidden;
+  border-radius:8px; overflow:hidden;
   border:1px solid var(--p-line);
+  box-shadow:0 2px 10px rgba(0,0,0,.35);
 }
 .pf-dc__disco img{ width:100%; height:100%; object-fit:cover; display:block; }
-.pf-dc__s{ display:block; font-size:var(--t1); color:var(--p-dim); margin-top:1px; }
+.pf-dc__s{
+  display:block; font-size:var(--t1); color:var(--p-dim);
+  margin-top:2px; line-height:1.35;
+  /* Un titulo largo estrecha, no empuja: sin esto la caratula se salia
+     de la caja con las canciones de nombre kilometrico. */
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+
+/* El estado, del color de su estado. `--st` ya viene calculado en la
+   caja: es el mismo color del punto del avatar. */
+.pf-dc__estado{
+  color:var(--st, var(--p-dim));
+  font-weight:550;
+  letter-spacing:.01em;
+}
+
+/* Lo que suena: nota, titulo y artista. Tres pesos distintos porque son
+   tres cosas distintas — la nota situa, el titulo es lo que se busca y
+   el artista acompaña. */
+.pf-dc__son{
+  display:flex; align-items:center; gap:5px;
+  min-width:0;
+}
+.pf-dc__son svg{
+  width:11px; height:11px; flex:none;
+  opacity:.8;
+}
+.pf-dc__son b{
+  font-weight:600; color:var(--p-text);
+  min-width:0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+/* El artista, detras de un punto que no hay que escribir en el marcado:
+   asi no aparece suelto cuando la cancion no trae artista. */
+.pf-dc__son i{
+  font-style:normal; flex:none;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.pf-dc__son i::before{ content:"·"; margin-right:5px; opacity:.6; }
+
+/* La actividad —«Jugando a…»— tambien sube un punto: es contenido, no
+   una etiqueta. */
+.pf-dc__act{ color:var(--p-text); opacity:.82; }
 
 /* --- actividad en vivo --- */
 .pf-live{ display:grid; gap:7px; width:100%; }

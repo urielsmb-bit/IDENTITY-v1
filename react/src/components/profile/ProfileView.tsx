@@ -102,6 +102,15 @@ function varsAnimacion(b: BlockStyle): Record<string, string> {
   return v;
 }
 
+/* La nota de lo que suena. Sustituye a la palabra «Escuchando», que
+   ocupaba el sitio del titulo de la cancion siendo lo menos importante
+   de la linea. */
+const NOTA_MUSICAL = (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M9 18.5a2.5 2.5 0 1 1-2.5-2.5c.6 0 1.1.2 1.5.5V4.8l10-2v10.7a2.5 2.5 0 1 1-2.5-2.5c.6 0 1.1.2 1.5.5V5.1l-8 1.6v11.8Z" />
+  </svg>
+);
+
 /* Los iconos de la linea de oficio y ciudad. De trazo y con
    `currentColor`, como todo lo demas del perfil: un emoji lo dibuja cada
    sistema a su manera, no hereda el color del tema y no se le puede dar
@@ -1066,19 +1075,33 @@ export function ProfileView({
                 {/* Estado y actividad son dos lineas, no una. Antes se
                     pisaban: jugando desaparecia el estado, y sin jugar salia
                     el estado donde deberia ir la actividad. */}
+                {/* El estado, del COLOR de su estado. Era una linea gris
+                    igual que las demas, o sea que «No molestar» y «En
+                    linea» se leian iguales — y el unico sitio donde ya
+                    estaba el color era un punto de 12px en el avatar.
+                    Aqui el color ya esta calculado (`--st`): usarlo no
+                    cuesta nada y hace que el estado se entienda sin
+                    leerlo. */}
                 {discord?.estadoNombre && (
-                  <span className="pf-dc__s">{discord.estadoNombre}</span>
+                  <span className="pf-dc__s pf-dc__estado">{discord.estadoNombre}</span>
                 )}
-                {/* Con cancion no se repite «Escuchando Spotify»: la linea de
-                    abajo ya dice QUE suena, que es la mitad que faltaba. */}
+
+                {/* La cancion, con jerarquia: el titulo es lo que se busca
+                    con la vista, el artista acompaña. Iban los dos del
+                    mismo gris y pegados por un punto —«Escuchando CLL 34 ·
+                    Jay PR»— que es una sola mancha de texto donde hay tres
+                    cosas distintas. */}
                 {discord?.cancion ? (
-                  <span className="pf-dc__s">
-                    Escuchando {discord.cancion.titulo}
-                    {discord.cancion.artista ? ` · ${discord.cancion.artista}` : ''}
+                  <span className="pf-dc__s pf-dc__son">
+                    {NOTA_MUSICAL}
+                    <b>{discord.cancion.titulo}</b>
+                    {discord.cancion.artista && <i>{discord.cancion.artista}</i>}
                   </span>
                 ) : (
                   <>
-                    {discord?.actividad && <span className="pf-dc__s">{discord.actividad}</span>}
+                    {discord?.actividad && (
+                      <span className="pf-dc__s pf-dc__act">{discord.actividad}</span>
+                    )}
                     {discord?.detalle && <span className="pf-dc__s">{discord.detalle}</span>}
                   </>
                 )}
