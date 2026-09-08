@@ -95,11 +95,24 @@ select cron.schedule(
 );
 
 -- ---- comprobar --------------------------------------------
--- El trabajo, y las ultimas llamadas con lo que respondieron.
+-- El trabajo:
 --
 --   select jobname, schedule, active from cron.job;
 --
---   select status, (response).status_code, (response).body
+-- Y las ultimas llamadas. `net._http_response` no tiene columna
+-- `status` ni una `response` compuesta —eso es de `http_collect_response`,
+-- otra cosa— asi que lo seguro es pedirlo todo:
+--
+--   select * from net._http_response order by created desc limit 3;
+--
+-- Y si se quiere solo lo util:
+--
+--   select id, status_code, content, created
 --     from net._http_response order by created desc limit 5;
 --
--- Lo que se busca en el cuerpo es {"ok":true,"vistos":N}.
+-- Lo que se busca en `content` es {"ok":true,"vistos":N}.
+--
+-- La otra forma de comprobarlo, sin salir de aqui: mirar dos veces
+-- seguidas cuanto ha envejecido la foto. Si baja sola, el cron corre.
+--
+--   select discord_id, now() - actualizado as edad from presencia;
