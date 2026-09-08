@@ -434,7 +434,14 @@ export function ProfileView({
     !!p.discordId && (verWidget || quiereMarco),
   );
   /** El marco de Nitro para el avatar del perfil, si lo hay y se quiere. */
-  const marcoDiscord = quiereMarco ? discord?.decoracion || '' : '';
+  /* El marco, con Lanyard o sin el. Lanyard lo manda en vivo cuando esta;
+     cuando no, sale el que se copio de Discord al enlazar la cuenta. Antes
+     colgaba solo de Lanyard, asi que el marco de Nitro —que es de las cosas
+     que mas se quieren enseñar— solo se veia si ademas estabas en el
+     servidor de un tercero. */
+  const marcoDiscord = quiereMarco
+    ? discord?.decoracion || p.discordDecoUrl || ''
+    : '';
 
   /**
    * Quien es, con Lanyard o sin el.
@@ -1012,8 +1019,8 @@ export function ProfileView({
                 {/* El marco de Nitro va ENCIMA del avatar y desbordandolo:
                     esa es su gracia, y por eso no puede ir dentro del
                     recorte circular. */}
-                {discord?.decoracion && (
-                  <img className="pf-dc__deco" src={discord.decoracion} alt="" aria-hidden="true" />
+                {marcoDiscord && (
+                  <img className="pf-dc__deco" src={marcoDiscord} alt="" aria-hidden="true" />
                 )}
                 {/* El punto de estado SOLO cuando hay presencia de verdad.
                     Sin Lanyard no se sabe si estas conectado, y un punto

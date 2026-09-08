@@ -316,6 +316,64 @@ export function useCuentaDiscordDeLaSesion(): CuentaDiscord {
   }, [ident]);
 }
 
+/**
+ * El marco del avatar, traido de Discord y no de Lanyard.
+ *
+ * La decoracion de Nitro SI se puede saber sin Lanyard: viene en el propio
+ * usuario, y el inicio de sesion con Discord nos deja un token con el que
+ * preguntarselo. Lo que no se puede saber es el estado y la actividad —eso
+ * Discord solo lo entrega por la pasarela y a un bot que comparta servidor
+ * contigo, que es literalmente lo que es Lanyard—.
+ *
+ * El token solo existe en la vuelta del propio inicio de sesion: no se
+ * guarda ni se refresca. Por eso esto se pregunta UNA vez, justo cuando se
+ * conecta la cuenta, y lo que se queda en el perfil es la direccion de la
+ * imagen. Quien enlazo Discord antes de que esto existiera tiene que volver
+ * a conectarlo para que se la traiga.
+ *
+ * Si no hay token, si Discord no contesta o si la cuenta no lleva marco, no
+ * pasa nada: se queda sin marco, que es como estaba.
+ */
+export function useDecoracionDeLaSesion(): string {
+  const token = useAuthStore((s) => s.session?.provider_token ?? '');
+  const hayDiscord = useAuthStore((s) =>
+    !!s.user?.identities?.some((i) => i.provider === 'discord'),
+  );
+  const [deco, setDeco] = useState('');
+
+  useEffect(() => {
+    if (!token || !hayDiscord) return;
+    let vivo = true;
+
+    (async () => {
+      try {
+        const r = await fetch('https://discord.com/api/v10/users/@me', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!r.ok) return;
+        const j = (await r.json()) as { avatar_decoration_data?: { asset?: unknown } };
+        const asset = j?.avatar_decoration_data?.asset;
+        /* El identificador se comprueba antes de meterlo en una direccion:
+           llega de fuera, y una barra o dos puntos ahi dentro apuntarian la
+           imagen a otro sitio. */
+        if (vivo && typeof asset === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(asset)) {
+          setDeco(
+            `https://cdn.discordapp.com/avatar-decoration-presets/${asset}.png?size=160&passthrough=true`,
+          );
+        }
+      } catch {
+        /* Sin marco, igual que antes. No es un fallo que contarle a nadie. */
+      }
+    })();
+
+    return () => {
+      vivo = false;
+    };
+  }, [token, hayDiscord]);
+
+  return deco;
+}
+
 /** Atajo para quien solo necesita el id. */
 export function useIdDiscordDeLaSesion(): string {
   return useCuentaDiscordDeLaSesion().id;

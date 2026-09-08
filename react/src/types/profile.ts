@@ -258,6 +258,16 @@ export interface Profile {
   /** Poner el marco de Nitro alrededor del avatar del perfil.
    *  Sin valor = si, cuando la cuenta tiene uno. */
   discordDeco?: boolean;
+  /**
+   * La imagen del marco, copiada de Discord al enlazar la cuenta.
+   *
+   * Se guarda porque el marco NO viene de Lanyard: viene del usuario de
+   * Discord, y a ese solo se le puede preguntar con el token del propio
+   * inicio de sesion, que dura lo que dura la vuelta del enlace. Quien
+   * visita el perfil no tiene ese token, asi que si no estuviera aqui el
+   * marco solo se veria estando en el servidor de Lanyard.
+   */
+  discordDecoUrl?: string;
 
   /* background */
   bgType: 'none' | 'color' | 'gradient' | 'image' | 'video';

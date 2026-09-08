@@ -17,7 +17,12 @@ import { idYouTube } from '@/lib/music';
 import { Campo, ColorRGB, Deslizador, Interruptor, Pastillas, SelectorFuente, Tarjetas } from './Controles';
 import { DIBUJOS } from './dibujos';
 import { PanelAnimacion } from './PanelAnimacion';
-import { useDiscord, useIdDiscordDeLaSesion, useCuentaDiscordDeLaSesion } from '@/hooks/useDiscord';
+import {
+  useDiscord,
+  useIdDiscordDeLaSesion,
+  useCuentaDiscordDeLaSesion,
+  useDecoracionDeLaSesion,
+} from '@/hooks/useDiscord';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { SubirMedio } from './SubirMedio';
@@ -357,6 +362,11 @@ function GuardarCuenta({
   update: (p: Partial<Profile>) => void;
 }) {
   const { id, usuario, mostrar, avatar } = cuenta;
+  /* El marco de Nitro. Se pregunta a Discord con el token del propio
+     enlace y se guarda aqui, porque quien visita el perfil no tiene ese
+     token: sin esto el marco solo se veia estando en Lanyard. */
+  const deco = useDecoracionDeLaSesion();
+
   useEffect(() => {
     if (!id) return;
     const cambios: Partial<Profile> = {};
@@ -364,10 +374,12 @@ function GuardarCuenta({
     if (usuario && profile.discordUser !== usuario) cambios.discordUser = usuario;
     if (mostrar && profile.discordName !== mostrar) cambios.discordName = mostrar;
     if (avatar && profile.discordAvatar !== avatar) cambios.discordAvatar = avatar;
+    if (deco && profile.discordDecoUrl !== deco) cambios.discordDecoUrl = deco;
     if (Object.keys(cambios).length > 0) update(cambios);
   }, [
-    id, usuario, mostrar, avatar, update,
+    id, usuario, mostrar, avatar, deco, update,
     profile.discordId, profile.discordUser, profile.discordName, profile.discordAvatar,
+    profile.discordDecoUrl,
   ]);
   return null;
 }

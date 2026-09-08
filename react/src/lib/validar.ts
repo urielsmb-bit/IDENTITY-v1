@@ -339,6 +339,11 @@ function esquema(ID: any) {
       const s = String(v ?? '').trim().slice(0, 300);
       return /^https:\/\/cdn\.discordapp\.com\/[\w./-]+(\?[\w=&.-]*)?$/.test(s) ? s : '';
     },
+    /* El marco, con la misma regla y por el mismo motivo. */
+    discordDecoUrl: (v: any) => {
+      const s = String(v ?? '').trim().slice(0, 300);
+      return /^https:\/\/cdn\.discordapp\.com\/[\w./-]+(\?[\w=&.-]*)?$/.test(s) ? s : '';
+    },
     showStats: bool, showRate: bool, discordWidget: bool, trackClick: bool,
     
     // 100 es "sin tocar". Menos de 100 dejaria hueco alrededor del fondo,
