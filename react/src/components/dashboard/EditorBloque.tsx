@@ -22,6 +22,7 @@ import {
   useIdDiscordDeLaSesion,
   useCuentaDiscordDeLaSesion,
   useDecoracionDeLaSesion,
+  useEntrarEnElServidor,
 } from '@/hooks/useDiscord';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
@@ -322,14 +323,17 @@ function CampoDiscord({
           bot propio. Cabe en una línea al pie, no en una caja con acción.
 
           Y si Lanyard no contesta tampoco se dice: no falta nada. */}
-      {error === 'sin-lanyard' && (
+      {/* El bloque está TERMINADO sin nada más: tu avatar, tu marco, tu
+          nombre y tu etiqueta salen en cuanto conectas la cuenta.
+
+          Lo que falta cuando falta es el estado EN VIVO, y ya no se pide
+          entrar a ningún sitio: al conectar Discord el bot te mete solo en
+          el servidor desde el que puede verlo. Así que esto no es una
+          instrucción, es un parte: o todavía no ha pasado, o no pudo. */}
+      {error === 'sin-presencia' && (
         <p className="f__d" style={{ marginBottom: 0 }}>
-          ¿Quieres que además se vea en vivo tu estado y a qué estás jugando?
-          Eso lo publica{' '}
-          <a href="https://discord.gg/lanyard" target="_blank" rel="noopener noreferrer">
-            Lanyard
-          </a>
-          , de quien esté en su servidor. Es opcional y se conecta solo.
+          Tu estado en vivo aparecerá en un minuto. Si acabas de conectar la
+          cuenta, es que aún no te hemos visto conectado.
         </p>
       )}
 
@@ -366,6 +370,9 @@ function GuardarCuenta({
      enlace y se guarda aqui, porque quien visita el perfil no tiene ese
      token: sin esto el marco solo se veia estando en Lanyard. */
   const deco = useDecoracionDeLaSesion();
+  /* Y de paso, al servidor donde el bot puede ver tu estado. Va aqui
+     porque es el mismo momento —y el mismo token— que el marco. */
+  useEntrarEnElServidor();
 
   useEffect(() => {
     if (!id) return;

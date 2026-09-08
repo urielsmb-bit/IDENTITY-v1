@@ -102,6 +102,8 @@ export function useAuth() {
   const enlazarProveedor = async (
     proveedor: ProveedorEnlazable,
     volverA = '/dashboard',
+    /** Permisos de mas que pedirle al proveedor, separados por espacios. */
+    scopes?: string,
   ) => {
     const client = getClient();
     const destino = volverA.startsWith('/') && !volverA.startsWith('//')
@@ -109,15 +111,26 @@ export function useAuth() {
       : '/dashboard';
     const { data, error } = await client.auth.linkIdentity({
       provider: proveedor,
-      options: { redirectTo: window.location.origin + destino },
+      options: { redirectTo: window.location.origin + destino, scopes },
     });
     if (error) throw error;
     return data;
   };
 
-  /** Se conserva el nombre viejo: lo usa el bloque de Discord. */
+  /**
+   * Enlazar Discord.
+   *
+   * Con `guilds.join`, que es lo que permite que el bot te meta en el
+   * servidor sin que tengas que entrar a mano a ninguna parte. No es
+   * silencioso: la propia pantalla de permisos de Discord lo dice —
+   * «Unirse a servidores por ti»— y sin ese si no hay nada que hacer.
+   *
+   * Hace falta porque la presencia solo la reparte Discord a un bot que
+   * comparta servidor contigo. Antes ese bot era el de Lanyard y el paso
+   * lo dabas tu; ahora es el nuestro y lo damos nosotros.
+   */
   const enlazarDiscord = (volverA = '/dashboard') =>
-    enlazarProveedor('discord', volverA);
+    enlazarProveedor('discord', volverA, 'identify email guilds.join');
 
   /**
    * Suelta un proveedor de la cuenta.

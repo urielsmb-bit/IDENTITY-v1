@@ -349,6 +349,31 @@
 }
 .pf-avatar img{ width:100%; height:100%; object-fit:cover; }
 
+/* ---- el marco de Nitro, cuando llega como IMAGEN ----------
+   Existia `.pf-avatar__decor` —con erre— que lo pinta de fondo desde una
+   variable, pero el marcado escribe `.pf-avatar__deco`. O sea que esta
+   imagen no tenia NINGUNA regla: entraba como un hijo mas de un
+   `display:grid`, se abria su propia fila y estiraba la caja. El avatar
+   salia ovalado.
+
+   No se vio hasta ahora porque el marco solo llegaba de Lanyard, es
+   decir casi nunca; en cuanto empezo a salir de la propia cuenta de
+   Discord, salio tambien el fallo. */
+.pf-avatar img.pf-avatar__deco{
+  /* Fuera del flujo: asi no crea fila y `aspect-ratio:1` vuelve a mandar. */
+  position:absolute;
+  left:-12.5%; top:-12.5%;
+  width:125%; height:125%;
+  object-fit:contain;
+  border-radius:0;
+  pointer-events:none;
+}
+
+/* Con marco, la caja deja de recortar —la gracia del marco es desbordar—
+   y el recorte pasa a la foto, que es quien lo necesitaba. */
+.pf-avatar[data-deco="on"]{ overflow:visible; }
+.pf-avatar[data-deco="on"] > img:not(.pf-avatar__deco){ border-radius:inherit; }
+
 .pf[data-avshape="circle"]  .pf-avatar{ border-radius:50%; }
 .pf[data-avshape="rounded"] .pf-avatar{ border-radius:24%; }
 .pf[data-avshape="square"]  .pf-avatar{ border-radius:0; }

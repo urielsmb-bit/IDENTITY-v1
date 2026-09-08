@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
+import { supabase } from '@/lib/supabase';
 
 /** Lo que nos interesa de lo que devuelve Lanyard. */
 export interface PresenciaDiscord {
@@ -57,77 +58,6 @@ const NOMBRE_ESTADO: Record<string, string> = {
   offline: 'Desconectado',
 };
 
-/** Los tipos de actividad de Discord, con el verbo que usa cada uno. */
-const VERBO: Record<number, string> = {
-  0: 'Jugando a',
-  1: 'Emitiendo',
-  2: 'Escuchando',
-  3: 'Viendo',
-  5: 'Compitiendo en',
-};
-
-function leer(d: Record<string, any>): PresenciaDiscord | null {
-  const u = d?.discord_user;
-  if (!u?.id) return null;
-
-  // La actividad 4 es el estado personalizado, que no lleva verbo.
-  const acts: any[] = Array.isArray(d.activities) ? d.activities : [];
-  const principal = acts.find((a) => a && a.type !== 4);
-  const personalizado = acts.find((a) => a && a.type === 4);
-
-  const estado = String(d.discord_status || 'offline');
-  let actividad = '';
-  let detalle = '';
-  if (principal) {
-    actividad = `${VERBO[principal.type] ?? 'En'} ${principal.name}`;
-    detalle = [principal.details, principal.state].filter(Boolean).join(' · ');
-  } else if (personalizado?.state) {
-    actividad = String(personalizado.state);
-  }
-
-  const dec = u.avatar_decoration_data?.asset;
-
-  const pg = u.primary_guild;
-  const guild =
-    pg?.tag && pg?.identity_enabled !== false
-      ? {
-          tag: String(pg.tag).slice(0, 8),
-          icono: pg.badge
-            ? `https://cdn.discordapp.com/clan-badges/${pg.identity_guild_id}/${pg.badge}.png?size=32`
-            : '',
-        }
-      : null;
-
-  const sp = d.listening_to_spotify ? d.spotify : null;
-  const cancion = sp?.song
-    ? {
-        titulo: String(sp.song).slice(0, 80),
-        artista: String(sp.artist || '').slice(0, 80),
-        portada: /^https:\/\/i\.scdn\.co\//.test(String(sp.album_art_url || ''))
-          ? String(sp.album_art_url)
-          : '',
-      }
-    : null;
-
-  return {
-    id: String(u.id),
-    usuario: String(u.username || ''),
-    mostrar: String(u.display_name || u.global_name || u.username || ''),
-    avatar: u.avatar
-      ? `https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.png?size=128`
-      : '',
-    // `passthrough=true` conserva la animación de los marcos animados.
-    decoracion: dec
-      ? `https://cdn.discordapp.com/avatar-decoration-presets/${dec}.png?size=160&passthrough=true`
-      : '',
-    estado,
-    estadoNombre: NOMBRE_ESTADO[estado] ?? '',
-    actividad,
-    detalle: detalle.slice(0, 80),
-    guild,
-    cancion,
-  };
-}
 
 /**
  * Presencia de Discord en vivo, por Lanyard.
@@ -141,124 +71,108 @@ function leer(d: Record<string, any>): PresenciaDiscord | null {
  * Si el id no está en Lanyard, la respuesta lo dice y aquí se traduce a un
  * aviso concreto, no a un widget vacío.
  */
+/**
+ * El estado de Discord de alguien, leido de NUESTRA tabla.
+ *
+ * Antes esto era un websocket a Lanyard. Lanyard es un bot en un servidor
+ * publico, y por eso el estado en vivo solo se veia de quien ademas
+ * hubiera entrado ahi: un paso manual en mitad de «conecta tu Discord»,
+ * que no da casi nadie.
+ *
+ * Ahora la presencia la recoge nuestro propio bot —la funcion de borde
+ * `discord-presencia` toma la foto de la pasarela cada minuto— y aqui
+ * solo se lee la fila. Los datos siguen siendo de Discord y de nadie mas;
+ * lo que cambia es de quien es el bot que los recibe.
+ *
+ * Se pregunta cada minuto porque cada minuto es lo que tarda en
+ * refrescarse la foto: preguntar mas a menudo solo repetiria la lectura.
+ */
+const RANCIA_MS = 5 * 60 * 1000;
+
 export function useDiscord(id: string | undefined, activo = true) {
   const [presencia, setPresencia] = useState<PresenciaDiscord | null>(null);
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     setPresencia(null);
     setError('');
     if (!activo || !id || !/^\d{17,20}$/.test(id)) return;
+    /* Sin backend no hay tabla que leer. No es un fallo: es el modo local. */
+    if (!supabase) return;
 
     let vivo = true;
-    let latido: number | undefined;
-    let reintento: number | undefined;
-    let resuscribir: number | undefined;
-    let intentos = 0;
+    const cliente = supabase;
 
-    const conectar = () => {
-      if (!vivo) return;
+    const traer = async () => {
       setCargando(true);
-      let ws: WebSocket;
-      try {
-        ws = new WebSocket('wss://api.lanyard.rest/socket');
-      } catch {
+      const { data, error: fallo } = await cliente
+        .from('presencia')
+        .select('estado, actividad, detalle, cancion_titulo, cancion_artista, cancion_portada, actualizado')
+        .eq('discord_id', id)
+        .maybeSingle();
+
+      if (!vivo) return;
+      setCargando(false);
+
+      if (fallo) {
+        setPresencia(null);
         setError('sin-conexion');
-        setCargando(false);
         return;
       }
-      wsRef.current = ws;
 
-      ws.onmessage = (ev) => {
-        let m: any;
-        try {
-          m = JSON.parse(ev.data as string);
-        } catch {
-          return;
-        }
+      /* Sin fila: esta persona no esta en nuestro servidor todavia, o el
+         bot aun no ha tomado su primera foto. */
+      if (!data) {
+        setPresencia(null);
+        setError('sin-presencia');
+        return;
+      }
 
-        // op 1 = hola: dice cada cuánto hay que latir y es cuando se pide
-        // el id que nos interesa.
-        if (m.op === 1) {
-          const cada = Number(m.d?.heartbeat_interval) || 30000;
-          latido = window.setInterval(() => {
-            if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ op: 3 }));
-          }, cada);
-          ws.send(JSON.stringify({ op: 2, d: { subscribe_to_id: id } }));
-          return;
-        }
+      /* Una foto vieja no es un estado: si la funcion deja de correr, el
+         perfil no puede seguir diciendo «en linea» de hace tres dias. Se
+         calla, que es lo unico honesto cuando no se sabe. */
+      const edad = Date.now() - new Date(data.actualizado as string).getTime();
+      if (!Number.isFinite(edad) || edad > RANCIA_MS) {
+        setPresencia(null);
+        setError('sin-presencia');
+        return;
+      }
 
-        // op 0 = un evento: el estado inicial y cada cambio posterior.
-        if (m.op === 0 && (m.t === 'INIT_STATE' || m.t === 'PRESENCE_UPDATE')) {
-          const datos = m.t === 'INIT_STATE' ? m.d?.[id] ?? m.d : m.d;
-          const p = leer(datos ?? {});
-          setCargando(false);
-          if (p) {
-            setPresencia(p);
-            setError('');
-            intentos = 0;
-          } else {
-            // Codigo, no frase: asi el editor puede ofrecer el enlace y el
-            // perfil publico puede callarse, que son dos necesidades
-            // distintas para el mismo hecho.
-            setError('sin-lanyard');
-
-            /* Y se vuelve a preguntar cada pocos segundos.
-               Lanyard no avisa de que alguien acaba de entrar en su
-               servidor: la suscripcion que fallo se queda fallada para
-               siempre. Sin esto, quien va a Discord, entra y vuelve seguia
-               viendo el mismo aviso hasta recargar a mano — que es
-               exactamente el paso manual que sobra. Preguntando en bucle, el
-               widget se enciende solo en cuanto entra. */
-            if (!resuscribir) {
-              resuscribir = window.setInterval(() => {
-                if (ws.readyState === WebSocket.OPEN) {
-                  ws.send(JSON.stringify({ op: 2, d: { subscribe_to_id: id } }));
-                }
-              }, 6000);
+      const estado = String(data.estado ?? 'offline');
+      setPresencia({
+        id,
+        /* La identidad NO sale de aqui: sale del perfil, que la copio al
+           enlazar la cuenta. Esta tabla solo sabe de estados. */
+        usuario: '',
+        mostrar: '',
+        avatar: '',
+        decoracion: '',
+        estado,
+        estadoNombre: NOMBRE_ESTADO[estado] ?? NOMBRE_ESTADO.offline!,
+        actividad: String(data.actividad ?? ''),
+        detalle: String(data.detalle ?? ''),
+        guild: null,
+        cancion: data.cancion_titulo
+          ? {
+              titulo: String(data.cancion_titulo),
+              artista: String(data.cancion_artista ?? ''),
+              portada: String(data.cancion_portada ?? ''),
             }
-          }
-          // En cuanto responde con datos, se deja de insistir.
-          if (p && resuscribir) {
-            window.clearInterval(resuscribir);
-            resuscribir = undefined;
-          }
-        }
-      };
-
-      ws.onclose = () => {
-        if (latido) window.clearInterval(latido);
-        if (resuscribir) { window.clearInterval(resuscribir); resuscribir = undefined; }
-        if (!vivo) return;
-        // Espera creciente, con tope: si Lanyard está caído no tiene sentido
-        // martillearlo desde el navegador de cada visitante.
-        intentos += 1;
-        if (intentos > 5) {
-          setCargando(false);
-          setError('sin-conexion');
-          return;
-        }
-        reintento = window.setTimeout(conectar, Math.min(30000, 1000 * 2 ** intentos));
-      };
-
-      ws.onerror = () => ws.close();
+          : null,
+      });
+      setError('');
     };
 
-    conectar();
-
+    void traer();
+    const reloj = window.setInterval(traer, 60_000);
     return () => {
       vivo = false;
-      if (latido) window.clearInterval(latido);
-      if (resuscribir) window.clearInterval(resuscribir);
-      if (reintento) window.clearTimeout(reintento);
-      wsRef.current?.close();
-      wsRef.current = null;
+      window.clearInterval(reloj);
     };
   }, [id, activo]);
 
-  return { presencia, error, cargando };
+  return { presencia, cargando, error };
 }
 
 /** Lo que la propia cuenta enlazada dice de sí misma. Sin Lanyard de por medio. */
@@ -372,6 +286,47 @@ export function useDecoracionDeLaSesion(): string {
   }, [token, hayDiscord]);
 
   return deco;
+}
+
+/**
+ * Meterse en el servidor donde el bot puede ver tu estado.
+ *
+ * Es la pieza que quita el paso manual. Discord solo reparte la presencia
+ * a un bot que comparta servidor contigo, y hasta ahora eso significaba
+ * pedirte que entraras al de Lanyard por tu cuenta — un desvio a mitad de
+ * «conecta tu Discord» que casi nadie hace. Ahora te mete el nuestro, con
+ * el permiso `guilds.join` que acabas de dar en la pantalla de Discord.
+ *
+ * El token del bot no aparece por aqui: la llamada va a una funcion de
+ * borde, que es la unica que lo tiene. Desde el navegador solo viaja TU
+ * token, y ni siquiera decimos quien eres — eso se lo pregunta la funcion
+ * a Discord, para que nadie pueda meter a otra persona escribiendo su id.
+ *
+ * Una vez por token: el token cambia en cada enlace, asi que esto corre
+ * al conectar la cuenta y no en cada pintada.
+ */
+export function useEntrarEnElServidor(): void {
+  const token = useAuthStore((s) => s.session?.provider_token ?? '');
+  const hayDiscord = useAuthStore((s) =>
+    !!s.user?.identities?.some((i) => i.provider === 'discord'),
+  );
+  const hecho = useRef('');
+
+  useEffect(() => {
+    if (!token || !hayDiscord || !supabase) return;
+    if (hecho.current === token) return;
+    hecho.current = token;
+
+    /* Sin `await` y sin contarle nada a nadie: si falla, lo unico que pasa
+       es que no habra estado en vivo, que es como estaba antes. No es un
+       error que merezca interrumpir a quien acaba de conectar su cuenta. */
+    void supabase.functions
+      .invoke('discord-entrar', { body: { access_token: token } })
+      .then(
+        () => {},
+        () => {},
+      );
+  }, [token, hayDiscord]);
 }
 
 /** Atajo para quien solo necesita el id. */
