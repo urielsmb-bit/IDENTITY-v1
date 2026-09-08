@@ -116,9 +116,19 @@ export function useDiscord(id: string | undefined, activo = true) {
       setCargando(true);
       const { data, error: fallo } = await cliente
         .from('presencia')
-        .select(
-          'estado, actividad, detalle, cancion_titulo, cancion_artista, cancion_portada, cancion_id, actualizado',
-        )
+        /* Todas las columnas, sin nombrarlas.
+        
+           Nombrarlas ata esta lectura a que una migracion concreta ya se
+           haya aplicado: se pidio `cancion_id` en cuanto la funcion
+           empezo a escribirla, y como la columna todavia no existia
+           PostgREST tumbaba la consulta ENTERA —«42703: column
+           presencia.cancion_id does not exist»— y el perfil se quedaba sin
+           estado, sin cancion y sin punto. No sin lo nuevo: sin nada.
+        
+           A la escritura ya se le habia puesto ese cuidado y a la lectura
+           se me olvido. Con `*` no hay nada que desincronizar: llega lo
+           que haya, y los campos que falten se leen como vacios. */
+        .select('*')
         .eq('discord_id', id)
         .maybeSingle();
 
