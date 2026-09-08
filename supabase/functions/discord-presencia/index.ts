@@ -145,6 +145,8 @@ function tomarFoto(token: string, guild: string): Promise<Presencia[]> {
        sintoma es identico. Con el nombre y el id se compara en dos
        segundos contra la lista de miembros del servidor. */
     let quien = '';
+    /** El id del propio bot, para no guardarse a si mismo. */
+    let yo = '';
 
     const acabar = (fn: () => void) => {
       if (acabado) return;
@@ -196,7 +198,10 @@ function tomarFoto(token: string, guild: string): Promise<Presencia[]> {
          confirma uno. Los dos sirven para saber dónde está. */
       if (m.t === 'READY') {
         const u = m.d?.user as { id?: string; username?: string } | undefined;
-        if (u?.id) quien = `${u.username ?? '?'} (${u.id})`;
+        if (u?.id) {
+          quien = `${u.username ?? '?'} (${u.id})`;
+          yo = u.id;
+        }
       }
       if (m.t === 'READY' && Array.isArray(m.d?.guilds)) {
         for (const g of m.d.guilds as Array<{ id?: string }>) {
@@ -207,7 +212,9 @@ function tomarFoto(token: string, guild: string): Promise<Presencia[]> {
 
       if (m.t === 'GUILD_CREATE' && m.d?.id === guild) {
         const p = Array.isArray(m.d.presences) ? (m.d.presences as Presencia[]) : [];
-        acabar(() => resolve(p));
+        /* Fuera el propio bot: esta siempre en linea por definicion y no
+           es nadie con perfil que enseñar. */
+        acabar(() => resolve(p.filter((x) => x.user?.id !== yo)));
       }
     };
 
@@ -244,9 +251,32 @@ Deno.serve(async (req) => {
      Supabase está migrando de claves —hay cuatro en el proyecto— y lo que
      inyecta bajo ese nombre no es lo que devuelve el CLI. Un secreto
      propio no depende de esa migración. */
-  const esperado = Deno.env.get('CRON_SECRET') ?? '';
+  const esperado = (Deno.env.get('CRON_SECRET') ?? '').trim();
   const dado = req.headers.get('x-cron-secret') ?? '';
-  if (!esperado || dado !== esperado) {
+
+  /* O la clave de servicio, mirando el ROL que declara.
+     
+     La pasarela de Supabase ya ha comprobado la firma antes de que esto
+     corra —si no, la peticion no llega— asi que aqui solo hace falta
+     leer de quien es: `anon` es la clave publica del navegador y no
+     vale, `service_role` solo vive en el servidor y si.
+     
+     Esto es lo que permite que el cron no necesite un secreto aparte, y
+     por tanto que la migracion que lo programa no lleve ninguno escrito
+     dentro. */
+  const rol = (() => {
+    const jwt = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
+    const trozo = jwt.split('.')[1];
+    if (!trozo) return '';
+    try {
+      const json = atob(trozo.replace(/-/g, '+').replace(/_/g, '/'));
+      return String((JSON.parse(json) as { role?: unknown }).role ?? '');
+    } catch {
+      return '';
+    }
+  })();
+
+  if (rol !== 'service_role' && (!esperado || dado !== esperado)) {
     return new Response('no', { status: 401 });
   }
 
