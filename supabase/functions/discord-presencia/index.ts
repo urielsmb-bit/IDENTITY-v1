@@ -70,6 +70,8 @@ interface Actividad {
   details?: string;
   state?: string;
   assets?: { large_image?: string };
+  /** El id de la pista en Spotify. Discord lo manda y no lo miraba nadie. */
+  sync_id?: string;
 }
 
 interface Presencia {
@@ -86,6 +88,7 @@ interface Fila {
   cancion_titulo: string;
   cancion_artista: string;
   cancion_portada: string;
+  cancion_id: string;
   actualizado: string;
 }
 
@@ -125,11 +128,50 @@ function aFila(p: Presencia, ahora: string): Fila | null {
     cancion_titulo: (spotify?.details ?? '').slice(0, 120),
     cancion_artista: (spotify?.state ?? '').slice(0, 120),
     cancion_portada: spotify ? portadaSpotify(spotify) : '',
+    /* Solo si tiene la forma de un id de Spotify. Se va a meter en una
+       direccion, y lo que llega de fuera no se mete en una direccion sin
+       mirarlo: una barra ahi dentro apuntaria el reproductor a otro
+       sitio. Son 22 caracteres de base62; se admite algo de holgura. */
+    cancion_id:
+      spotify?.sync_id && /^[A-Za-z0-9]{16,32}$/.test(spotify.sync_id)
+        ? spotify.sync_id
+        : '',
     actualizado: ahora,
   };
 }
 
 /** Se conecta, recoge las presencias del servidor y cierra. */
+/**
+ * Cuantas sesiones nuevas le quedan hoy al bot.
+ *
+ * Cada pasada de esto abre un IDENTIFY, y Discord los raciona por dia. Si
+ * el cron va demasiado seguido se agotan y la presencia se congela hasta
+ * que el contador se repone — sin ningun error visible, que es la peor
+ * forma de romperse.
+ *
+ * NO viene en el READY, aunque lo parezca: viene de `/gateway/bot`. Y se
+ * pide solo cuando se pregunta (`?limites=1`), para no gastar una
+ * peticion de mas en cada minuto del año.
+ */
+async function sesionesQueQuedan(token: string) {
+  try {
+    const r = await fetch('https://discord.com/api/v10/gateway/bot', {
+      headers: { Authorization: `Bot ${token}` },
+    });
+    if (!r.ok) return null;
+    const j = (await r.json()) as { session_start_limit?: Record<string, number> };
+    const l = j.session_start_limit;
+    if (!l) return null;
+    return {
+      quedan: l.remaining,
+      de: l.total,
+      reponen_en_h: Math.round((l.reset_after ?? 0) / 3600000),
+    };
+  } catch {
+    return null;
+  }
+}
+
 function tomarFoto(token: string, guild: string): Promise<Presencia[]> {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(PASARELA);
@@ -301,6 +343,7 @@ Deno.serve(async (req) => {
     );
   }
 
+  const pideLimites = new URL(req.url).searchParams.has('limites');
   const ahora = new Date().toISOString();
   const filas = presencias.map((p) => aFila(p, ahora)).filter((f): f is Fila => f !== null);
 
@@ -316,7 +359,22 @@ Deno.serve(async (req) => {
   );
 
   if (filas.length > 0) {
-    const { error } = await db.from('presencia').upsert(filas, { onConflict: 'discord_id' });
+    let { error } = await db.from('presencia').upsert(filas, { onConflict: 'discord_id' });
+
+    /* La columna `cancion_id` llego despues (0020). Desplegar la funcion
+       y aplicar la migracion son dos actos distintos y nunca caen a la
+       vez: entre uno y otro hay una ventana en la que esto escribiria una
+       columna que no existe y la presencia se congelaria.
+       
+       Asi que si la base dice que no la conoce, se reintenta sin ella. El
+       estado y la cancion siguen guardandose; lo unico que falta hasta
+       que se aplique la migracion es poder REPRODUCIR lo que suena. */
+    if (error && (error.code === 'PGRST204' || /cancion_id/.test(error.message))) {
+      console.warn('discord-presencia · sin columna cancion_id; falta aplicar la 0020');
+      const sinId = filas.map(({ cancion_id: _omitido, ...resto }) => resto);
+      ({ error } = await db.from('presencia').upsert(sinId, { onConflict: 'discord_id' }));
+    }
+
     if (error) {
       /* El motivo, entero. Esto solo lo ve quien tiene `CRON_SECRET`, y
          «base» a secas obliga a ir a buscar el registro para saber si es
@@ -340,5 +398,14 @@ Deno.serve(async (req) => {
     : await apagar.neq('estado', 'offline');
   if (err2) console.error('discord-presencia · apagar', err2.message);
 
-  return Response.json({ ok: true, vistos: filas.length }, { status: 200 });
+  return Response.json(
+    {
+      ok: true,
+      vistos: filas.length,
+      /* Solo si se pregunta. Util una vez al mes y decisivo el dia que
+         la presencia se congele sin motivo aparente. */
+      sesiones: pideLimites ? await sesionesQueQuedan(token) : undefined,
+    },
+    { status: 200 },
+  );
 });

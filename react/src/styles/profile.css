@@ -516,9 +516,14 @@
   font-size:var(--t3);
 }
 .pf-dc__av img{ width:100%; height:100%; object-fit:cover; border-radius:50%; }
+/* Sin la linea de «No molestar» debajo del nombre, este punto es lo
+   unico que dice el estado. Crece dos pixeles y se le pone su color de
+   fondo tambien como halo: sigue siendo discreto, pero ya no hay que
+   buscarlo. */
 .pf-dc__dot{
   position:absolute; right:-2px; bottom:-2px;
-  width:12px; height:12px; border-radius:50%;
+  width:14px; height:14px; border-radius:50%;
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--st,#747F8D) 35%, transparent);
   background:var(--st,#747F8D);
   border:2.5px solid var(--p-bg);
 }
@@ -567,14 +572,6 @@
   /* Un titulo largo estrecha, no empuja: sin esto la caratula se salia
      de la caja con las canciones de nombre kilometrico. */
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-}
-
-/* El estado, del color de su estado. `--st` ya viene calculado en la
-   caja: es el mismo color del punto del avatar. */
-.pf-dc__estado{
-  color:var(--st, var(--p-dim));
-  font-weight:550;
-  letter-spacing:.01em;
 }
 
 /* Lo que suena: nota, titulo y artista. Tres pesos distintos porque son

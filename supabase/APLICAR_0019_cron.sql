@@ -30,10 +30,25 @@
 -- llamarla, y ese alguien es la propia base: `pg_cron` para el reloj y
 -- `pg_net` para la llamada.
 --
--- POR QUE CADA MINUTO. Es el compromiso: mas a menudo no aporta —un
--- estado de Discord no cambia cada diez segundos y cada pasada abre un
--- websocket— y menos se nota, porque «en linea» que tarda cinco minutos
--- en aparecer no se lee como en vivo, se lee como roto.
+-- POR QUE CADA DOS MINUTOS, Y NO CADA UNO NI EN VIVO
+--
+-- Porque cada pasada abre una sesion nueva con Discord, y Discord las
+-- raciona. Medido contra `/gateway/bot` en este mismo bot:
+--
+--     {"quedan": 976, "de": 1000, "reponen_en_h": 23}
+--
+-- Mil al dia. Cada minuto son 1.440: se agotan a las dieciseis horas y a
+-- partir de ahi la presencia se queda congelada SIN ERROR NINGUNO, que es
+-- la peor forma de romperse. Cada dos minutos son 720, con margen de
+-- sobra para los disparos a mano y algun reintento.
+--
+-- Y en vivo no puede ser desde aqui. Vivo significa mantener el
+-- websocket abierto, y una funcion de borde vive lo que dura una
+-- peticion: nace, responde y muere. Para eso hace falta un proceso
+-- encendido siempre —un VPS, un Fly, un Railway—, y entonces son 1 sesion
+-- por reinicio en vez de 720 al dia, y la actualizacion es instantanea.
+-- Es la unica forma de tener «en vivo» de verdad; esto es lo mas cerca
+-- que se llega sin pagar una maquina.
 --
 -- AQUI NO HAY NINGUNA CLAVE ESCRITA. La cabecera se arma leyendo
 -- `privado.config`, que es la misma tabla donde ya vive la pimienta de
@@ -72,7 +87,7 @@ $$;
 -- ---- 3 · cada minuto --------------------------------------
 select cron.schedule(
   'presencia-discord',
-  '* * * * *',
+  '*/2 * * * *',
   $trabajo$
   select
     net.http_post(

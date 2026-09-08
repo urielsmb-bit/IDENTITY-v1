@@ -40,7 +40,15 @@ export interface PresenciaDiscord {
    * artista y la imagen del disco. Por la lista de actividades solo se sacaba
    * «Escuchando Spotify», que es la mitad de la frase.
    */
-  cancion: { titulo: string; artista: string; portada: string } | null;
+  cancion: {
+    titulo: string;
+    artista: string;
+    portada: string;
+    /** Id de la pista en Spotify. Con el se puede REPRODUCIR, no solo
+     *  contar que suena: de aqui sale el reproductor del perfil cuando su
+     *  dueño no ha puesto musica propia. */
+    id: string;
+  } | null;
 }
 
 /** Los colores son los de Discord: reconocerlos es el punto. */
@@ -108,7 +116,9 @@ export function useDiscord(id: string | undefined, activo = true) {
       setCargando(true);
       const { data, error: fallo } = await cliente
         .from('presencia')
-        .select('estado, actividad, detalle, cancion_titulo, cancion_artista, cancion_portada, actualizado')
+        .select(
+          'estado, actividad, detalle, cancion_titulo, cancion_artista, cancion_portada, cancion_id, actualizado',
+        )
         .eq('discord_id', id)
         .maybeSingle();
 
@@ -158,6 +168,7 @@ export function useDiscord(id: string | undefined, activo = true) {
               titulo: String(data.cancion_titulo),
               artista: String(data.cancion_artista ?? ''),
               portada: String(data.cancion_portada ?? ''),
+              id: String(data.cancion_id ?? ''),
             }
           : null,
       });

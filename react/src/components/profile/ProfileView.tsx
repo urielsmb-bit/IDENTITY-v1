@@ -217,16 +217,68 @@ export function ProfileView({
   const music = useMusic();
   const initMusic = music.init;
 
+  /* Presencia de Discord. Se lee si hay id Y sirve para algo: el widget
+     encendido, el marco en el avatar, o el reproductor —que cuando no
+     tienes musica propia suena con lo que estas escuchando ahora—. Sin
+     ninguna de las tres no se pregunta por nada.
+
+     Va AQUI ARRIBA y no donde se pinta el widget porque la lista de
+     pistas lo necesita, y esa se calcula antes. Con la declaracion mas
+     abajo el perfil reventaba en cuanto alguien no tenia musica propia:
+     `const` no se puede leer antes de su linea, y TypeScript no lo ve
+     porque el uso esta dentro de un callback. */
+  const verWidget = !(p.blocksOff ?? []).includes('discord');
+  const verMusica = !(p.blocksOff ?? []).includes('music');
+  const quiereMarco = p.discordDeco !== false;
+  const { presencia: discord } = useDiscord(
+    p.discordId,
+    !!p.discordId && (verWidget || quiereMarco || verMusica),
+  );
+
   // Clave por contenido: el objeto `profile` cambia de identidad en cada
   // re-render (contar la visita, refrescos de react-query...) y con `[p.audio]`
   // la lista se recreaba, reiniciando el reproductor a mitad de canción.
   const audioKey = p.audio ? JSON.stringify(p.audio) : '';
 
+  /**
+   * La pista que suena en el perfil.
+   *
+   * Manda la tuya. Si no has puesto ninguna y Discord dice que estas
+   * escuchando algo AHORA, suena eso — el perfil de quien no ha
+   * configurado musica deja de tener un hueco vacio donde podria estar lo
+   * que le gusta, y ademas es mas verdad que una cancion elegida hace
+   * seis meses.
+   *
+   * Hace falta el id de la pista, no su titulo: con un titulo no se monta
+   * un reproductor. Discord lo manda en `sync_id` y se guarda en la
+   * presencia. La direccion se arma aqui, con el id metido en una
+   * plantilla fija — y aun asi pasa por `incrustable()` al pintarse, que
+   * es quien decide de verdad que se puede meter en un `iframe`.
+   */
   const pistas: AudioTrack[] = useMemo(() => {
     const a = p.audio;
-    if (!a) return [];
-    if (a.tracks && a.tracks.length) return a.tracks;
-    if (!a.title && !a.yt && !a.cover) return [];
+    const propia =
+      a && ((a.tracks && a.tracks.length > 0) || a.title || a.yt || a.cover);
+
+    if (!propia) {
+      const c = discord?.cancion;
+      if (!c?.id) return [];
+      return [
+        {
+          title: c.titulo,
+          artist: c.artista,
+          length: '',
+          cover: c.portada,
+          src: 'spotify' as const,
+          yt: '',
+          preview: '',
+          url: '',
+          embed: `https://open.spotify.com/embed/track/${c.id}`,
+        },
+      ];
+    }
+
+    if (a!.tracks && a!.tracks.length) return a!.tracks;
     return [
       {
         title: a.title || '',
@@ -240,8 +292,11 @@ export function ProfileView({
         embed: '',
       },
     ];
+    /* `audioKey` es tu musica; la cancion de Discord es el respaldo. Sin
+       ella en la lista, empezar a escuchar algo no encendia el
+       reproductor hasta el siguiente repintado por otro motivo. */
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audioKey]);
+  }, [audioKey, discord?.cancion?.id, discord?.cancion?.titulo]);
 
   // Montar el reproductor. Sin este init, crearReproductor() nunca llegaba a
   // existir y los botones de play/pausa eran decorativos.
@@ -433,15 +488,6 @@ export function ProfileView({
 
   const modoLibre = (p.layoutMode || 'stack') === 'free';
 
-  /* Presencia en vivo. Se conecta si hay id Y sirve para algo: el widget
-     encendido, o el marco en el avatar. Sin ninguna de las dos no se abre un
-     socket por nada. */
-  const verWidget = !(p.blocksOff ?? []).includes('discord');
-  const quiereMarco = p.discordDeco !== false;
-  const { presencia: discord } = useDiscord(
-    p.discordId,
-    !!p.discordId && (verWidget || quiereMarco),
-  );
   /** El marco de Nitro para el avatar del perfil, si lo hay y se quiere. */
   /* El marco, con Lanyard o sin el. Lanyard lo manda en vivo cuando esta;
      cuando no, sale el que se copio de Discord al enlazar la cuenta. Antes
@@ -1035,7 +1081,18 @@ export function ProfileView({
                     Sin Lanyard no se sabe si estas conectado, y un punto
                     gris se lee como «desconectado», que es afirmar algo que
                     no se sabe. */}
-                {discord && <i className="pf-dc__dot" />}
+                {/* El punto es AHORA el unico que dice el estado —la linea
+                    de texto se quito— asi que lleva el nombre encima: al
+                    raton y a un lector de pantalla. Un color a secas no es
+                    informacion para quien no distingue el rojo del verde. */}
+                {discord && (
+                  <i
+                    className="pf-dc__dot"
+                    title={discord.estadoNombre}
+                    role="img"
+                    aria-label={discord.estadoNombre}
+                  />
+                )}
               </span>
               <span className="pf-dc__txt">
                 <span className="pf-dc__u">
@@ -1075,17 +1132,6 @@ export function ProfileView({
                 {/* Estado y actividad son dos lineas, no una. Antes se
                     pisaban: jugando desaparecia el estado, y sin jugar salia
                     el estado donde deberia ir la actividad. */}
-                {/* El estado, del COLOR de su estado. Era una linea gris
-                    igual que las demas, o sea que «No molestar» y «En
-                    linea» se leian iguales — y el unico sitio donde ya
-                    estaba el color era un punto de 12px en el avatar.
-                    Aqui el color ya esta calculado (`--st`): usarlo no
-                    cuesta nada y hace que el estado se entienda sin
-                    leerlo. */}
-                {discord?.estadoNombre && (
-                  <span className="pf-dc__s pf-dc__estado">{discord.estadoNombre}</span>
-                )}
-
                 {/* La cancion, con jerarquia: el titulo es lo que se busca
                     con la vista, el artista acompaña. Iban los dos del
                     mismo gris y pegados por un punto —«Escuchando CLL 34 ·
