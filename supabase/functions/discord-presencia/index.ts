@@ -139,6 +139,12 @@ function tomarFoto(token: string, guild: string): Promise<Presencia[]> {
        ninguna parte, y el fallo casi siempre es que el id del servidor no
        es ese o que el bot no está dentro. */
     const donde = new Set<string>();
+    /* Y QUIEN es el bot, que viene en el READY. Sin esto, «no estoy en
+       ningun servidor» deja una duda que no se puede resolver: si el
+       token es de otra aplicacion distinta de la que invitaste, el
+       sintoma es identico. Con el nombre y el id se compara en dos
+       segundos contra la lista de miembros del servidor. */
+    let quien = '';
 
     const acabar = (fn: () => void) => {
       if (acabado) return;
@@ -159,7 +165,7 @@ function tomarFoto(token: string, guild: string): Promise<Presencia[]> {
             new Error(
               donde.size
                 ? `el bot no ve el servidor ${guild}. Está en: ${[...donde].join(', ')}`
-                : 'el bot no está en ningún servidor todavía',
+                : `el bot ${quien || '(sin identificar)'} no está en ningún servidor`,
             ),
           ),
         ),
@@ -188,6 +194,10 @@ function tomarFoto(token: string, guild: string): Promise<Presencia[]> {
 
       /* READY trae la lista de servidores del bot, y cada GUILD_CREATE
          confirma uno. Los dos sirven para saber dónde está. */
+      if (m.t === 'READY') {
+        const u = m.d?.user as { id?: string; username?: string } | undefined;
+        if (u?.id) quien = `${u.username ?? '?'} (${u.id})`;
+      }
       if (m.t === 'READY' && Array.isArray(m.d?.guilds)) {
         for (const g of m.d.guilds as Array<{ id?: string }>) {
           if (g?.id) donde.add(g.id);
@@ -264,17 +274,28 @@ Deno.serve(async (req) => {
   const ahora = new Date().toISOString();
   const filas = presencias.map((p) => aFila(p, ahora)).filter((f): f is Fila => f !== null);
 
+  /* La clave de servicio, que es la que se salta RLS para poder escribir.
+     Se leia de una variable que dejo de existir cuando la puerta paso a
+     `CRON_SECRET`: quedo la referencia suelta y reventaba con un 500 —
+     pero solo al llegar aqui, o sea solo cuando la foto SI llegaba. Por
+     eso no se vio hasta que el id del servidor fue el bueno. */
   const db = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
-    servicio,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     { auth: { persistSession: false } },
   );
 
   if (filas.length > 0) {
     const { error } = await db.from('presencia').upsert(filas, { onConflict: 'discord_id' });
     if (error) {
+      /* El motivo, entero. Esto solo lo ve quien tiene `CRON_SECRET`, y
+         «base» a secas obliga a ir a buscar el registro para saber si es
+         un permiso, una columna o la clave. */
       console.error('discord-presencia · upsert', error.message);
-      return Response.json({ ok: false, motivo: 'base' }, { status: 200 });
+      return Response.json(
+        { ok: false, motivo: 'base', detalle: error.message, codigo: error.code },
+        { status: 200 },
+      );
     }
   }
 

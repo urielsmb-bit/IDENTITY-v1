@@ -81,6 +81,13 @@ create index if not exists presencia_actualizado_idx
 -- escribir sigue siendo cosa de la funcion de borde.
 grant select on public.presencia to anon, authenticated;
 
+-- Y a `service_role`, que es quien ESCRIBE desde la funcion de borde.
+-- Se me paso: `service_role` se salta la RLS, si, pero saltarse la RLS no
+-- es tener permiso de tabla — son dos cosas distintas y hacen falta las
+-- dos. Es la misma leccion de la 0012 con el EXECUTE de `registrar_vista`:
+-- en esta base no queda nada por defecto, hay que decir quien puede.
+grant select, insert, update, delete on public.presencia to service_role;
+
 alter table public.presencia enable row level security;
 
 -- LEER: cualquiera. Es lo que pinta un perfil publico, y no hay nada
