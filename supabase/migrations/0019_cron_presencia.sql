@@ -6,7 +6,21 @@
 -- llamarla, y ese alguien es la propia base: `pg_cron` para el reloj y
 -- `pg_net` para la llamada.
 --
--- POR QUE CADA DOS MINUTOS, Y NO CADA UNO NI EN VIVO
+-- NO ES UN MUESTREO CADA DOS MINUTOS: SON TURNOS DE ESCUCHA
+--
+-- Cada pasada no hace una foto y cuelga. Hace la foto y SE QUEDA
+-- escuchando 110 segundos, recibiendo cada `PRESENCE_UPDATE` en el
+-- momento en que ocurre y escribiendolo al instante. El cron cada dos
+-- minutos solo empalma un turno con el siguiente.
+--
+-- Asi que cambiar de cancion o ponerse ausente se ve YA, no dentro de dos
+-- minutos. El unico hueco ciego son los ~10 segundos entre turno y turno,
+-- y lo que pase ahi lo recoge la foto inicial del turno siguiente.
+--
+-- Medido: {"ok":true,"cambios":1,"segundos":110} — la ventana entera
+-- aguanta y los cambios entran en vivo.
+--
+-- POR QUE DOS MINUTOS Y NO CADA UNO NI UNA CONEXION ETERNA
 --
 -- Porque cada pasada abre una sesion nueva con Discord, y Discord las
 -- raciona. Medido contra `/gateway/bot` en este mismo bot:
@@ -18,13 +32,15 @@
 -- la peor forma de romperse. Cada dos minutos son 720, con margen de
 -- sobra para los disparos a mano y algun reintento.
 --
--- Y en vivo no puede ser desde aqui. Vivo significa mantener el
--- websocket abierto, y una funcion de borde vive lo que dura una
--- peticion: nace, responde y muere. Para eso hace falta un proceso
--- encendido siempre —un VPS, un Fly, un Railway—, y entonces son 1 sesion
--- por reinicio en vez de 720 al dia, y la actualizacion es instantanea.
--- Es la unica forma de tener «en vivo» de verdad; esto es lo mas cerca
--- que se llega sin pagar una maquina.
+-- Una conexion eterna no cabe aqui: una funcion de borde vive lo que
+-- dura su peticion, y 110s es lo que aguanta. Para tenerla de verdad hace
+-- falta un proceso encendido siempre —un VPS, un Fly, un Railway— y
+-- entonces son 1 sesion por reinicio en vez de 720 al dia. La diferencia
+-- practica con lo de aqui es el hueco de 10 segundos entre turnos.
+--
+-- LO QUE ESTO CUESTA: la funcion pasa ~92% del tiempo corriendo. Son 720
+-- invocaciones al dia, no 720 minutos facturados como servidor, pero
+-- conviene saberlo antes de mirar la factura.
 --
 -- AQUI NO HAY NINGUNA CLAVE ESCRITA. La cabecera se arma leyendo
 -- `privado.config`, que es la misma tabla donde ya vive la pimienta de

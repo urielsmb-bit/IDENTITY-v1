@@ -49,9 +49,27 @@ const PASARELA = 'wss://gateway.discord.gg/?v=10&encoding=json';
    él la pasarela cierra con 4014 en vez de mandar nada. */
 const INTENTS = (1 << 0) | (1 << 8);
 
-/** Cuánto se espera a la foto antes de rendirse. El HELLO da ~41s de
- *  margen antes del primer latido, así que aquí no hace falta latir. */
+/** Cuánto se espera a la primera foto antes de rendirse. */
 const ESPERA_MS = 20_000;
+
+/**
+ * Cuánto se queda escuchando despues de la foto.
+ *
+ * Esto es lo que convierte un muestreo en algo casi en vivo. Conectar,
+ * hacer la foto y colgar cuesta una sesion y da el estado de UN instante:
+ * lo que pase en los dos minutos siguientes no se entera nadie hasta la
+ * pasada siguiente.
+ *
+ * Quedandose escuchando, la MISMA sesion recibe cada `PRESENCE_UPDATE` en
+ * el momento en que ocurre. Mismo gasto —una sesion por pasada, y Discord
+ * solo da mil al dia— y los cambios entran al instante en vez de tardar
+ * hasta dos minutos.
+ *
+ * El tope lo pone la plataforma, no nosotros: una funcion de borde vive
+ * lo que dura su peticion. 110s deja margen bajo el limite y encaja con
+ * un cron cada dos minutos, asi que la cobertura es casi continua.
+ */
+const VENTANA_MS = 110_000;
 
 /** Los tipos de actividad de Discord, con el verbo que usa cada uno.
  *  Los mismos que ya usaba el editor, para que el texto no cambie según
@@ -172,10 +190,21 @@ async function sesionesQueQuedan(token: string) {
   }
 }
 
-function tomarFoto(token: string, guild: string): Promise<Presencia[]> {
+function tomarFoto(
+  token: string,
+  guild: string,
+  /** Se llama con la foto inicial y luego con CADA cambio que llegue. */
+  alLlegar: (p: Presencia[], inicial: boolean) => void | Promise<void>,
+  ventanaMs: number,
+): Promise<{ cambios: number; segundos: number }> {
   return new Promise((resolve, reject) => {
+    const arranque = Date.now();
     const ws = new WebSocket(PASARELA);
     let acabado = false;
+    let seq: number | null = null;
+    let latido: number | undefined;
+    let cambios = 0;
+    let fotoHecha = false;
     /* En qué servidores está el bot de verdad. Se apunta para poder
        decirlo cuando la foto no llega: «no llegó a tiempo» no lleva a
        ninguna parte, y el fallo casi siempre es que el id del servidor no
@@ -194,6 +223,7 @@ function tomarFoto(token: string, guild: string): Promise<Presencia[]> {
       if (acabado) return;
       acabado = true;
       clearTimeout(reloj);
+      if (latido) clearInterval(latido);
       try {
         ws.close();
       } catch {
@@ -202,7 +232,7 @@ function tomarFoto(token: string, guild: string): Promise<Presencia[]> {
       fn();
     };
 
-    const reloj = setTimeout(
+    let reloj = setTimeout(
       () =>
         acabar(() =>
           reject(
@@ -224,7 +254,20 @@ function tomarFoto(token: string, guild: string): Promise<Presencia[]> {
         return;
       }
 
+      /* La secuencia, que hay que devolverle en cada latido. */
+      if (typeof m.s === 'number') seq = m.s;
+
       if (m.op === 10) {
+        /* Ahora SI hay que latir: la ventana de escucha dura mas que el
+           margen que da el HELLO (~41s), y sin latidos Discord cierra la
+           sesion por su cuenta a mitad de la ventana. */
+        const cada = Number((m.d as { heartbeat_interval?: number })?.heartbeat_interval) || 41250;
+        latido = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ op: 1, d: seq }));
+          }
+        }, cada);
+
         ws.send(JSON.stringify({
           op: 2,
           d: {
@@ -252,11 +295,32 @@ function tomarFoto(token: string, guild: string): Promise<Presencia[]> {
       }
       if (m.t === 'GUILD_CREATE' && typeof m.d?.id === 'string') donde.add(m.d.id);
 
-      if (m.t === 'GUILD_CREATE' && m.d?.id === guild) {
+      if (m.t === 'GUILD_CREATE' && m.d?.id === guild && !fotoHecha) {
+        fotoHecha = true;
         const p = Array.isArray(m.d.presences) ? (m.d.presences as Presencia[]) : [];
         /* Fuera el propio bot: esta siempre en linea por definicion y no
            es nadie con perfil que enseñar. */
-        acabar(() => resolve(p.filter((x) => x.user?.id !== yo)));
+        void alLlegar(p.filter((x) => x.user?.id !== yo), true);
+
+        /* Y a partir de aqui NO se cuelga: se queda escuchando lo que
+           cambie. El reloj deja de ser «me rindo» y pasa a ser «hasta
+           aqui llega mi turno». */
+        clearTimeout(reloj);
+        reloj = setTimeout(
+          () => acabar(() => resolve({ cambios, segundos: Math.round((Date.now() - arranque) / 1000) })),
+          ventanaMs,
+        );
+      }
+
+      /* Cada cambio, en el momento en que ocurre. Esto es lo que hace que
+         cambiar de cancion o ponerse ausente se vea al instante en vez de
+         esperar a la siguiente pasada del cron. */
+      if (m.t === 'PRESENCE_UPDATE' && m.d?.guild_id === guild) {
+        const p = m.d as unknown as Presencia;
+        if (p.user?.id && p.user.id !== yo) {
+          cambios++;
+          void alLlegar([p], false);
+        }
       }
     };
 
@@ -330,11 +394,69 @@ Deno.serve(async (req) => {
     return Response.json({ ok: false, motivo: 'sin-bot' }, { status: 200 });
   }
 
-  let presencias: Presencia[];
+  const pideLimites = new URL(req.url).searchParams.has('limites');
+  /* La ventana se puede acortar para probar sin esperar dos minutos. */
+  const ventana = Math.min(
+    VENTANA_MS,
+    Number(new URL(req.url).searchParams.get('ventana')) * 1000 || VENTANA_MS,
+  );
+
+  const db = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    { auth: { persistSession: false } },
+  );
+
+  let fallo = '';
+
+  /** Escribe lo que llegue. Se llama con la foto inicial y con cada cambio. */
+  const guardar = async (presencias: Presencia[], inicial: boolean) => {
+    const ahora = new Date().toISOString();
+    const filas = presencias.map((x) => aFila(x, ahora)).filter((f): f is Fila => f !== null);
+    if (filas.length === 0 && !inicial) return;
+
+    if (filas.length > 0) {
+      let { error } = await db.from('presencia').upsert(filas, { onConflict: 'discord_id' });
+
+      /* La columna `cancion_id` llego despues (0020). Desplegar la funcion
+         y aplicar la migracion son dos actos distintos y nunca caen a la
+         vez: entre uno y otro esto escribiria una columna que no existe y
+         la presencia se congelaria. Si la base dice que no la conoce, se
+         reintenta sin ella: el estado se sigue guardando y lo unico que
+         falta es poder REPRODUCIR lo que suena. */
+      if (error && (error.code === 'PGRST204' || /cancion_id/.test(error.message))) {
+        console.warn('discord-presencia · sin columna cancion_id; falta aplicar la 0020');
+        const sinId = filas.map(({ cancion_id: _omitido, ...resto }) => resto);
+        ({ error } = await db.from('presencia').upsert(sinId, { onConflict: 'discord_id' }));
+      }
+
+      if (error) {
+        console.error('discord-presencia · upsert', error.message);
+        fallo = error.message;
+        return;
+      }
+    }
+
+    /* Y a quien NO salga en la FOTO, «offline»: la pasarela no manda a los
+       desconectados, asi que no aparecer es exactamente eso.
+       
+       Solo con la foto inicial. Un `PRESENCE_UPDATE` habla de UNA persona;
+       apagar a todas las demas cada vez que alguien cambia de cancion
+       dejaria el servidor entero desconectado entre evento y evento. */
+    if (!inicial) return;
+    const dentro = filas.map((f) => f.discord_id);
+    const apagar = db.from('presencia').update({ estado: 'offline', actualizado: ahora });
+    const { error: err2 } = dentro.length
+      ? await apagar.not('discord_id', 'in', `(${dentro.join(',')})`).neq('estado', 'offline')
+      : await apagar.neq('estado', 'offline');
+    if (err2) console.error('discord-presencia · apagar', err2.message);
+  };
+
+  let resumen: { cambios: number; segundos: number };
   try {
-    presencias = await tomarFoto(token, guild);
+    resumen = await tomarFoto(token, guild, guardar, ventana);
   } catch (e) {
-    /* El motivo sí se registra —hace falta para saber si es el token o el
+    /* El motivo si se registra —hace falta para saber si es el token o el
        intent— pero nunca el token. */
     console.error('discord-presencia', e instanceof Error ? e.message : e);
     return Response.json(
@@ -343,65 +465,18 @@ Deno.serve(async (req) => {
     );
   }
 
-  const pideLimites = new URL(req.url).searchParams.has('limites');
-  const ahora = new Date().toISOString();
-  const filas = presencias.map((p) => aFila(p, ahora)).filter((f): f is Fila => f !== null);
-
-  /* La clave de servicio, que es la que se salta RLS para poder escribir.
-     Se leia de una variable que dejo de existir cuando la puerta paso a
-     `CRON_SECRET`: quedo la referencia suelta y reventaba con un 500 —
-     pero solo al llegar aqui, o sea solo cuando la foto SI llegaba. Por
-     eso no se vio hasta que el id del servidor fue el bueno. */
-  const db = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    { auth: { persistSession: false } },
-  );
-
-  if (filas.length > 0) {
-    let { error } = await db.from('presencia').upsert(filas, { onConflict: 'discord_id' });
-
-    /* La columna `cancion_id` llego despues (0020). Desplegar la funcion
-       y aplicar la migracion son dos actos distintos y nunca caen a la
-       vez: entre uno y otro hay una ventana en la que esto escribiria una
-       columna que no existe y la presencia se congelaria.
-       
-       Asi que si la base dice que no la conoce, se reintenta sin ella. El
-       estado y la cancion siguen guardandose; lo unico que falta hasta
-       que se aplique la migracion es poder REPRODUCIR lo que suena. */
-    if (error && (error.code === 'PGRST204' || /cancion_id/.test(error.message))) {
-      console.warn('discord-presencia · sin columna cancion_id; falta aplicar la 0020');
-      const sinId = filas.map(({ cancion_id: _omitido, ...resto }) => resto);
-      ({ error } = await db.from('presencia').upsert(sinId, { onConflict: 'discord_id' }));
-    }
-
-    if (error) {
-      /* El motivo, entero. Esto solo lo ve quien tiene `CRON_SECRET`, y
-         «base» a secas obliga a ir a buscar el registro para saber si es
-         un permiso, una columna o la clave. */
-      console.error('discord-presencia · upsert', error.message);
-      return Response.json(
-        { ok: false, motivo: 'base', detalle: error.message, codigo: error.code },
-        { status: 200 },
-      );
-    }
+  if (fallo) {
+    return Response.json({ ok: false, motivo: 'base', detalle: fallo }, { status: 200 });
   }
-
-  /* Y a quien NO salga en la foto, «offline»: la pasarela no manda a los
-     desconectados, así que no aparecer es exactamente eso. Va dentro del
-     camino de éxito a propósito — si esto se hiciera tras un fallo de
-     red, un tropiezo de treinta segundos apagaría a todo el mundo. */
-  const dentro = filas.map((f) => f.discord_id);
-  const apagar = db.from('presencia').update({ estado: 'offline', actualizado: ahora });
-  const { error: err2 } = dentro.length
-    ? await apagar.not('discord_id', 'in', `(${dentro.join(',')})`).neq('estado', 'offline')
-    : await apagar.neq('estado', 'offline');
-  if (err2) console.error('discord-presencia · apagar', err2.message);
 
   return Response.json(
     {
       ok: true,
-      vistos: filas.length,
+      /* Cuantos cambios entraron EN VIVO durante la ventana, y cuanto
+         duro. Es la unica forma de saber si la plataforma esta cortando
+         la funcion antes de tiempo. */
+      cambios: resumen.cambios,
+      segundos: resumen.segundos,
       /* Solo si se pregunta. Util una vez al mes y decisivo el dia que
          la presencia se congele sin motivo aparente. */
       sesiones: pideLimites ? await sesionesQueQuedan(token) : undefined,
