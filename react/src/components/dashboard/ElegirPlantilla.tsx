@@ -21,6 +21,11 @@ interface Props {
   variante?: 'panel' | 'bienvenida';
   /** Se llama despues de elegir, para cerrar la bienvenida. */
   alElegir?: () => void;
+  /**
+   * Pasar al lienzo libre. Lo hace quien nos pinta, porque sembrar las
+   * coordenadas exige medir la vista previa que hay en pantalla.
+   */
+  alLienzoLibre?: () => void;
 }
 
 /**
@@ -36,7 +41,13 @@ interface Props {
  * Preguntar siempre convierte la confirmacion en un tramite que se pulsa
  * sin leer, y entonces no protege de nada.
  */
-export function ElegirPlantilla({ profile, update, variante = 'panel', alElegir }: Props) {
+export function ElegirPlantilla({
+  profile,
+  update,
+  variante = 'panel',
+  alElegir,
+  alLienzoLibre,
+}: Props) {
   const [porConfirmar, setPorConfirmar] = useState<PlantillaBase | null>(null);
 
   const elegida = profile.base || '';
@@ -48,6 +59,11 @@ export function ElegirPlantilla({ profile, update, variante = 'panel', alElegir 
      evita la pregunta de por que el perfil no se ve como la tarjeta que
      aparece marcada. */
   const tocada = !!activa && !coincideBase(profile, activa);
+
+  /* Con el lienzo libre no manda ninguna plantilla: cada pieza esta donde
+     su dueño la solto. Se marca esa tarjeta y ninguna otra, porque decir
+     «Clásica» sobre un diseño colocado a mano seria mentir. */
+  const libre = (profile.layoutMode || 'stack') === 'free';
 
   /** Lo que se perderia al recolocar: los ajustes de bloque y el lienzo. */
   const hayTrabajoFino =
@@ -76,7 +92,7 @@ export function ElegirPlantilla({ profile, update, variante = 'panel', alElegir 
         aria-label="Plantillas de arranque"
       >
         {PLANTILLAS_BASE.map((pl) => {
-          const on = pl.id === elegida;
+          const on = pl.id === elegida && !libre;
           return (
             <button
               key={pl.id}
@@ -96,6 +112,30 @@ export function ElegirPlantilla({ profile, update, variante = 'panel', alElegir 
             </button>
           );
         })}
+
+        {/* La sexta, en el hueco que dejan cinco tarjetas en una rejilla de
+            tres. No es una plantilla —es soltarlas todas— y por eso se
+            dibuja con el trazo discontinuo del lienzo y no con el marco de
+            las demas. Estaba enterrada en el panel de la tarjeta, debajo de
+            siete deslizadores, con el nombre «Colocación de los bloques»:
+            la capacidad mas llamativa del editor, invisible. */}
+        {alLienzoLibre && (
+          <button
+            type="button"
+            className={`plbase__it plbase__it--libre${libre ? ' on' : ''}`}
+            aria-pressed={libre}
+            onClick={() => !libre && alLienzoLibre()}
+          >
+            <span className="plbase__fig" aria-hidden="true">
+              {DIBUJOS.LAYOUT_MODES?.free}
+            </span>
+            <span className="plbase__n">Rejilla libre</span>
+            <span className="plbase__d">
+              Coloca cada bloque donde quieras arrastrándolo en la vista previa.
+              Parte de donde esté tu diseño ahora.
+            </span>
+          </button>
+        )}
       </div>
 
       {/* Un perfil de antes de las plantillas, o uno ya trabajado, no

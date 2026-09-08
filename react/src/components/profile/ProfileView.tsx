@@ -102,6 +102,27 @@ function varsAnimacion(b: BlockStyle): Record<string, string> {
   return v;
 }
 
+/* Los iconos de la linea de oficio y ciudad. De trazo y con
+   `currentColor`, como todo lo demas del perfil: un emoji lo dibuja cada
+   sistema a su manera, no hereda el color del tema y no se le puede dar
+   resplandor. */
+const ICONO_OFICIO = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+       strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="2.5" y="7" width="19" height="13" rx="2" />
+    <path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7" />
+    <path d="M2.5 12h19" />
+  </svg>
+);
+
+const ICONO_CIUDAD = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+       strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+    <circle cx="12" cy="10" r="3" />
+  </svg>
+);
+
 /** Interruptor a atributo: el CSS pregunta por "on"/"off", no por booleanos. */
 const sw = (v: unknown) => (v ? 'on' : 'off');
 
@@ -926,21 +947,32 @@ export function ProfileView({
             </div>
           )}
 
-          {/* Oficio, ubicación, pronombres, edad */}
-          {ver('meta') && (p.title || p.location || p.pronouns || p.age) && (
+          {/* Oficio, ubicación y edad.
+              Cada cosa con su icono en vez de tres textos separados por
+              puntos. Un maletín y una chincheta se leen de un vistazo y sin
+              idioma: no hace falta deducir si «Bogotá» es la ciudad o el
+              oficio, ni que el punto de en medio separa dos cosas
+              distintas.
+
+              Los pronombres se han quitado a peticion de su dueño. El campo
+              sigue en el perfil —nadie pierde lo que escribio— pero no se
+              pinta ni se puede editar. */}
+          {ver('meta') && (p.title || p.location || p.age) && (
             <div className="pf-idblock" {...bloque('meta')}>
               <div className="pf-title">
-                {[
-                  p.title ? <b key="t">{p.title}</b> : null,
-                  p.location || null,
-                  p.pronouns || null,
-                  p.age ? `${p.age} años` : null,
-                ]
-                  .filter(Boolean)
-                  .reduce<React.ReactNode[]>(
-                    (acc, item, i) => (i === 0 ? [item] : [...acc, ' · ', item]),
-                    [],
-                  )}
+                {p.title && (
+                  <span className="pf-meta">
+                    {ICONO_OFICIO}
+                    <b>{p.title}</b>
+                  </span>
+                )}
+                {p.location && (
+                  <span className="pf-meta">
+                    {ICONO_CIUDAD}
+                    {p.location}
+                  </span>
+                )}
+                {!!p.age && <span className="pf-meta">{p.age} años</span>}
               </div>
             </div>
           )}

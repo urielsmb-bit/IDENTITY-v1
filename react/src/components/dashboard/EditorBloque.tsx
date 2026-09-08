@@ -918,20 +918,6 @@ export function EditorBloque({
           </Campo>
         );
 
-      case 'pronombres':
-        return (
-          <Campo key={id} label="Pronombres">
-            <input
-              type="text"
-              className="inp"
-              placeholder="Ej: él, ella, elle"
-              maxLength={24}
-              value={profile.pronouns || ''}
-              onChange={(e) => update({ pronouns: e.target.value })}
-            />
-          </Campo>
-        );
-
       case 'formaAvatar':
         return (
           <Campo key={id} label="Forma">
@@ -987,6 +973,19 @@ export function EditorBloque({
           </Campo>
         );
       }
+
+      case 'tamRedes':
+        return (
+          <Deslizador
+            key={id}
+            label="Tamaño de los iconos"
+            sufijo="px"
+            min={12}
+            max={48}
+            value={profile.iconSize || 20}
+            onChange={(v) => update({ iconSize: v })}
+          />
+        );
 
       case 'monoRedes':
         // `monoIcons` estaba en el perfil, en el validador y en el CSS desde

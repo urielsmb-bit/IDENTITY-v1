@@ -8,7 +8,7 @@ import { useEditorStore } from '@/stores/editorStore';
 import { useToast } from '@/hooks/useToast';
 import { ProfileView } from '@/components/profile/ProfileView';
 import {
-  SURFACES, LAYOUT_MODES, PARTICLES, CURSORS, ENTER_FX, TRAIL_FX,
+  SURFACES, PARTICLES, CURSORS, ENTER_FX, TRAIL_FX,
 } from '@/data/themes';
 import { NETS, NET_GROUPS, NET_ORDER } from '@/data/nets';
 import {
@@ -807,8 +807,26 @@ export default function DashboardPage() {
             <Progreso profile={profile} irA={irA} />
 
             <Campo label="Plantilla" guia="formato">
-              <ElegirPlantilla profile={profile} update={update} />
+              <ElegirPlantilla
+                profile={profile}
+                update={update}
+                /* Sembrar el lienzo mide el DOM de la vista previa, asi que
+                   vive aqui y no dentro del selector: es lo unico de esa
+                   rejilla que necesita saber que hay pintado. */
+                alLienzoLibre={() => {
+                  const { pos, canvasH } = sembrarLienzo(profile);
+                  update({ layoutMode: 'free', pos, canvasH });
+                }}
+              />
             </Campo>
+
+            {profile.layoutMode === 'free' && (
+              <p className="dash__pista" data-guia="libre">
+                Arrastra los bloques en la vista previa para moverlos, tira del
+                borde derecho para cambiar su ancho, y púlsalos para abrir sus
+                ajustes.
+              </p>
+            )}
 
             <h3 className="grupo__t">Tus piezas</h3>
             <p className="dash__sub">
@@ -992,6 +1010,72 @@ export default function DashboardPage() {
               </section>
             </Overlay>
 
+            {/* El cursor es una pieza mas y no un ajuste de la tarjeta: no
+                tiene nada que ver con la caja —no va dentro de ella, ni la
+                toca— y estaba enterrado entre el desenfoque del borde y la
+                inclinacion 3D. Es de las primeras cosas que se cambian y
+                era de las ultimas que se encontraban. */}
+            <Overlay
+              abierto={pieza === 'cursor'}
+              alCerrar={cerrarPieza}
+              titulo="Cursor"
+              desc="El puntero con el que se recorre tu perfil."
+            >
+              <Campo label="Cursor" guia="cursor">
+                  <Tarjetas
+                    opciones={CURSORS}
+                    dibujos={DIBUJOS.CURSORS}
+                    value={profile.cursor || 'default'}
+                    onChange={(v) => updateField('cursor', v)}
+                  />
+                </Campo>
+
+                {/* Con imagen propia manda la imagen, sea cual sea el tipo. */}
+                <SubirMedio
+                  titulo="Imagen del cursor"
+                  destino="cursor"
+                  lado={128}
+                  maxAnimadoMB={1}
+                  value={profile.cursorImg || ''}
+                  onChange={(r) => updateField('cursorImg', r.url)}
+                />
+
+                {profile.cursorImg && (
+                  <Deslizador
+                    label="Tamaño del cursor"
+                    sufijo="px"
+                    min={12}
+                    max={96}
+                    step={2}
+                    value={profile.cursorSize ?? 32}
+                    onChange={(v) => updateField('cursorSize', v)}
+                  />
+                )}
+
+                <Deslizador
+                  label="Estela"
+                  desc="Cuántas motas deja al pasar. 0 = ninguna."
+                  min={0}
+                  max={12}
+                  value={
+                    profile.cursorTrail ??
+                    (profile.cursor === 'dot' || profile.cursor === 'blade' ? 5 : 0)
+                  }
+                  onChange={(v) => updateField('cursorTrail', v)}
+                />
+
+                {(profile.cursorTrail ?? 0) > 0 && (
+                  <Campo label="Tipo de estela">
+                    <Tarjetas
+                      opciones={TRAIL_FX}
+                    dibujos={DIBUJOS.TRAIL_FX}
+                      value={profile.cursorTrailFx || 'chispas'}
+                      onChange={(v) => updateField('cursorTrailFx', v)}
+                    />
+                  </Campo>
+                )}
+            </Overlay>
+
             <Overlay
               abierto={pieza === 'tarjeta'}
               alCerrar={cerrarPieza}
@@ -1108,36 +1192,6 @@ export default function DashboardPage() {
               />
 
               
-              <Campo
-                guia="libre"
-                label="Colocación de los bloques"
-                valor={profile.layoutMode === 'free' ? 'arrastrando' : 'en columna'}
-              >
-                <Tarjetas
-                  opciones={LAYOUT_MODES}
-                    dibujos={DIBUJOS.LAYOUT_MODES}
-                  value={profile.layoutMode || 'stack'}
-                  onChange={(v) => {
-                    // Al entrar en el lienzo se siembran las coordenadas
-                    // midiendo el diseño que hay AHORA. Sin esto, todas las
-                    // piezas caerían en 0,0 amontonadas: en el lienzo cada una
-                    // se coloca sola, no fluye detrás de la anterior.
-                    if (v === 'free') {
-                      const { pos, canvasH } = sembrarLienzo(profile);
-                      update({ layoutMode: v, pos, canvasH });
-                    } else {
-                      updateField('layoutMode', v);
-                    }
-                  }}
-                />
-              </Campo>
-              {profile.layoutMode === 'free' && (
-                <p className="dash__pista">
-                  Arrastra los bloques en la vista previa para moverlos, tira del
-                  borde derecho para cambiar su ancho, y púlsalos para abrir sus
-                  ajustes.
-                </p>
-              )}
 
               <section className="grupo" data-guia="movimiento">
                 <h3 className="grupo__t">Movimiento</h3>
@@ -1167,60 +1221,7 @@ export default function DashboardPage() {
                     updateField(mapa[k] as keyof Profile, v as never);
                   }}
                 />
-                <Campo label="Cursor" guia="cursor">
-                  <Tarjetas
-                    opciones={CURSORS}
-                    dibujos={DIBUJOS.CURSORS}
-                    value={profile.cursor || 'default'}
-                    onChange={(v) => updateField('cursor', v)}
-                  />
-                </Campo>
-
-                {/* Con imagen propia manda la imagen, sea cual sea el tipo. */}
-                <SubirMedio
-                  titulo="Imagen del cursor"
-                  destino="cursor"
-                  lado={128}
-                  maxAnimadoMB={1}
-                  value={profile.cursorImg || ''}
-                  onChange={(r) => updateField('cursorImg', r.url)}
-                />
-
-                {profile.cursorImg && (
-                  <Deslizador
-                    label="Tamaño del cursor"
-                    sufijo="px"
-                    min={12}
-                    max={96}
-                    step={2}
-                    value={profile.cursorSize ?? 32}
-                    onChange={(v) => updateField('cursorSize', v)}
-                  />
-                )}
-
-                <Deslizador
-                  label="Estela"
-                  desc="Cuántas motas deja al pasar. 0 = ninguna."
-                  min={0}
-                  max={12}
-                  value={
-                    profile.cursorTrail ??
-                    (profile.cursor === 'dot' || profile.cursor === 'blade' ? 5 : 0)
-                  }
-                  onChange={(v) => updateField('cursorTrail', v)}
-                />
-
-                {(profile.cursorTrail ?? 0) > 0 && (
-                  <Campo label="Tipo de estela">
-                    <Tarjetas
-                      opciones={TRAIL_FX}
-                    dibujos={DIBUJOS.TRAIL_FX}
-                      value={profile.cursorTrailFx || 'chispas'}
-                      onChange={(v) => updateField('cursorTrailFx', v)}
-                    />
-                  </Campo>
-                )}
-                <Interruptor
+                  <Interruptor
                   label="Inclinación 3D"
                   desc="La tarjeta sigue al ratón"
                   on={!!profile.tilt}

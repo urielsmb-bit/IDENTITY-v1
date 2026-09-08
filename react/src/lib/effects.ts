@@ -555,7 +555,16 @@ export function cursor(
     foto.alt = '';
     foto.width = lado;
     foto.height = lado;
-    // Centrada en la punta del raton, como los demas cursores.
+    /* Centrada en la punta del raton, como los demas cursores.
+       El tamaño va tambien en la CAJA, no solo en la imagen. El margen
+       negativo desplaza al contenedor media medida, asi que solo centra si
+       el contenedor mide de verdad `lado`; y no media: `.cur` es fijo y sin
+       ancho, o sea que se encogia a su contenido, y su contenido es una
+       imagen con `width:100%` — que se resuelve contra el padre que aun no
+       tiene ancho—. Salia descentrada y siempre para el mismo lado, que es
+       la firma de esto. */
+    el.style.width = `${lado}px`;
+    el.style.height = `${lado}px`;
     el.style.margin = `${-lado / 2}px 0 0 ${-lado / 2}px`;
     el.appendChild(foto);
   }

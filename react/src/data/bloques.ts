@@ -44,6 +44,7 @@ export type ControlId =
   | 'margen'
   // piezas con contenido propio
   | 'estiloRedes'
+  | 'tamRedes'
   | 'estiloInsignias'
   | 'listaRedes'
   | 'listaInsignias'
@@ -56,7 +57,6 @@ export type ControlId =
   | 'bordeAvatar'
   | 'brilloAvatar'
   | 'ubicacion'
-  | 'pronombres'
   | 'animacion'
   | 'heredarCaja'
   | 'discordId'
@@ -119,7 +119,10 @@ const COLOR_NOMBRE: GrupoControles = {
  *  propia forma. La caja es opcional, y por defecto no la hay. */
 const FORMA_REDES: GrupoControles = {
   titulo: 'Forma de los iconos',
-  controles: ['estiloRedes', 'monoRedes'],
+  /* El tamaño estaba en el perfil (`iconSize`), en el validador y en el
+     CSS desde la migracion, y sin un solo mando en ninguna parte: unos
+     iconos que se guardaban a 20px y nadie podia cambiar. */
+  controles: ['estiloRedes', 'tamRedes', 'monoRedes'],
 };
 const FORMA_INSIGNIAS: GrupoControles = {
   titulo: 'Forma de las insignias',
@@ -190,14 +193,13 @@ export const BLOQUES: DefBloque[] = [
   {
     id: 'meta',
     nombre: 'Oficio y ubicación',
-    descripcion: 'La línea de oficio, ciudad y pronombres.',
+    descripcion: 'La línea de oficio y ciudad, cada uno con su icono.',
     icono: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
     campoTexto: 'title',
-    /* La linea entera, no solo el oficio. La ciudad y los pronombres se
-       pintan en este bloque y se escribian en otra seccion; los
-       pronombres, en ninguna. */
+    /* La linea entera, no solo el oficio: la ciudad se pinta en este
+       bloque y se escribia en otra seccion. */
     grupos: [
-      { titulo: 'Texto', controles: ['texto', 'ubicacion', 'pronombres', 'visible'] },
+      { titulo: 'Texto', controles: ['texto', 'ubicacion', 'visible'] },
       TIPOGRAFIA, COLOR, COMPOSICION, ENTRADA,
     ],
   },

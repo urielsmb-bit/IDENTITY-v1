@@ -2922,15 +2922,21 @@
 .pza-fila{ margin-bottom:var(--s3); }
 .pza-caja{ position:relative; flex:1; min-width:0; display:flex; }
 .pza-caja > *{ flex:1; min-width:0; }
+/* El engranaje de las dos cajas de imagen va en la FILA DEL ROTULO, a la
+   derecha de «Avatar» y «Fondo», no flotando sobre la zona de soltar.
+   Ahi estorbaba dos veces: se posaba encima de la foto que acabas de subir
+   —justo lo que has puesto para mirarlo— y quedaba dentro del blanco que
+   abre el selector de archivos, o sea pegado a un boton gigante que hace
+   otra cosa. La fila del rotulo es su sitio: es el ajuste DE esa caja, y
+   ahi no tapa nada. */
 .pza__cfg--flota{
-  position:absolute; top:6px; right:6px;
-  width:30px; height:30px;
-  border:1px solid var(--border);
-  border-radius:8px;
-  background:var(--bg-primary);
+  position:absolute; top:-3px; right:0;
+  width:26px; height:26px;
+  border:0; border-radius:7px;
+  background:none;
   z-index:1;
 }
-.pza__cfg--flota:hover{ border-color:var(--border-strong); }
+.pza__cfg--flota:hover{ background:var(--surface-3); }
 
 /* ---- el panel de ajustes de una pieza, encima --------------------- */
 .ovl{

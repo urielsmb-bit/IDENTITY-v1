@@ -3,7 +3,7 @@ import type { Profile } from '@/types';
 import { BLOQUES, type DefBloque } from '@/data/bloques';
 import { NETS } from '@/data/nets';
 import { BADGES } from '@/data/badges';
-import { SURFACES } from '@/data/themes';
+import { CURSORS, SURFACES } from '@/data/themes';
 import { DIBUJOS } from './dibujos';
 import { EditorBloque } from './EditorBloque';
 
@@ -72,7 +72,7 @@ function vista(id: string, p: Profile, insignias: string[]): ReactNode {
       return <span className="pza__mono">@{p.username || 'tu_usuario'}</span>;
 
     case 'meta': {
-      const linea = [p.title, p.location, p.pronouns].filter(Boolean).join(' · ');
+      const linea = [p.title, p.location].filter(Boolean).join(' · ');
       return linea ? <span>{linea}</span> : <Vacio>Sin oficio ni ciudad</Vacio>;
     }
 
@@ -288,6 +288,37 @@ export function Piezas({
 
       <ul className="pzas" data-guia="bloques">
         {BLOQUES.filter((b) => b.id !== 'avatar').map(fila)}
+
+        {/* El cursor. No es un bloque —no se pinta dentro de la tarjeta—
+            pero se elige igual que uno, y estaba enterrado entre los
+            deslizadores de la caja. */}
+        <li className="pza pza--caja">
+          <button type="button" className="pza__cuerpo" onClick={() => onAbrir('cursor')}>
+            <span className="pza__ico pza__ico--dib" aria-hidden="true">
+              {DIBUJOS.CURSORS?.[profile.cursor || 'default']}
+            </span>
+            <span className="pza__txt">
+              <span className="pza__n">Cursor</span>
+              <span className="pza__v">
+                {profile.cursorImg
+                  ? 'Imagen propia'
+                  : CURSORS.find((c) => c.id === (profile.cursor || 'default'))?.name ??
+                    'El del sistema'}
+                {(profile.cursorTrail ?? 0) > 0 ? ' · con estela' : ''}
+              </span>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className="pza__cfg"
+            onClick={() => onAbrir('cursor')}
+            title="Ajustes del cursor"
+            aria-label="Ajustes del cursor"
+          >
+            {ENGRANAJE}
+          </button>
+        </li>
 
         {/* La tarjeta es la caja que envuelve a todas, asi que va la
             ultima y sin ojo: apagarla no es quitarla, es elegir «sin

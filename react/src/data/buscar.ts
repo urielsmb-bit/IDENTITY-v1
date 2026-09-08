@@ -65,6 +65,7 @@ const CONTROL: Record<ControlId, Ficha> = {
   estiloInsignias: { nombre: 'Estilo de las insignias', alias: ['badges', 'insignias', 'verificado'] },
   listaRedes: { nombre: 'Tus redes', alias: ['instagram', 'tiktok', 'twitter', 'añadir red'] },
   listaInsignias: { nombre: 'Tus insignias', alias: ['badges', 'logros'] },
+  tamRedes: { nombre: 'Tamaño de los iconos', alias: ['redes grandes', 'iconos pequeños', 'logos'] },
   monoRedes: { nombre: 'Iconos de un solo color', alias: ['monocromo', 'blanco y negro', 'sin color'] },
 
   enlaceMusica: { nombre: 'Enlace de la música', alias: ['canción', 'spotify', 'youtube', 'audio'] },
@@ -76,7 +77,6 @@ const CONTROL: Record<ControlId, Ficha> = {
   bordeAvatar: { nombre: 'Borde del avatar', alias: ['aro', 'contorno', 'marco'] },
   brilloAvatar: { nombre: 'Resplandor del avatar', alias: ['halo', 'brillo', 'glow'] },
   ubicacion: { nombre: 'Ciudad', alias: ['ubicación', 'dónde vives', 'país', 'lugar'] },
-  pronombres: { nombre: 'Pronombres', alias: ['él', 'ella', 'elle', 'género'] },
 
   animacion: { nombre: 'Animación de entrada', alias: ['aparecer', 'entrada', 'transición'] },
 

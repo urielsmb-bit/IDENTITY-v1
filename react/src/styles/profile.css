@@ -413,7 +413,20 @@
 .pf-verified{ width:19px; height:19px; flex:none; color:var(--p-primary); }
 
 .pf-handle{ font-family:var(--b-font, var(--p-fm)); font-size:var(--t2); color:var(--p-dim); }
-.pf-title{ font-size:var(--t3); color:var(--p-dim); }
+/* Oficio, ciudad y edad, cada uno con su icono. Es una fila y no un
+   parrafo: por eso se alinea con `--u-just` —lo mismo que las redes y las
+   insignias— y no con `text-align`, que sobre cajas flexibles no mueve
+   nada. */
+.pf-title{
+  font-size:var(--t3); color:var(--p-dim);
+  display:flex; flex-wrap:wrap; align-items:center;
+  gap:4px 12px;
+  justify-content:var(--u-just, center);
+}
+.pf-meta{ display:inline-flex; align-items:center; gap:5px; }
+/* El icono acompaña al texto: crece con el —de ahi el `em`— y se queda
+   por debajo de su peso, que es de acompañante y no de titular. */
+.pf-meta svg{ width:1.05em; height:1.05em; flex:none; opacity:.75; }
 .pf-title b{ color:var(--p-text); font-weight:600; }
 /* Sin `opacity:.8` encima del color. Era la unica linea del perfil con las
    dos atenuaciones puestas a la vez: un gris ya apagado (--p-dim) rebajado
