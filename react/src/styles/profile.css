@@ -2439,6 +2439,20 @@
    width:100% se saldrían de la tarjeta. */
 .pf[data-avpos="side"] .pf-stack > .pf-idblock{ width:auto; }
 
+/* La bio y las insignias van AL LADO del avatar y no lo despejan, asi que
+   se les hace su propio contexto de formato.
+
+   Sin esto pasa lo que hace un `float` de toda la vida: el texto rodea la
+   foto mientras coincide con su altura, y en cuanto la pasa vuelve al
+   borde izquierdo. O sea que una bio de tres lineas salia con las dos
+   primeras en su columna y la tercera cruzando por debajo del avatar. Se
+   leia como un fallo de maquetacion, porque lo era.
+
+   `flow-root` y no `overflow:hidden`: hace lo mismo —crear el contexto—
+   sin recortar halos ni resplandores. */
+.pf[data-avpos="side"] .pf-stack > .pf-bio,
+.pf[data-avpos="side"] .pf-stack > .pf-badges{ display:flow-root; }
+
 /* Todo lo que no es cabecera baja por debajo del avatar. Sin esto, una
    bio corta dejaría las redes abrazando el avatar a media altura.
    Las insignias SÍ son cabecera: sueltas a todo el ancho formaban una

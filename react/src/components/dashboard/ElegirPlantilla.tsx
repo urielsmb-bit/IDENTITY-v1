@@ -65,9 +65,23 @@ export function ElegirPlantilla({
      «Clásica» sobre un diseño colocado a mano seria mentir. */
   const libre = (profile.layoutMode || 'stack') === 'free';
 
-  /** Lo que se perderia al recolocar: los ajustes de bloque y el lienzo. */
+  /**
+   * Lo que se perderia al recolocar: ajustes hechos A MANO, o el lienzo.
+   *
+   * Ojo con `bstyle` a secas: las plantillas lo escriben ELLAS —los
+   * tamaños de cada bloque son parte del diseño— asi que en cuanto eliges
+   * una cualquiera, «hay ajustes de bloque» es cierto siempre. Con esa
+   * comprobacion la confirmacion saltaba en TODOS los cambios de
+   * plantilla, y una confirmacion que sale siempre se pulsa sin leer:
+   * deja de proteger de nada y solo estorba.
+   *
+   * Lo que de verdad hay que proteger es lo que has tocado tu, y para eso
+   * ya existe `coincideBase`: si el perfil sigue siendo tal cual lo dejo
+   * su plantilla, no hay nada hecho a mano que perder.
+   */
   const hayTrabajoFino =
-    Object.keys(profile.bstyle ?? {}).length > 0 || profile.layoutMode === 'free';
+    profile.layoutMode === 'free' ||
+    (activa ? tocada : Object.keys(profile.bstyle ?? {}).length > 0);
 
   function aplicar(pl: PlantillaBase) {
     update(aplicarBase(pl, primeraVez));

@@ -65,134 +65,166 @@ const SEGURO = {
 export const PLANTILLAS_BASE: PlantillaBase[] = [
   {
     id: 'clasica',
-    nombre: 'Clásica',
-    descripcion: 'Tarjeta de cristal centrada. La de toda la vida, y la que mejor le sienta a casi todo.',
+    nombre: 'Cristal',
+    descripcion: 'Cristal esmerilado, nombre con halo y los iconos encendidos. La que más brilla.',
     bloques: ['avatar', 'name', 'handle', 'bio', 'socials'],
     ajustes: {
       ...SEGURO,
       surface: 'glass',
-      sWidthPct: 50,          // ≈460px de diseño
-      sOpacity: 9,
-      sBlur: 22,
+      sWidthPct: 46,          // ≈420px: estrecha, como las de guns
+      sOpacity: 7,            // casi transparente: manda el fondo
+      sBlur: 30,              // y por eso el desenfoque tiene que ser fuerte
       sBorderOn: true,
       sBorderW: 1,
-      radius: 18,
-      gap: 16,
-      pad: null,              // el que calcula el CSS a partir del ancho
+      radius: 22,
+      gap: 13,
+      pad: null,
       align: 'center',
       avPos: 'center',
       avShape: 'circle',
-      avSize: 112,
+      avSize: 104,
+      avBorder: true,
+      avGlow: true,
       blockStyle: 'inherit',
-      socialStyle: 'icons',
-      badgeStyle: 'plain',
+      /* Los iconos encendidos, no planos: es lo que hace que una tarjeta
+         oscura no se vea apagada. */
+      socialStyle: 'glow',
+      glowName: true,
+      glowSocials: true,
+      badgeStyle: 'icons',
       musicStyle: 'compact',
-      iconSize: 20,
+      iconSize: 22,
+      font: 'inter',
+      fontDisplay: 'space',
     },
-    cajas: {},
+    cajas: {
+      name: { size: 108 },
+      handle: { size: 92 },
+      bio: { size: 95, mt: 2 },
+    },
   },
   {
     id: 'compacta',
-    nombre: 'Compacta',
-    descripcion: 'Estrecha y apretada, del tamaño de una tarjeta de visita. Para un nombre, dos líneas y tus redes.',
+    nombre: 'Sobria',
+    descripcion: 'Sólida, estrecha y sin un solo brillo. Todo en gris, del tamaño de una tarjeta de visita.',
     bloques: ['avatar', 'name', 'handle', 'socials'],
     ajustes: {
       ...SEGURO,
       surface: 'solid',
-      sWidthPct: 36,          // ≈330px: cabe entera en cualquier telefono
-      sOpacity: 88,
+      sWidthPct: 34,          // ≈313px: cabe entera en cualquier telefono
+      sOpacity: 90,
       sBlur: 0,
       sBorderOn: true,
       sBorderW: 1,
-      radius: 20,
-      gap: 11,
-      pad: 20,
+      radius: 24,
+      gap: 9,
+      pad: 18,
       align: 'center',
       avPos: 'center',
       avShape: 'circle',
-      avSize: 84,
+      avSize: 76,
+      avBorder: false,
+      avGlow: false,
       blockStyle: 'inherit',
+      /* Ni halos ni color de marca: esta plantilla es la contraria de
+         «Cristal» a proposito, para que elegir signifique algo. */
       socialStyle: 'icons',
+      monoIcons: true,
+      glowName: false,
+      glowSocials: false,
       badgeStyle: 'icons',
       musicStyle: 'minimal',
-      iconSize: 18,
+      iconSize: 17,
+      font: 'inter',
+      fontDisplay: 'inter',
     },
-    /* Todo un punto por debajo: en una caja estrecha el nombre de fabrica
-       se parte en dos lineas y la biografia se come la tarjeta. */
     cajas: {
-      name: { size: 86 },
-      handle: { size: 92 },
-      bio: { size: 92 },
-      meta: { size: 92 },
+      name: { size: 84 },
+      handle: { size: 88 },
+      bio: { size: 90 },
+      meta: { size: 90 },
+      views: { size: 88 },
       socials: { mt: 4 },
-      views: { size: 90 },
     },
   },
   {
     id: 'retrato',
-    nombre: 'Retrato',
-    descripcion: 'La foto a un lado y el texto al otro, alineado a la izquierda. Se lee como una ficha.',
+    nombre: 'Ficha',
+    descripcion: 'La foto a un lado y el texto al otro, en serif. Se lee como la ficha de un libro.',
     bloques: ['avatar', 'name', 'handle', 'meta', 'bio', 'socials'],
     ajustes: {
       ...SEGURO,
       surface: 'glass',
       sWidthPct: 62,          // ≈570px: las dos columnas caben sin montarse
-      sOpacity: 10,
-      sBlur: 20,
+      sOpacity: 11,
+      sBlur: 18,
       sBorderOn: true,
       sBorderW: 1,
-      radius: 16,
-      gap: 13,
+      radius: 12,             // esquinas casi rectas: mas documento que app
+      gap: 12,
       pad: null,
       align: 'left',
       avPos: 'side',
       avShape: 'rounded',
-      avSize: 104,
+      avSize: 100,
+      avBorder: false,
+      avGlow: false,
       blockStyle: 'inherit',
       socialStyle: 'icons',
+      glowName: false,
+      glowSocials: false,
       badgeStyle: 'plain',
       musicStyle: 'compact',
-      iconSize: 20,
+      iconSize: 19,
+      font: 'manrope',
+      /* Serif solo en el nombre. Es lo unico que hace que esto se lea como
+         una ficha y no como otra tarjeta mas. */
+      fontDisplay: 'serif',
     },
-    /* La cabecera ya va a la izquierda por `align`, pero las piezas que son
-       una FILA —redes, insignias, visitas— se colocan con su propia
-       variable y se quedaban centradas debajo de un texto que no lo esta. */
     cajas: {
       bio: { align: 'left' },
       meta: { align: 'left' },
       socials: { align: 'left' },
       badges: { align: 'left' },
       views: { align: 'left' },
+      name: { size: 96 },
     },
   },
   {
     id: 'minima',
     nombre: 'Mínima',
-    descripcion: 'Sin caja: el nombre y poco más, flotando sobre tu fondo. Cuanto mejor sea la imagen, mejor queda.',
+    descripcion: 'Sin caja: el nombre enorme flotando sobre tu fondo. Cuanto mejor sea la imagen, mejor queda.',
     bloques: ['avatar', 'name', 'socials'],
     ajustes: {
       ...SEGURO,
       surface: 'none',
-      sWidthPct: 46,
+      sWidthPct: 50,
       sBorderOn: false,
       radius: 0,
-      gap: 20,
+      gap: 22,
       pad: 0,
       align: 'center',
       avPos: 'center',
       avShape: 'circle',
-      avSize: 96,
+      avSize: 88,
+      avBorder: false,
+      avGlow: true,
       blockStyle: 'transparent',
       socialStyle: 'icons',
+      glowName: true,
+      glowSocials: true,
       badgeStyle: 'icons',
       musicStyle: 'transparent',
-      iconSize: 22,
+      iconSize: 25,
+      font: 'inter',
+      /* Anton. Sin caja detras, el nombre ES la composicion: con una
+         tipografia de texto normal esto se queda en un perfil desnudo en
+         vez de en una portada. */
+      fontDisplay: 'display',
     },
-    /* Sin caja detras, el nombre puede permitirse ser mas grande; y la
-       biografia, un punto mas pequeña para no cruzar el fondo entero. */
     cajas: {
-      name: { size: 118 },
-      bio: { size: 96, mt: 2 },
+      name: { size: 145 },
+      bio: { size: 95, mt: 2 },
     },
   },
   {
@@ -203,34 +235,42 @@ export const PLANTILLAS_BASE: PlantillaBase[] = [
     ajustes: {
       ...SEGURO,
       surface: 'glass',
-      sWidthPct: 72,          // ≈660px, el tope antes de que se vea vacia
+      sWidthPct: 70,          // ≈645px, dentro del tope seguro de movil
       sOpacity: 8,
-      sBlur: 26,
+      sBlur: 24,
       sBorderOn: true,
       sBorderW: 1,
-      radius: 22,
-      gap: 12,
+      radius: 20,
+      gap: 10,
       pad: null,
       align: 'center',
       avPos: 'center',
       avShape: 'circle',
-      avSize: 104,
+      avSize: 96,
+      avBorder: true,
+      avGlow: false,
       blockStyle: 'glass',
       socialStyle: 'boxed',
+      glowName: false,
+      glowSocials: false,
       badgeStyle: 'boxed',
       musicStyle: 'card',
       iconSize: 20,
+      font: 'inter',
+      fontDisplay: 'space',
     },
-    /* Cada bloque con su caja, todas del mismo ancho y el mismo radio: es lo
-       que hace que se lean como una rejilla y no como cinco cosas sueltas
-       que se quedaron ahi. El ancho es 100 —el de la tarjeta— para que
-       ninguna sobresalga de su columna en una pantalla estrecha. */
+    /* Cada bloque con su caja, todas del mismo ancho y el mismo radio: es
+       lo que hace que se lean como una rejilla y no como cinco cosas
+       sueltas. El ancho es 100 —el de la tarjeta— para que ninguna
+       sobresalga en una pantalla estrecha. */
     cajas: {
-      socials: { s: 'glass', w: 100, pad: 14, rad: 14 },
-      badges: { s: 'glass', w: 100, pad: 12, rad: 14 },
-      music: { s: 'glass', w: 100, pad: 14, rad: 14 },
-      discord: { s: 'glass', w: 100, pad: 14, rad: 14 },
-      views: { s: 'glass', w: 100, pad: 10, rad: 14, size: 92 },
+      name: { size: 96 },
+      bio: { s: 'glass', w: 100, pad: 12, rad: 12, size: 92 },
+      socials: { s: 'glass', w: 100, pad: 13, rad: 12 },
+      badges: { s: 'glass', w: 100, pad: 11, rad: 12 },
+      music: { s: 'glass', w: 100, pad: 13, rad: 12 },
+      discord: { s: 'glass', w: 100, pad: 13, rad: 12 },
+      views: { s: 'glass', w: 100, pad: 9, rad: 12, size: 90 },
     },
   },
 ];

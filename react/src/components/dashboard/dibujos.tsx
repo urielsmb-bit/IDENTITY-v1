@@ -528,12 +528,18 @@ export const DIBUJOS: Record<string, Record<string, ReactNode>> = {
      caja, si los bloques llevan cajita propia. Se elige mirando, que es lo
      que hace que no haga falta leerse las cinco descripciones. */
   BASES: {
+    /* Cristal: el halo es lo que la distingue. Un aro suelto alrededor
+       del avatar y los iconos con su propio cerco. */
     clasica: W(
       <>
-        <rect x="26" y="5" width="48" height="54" rx="6" fill="currentColor" fillOpacity=".12" strokeWidth="1.2" opacity=".85" />
+        <rect x="26" y="5" width="48" height="54" rx="7" fill="currentColor" fillOpacity=".1" strokeWidth="1.2" opacity=".85" />
+        <circle cx="50" cy="19" r="10" fill="currentColor" fillOpacity=".18" stroke="none" />
         <circle cx="50" cy="19" r="7" fill="currentColor" stroke="none" />
-        {raya(36, 31, 28)}
-        {raya(40, 39, 20, 0.5)}
+        {raya(36, 32, 28)}
+        {raya(40, 40, 20, 0.5)}
+        <circle cx="43" cy="51" r="3.6" fill="currentColor" fillOpacity=".2" stroke="none" />
+        <circle cx="50" cy="51" r="3.6" fill="currentColor" fillOpacity=".2" stroke="none" />
+        <circle cx="57" cy="51" r="3.6" fill="currentColor" fillOpacity=".2" stroke="none" />
         {puntos(50, 51)}
       </>,
     ),
@@ -546,9 +552,12 @@ export const DIBUJOS: Record<string, Record<string, ReactNode>> = {
         {puntos(50, 47)}
       </>,
     ),
+    /* Ficha: esquinas casi rectas —mas documento que aplicacion— y el
+       nombre con remates, que es lo unico que la serif deja ver a este
+       tamaño. */
     retrato: W(
       <>
-        <rect x="9" y="13" width="82" height="38" rx="5" fill="currentColor" fillOpacity=".12" strokeWidth="1.2" opacity=".85" />
+        <rect x="9" y="13" width="82" height="38" rx="2" fill="currentColor" fillOpacity=".12" strokeWidth="1.2" opacity=".85" />
         <rect x="17" y="21" width="21" height="21" rx="6" fill="currentColor" stroke="none" />
         {raya(45, 22, 30)}
         {raya(45, 29, 20, 0.5)}
@@ -560,10 +569,11 @@ export const DIBUJOS: Record<string, Record<string, ReactNode>> = {
       <>
         {/* Sin caja: el borde punteado solo dice donde acaba el diseño. */}
         <rect x="24" y="4" width="52" height="56" rx="6" strokeWidth="1.1" strokeDasharray="3 4" opacity=".3" />
-        <circle cx="50" cy="18" r="6" fill="currentColor" stroke="none" />
-        {raya(33, 31, 34)}
-        {raya(41, 40, 18, 0.45)}
-        {puntos(50, 51)}
+        <circle cx="50" cy="16" r="6" fill="currentColor" stroke="none" />
+        {/* El nombre ENORME: es la composicion entera. */}
+        <rect x="22" y="28" width="56" height="9" rx="4.5" fill="currentColor" stroke="none" />
+        {raya(41, 43, 18, 0.45)}
+        {puntos(50, 54)}
       </>,
     ),
     vitrina: W(
