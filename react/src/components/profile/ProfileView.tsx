@@ -1167,11 +1167,17 @@ export function ProfileView({
                 )}
               </span>
 
-              {discord?.cancion?.portada && (
-                <span className="pf-dc__disco">
-                  <img src={discord.cancion.portada} alt="" loading="lazy" />
-                </span>
-              )}
+              {/* La caratula de lo que suena NO se pinta aqui.
+
+                  Ocupaba el lado derecho de la caja entera para repetir en
+                  imagen lo que la linea de al lado ya dice con palabras, y
+                  siendo lo unico con color de todo el widget se llevaba la
+                  vista antes que el nombre y el estado, que es lo que se
+                  viene a mirar.
+
+                  La portada se sigue leyendo y guardando: es la que viste
+                  el reproductor cuando el perfil no tiene musica propia y
+                  suena lo que estas escuchando. */}
             </div>
           )}
 
