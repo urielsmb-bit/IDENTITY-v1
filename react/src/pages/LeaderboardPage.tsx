@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useProfileStore } from '@/stores/profileStore';
 import { useDiscoverProfiles } from '@/hooks/useProfile';
-import { safeMedia, num } from '@/lib/utils';
+import { num } from '@/lib/utils';
+import { avatarDe } from '@/lib/avatar';
 import type { Profile } from '@/types';
 
 /* Visitas y nota, y nada mas. «Nivel» y «likes» eran campos que nadie
@@ -149,6 +150,7 @@ export default function LeaderboardPage() {
           <ol className="rank__l">
             {rankedProfiles.map((p) => {
               const puesto = puestos.get(p.username) ?? 0;
+              const cara = avatarDe(p);
               return (
                 <li key={p.username}>
                   <Link className={`rank__f${puesto <= 3 ? ' es-top' : ''}`} to={`/u/${p.username}`}>
@@ -156,13 +158,14 @@ export default function LeaderboardPage() {
                         columna quede recta al pasar de 9 a 10. */}
                     <span className="rank__n">{puesto}</span>
 
-                    <span className="rank__av">
-                      {p.avatarUrl ? (
-                        <img src={safeMedia(p.avatarUrl)} alt="" loading="lazy" />
+                    <span
+                      className="rank__av"
+                      style={cara.url ? undefined : { background: cara.color, color: '#fff' }}
+                    >
+                      {cara.url ? (
+                        <img src={cara.url} alt="" loading="lazy" />
                       ) : (
-                        <span aria-hidden="true">
-                          {p.emoji || (p.name || p.username).charAt(0).toUpperCase()}
-                        </span>
+                        <span aria-hidden="true">{cara.signo}</span>
                       )}
                     </span>
 

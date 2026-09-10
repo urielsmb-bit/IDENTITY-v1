@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import type { Profile } from '@/types';
 import { getBadge } from '@/data/badges';
 import { insigniasGanadas } from '@/lib/insignias';
-import { safeMedia, num } from '@/lib/utils';
+import { num } from '@/lib/utils';
+import { avatarDe } from '@/lib/avatar';
 
 interface ProfileCardProps {
   profile: Profile;
@@ -26,6 +27,7 @@ function hexA(hex: string | undefined, a: number) {
 
 export function ProfileCard({ profile: p }: ProfileCardProps) {
   const tint = hexA(p.accent, 0.18);
+  const cara = avatarDe(p);
   /* Las filas de `descubrir` traen visitas y notas, asi que aqui se
      calculan igual que en el perfil. Lo que no traen es lo que concede el
      equipo: en la tarjeta pequena se puede vivir sin ello. */
@@ -57,13 +59,14 @@ export function ProfileCard({ profile: p }: ProfileCardProps) {
         } as React.CSSProperties
       }
     >
-      <span className="pcard__av">
-        {p.avatarUrl ? (
-          <img src={safeMedia(p.avatarUrl)} alt="" loading="lazy" />
+      <span
+        className="pcard__av"
+        style={cara.url ? undefined : { background: cara.color, color: '#fff' }}
+      >
+        {cara.url ? (
+          <img src={cara.url} alt="" loading="lazy" />
         ) : (
-          <span aria-hidden="true">
-            {p.emoji || (p.name || '?').charAt(0).toUpperCase()}
-          </span>
+          <span aria-hidden="true">{cara.signo}</span>
         )}
       </span>
 

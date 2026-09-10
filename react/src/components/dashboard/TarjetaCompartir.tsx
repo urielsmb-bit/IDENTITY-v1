@@ -1,6 +1,7 @@
 import type { Profile } from '@/types';
 import { safeMedia } from '@/lib/utils';
 import { tituloTarjeta, descripcionTarjeta, imagenTarjeta } from '@/lib/tarjeta';
+import { avatarDe } from '@/lib/avatar';
 
 /**
  * Cómo se verá tu enlace cuando lo pegues.
@@ -24,7 +25,10 @@ import { tituloTarjeta, descripcionTarjeta, imagenTarjeta } from '@/lib/tarjeta'
 export function TarjetaCompartir({ profile }: { profile: Profile }) {
   const titulo = tituloTarjeta(profile);
   const descripcion = descripcionTarjeta(profile);
-  const imagen = imagenTarjeta(profile.avatarUrl);
+  /* La misma cara que ve todo el mundo, no solo la que subiste: quien
+     comparte su enlace nada mas conectar Discord tenia una tarjeta sin
+     imagen aunque su perfil si la enseñara. */
+  const imagen = imagenTarjeta(avatarDe(profile).url);
 
   /* El dominio real cuando lo hay. En local sale `localhost`, que es
      justo lo que se vería si compartieras desde aquí. */

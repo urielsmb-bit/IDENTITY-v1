@@ -10,6 +10,7 @@ import { useCursor } from '@/hooks/useCursor';
 import { useDiscord, COLOR_ESTADO } from '@/hooks/useDiscord';
 import { useMusic } from '@/hooks/useMusic';
 import { safeUrl, safeMedia } from '@/lib/utils';
+import { avatarDe } from '@/lib/avatar';
 import { incrustable } from '@/lib/validar';
 import { esVimeo, urlFondoVimeo } from '@/lib/vimeo';
 import { registrarClic } from '@/lib/backend';
@@ -177,6 +178,10 @@ export function ProfileView({
   onVote,
   myVote,
 }: ProfileViewProps) {
+  /* Que cara toca: la tuya, la de Discord o tu inicial sobre un color.
+     Lo decide `avatarDe` y no este componente, porque la misma cara tiene
+     que salir en el ranking, en Descubrir y en la tarjeta de compartir. */
+  const cara = avatarDe(p);
   const [gateUnlocked, setGateUnlocked] = useState(!p.gate || preview);
   /** Mientras dura, el perfil ENTERO entra: el fondo sube desde negro a la
    *  vez que la tarjeta, en vez de aparecer ya puesto detrás de ella. */
@@ -951,22 +956,34 @@ export function ProfileView({
         <div ref={cardRef} className="pf-stack">
           <span className="pf-card__sheen" aria-hidden="true" />
 
-          {/* Avatar */}
-          {ver('avatar') && (p.avatarUrl || p.emoji || p.name) && (
+          {/* Avatar.
+
+              Ya no se pregunta si HAY foto: `avatarDe` decide cual toca -la
+              tuya, la de Discord o tu inicial- y siempre hay una. Por eso
+              tampoco hay condicion de contenido: el bloque se pinta si esta
+              encendido, y punto. */}
+          {ver('avatar') && (
             <div
               className="pf-avatar"
               data-fx={p.avatarFx || 'none'}
               data-deco={marcoDiscord ? 'on' : undefined}
+              data-signo={cara.url ? undefined : 'on'}
               {...bloque('avatar')}
+              style={
+                {
+                  ...(bloque('avatar').style as React.CSSProperties),
+                  '--av-color': cara.color,
+                } as React.CSSProperties
+              }
             >
-              {p.avatarUrl ? (
+              {cara.url ? (
                 <img
-                  src={safeMedia(p.avatarUrl)}
+                  src={cara.url}
                   alt={`Avatar de ${p.name || p.username}`}
                   loading="lazy"
                 />
               ) : (
-                p.emoji || (p.name || '?').trim().charAt(0).toUpperCase()
+                <span className="pf-avatar__signo">{cara.signo}</span>
               )}
               {marcoDiscord && (
                 <img className="pf-avatar__deco" src={marcoDiscord} alt="" aria-hidden="true" />

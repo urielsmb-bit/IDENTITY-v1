@@ -349,6 +349,23 @@
 }
 .pf-avatar img{ width:100%; height:100%; object-fit:cover; }
 
+/* Sin foto: la inicial sobre un color solido en vez de sobre el gris del
+   tema. El color sale del @usuario y es siempre el mismo para la misma
+   persona -lo decide `avatarDe`-, asi que un perfil recien hecho ya tiene
+   cara en lugar de un hueco.
+
+   Blanco encima y no el color de marca: el fondo se genera y puede caer en
+   cualquiera de los 360 tonos, asi que el texto tiene que leerse contra
+   todos. Por eso `avatarDe` fija la luz del color en vez de dejarla suelta.
+
+   `[data-avfondo="off"]` sigue mandando sobre esto -tiene mas
+   especificidad-: quitar el fondo del avatar es una decision de su dueño y
+   no se la pisa un color que ponemos nosotros. */
+.pf-avatar[data-signo]{
+  background:var(--av-color, var(--p-surface-2));
+  color:#fff;
+}
+
 /* ---- el marco de Nitro, cuando llega como IMAGEN ----------
    Existia `.pf-avatar__decor` —con erre— que lo pinta de fondo desde una
    variable, pero el marcado escribe `.pf-avatar__deco`. O sea que esta
@@ -2040,6 +2057,22 @@
   width:100%;
   height:100%;
   object-fit:cover;
+}
+
+/* La inicial -o el emoji- va dentro de un `span`, y hace falta que lo este.
+
+   Suelta como texto no se veia. `.pf-avatar` es una rejilla y el espaciador
+   que la hace cuadrada ocupa la celda 1/1; la regla de arriba devuelve a esa
+   celda a los HIJOS, y un nodo de texto no es un hijo que un selector pueda
+   nombrar. Se iba a una segunda fila y `overflow:hidden` lo recortaba: el
+   avatar sin foto llevaba desde ese arreglo siendo un circulo vacio.
+
+   Y como la regla de arriba estira a los hijos al 100%, el `span` necesita
+   centrar lo suyo por su cuenta. */
+.pf-avatar__signo{
+  display:grid;
+  place-items:center;
+  user-select:none;
 }
 
 
