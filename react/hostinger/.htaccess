@@ -1,0 +1,74 @@
+# ============================================================
+# IDENTITY · Apache/LiteSpeed (Hostinger)
+#
+# Traduce lo que en Vercel hacia `vercel.json`: el encaminamiento de una
+# sola pagina, la pieza que pone las etiquetas de cada perfil, y las
+# cabeceras de seguridad. Si algo de esto falta, el sitio "funciona" pero
+# mal de una forma que no se nota hasta que es tarde: los enlaces
+# compartidos salen sin tarjeta, o recargar dentro de un perfil da 404.
+# ============================================================
+
+Options -Indexes
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # ---- 1 · el perfil pasa por PHP ----------------------------------
+  # Antes que nada, porque es lo unico que NO puede resolver el navegador:
+  # la tarjeta de vista previa la lee un robot que no ejecuta JavaScript.
+  # `perfil.php` devuelve el mismo index.html con las etiquetas puestas.
+  #
+  # `[L]` y no `[R]`: se sirve aqui mismo. Una redireccion cambiaria la
+  # direccion que ve quien comparte el enlace.
+  RewriteRule ^u/([A-Za-z0-9_.-]{1,32})/?$ perfil.php?u=$1 [L,QSA]
+
+  # ---- 2 · el resto, a la aplicacion -------------------------------
+  # Todo lo que no sea un fichero de verdad lo pinta React. Sin esto,
+  # entrar directo a /top o recargar dentro de /dashboard da 404: esas
+  # rutas no existen en el disco, existen en el navegador.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . index.html [L]
+</IfModule>
+
+# ---- 3 · las cabeceras de seguridad -------------------------------
+# Las mismas de `react/vercel.json`, palabra por palabra. La CSP es la que
+# decide que se puede incrustar y a donde se puede llamar: si se queda
+# corta, deja de sonar la musica o de verse el fondo de video; si se pasa,
+# deja de servir para nada.
+<IfModule mod_headers.c>
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' https://www.youtube.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://discord.com https://vimeo.com https://*.vimeo.com https://*.cloud.vimeo.com https://ypvipmhfnraalcqbttiq.supabase.co wss://ypvipmhfnraalcqbttiq.supabase.co https://open.spotify.com https://api.spotify.com https://accounts.spotify.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://open.spotify.com https://player.vimeo.com; base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'self'; upgrade-insecure-requests"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), interest-cohort=()"
+
+  # Los ficheros de `assets/` llevan un resumen en el nombre: si cambia el
+  # contenido, cambia el nombre. Por eso pueden guardarse un año sin riesgo
+  # de servir una version vieja.
+  <FilesMatch "\.(js|css|woff2|png|jpg|jpeg|webp|avif|svg)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  # El cascaron NO: es el que apunta a esos ficheros, y guardado en el
+  # navegador dejaria a alguien con la version de antes para siempre.
+  <FilesMatch "^index\.html$">
+    Header set Cache-Control "public, max-age=0, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
+# ---- 4 · comprimir ------------------------------------------------
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain application/javascript application/json image/svg+xml
+</IfModule>
+
+# ---- 5 · la configuracion no se sirve ------------------------------
+# `config.php` lleva la clave anonima —la misma que ya va dentro del
+# JavaScript, o sea que no es un secreto— pero servir un `.php` como texto
+# por un fallo de configuracion es la clase de accidente que conviene
+# impedir dos veces.
+<FilesMatch "^(config\.php|\.env.*|_csp\.txt)$">
+  Require all denied
+</FilesMatch>

@@ -57,6 +57,12 @@ pruebas-backend.html
 # no lo ignoraba nadie. `**/` lo caza se lance desde donde se lance.
 **/supabase/.temp/
 
+# ---- lo que se sube a Hostinger ---------------------------------
+# `dist/` mas los tres ficheros del hosting compartido, ya armado. Lo hace
+# `npm run build:hostinger` y se rehace entero cada vez: no es fuente, es
+# el resultado.
+salida-hostinger/
+
 # ---- compilado --------------------------------------------------
 # Sale de `npm run build` en cada despliegue. Guardarlo solo genera
 # conflictos en cada rama por un fichero que nadie edita a mano.
