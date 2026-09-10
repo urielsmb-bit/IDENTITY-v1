@@ -1162,6 +1162,17 @@ canvas.chart{ width:100%; display:block; }
 }
 .tpl__pub .inp{ flex:1; min-width:0; }
 
+/* Lo que se lleva quien copie tu plantilla. Debajo del campo y no en un
+   aviso al pulsar: enterarte DESPUES de haber publicado tu musica no
+   sirve de nada. */
+.tpl__pub-nota{
+  margin:var(--s2) 0 0;
+  max-width:520px;
+  font-size:var(--t1); line-height:1.5;
+  color:var(--text-muted);
+}
+.tpl__pub-nota b{ color:var(--text-secondary); font-weight:600; }
+
 .tpl__err{ margin-top:var(--s4); color:var(--dnd); font-size:var(--t2); }
 .tpl__cargando{ margin-top:var(--s6); color:var(--text-muted); font-size:var(--t2); }
 

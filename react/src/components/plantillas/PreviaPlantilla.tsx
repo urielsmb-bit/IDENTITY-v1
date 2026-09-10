@@ -32,7 +32,7 @@ const ANCHO_PREVIA = 860;
 const ALTO_PREVIA = 540;
 
 /**
- * Quita el fondo de foto o video SOLO para la miniatura.
+ * Quita el video de fondo SOLO para la miniatura.
  *
  * En una tarjeta de 265px, un fondo de video significa un `iframe` de
  * Vimeo por plantilla. Y un iframe que aun no ha cargado se pinta BLANCO
@@ -40,16 +40,21 @@ const ALTO_PREVIA = 540;
  * blanco mientras cargaban. Con doce plantillas serian doce reproductores
  * cargando a la vez para ocupar el tamaño de un sello.
  *
- * Ademas la miniatura ni siquiera deberia prometerlo: el fondo de su
- * autor NO viaja dentro de la plantilla, asi que enseñarlo aqui seria
- * vender algo que no se entrega.
+ * La foto SI se queda. Antes se quitaba tambien, y con razon: entonces
+ * ningun fondo viajaba dentro de la plantilla, asi que enseñarlo aqui era
+ * vender algo que no se entrega. Ahora un fondo enlazado de fuera si
+ * viaja, y una imagen no cuesta un reproductor: cuesta una etiqueta
+ * `img`, que es lo que ya hay en cualquier tarjeta.
+ *
+ * O sea que el video queda como lo unico que la miniatura enseña de
+ * menos. Es el lado correcto por el que quedarse corto: se ve al probarla
+ * a pantalla completa, que es donde se decide.
  *
  * Esto NO toca lo que se guarda ni lo que se aplica: solo lo que se
- * pinta en la tarjeta. En la pantalla de probar a tamaño completo el
- * fondo que sale es el TUYO, que ya es tuyo y ya estaba cargado.
+ * pinta en la tarjeta.
  */
-function sinFondoPesado(p: Profile): Profile {
-  if (p.bgType !== 'image' && p.bgType !== 'video') return p;
+function sinVideoDeFondo(p: Profile): Profile {
+  if (p.bgType !== 'video') return p;
   return { ...p, bgType: 'none', bgValue: '' };
 }
 
@@ -66,8 +71,10 @@ export function PreviaPlantilla({
   nombre?: string;
   usuario?: string;
   avatar?: string;
-  /** El perfil de su autor. Con el se pinta el perfil DE VERDAD, con sus
-   *  bloques y su composicion; sin el, el maniqui de abajo. */
+  /** Sobre que perfil se pinta: el TUYO si tienes uno, y si no el de
+   *  quien la publico. Con cualquiera de los dos se pinta el perfil DE
+   *  VERDAD, con sus bloques y su composicion; sin ninguno, el maniqui
+   *  de abajo. */
   perfil?: Profile | null;
 }) {
   /* La caja mide y de ahi sale la escala. Va arriba del todo porque un
@@ -94,13 +101,13 @@ export function PreviaPlantilla({
      enorme, eso no se parecia en nada y se leia como que la plantilla no
      se habia guardado bien.
 
-     La plantilla se aplica ENCIMA de su perfil, y eso hace dos cosas a la
-     vez: se ve la composicion de verdad, y el fondo desaparece solo,
-     porque `extraerPlantilla` no se lleva imagenes ni videos ajenos. O
-     sea que la previa enseña exactamente lo que te vas a llevar, ni mas
-     ni menos.
+     La plantilla se aplica ENCIMA del perfil que se le pase, y asi la
+     previa enseña exactamente lo que te vas a llevar: la composicion, las
+     cajas, el fondo si es de los que viajan y la cancion. Lo unico que se
+     queda fuera es el video de fondo, y por lo que dice `sinVideoDeFondo`.
 
-     Sin `particles` no: esas SI viajan, asi que se quedan.
+     La musica no suena: `ProfileView` en modo `preview` no monta el
+     reproductor. Se ve el bloque, que es lo que hay que ver aqui.
 
      El encogido lo hace el mismo motor de escalado del perfil publico:
      mide el hueco y se ajusta solo. Aqui el hueco es la caja de la
@@ -130,7 +137,7 @@ export function PreviaPlantilla({
           visibility: escala ? 'visible' : 'hidden',
         }}
       >
-        <ProfileView profile={sinFondoPesado(aplicarPlantilla(perfil, t))} preview />
+        <ProfileView profile={sinVideoDeFondo(aplicarPlantilla(perfil, t))} preview />
       </div>
     );
   }

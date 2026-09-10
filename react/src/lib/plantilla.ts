@@ -1,19 +1,39 @@
-import type { Profile } from '@/types';
+import type { AudioTrack, Profile, ProfileAudio } from '@/types';
 
 /**
  * Plantillas: que se copia de un perfil y que NO.
  *
- * Una plantilla es el ASPECTO de un perfil, no su contenido. Cuando
- * alguien publica la suya, lo que viaja a una tabla publica son colores,
- * tipografias y colocacion —nunca su nombre, su biografia, su avatar, sus
- * enlaces, sus redes ni ningun archivo suyo—.
+ * La frontera era «aspecto si, contenido no». Con ella una plantilla
+ * llegaba a medias: se llevaba la forma de las cajas y la colocacion,
+ * pero no la cancion ni el fondo, que en un perfil de estos son la mitad
+ * del diseño. Quien la aplicaba se encontraba con algo que no se parecia
+ * a lo que habia visto, y la culpa no era suya.
  *
- * Por eso esto es una lista BLANCA: se nombra lo que se lleva. Con una
- * lista negra —«todo menos estos»— basta que alguien añada un campo al
- * perfil y se olvide de apuntarlo aqui para que se publique sin querer, y
- * ese fallo no avisa: sale bien en las pruebas y mal en la vida de
- * alguien. Aqui un campo nuevo se queda fuera por defecto, que es el lado
- * correcto por el que equivocarse.
+ * La de ahora es otra y es mas fina: **de quien es el archivo**.
+ *
+ *  - Un enlace a un sitio publico —YouTube, Spotify, Vimeo, una imagen en
+ *    cualquier servidor— no es de su autor, lo carga cualquiera y no se
+ *    rompe porque el toque su perfil. VIAJA.
+ *
+ *  - Un archivo SUYO no. `subirMedio` guarda en una ruta fija por persona
+ *    y por tipo —«<id>/fondo.mp4», con `upsert`— o sea que la direccion NO
+ *    cambia al sustituir el archivo. Una plantilla que se la llevara no
+ *    estaria copiando un fondo: estaria apuntando a un sitio que su autor
+ *    reescribe cuando quiere. El dia que el cambie el suyo, cambia el de
+ *    todos los perfiles que usen su plantilla, y no se entera nadie. Y
+ *    «media:» ni siquiera sale del navegador donde se guardo.
+ *
+ * Lo que sigue sin viajar, y por lo de siempre, es QUIEN ERES: el nombre,
+ * la biografia, el avatar, las redes, los enlaces, la galeria, la cuenta
+ * de Discord y el texto de la pantalla de entrada —ese llega a llevar
+ * contraseñas—. Eso no es el diseño de nadie: es la persona.
+ *
+ * Por eso esto sigue siendo una lista BLANCA: se nombra lo que se lleva.
+ * Con una lista negra —«todo menos estos»— basta que alguien añada un
+ * campo al perfil y se olvide de apuntarlo aqui para que se publique sin
+ * querer, y ese fallo no avisa: sale bien en las pruebas y mal en la vida
+ * de alguien. Aqui un campo nuevo se queda fuera por defecto, que es el
+ * lado correcto por el que equivocarse.
  */
 export const CAMPOS_PLANTILLA = [
   /* aspecto */
@@ -48,16 +68,99 @@ export const CAMPOS_PLANTILLA = [
 export type AjustesPlantilla = Partial<Profile>;
 
 /**
- * Fondos que SI viajan.
+ * Un enlace que se puede repartir dentro de una plantilla.
  *
- * Un color o un degradado son una decision de diseño y no son de nadie.
- * Una imagen o un video son un archivo de su dueño: publicarlos dentro de
- * una plantilla los repartiria por todos los perfiles que la usen, y ni
- * quien la publica lo esperaria ni quien la usa lo querria. Ademas
- * `bgValue` seria un enlace a su carpeta del cubo, que puede borrar
- * cuando quiera y dejar a todo el mundo con un hueco.
+ * Devuelve el enlace si es de fuera, y cadena vacia si no.
+ *
+ * Solo http(s). «media:» vive en el IndexedDB del navegador de su dueño y
+ * para cualquier otra persona es un hueco; «blob:» muere con la pestaña
+ * que lo creo; y «data:» meteria el archivo entero, byte a byte, dentro
+ * de una fila de la tabla que se lee en bucle en la pagina de plantillas.
+ *
+ * Y fuera tambien el cubo de subidas —«/storage/v1/object/»—, que es el
+ * caso explicado arriba: direccion fija que su dueño reescribe.
  */
-const FONDOS_QUE_VIAJAN = ['none', 'color', 'gradient'] as const;
+export function enlaceCompartible(v: unknown): string {
+  const s = String(v ?? '').trim();
+  if (!s || !/^https?:\/\//i.test(s)) return '';
+  if (/\/storage\/v\d+\/object\//i.test(s)) return '';
+  return s;
+}
+
+/** Texto corto y saneado: lo que se pueda leer, con un tope. */
+function corto(v: unknown, max = 120): string {
+  return String(v ?? '').trim().slice(0, max);
+}
+
+/**
+ * Una pista, si queda algo por donde sonar.
+ *
+ * `yt` es un id de YouTube y `embed` la direccion de un reproductor: ni
+ * uno ni otro son un archivo de nadie, asi que pasan. `url` y `preview`
+ * si pueden serlo, y por eso pasan por el filtro.
+ *
+ * Si despues de filtrar no queda NADA que suene, la pista se cae entera:
+ * una fila con titulo y caratula que al pulsar no hace nada es peor que
+ * no tener musica, porque promete.
+ */
+function pistaCompartible(v: unknown): AudioTrack | null {
+  if (!v || typeof v !== 'object') return null;
+  const t = v as Record<string, unknown>;
+
+  const yt = corto(t.yt, 24);
+  const embed = enlaceCompartible(t.embed);
+  const url = enlaceCompartible(t.url);
+  const preview = enlaceCompartible(t.preview);
+  if (!yt && !embed && !url && !preview) return null;
+
+  const src = t.src === 'youtube' || t.src === 'spotify' ? t.src : 'manual';
+  return {
+    title: corto(t.title),
+    artist: corto(t.artist),
+    length: corto(t.length, 12),
+    cover: enlaceCompartible(t.cover),
+    src,
+    yt,
+    preview,
+    url,
+    embed,
+  };
+}
+
+/**
+ * La musica de la plantilla.
+ *
+ * El titulo y el artista viajan con la cancion: son el nombre de una
+ * obra, no algo que su autor haya escrito sobre si mismo.
+ *
+ * Devuelve `null` cuando no queda nada sonable, y entonces la plantilla
+ * NO DICE NADA de la musica —igual que con el fondo—, asi que aplicarla
+ * no le borra a nadie la suya.
+ */
+function audioCompartible(v: unknown): ProfileAudio | null {
+  if (!v || typeof v !== 'object') return null;
+  const a = v as Record<string, unknown>;
+
+  const pistas = Array.isArray(a.tracks)
+    ? a.tracks.slice(0, 24).map(pistaCompartible).filter((t): t is AudioTrack => t !== null)
+    : [];
+
+  const yt = corto(a.yt, 24);
+  const ytUrl = enlaceCompartible(a.ytUrl);
+  if (pistas.length === 0 && !yt && !ytUrl) return null;
+
+  const src = a.src === 'youtube' || a.src === 'spotify' ? a.src : 'manual';
+  return {
+    provider: corto(a.provider, 24),
+    src,
+    title: corto(a.title),
+    artist: corto(a.artist),
+    cover: enlaceCompartible(a.cover),
+    yt,
+    ytUrl,
+    tracks: pistas,
+  };
+}
 
 /** Saca de un perfil lo que se puede publicar, y nada mas. */
 export function extraerPlantilla(p: Partial<Profile>): AjustesPlantilla {
@@ -68,24 +171,44 @@ export function extraerPlantilla(p: Partial<Profile>): AjustesPlantilla {
     if (v !== undefined) out[campo] = v;
   }
 
+  /* ---- el fondo ----------------------------------------------------
+     Un color o un degradado son una decision de diseño y no son de
+     nadie. Una foto o un video, depende: de fuera va dentro de la
+     plantilla como cualquier otro ajuste; archivo suyo, la plantilla NO
+     DICE NADA del fondo y ni el campo aparece.
+
+     Callar no es lo mismo que decir «sin fondo», y la diferencia importa.
+     Antes se ponia `bgType:'none'` y eso hacia dos cosas mal a la vez:
+     al aplicar la plantilla le BORRABA el fondo a quien la usara —ponias
+     una y perdias tu video sin que nadie te avisara— y ademas mentia
+     sobre el diseño, porque «sin fondo» es una decision de su autor y
+     esto era otra cosa: que no podiamos llevarnos su archivo. */
   const tipo = p.bgType;
-  if (tipo && (FONDOS_QUE_VIAJAN as readonly string[]).includes(tipo)) {
+  if (tipo === 'none' || tipo === 'color' || tipo === 'gradient') {
     out.bgType = tipo;
     out.bgValue = tipo === 'none' ? '' : (p.bgValue ?? '');
+  } else if (tipo === 'image' || tipo === 'video') {
+    const enlace = enlaceCompartible(p.bgValue);
+    if (enlace) {
+      out.bgType = tipo;
+      out.bgValue = enlace;
+      /* La proporcion se lee de Vimeo al pegar el enlace. Sin ella hay
+         que dar por hecho 16:9, y un video en otro formato sale con
+         franjas en vez de cubrir la pantalla. */
+      if (tipo === 'video' && p.bgRatio) out.bgRatio = p.bgRatio;
+    }
   }
-  /* Y si tenia foto o video, la plantilla NO DICE NADA del fondo: ni el
-     campo aparece.
 
-     Antes decia `bgType:'none'`, y eso hacia dos cosas mal a la vez. Una,
-     al aplicarla le BORRABA el fondo a quien la usaba: ponias una
-     plantilla y perdias tu video sin que nadie te avisara. Y dos, mentia
-     sobre el diseño: «sin fondo» era una decision de su autor, no lo que
-     habia pasado. Lo que habia pasado es que no podiamos llevarnos su
-     archivo.
-     
-     Callando el campo, las dos cosas quedan bien: un autor que de verdad
-     eligio «sin fondo» lo dice —eso SI viaja, esta en la lista de
-     arriba— y uno que tenia una foto no toca el fondo de nadie. */
+  /* ---- el cursor ---------------------------------------------------
+     El cursor es del diseño, no de la persona, asi que va por la misma
+     regla que el fondo: uno dibujado y colgado en cualquier sitio viaja;
+     uno subido al cubo, no. */
+  const cursor = enlaceCompartible(p.cursorImg);
+  if (cursor) out.cursorImg = cursor;
+
+  /* ---- la musica ---------------------------------------------------- */
+  const audio = audioCompartible(p.audio);
+  if (audio) out.audio = audio;
 
   return out as AjustesPlantilla;
 }

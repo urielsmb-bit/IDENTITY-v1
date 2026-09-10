@@ -17,13 +17,12 @@ const PERSONAL = {
   joined: '2026-01-01', discordId: '123456789012345678',
   discordUser: 'sharkiii', discordName: 'Uriel',
   discordAvatar: 'https://cdn.discordapp.com/avatars/1/abc.png',
-  gateText: 'contraseña: 1234', cursorImg: 'https://x/mi-cursor.png',
+  gateText: 'contraseña: 1234',
   socials: [{ net: 'x', user: 'shark' }],
   links: [{ label: 'mi web', url: 'https://ejemplo.com' }],
   projects: [{ title: 'proyecto' }],
   gallery: [{ url: 'https://x/foto.jpg' }],
   tags: ['dev'],
-  audio: { url: 'https://x/cancion.mp3' },
   views: 11, nota: 4.5, numNotas: 2, verified: true,
 } as unknown as Partial<Profile>;
 
@@ -40,7 +39,7 @@ describe('extraerPlantilla · lo que NO puede salir', () => {
     'username', 'name', 'title', 'location', 'pronouns', 'emoji', 'age',
     'bio', 'about', 'avatarUrl', 'joined', 'discordId', 'gateText',
     'discordUser', 'discordName', 'discordAvatar',
-    'cursorImg', 'socials', 'links', 'projects', 'gallery', 'tags', 'audio',
+    'socials', 'links', 'projects', 'gallery', 'tags',
     'views', 'nota', 'numNotas', 'verified',
   ]) {
     it(`no publica «${campo}»`, () => {
@@ -82,7 +81,7 @@ describe('extraerPlantilla · el fondo', () => {
     expect(s.bgType).toBe('gradient');
   });
 
-  it('NO se lleva la imagen de nadie, y NO dice nada del fondo', () => {
+  it('NO se lleva un archivo SUBIDO, y NO dice nada del fondo', () => {
     const s = extraerPlantilla({
       bgType: 'image',
       bgValue: 'https://x.supabase.co/storage/v1/object/public/media/uid/fondo.png',
@@ -91,10 +90,20 @@ describe('extraerPlantilla · el fondo', () => {
     expect(s).not.toHaveProperty('bgValue');
   });
 
-  it('NO se lleva el video de nadie, y NO dice nada del fondo', () => {
-    const s = extraerPlantilla({ bgType: 'video', bgValue: 'https://vimeo.com/1' } as Partial<Profile>);
-    expect(s).not.toHaveProperty('bgType');
-    expect(s).not.toHaveProperty('bgValue');
+  it('SI se lleva un video enlazado de fuera, con su proporcion', () => {
+    const s = extraerPlantilla({
+      bgType: 'video', bgValue: 'https://vimeo.com/1', bgRatio: 2.35,
+    } as Partial<Profile>);
+    expect(s.bgType).toBe('video');
+    expect(s.bgValue).toBe('https://vimeo.com/1');
+    expect(s.bgRatio).toBe(2.35);
+  });
+
+  it('un fondo que solo vive en su navegador no viaja', () => {
+    for (const v of ['media:abc-123', 'blob:http://x/1', 'data:image/png;base64,AAAA']) {
+      const s = extraerPlantilla({ bgType: 'image', bgValue: v } as Partial<Profile>);
+      expect(s).not.toHaveProperty('bgValue');
+    }
   });
 
   it('«sin fondo» elegido a proposito SI viaja', () => {
@@ -109,9 +118,11 @@ describe('aplicarPlantilla · el fondo de quien la usa', () => {
     bgType: 'video', bgValue: 'https://vimeo.com/999',
   } as unknown as Profile;
 
-  it('una plantilla cuyo autor tenia foto NO me borra mi video', () => {
+  it('una plantilla cuyo autor tenia una foto SUYA no me borra mi video', () => {
     const dePlantilla = extraerPlantilla({
-      theme: 'gaming', bgType: 'image', bgValue: 'https://x/suyo.png',
+      theme: 'gaming',
+      bgType: 'image',
+      bgValue: 'https://x.supabase.co/storage/v1/object/public/media/otro/fondo.png',
     } as Partial<Profile>);
     const r = aplicarPlantilla(conVideo, dePlantilla);
     expect(r.theme).toBe('gaming');
@@ -164,11 +175,83 @@ describe('aplicarPlantilla', () => {
 describe('la lista blanca', () => {
   it('no nombra ningun campo de contenido', () => {
     const prohibidos = ['username', 'name', 'bio', 'about', 'avatarUrl',
-      'socials', 'links', 'projects', 'gallery', 'tags', 'audio', 'title',
+      'socials', 'links', 'projects', 'gallery', 'tags', 'title',
       'location', 'pronouns', 'emoji', 'age', 'discordId', 'gateText',
       'discordUser', 'discordName', 'discordAvatar',
-      'cursorImg', 'views', 'verified', 'gate'];
+      'views', 'verified', 'gate'];
     const cruce = (CAMPOS_PLANTILLA as readonly string[]).filter((c) => prohibidos.includes(c));
     expect(cruce).toEqual([]);
+  });
+});
+
+/**
+ * La frontera de ahora.
+ *
+ * No es «que clase de cosa es» sino DE QUIEN ES EL ARCHIVO. Un enlace de
+ * fuera lo carga cualquiera; un archivo del cubo tiene una direccion fija
+ * que su dueño reescribe, asi que repartirlo dentro de una plantilla es
+ * apuntar a algo que puede cambiar bajo los pies de todo el mundo.
+ */
+describe('de quien es el archivo', () => {
+  it('el cursor dibujado viaja; el subido, no', () => {
+    expect(extraerPlantilla({ cursorImg: 'https://x/flecha.png' } as Partial<Profile>).cursorImg)
+      .toBe('https://x/flecha.png');
+    expect(
+      extraerPlantilla({
+        cursorImg: 'https://x.supabase.co/storage/v1/object/public/media/uid/cursor.png',
+      } as Partial<Profile>),
+    ).not.toHaveProperty('cursorImg');
+  });
+});
+
+describe('la musica de la plantilla', () => {
+  it('se lleva la cancion enlazada, con su titulo y su artista', () => {
+    const s = extraerPlantilla({
+      audio: {
+        provider: 'spotify', src: 'spotify', title: '', artist: '', cover: '',
+        yt: '', ytUrl: '',
+        tracks: [{
+          title: 'HAD-U-KEN', artist: 'Glokky', length: '2:41',
+          cover: 'https://i.scdn.co/image/abc',
+          src: 'spotify', yt: '', preview: '', url: '',
+          embed: 'https://open.spotify.com/embed/track/abc',
+        }],
+      },
+    } as unknown as Partial<Profile>);
+    expect(s.audio?.tracks?.[0]?.title).toBe('HAD-U-KEN');
+    expect(s.audio?.tracks?.[0]?.artist).toBe('Glokky');
+    expect(s.audio?.tracks?.[0]?.embed).toBe('https://open.spotify.com/embed/track/abc');
+  });
+
+  it('una pista que solo sonaba con un archivo suyo se cae entera', () => {
+    const s = extraerPlantilla({
+      audio: {
+        tracks: [{
+          title: 'mi grabacion', artist: '', length: '', cover: '',
+          src: 'manual', yt: '', preview: '', embed: '',
+          url: 'https://x.supabase.co/storage/v1/object/public/media/uid/cancion.mp3',
+        }],
+      },
+    } as unknown as Partial<Profile>);
+    expect(s).not.toHaveProperty('audio');
+  });
+
+  it('sin nada sonable la plantilla NO habla de musica, y no borra la mia', () => {
+    const mia = {
+      username: 'yo',
+      audio: { tracks: [{ title: 'la mia', yt: 'abc123' }] },
+    } as unknown as Profile;
+    const r = aplicarPlantilla(mia, extraerPlantilla({ theme: 'gaming' } as Partial<Profile>));
+    expect(r.audio?.tracks?.[0]?.title).toBe('la mia');
+  });
+
+  it('una fila manipulada no cuela un enlace de esos que no se cargan', () => {
+    const s = extraerPlantilla({
+      audio: {
+        tracks: [{ title: 'x', src: 'manual', url: 'javascript:alert(1)', yt: 'ok123' }],
+      },
+    } as unknown as Partial<Profile>);
+    expect(s.audio?.tracks?.[0]?.url).toBe('');
+    expect(s.audio?.tracks?.[0]?.yt).toBe('ok123');
   });
 });

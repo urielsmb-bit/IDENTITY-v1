@@ -55,6 +55,14 @@ export default function TemplatesPage() {
   const [nombre, setNombre] = useState('');
   const [publicando, setPublicando] = useState(false);
 
+  /* Sobre lo tuyo si lo tienes; si no, sobre lo de su autor.
+     La pregunta que decide no es «que hizo esta persona» sino «como me
+     queda a mi», y con tu nombre —que es mas largo—, tu foto y tus
+     bloques la respuesta cambia. Sin perfil no hay nada tuyo que pintar,
+     y entonces se ve tal y como la subio su autor, que es mejor que un
+     maniqui con dos rayas. */
+  const mio = useProfileStore((s) => s.mine());
+
   const cargar = useCallback(async () => {
     if (!hasBackend()) {
       setLista([]);
@@ -187,8 +195,9 @@ export default function TemplatesPage() {
         <div>
           <h1 className="t-h1">Plantillas</h1>
           <p className="tpl__sub">
-            El aspecto de perfiles reales, publicado por quien lo hizo. Se copia
-            el diseño —colores, tipografía, colocación—, nunca su contenido.
+            El diseño de perfiles reales, publicado por quien lo hizo. Se copia
+            entero —colores, tipografía, colocación, la música y el fondo cuando
+            son enlaces—, nunca quién es esa persona.
           </p>
         </div>
         {hasBackend() && (
@@ -226,20 +235,32 @@ export default function TemplatesPage() {
       </div>
 
       {abierto && (
-        <form className="tpl__pub" onSubmit={publicar}>
-          <input
-            className="inp"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            placeholder="Ponle un nombre a tu plantilla"
-            maxLength={40}
-            autoFocus
-            aria-label="Nombre de tu plantilla"
-          />
-          <button className="btn btn--primary" disabled={publicando || nombre.trim().length < 2}>
-            {publicando ? 'Publicando…' : 'Publicar'}
-          </button>
-        </form>
+        <>
+          <form className="tpl__pub" onSubmit={publicar}>
+            <input
+              className="inp"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              placeholder="Ponle un nombre a tu plantilla"
+              maxLength={40}
+              autoFocus
+              aria-label="Nombre de tu plantilla"
+              aria-describedby="pub-nota"
+            />
+            <button className="btn btn--primary" disabled={publicando || nombre.trim().length < 2}>
+              {publicando ? 'Publicando…' : 'Publicar'}
+            </button>
+          </form>
+          {/* Antes de pulsar, no despues. Que tu música salga con tu
+              plantilla es razonable, pero enterarte cuando ya está
+              publicada no lo es. */}
+          <p className="tpl__pub-nota" id="pub-nota">
+            Se va el diseño entero: colores, tipografía, colocación, la forma de
+            cada bloque y —<b>si son enlaces</b>— tu música y tu fondo. No se va
+            nada tuyo: ni nombre, ni foto, ni biografía, ni redes, ni los
+            archivos que hayas subido.
+          </p>
+        </>
       )}
 
       <div className="tpl__bar">
@@ -306,7 +327,7 @@ export default function TemplatesPage() {
                     nombre={p.autorNombre}
                     usuario={p.autor}
                     avatar={p.autorAvatar}
-                    perfil={p.autorPerfil}
+                    perfil={mio ?? p.autorPerfil}
                   />
                   <button
                     type="button"
