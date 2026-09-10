@@ -191,30 +191,29 @@ export default function TemplatesPage() {
 
   return (
     <div className="wrap tplpage">
+      {/* Un titulo de 40px y tres renglones de explicacion empujaban la
+          primera plantilla por debajo de la mitad de la pantalla. Aqui se
+          viene a ver diseños: la cabecera dice lo justo y se aparta. */}
       <header className="tpl__top">
-        <div>
-          <h1 className="t-h1">Plantillas</h1>
+        <span className="tpl__top-ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+            <path d="m12 3 9 5-9 5-9-5 9-5Z" strokeLinejoin="round" />
+            <path d="m3 16 9 5 9-5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="m3 12 9 5 9-5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <div className="tpl__top-txt">
+          <h1 className="tpl__top-t">Plantillas</h1>
           <p className="tpl__sub">
-            El diseño de perfiles reales, publicado por quien lo hizo. Se copia
-            entero —colores, tipografía, colocación, la música y el fondo cuando
-            son enlaces—, nunca quién es esa persona.
+            Explora los diseños de la comunidad o publica el tuyo. Se copia el
+            diseño, nunca quién eres.
           </p>
         </div>
-        {hasBackend() && (
-          <button
-            type="button"
-            className="btn btn--primary"
-            onClick={() => setAbierto((v) => !v)}
-          >
-            {abierto ? 'Cancelar' : 'Publicar la mía'}
-          </button>
-        )}
       </header>
 
-      {/* Las pestañas van solas en su fila. Publicar vive arriba, junto al
-          titulo: es lo que se APORTA a esta pagina, no una forma mas de
-          mirarla, y mezclarlo con los filtros lo convertia en un filtro
-          mas a ojos de cualquiera. */}
+      {/* Publicar va en la fila de las pestañas, no dentro de la cabecera:
+          es lo que se APORTA a esta pagina, y en el extremo opuesto a las
+          formas de mirarla no se confunde con una mas. */}
       <div className="tpl__nav">
         <div className="tpl__tabs" role="tablist" aria-label="Filtrar plantillas">
           {PESTANAS.map((p) => (
@@ -232,6 +231,15 @@ export default function TemplatesPage() {
           ))}
         </div>
 
+        {hasBackend() && (
+          <button
+            type="button"
+            className="btn btn--primary btn--sm tpl__crear"
+            onClick={() => setAbierto((v) => !v)}
+          >
+            {abierto ? 'Cancelar' : 'Publicar la mía'}
+          </button>
+        )}
       </div>
 
       {abierto && (
@@ -348,24 +356,34 @@ export default function TemplatesPage() {
                 </div>
 
                 <div className="tpl__b">
-                  <h2 className="tpl__n" title={p.nombre}>
-                    {p.nombre}
-                  </h2>
-
-                  {p.autor ? (
-                    <Link className="tpl__a tpl__a--link" to={`/u/${p.autor}`}>
+                  {/* La foto a un lado y el nombre con el autor al otro, en
+                      dos renglones pegados. Antes eran tres lineas sueltas
+                      —nombre, autor, usos— separadas por el mismo hueco,
+                      asi que la tarjeta ocupaba el doble para decir lo
+                      mismo y nada mandaba sobre nada. */}
+                  <div className="tpl__id">
+                    <span className="tpl__av">
                       {p.autorAvatar ? (
                         <img src={safeMedia(p.autorAvatar)} alt="" loading="lazy" />
                       ) : (
                         <span className="tpl__ini" aria-hidden="true">
-                          {p.autor.charAt(0).toUpperCase()}
+                          {(p.autor || '?').charAt(0).toUpperCase()}
                         </span>
                       )}
-                      <span>@{p.autor}</span>
-                    </Link>
-                  ) : (
-                    <span className="tpl__a">sin autor</span>
-                  )}
+                    </span>
+                    <span className="tpl__id-txt">
+                      <h2 className="tpl__n" title={p.nombre}>
+                        {p.nombre}
+                      </h2>
+                      {p.autor ? (
+                        <Link className="tpl__a" to={`/u/${p.autor}`}>
+                          @{p.autor}
+                        </Link>
+                      ) : (
+                        <span className="tpl__a">sin autor</span>
+                      )}
+                    </span>
+                  </div>
 
                   <p className="tpl__meta">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
