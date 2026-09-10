@@ -30,7 +30,21 @@ export function Navbar() {
   return (
     <header className={`nav${shadow ? ' nav--shadow' : ''}`} id="nav">
       <Link className="nav__mark" to="/" aria-label="sharee — inicio">
-        <span className="nav__glyph" aria-hidden="true" />
+        {/* La marca, incrustada y no en un `<img>`: son dos trazos, y una
+            peticion de red para eso cuesta mas que el dibujo. Ademas asi
+            hereda el color del texto y cambia con el tema. */}
+        <svg
+          className="nav__glyph"
+          viewBox="0 0 64 64"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="7"
+          strokeLinecap="round"
+          aria-hidden="true"
+        >
+          <path d="M30.4 36.37A11 11 0 0 1 30.4 27.63M34.25 22.95A11 11 0 1 1 34.25 41.05" />
+          <circle cx="23.5" cy="32" r="11" />
+        </svg>
         <span>sharee</span>
       </Link>
 

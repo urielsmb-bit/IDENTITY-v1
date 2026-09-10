@@ -43,8 +43,98 @@
     rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=Chakra+Petch:ital,wght@0,600;0,700;1,700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Anton&family=Pirata+One&family=VT323&family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap"
   />
+  <!-- El estilo de la entrada va AQUI DENTRO y no en la hoja del sitio,
+       por lo mismo que el marcado: la hoja es un fichero aparte que hay
+       que pedir, y hasta que llega no hay estilo. Incrustado, la entrada
+       se pinta con el HTML. Son treinta lineas; el resto del estilo del
+       sitio sigue donde estaba. -->
+  <style>
+    #entrada{
+      position:fixed; inset:0; z-index:9999;
+      display:grid; place-items:center; align-content:center;
+      gap:22px;
+      background:#050505;
+      /* Decorativa de principio a fin: nunca se come un clic, ni siquiera
+         mientras se ve. */
+      pointer-events:none;
+      animation:entradaSalir .5s ease 1.15s forwards;
+    }
+    /* `forwards` deja esto puesto al acabar: fuera de la vista y sin
+       ocupar sitio, sin que nadie tenga que quitarlo. */
+    @keyframes entradaSalir{ to{ opacity:0; visibility:hidden; } }
+
+    .entrada__halo{
+      position:absolute;
+      width:min(58vmin,420px); aspect-ratio:1;
+      border-radius:50%;
+      background:radial-gradient(circle, rgba(255,246,236,.16) 0%, rgba(255,246,236,.05) 42%, transparent 70%);
+      animation:entradaHalo .55s cubic-bezier(.22,1,.36,1) both;
+    }
+    @keyframes entradaHalo{ from{ opacity:0; transform:scale(.55); } }
+
+    .entrada__marca{
+      position:relative;
+      width:min(19vmin,104px); height:auto;
+      color:#fff;
+      filter:drop-shadow(0 0 18px rgba(255,244,232,.35));
+      animation:entradaMarca .6s cubic-bezier(.22,1,.36,1) .1s both;
+    }
+    @keyframes entradaMarca{ from{ opacity:0; transform:scale(.86); } }
+
+    /* La raya de debajo crece desde el centro. Es lo que convierte una
+       imagen quieta en «esto esta cargando». */
+    .entrada__linea{
+      position:relative;
+      width:min(32vmin,190px); height:1px;
+      background:linear-gradient(90deg, transparent, rgba(255,244,232,.75), transparent);
+      transform-origin:center;
+      animation:entradaLinea .6s cubic-bezier(.22,1,.36,1) .42s both;
+    }
+    @keyframes entradaLinea{ from{ opacity:0; transform:scaleX(0); } }
+
+    /* Quien pide menos movimiento ve lo mismo, quieto y mas corto. La
+       entrada sigue estando -es la marca, no un adorno- pero no se mueve
+       nada y se va antes. */
+    @media (prefers-reduced-motion:reduce){
+      #entrada{ animation:entradaSalir .3s ease .5s forwards; }
+      .entrada__halo,
+      .entrada__marca,
+      .entrada__linea{ animation:none; }
+    }
+  </style>
 </head>
 <body>
+  <!-- ============================================================
+       LA ENTRADA
+
+       Vive aqui, en el HTML, y NO en un componente de React. Tiene que ser
+       asi: una pantalla de carga pintada por React aparece cuando el
+       paquete de JavaScript ya se ha descargado y ejecutado, o sea
+       justo cuando ya no hace falta. Esto se ve en el primer pintado,
+       antes de que llegue nada.
+
+       Y se apaga SOLA, con CSS y sin una linea de guion. Si dependiera de
+       que React arranque para quitarse, un fallo de red dejaria el sitio
+       detras de una cortina negra para siempre. Asi lo peor que puede
+       pasar es que se vea la entrada y detras no haya nada — que es
+       exactamente lo que un fallo de red debe parecer.
+
+       Tampoco lleva guion propio por otro motivo: la CSP de este sitio
+       dice `script-src 'self'`, sin `unsafe-inline`. Un `<script>` suelto
+       aqui lo bloquearia el navegador.
+       ============================================================ -->
+  <div id="entrada" aria-hidden="true">
+    <span class="entrada__halo"></span>
+    <!-- El dibujo va incrustado y no en un `<img src>`: una pantalla de
+         carga que espera a una peticion de red es una contradiccion. -->
+    <svg class="entrada__marca" viewBox="0 0 64 64" fill="none" stroke="currentColor"
+         stroke-width="6.5" stroke-linecap="round">
+      <path d="M30.4 36.37A11 11 0 0 1 30.4 27.63M34.25 22.95A11 11 0 1 1 34.25 41.05" />
+      <circle cx="23.5" cy="32" r="11" />
+    </svg>
+    <span class="entrada__linea"></span>
+  </div>
+
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>

@@ -32,14 +32,18 @@
    logotipo, los botones primarios y el anillo de foco: cuatro cosas
    distintas del mismo color no son una identidad, son la falta de una.
    En ambar, un cuadrado de 16px basta. */
+/* Era un cuadrado redondeado de relleno. Ahora es la marca de verdad: dos
+   eslabones enganchados, en trazo, heredando el color del texto. */
 .nav__glyph{
-  width:16px; height:16px; flex:none;
-  border-radius:5px;
-  background:var(--brand);
-  box-shadow:0 0 0 0 var(--brand-soft);
-  transition:transform var(--transition-large), border-radius var(--transition-large);
+  width:19px; height:19px; flex:none;
+  color:var(--brand);
+  transition:transform var(--transition-large);
 }
-.nav__mark:hover .nav__glyph{ transform:rotate(45deg); border-radius:2px; }
+/* Gira un poco al pasar por encima. Un cuadrado podia girar 45 grados
+   porque acababa siendo un rombo; un aro girado 45 grados es el mismo aro,
+   asi que aqui el gesto es otro: se inclina lo justo para que se note que
+   responde. */
+.nav__mark:hover .nav__glyph{ transform:rotate(-12deg) scale(1.06); }
 
 .nav__links{ display:flex; gap:2px; margin-right:auto; }
 .nav__links a{
