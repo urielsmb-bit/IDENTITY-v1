@@ -1167,17 +1167,22 @@ export function ProfileView({
                 )}
               </span>
 
-              {/* La caratula de lo que suena NO se pinta aqui.
+              {/* El logo de lo que esta haciendo.
 
-                  Ocupaba el lado derecho de la caja entera para repetir en
-                  imagen lo que la linea de al lado ya dice con palabras, y
-                  siendo lo unico con color de todo el widget se llevaba la
-                  vista antes que el nombre y el estado, que es lo que se
-                  viene a mirar.
+                  La caratula de la cancion NO se pinta aqui, y sigue sin
+                  hacerlo: repetia en imagen lo que la linea de al lado ya
+                  decia con palabras. Este es otra cosa. El texto dice el
+                  nombre del juego; el logo dice CUAL es, y eso se reconoce
+                  de un vistazo, antes de leer.
 
-                  La portada se sigue leyendo y guardando: es la que viste
-                  el reproductor cuando el perfil no tiene musica propia y
-                  suena lo que estas escuchando. */}
+                  Solo cuando la actividad es lo que se esta contando. Si
+                  suena Spotify manda la cancion, y el icono de un juego al
+                  lado de un titulo de cancion no lo explica: lo enreda. */}
+              {discord?.actividad && !discord?.cancion && discord?.actividadImg && (
+                <span className="pf-dc__app">
+                  <img src={safeMedia(discord.actividadImg)} alt="" loading="lazy" />
+                </span>
+              )}
             </div>
           )}
 

@@ -87,7 +87,10 @@ interface Actividad {
   type?: number;
   details?: string;
   state?: string;
-  assets?: { large_image?: string };
+  assets?: { large_image?: string; small_image?: string };
+  /** De que aplicacion es la actividad. Hace falta para armar la direccion
+   *  de su icono: los archivos de una aplicacion viven bajo SU id. */
+  application_id?: string;
   /** El id de la pista en Spotify. Discord lo manda y no lo miraba nadie. */
   sync_id?: string;
 }
@@ -107,6 +110,8 @@ interface Fila {
   cancion_artista: string;
   cancion_portada: string;
   cancion_id: string;
+  /** El logo de lo que esta haciendo. */
+  actividad_img: string;
   /* Datos de la CUENTA, no del momento: los rellena `delUsuario` en la
      foto inicial. Opcionales para poder omitirlos si Discord no contesta,
      en vez de escribir vacio encima de lo que ya habia. */
@@ -121,6 +126,44 @@ function portadaSpotify(a: Actividad): string {
   const img = a.assets?.large_image ?? '';
   return img.startsWith('spotify:')
     ? `https://i.scdn.co/image/${img.slice('spotify:'.length)}`
+    : '';
+}
+
+/**
+ * El logo de lo que esta haciendo: el icono del juego o de la aplicacion.
+ *
+ * Discord manda `assets.large_image` en tres formas distintas y cada una
+ * se resuelve a una direccion diferente. No hay un campo «url del icono»:
+ * hay que armarla.
+ *
+ *  - `mp:external/<hash>/<esquema>/<host>/<ruta>` — la aplicacion dio una
+ *    direccion de fuera y Discord la sirve por su propio proxy. Lo que va
+ *    detras de `mp:` se pega tal cual a `media.discordapp.net`.
+ *  - Un id de 17 a 20 cifras — es un archivo que subio la aplicacion, y
+ *    vive bajo SU id, no bajo el de nadie mas. De ahi que haga falta
+ *    `application_id`: sin el no hay carpeta donde buscarlo.
+ *  - `spotify:<id>` — esa es la caratula de la cancion. Va por otro lado
+ *    y NO se pinta aqui: el bloque de musica ya la tiene.
+ *
+ * Se prefiere la grande. La pequeña es el icono de esquina —el mapa, el
+ * personaje— y a 42px no se distingue de nada.
+ */
+function imagenActividad(a: Actividad): string {
+  const img = a.assets?.large_image ?? a.assets?.small_image ?? '';
+  if (!img || img.startsWith('spotify:')) return '';
+
+  if (img.startsWith('mp:')) {
+    /* Lo que llega de fuera no se mete en una direccion sin mirarlo. El
+       host lo ponemos nosotros, asi que lo unico que hay que impedir es
+       que la ruta se salga de el o suba de carpeta. */
+    const resto = img.slice(3);
+    if (resto.includes('..') || !/^[A-Za-z0-9][\w./%?=&-]*$/.test(resto)) return '';
+    return `https://media.discordapp.net/${resto}`;
+  }
+
+  const app = a.application_id ?? '';
+  return /^\d{17,20}$/.test(img) && /^\d{17,20}$/.test(app)
+    ? `https://cdn.discordapp.com/app-assets/${app}/${img}.png`
     : '';
 }
 
@@ -160,6 +203,9 @@ function aFila(p: Presencia, ahora: string): Fila | null {
       spotify?.sync_id && /^[A-Za-z0-9]{16,32}$/.test(spotify.sync_id)
         ? spotify.sync_id
         : '',
+    /* Solo del juego. El estado personalizado no trae imagen, y la de
+       Spotify es la caratula, que ya va en su propio campo. */
+    actividad_img: juego ? imagenActividad(juego) : '',
     actualizado: ahora,
   };
 }
@@ -527,19 +573,27 @@ Deno.serve(async (req) => {
     if (filas.length > 0) {
       let { error } = await db.from('presencia').upsert(filas, { onConflict: 'discord_id' });
 
-      /* La columna `cancion_id` llego despues (0020). Desplegar la funcion
-         y aplicar la migracion son dos actos distintos y nunca caen a la
-         vez: entre uno y otro esto escribiria una columna que no existe y
-         la presencia se congelaria. Si la base dice que no la conoce, se
-         reintenta sin ella: el estado se sigue guardando y lo unico que
-         falta es poder REPRODUCIR lo que suena. */
+      /* Las columnas de la 0020 y la 0021 llegaron despues. Desplegar la
+         funcion y aplicar la migracion son dos actos distintos y nunca
+         caen a la vez: entre uno y otro esto escribiria columnas que no
+         existen y la presencia se congelaria. Si la base dice que no las
+         conoce, se reintenta sin ellas: el estado se sigue guardando y lo
+         unico que falta es lo de adorno.
+
+         Se quitan todas de golpe, no la que falte. Distinguir cual es
+         pediria leer el esquema en cada vuelta para ahorrarse un campo
+         durante los minutos que separan un despliegue de su SQL. */
       if (
         error &&
-        (error.code === 'PGRST204' || /cancion_id|tag|deco/.test(error.message))
+        (error.code === 'PGRST204' ||
+          /cancion_id|tag|deco|actividad_img/.test(error.message))
       ) {
-        console.warn('discord-presencia · faltan columnas de la 0020; se escribe sin ellas');
+        console.warn('discord-presencia · faltan columnas nuevas; se escribe sin ellas');
         const sinId = filas.map(
-          ({ cancion_id: _a, tag: _b, tag_icono: _c, deco: _d, ...resto }) => resto,
+          ({
+            cancion_id: _a, tag: _b, tag_icono: _c, deco: _d, actividad_img: _e,
+            ...resto
+          }) => resto,
         );
         ({ error } = await db.from('presencia').upsert(sinId, { onConflict: 'discord_id' }));
       }

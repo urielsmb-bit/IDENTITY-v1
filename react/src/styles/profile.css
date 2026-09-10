@@ -552,6 +552,22 @@
   opacity:.9;
 }
 .pf-dc__gt img{ width:14px; height:14px; display:block; flex:none; }
+/* El logo de lo que esta haciendo. Va en el hueco donde estuvo la
+   caratula de la cancion, que se quito por repetir el texto de al lado.
+   Este no lo repite: el nombre se lee, el logo se reconoce.
+
+   `flex:none` por lo de siempre: en una fila flex una imagen se deja
+   encoger por debajo de su contenido. Y `margin-left:auto` lo manda al
+   extremo, que es lo que separa «el dato» de «la insignia». */
+.pf-dc__app{
+  width:42px; height:42px; flex:none;
+  margin-left:auto;
+  border-radius:10px; overflow:hidden;
+  border:1px solid var(--p-line);
+  background:var(--p-bg2);
+}
+.pf-dc__app img{ width:100%; height:100%; object-fit:cover; display:block; }
+
 .pf-dc__s{
   display:block; font-size:var(--t1); color:var(--p-dim);
   margin-top:2px; line-height:1.35;

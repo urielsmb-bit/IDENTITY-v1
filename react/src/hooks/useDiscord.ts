@@ -28,6 +28,15 @@ export interface PresenciaDiscord {
   actividad: string;
   detalle: string;
   /**
+   * El logo de lo que esta haciendo: el icono del juego o la aplicacion.
+   *
+   * No lo manda Discord hecho: la presencia trae un identificador de
+   * archivo y hay que armar la direccion con el id de la aplicacion. Eso
+   * lo hace el bot, que es quien ve la presencia cruda; aqui llega ya
+   * como una direccion.
+   */
+  actividadImg: string;
+  /**
    * La etiqueta de servidor de Discord: ese «LPR» de dos a cuatro letras que
    * la gente lleva al lado del nombre. Lanyard ya la mandaba en
    * `primary_guild` y no la miraba nadie.
@@ -179,6 +188,7 @@ export function useDiscord(id: string | undefined, activo = true) {
         estadoNombre: NOMBRE_ESTADO[estado] ?? NOMBRE_ESTADO.offline!,
         actividad: String(data.actividad ?? ''),
         detalle: String(data.detalle ?? ''),
+        actividadImg: String(data.actividad_img ?? ''),
         guild: data.tag
           ? { tag: String(data.tag), icono: String(data.tag_icono ?? '') }
           : null,
