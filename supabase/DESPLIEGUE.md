@@ -90,14 +90,38 @@ quien lo tenga puede subir a tu cuenta.
 
 ## 3 · Desplegar
 
+**Desde la raíz del repositorio**, no desde `react/`.
+
+El CLI busca las funciones en `./supabase/functions/` contando desde donde lo
+lanzas. Lanzado desde `react/` no encuentra nada, se crea un `react/supabase/`
+vacío y falla con:
+
+```
+Entrypoint path does not exist - .../supabase/functions/<nombre>/index.ts
+```
+
+que no dice ni una palabra de lo que pasa de verdad. Si te ocurre, borra ese
+`react/supabase/` —es basura del CLI— y repite desde la raíz.
+
 ```bash
 npx supabase functions deploy registrar-vista
 npx supabase functions deploy borrar-cuenta
 npx supabase functions deploy vimeo-subida
+npx supabase functions deploy discord-presencia
+npx supabase functions deploy discord-entrar
 ```
 
+Si el CLI dice que no sabe a qué proyecto apunta, enlázalo una vez:
+
+```bash
+npx supabase link --project-ref ypvipmhfnraalcqbttiq
+```
+
+o añade `--project-ref ypvipmhfnraalcqbttiq` a cada despliegue.
+
 La carpeta `_compartido/` **no se despliega como función** —el guion bajo lo
-indica— pero su código viaja con las dos que lo importan.
+indica— pero su código viaja con las cuatro que lo importan: todas menos
+`discord-presencia`, que habla con la pasarela de Discord y no con la web.
 
 ## 4 · Comprobar
 
