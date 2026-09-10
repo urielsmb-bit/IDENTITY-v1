@@ -14,6 +14,15 @@ interface Props {
   onAbrir: (id: string) => void;
   /** Las insignias que de verdad tiene, para enseñarlas y no contarlas mal. */
   insignias?: string[];
+  /**
+   * Si tiene el plan. Lo que hay en la FILA es de todos —encender la pieza,
+   * escribir lo que dice—; lo que hay detrás del engranaje es de pago.
+   *
+   * El engranaje se pulsa igual sin plan: lo que cambia es que lo de dentro
+   * sale apagado. Aquí solo se dibuja el candado, para que se sepa antes de
+   * pulsar y no después.
+   */
+  premium?: boolean;
   /** Las dos cajas de subir, ya cableadas. Vienen de fuera porque llevan
    *  detrás el cubo de archivos, y eso no es asunto de una lista. */
   cajaAvatar: ReactNode;
@@ -160,6 +169,7 @@ export function Piezas({
   update,
   onAbrir,
   insignias = [],
+  premium = false,
   cajaAvatar,
   cajaFondo,
 }: Props) {
@@ -256,7 +266,10 @@ export function Piezas({
   };
 
   return (
-    <>
+    /* `display:contents`: envuelve para poder marcar los engranajes de una
+       vez —son cinco repartidos por el archivo— sin meter una caja que
+       cambie la colocación de nada. */
+    <div className="pzas-todo" data-pro={premium ? undefined : 'on'}>
       {/* Las dos imágenes, en fila y con su engranaje en la esquina. */}
       <div className="f-row pza-fila">
         <div className="pza-caja">
@@ -349,6 +362,6 @@ export function Piezas({
           </button>
         </li>
       </ul>
-    </>
+    </div>
   );
 }

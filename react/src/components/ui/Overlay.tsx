@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 
 interface OverlayProps {
   abierto: boolean;
@@ -6,6 +7,15 @@ interface OverlayProps {
   titulo: string;
   /** Una línea de qué es esta pieza. */
   desc?: string;
+  /**
+   * Se puede mirar pero no tocar: los ajustes de dentro son de pago.
+   *
+   * Se ABRE igual, y eso es lo importante. Un candado que no deja pasar no
+   * vende nada: quien no ha pagado no llega a saber qué se está perdiendo, y
+   * quien sí ha pagado tampoco entiende por qué. Aquí se ve la lista entera
+   * de mandos, apagada, con lo que cuesta encenderla arriba del todo.
+   */
+  bloqueado?: boolean;
   children: ReactNode;
 }
 
@@ -28,7 +38,14 @@ interface OverlayProps {
  * resto de la página inerte para lectores de pantalla y el fondo oscurecido
  * con `::backdrop`.
  */
-export function Overlay({ abierto, alCerrar, titulo, desc, children }: OverlayProps) {
+export function Overlay({
+  abierto,
+  alCerrar,
+  titulo,
+  desc,
+  bloqueado = false,
+  children,
+}: OverlayProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const cuerpo = useRef<HTMLDivElement>(null);
 
@@ -80,7 +97,40 @@ export function Overlay({ abierto, alCerrar, titulo, desc, children }: OverlayPr
             editor de una pieza se montaba entero sin que nadie lo hubiera
             pedido. */}
         <div className="ovl__cuerpo" ref={cuerpo}>
-          {abierto && children}
+          {abierto && bloqueado && (
+            <div className="ovl__pro">
+              <span className="ovl__pro-ic" aria-hidden="true">
+                <svg viewBox="23 32 465 448" fill="currentColor">
+                  <path d="M396.31 32H264l84.19 112.26L396.31 32zm-280.62 0l48.12 112.26L248 32H115.69zM256 74.67L192 160h128l-64-85.33zm166.95-23.61L376.26 160H488L422.95 51.06zm-333.9 0L23 160h112.74L89.05 51.06zM146.68 192H24l222.8 288h.53L146.68 192zm218.64 0L264.67 480h.53L488 192H365.32zm-35.93 0H182.61L256 400l73.39-208z" />
+                </svg>
+              </span>
+              <div className="ovl__pro-txt">
+                <strong>Esto es de Premium</strong>
+                <p>
+                  Míralo entero: está aquí para que veas qué desbloquea. Para
+                  cambiarlo hace falta el plan.
+                </p>
+              </div>
+              <Link className="btn btn--primary btn--sm" to="/pricing">
+                Ver planes
+              </Link>
+            </div>
+          )}
+
+          {/* `fieldset disabled` apaga TODOS los campos de dentro de una vez,
+              y ademas los saca del recorrido del teclado: hacerlo mando a
+              mando seria pasar una prop por veinte componentes y olvidarla en
+              el que se añada mañana. `pointer-events` remata lo que no es un
+              campo -las muestras de color, las rejillas de iconos-, que un
+              `disabled` no alcanza. */}
+          {abierto &&
+            (bloqueado ? (
+              <fieldset className="ovl__mirar" disabled>
+                {children}
+              </fieldset>
+            ) : (
+              children
+            ))}
         </div>
       </div>
     </dialog>

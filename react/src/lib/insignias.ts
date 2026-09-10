@@ -103,6 +103,24 @@ export function estadoInsignias(d: DatosInsignias): EstadoInsignia[] {
   });
 }
 
+/**
+ * Si este perfil tiene el plan.
+ *
+ * No hay campo `plan` ni cobro conectado. Lo que hay es la insignia del
+ * diamante, que concede el equipo escribiendo en `insignias_concedidas` con
+ * la clave de servicio. O sea que ya existe una fuente de verdad que el
+ * dueño del perfil NO puede escribirse a si mismo, que es lo unico que se le
+ * pide a esto. El dia que haya cobro, lo unico que cambia es QUIEN concede
+ * la insignia; nada de lo que hay detras de esta funcion se entera.
+ *
+ * Se mira lo CONCEDIDO, no lo que se enseña. `badgesOff` esconde insignias
+ * del perfil publico, y esconder el diamante no puede quitarte lo que has
+ * pagado: son dos cosas distintas y aqui manda la primera.
+ */
+export function tienePlan(d: DatosInsignias): boolean {
+  return resolveBadges(d.concedidas).includes('premium');
+}
+
 /** Sólo los ids ganados, que es lo que pinta el perfil público. */
 export function insigniasGanadas(d: DatosInsignias): string[] {
   return estadoInsignias(d)

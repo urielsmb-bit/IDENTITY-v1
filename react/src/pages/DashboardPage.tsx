@@ -36,6 +36,7 @@ import { useGuia } from '@/hooks/useGuia';
 import { PanelInsignias } from '@/components/dashboard/PanelInsignias';
 import { PublicarPlantilla } from '@/components/dashboard/PublicarPlantilla';
 import { useInsignias } from '@/hooks/useInsignias';
+import { tienePlan } from '@/lib/insignias';
 import { DIBUJOS } from '@/components/dashboard/dibujos';
 import { BLOQUE_POR_ID, type DefBloque, BLOQUES_APAGADOS_POR_DEFECTO } from '@/data/bloques';
 import { BASE_PERSONALIZADA } from '@/data/plantillasBase';
@@ -369,7 +370,11 @@ export default function DashboardPage() {
      perfil y se perdia las que concede el servidor —«Verificado» entre
      ellas— asi que decia «todavia ninguna» al lado de un panel que decia
      «llevas 1». */
-  const { ganadas: insigniasGanadasDelPerfil } = useInsignias(profile);
+  const { ganadas: insigniasGanadasDelPerfil, datos: datosInsignias } = useInsignias(profile);
+  /* El plan sale de la insignia del diamante, que concede el equipo: no hay
+     campo que su dueño pueda escribirse a si mismo. Lo de la FILA es de
+     todos; lo de detras del engranaje, de pago. */
+  const premium = tienePlan(datosInsignias);
 
   /** Handle bajo el que el borrador vive hoy en el store. Cambia al renombrar. */
   const storeKeyRef = useRef('');
@@ -839,6 +844,7 @@ export default function DashboardPage() {
               update={update}
               onAbrir={setPieza}
               insignias={insigniasGanadasDelPerfil}
+              premium={premium}
               cajaAvatar={
                 <SubirMedio
                   guia="avatar"
@@ -901,6 +907,7 @@ export default function DashboardPage() {
             <Overlay
               abierto={pieza === 'fondo'}
               alCerrar={cerrarPieza}
+              bloqueado={!premium}
               titulo="Fondo"
               desc="La imagen, el vídeo o el color que hay detrás de todo."
             >
@@ -1018,6 +1025,7 @@ export default function DashboardPage() {
             <Overlay
               abierto={pieza === 'cursor'}
               alCerrar={cerrarPieza}
+              bloqueado={!premium}
               titulo="Cursor"
               desc="El puntero con el que se recorre tu perfil."
             >
@@ -1079,6 +1087,7 @@ export default function DashboardPage() {
             <Overlay
               abierto={pieza === 'tarjeta'}
               alCerrar={cerrarPieza}
+              bloqueado={!premium}
               titulo="La tarjeta"
               desc="La caja que envuelve a todas las piezas, y cómo se mueve el perfil."
             >
@@ -1262,6 +1271,7 @@ export default function DashboardPage() {
             <Overlay
               abierto={!!defAbierto}
               alCerrar={cerrarPieza}
+              bloqueado={!premium}
               titulo={defAbierto?.nombre ?? ''}
               desc={defAbierto?.descripcion}
             >

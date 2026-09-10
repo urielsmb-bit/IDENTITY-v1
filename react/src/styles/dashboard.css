@@ -2917,6 +2917,31 @@
 .pza__cfg svg{ width:17px; height:17px; display:block; }
 .pza__cfg:hover{ color:var(--text-primary); background:var(--surface-3); }
 
+/* Envuelve la lista entera sin ser una caja: los engranajes son cinco y
+   estan repartidos por el archivo, y marcarlos de una vez pide un ancestro.
+   `display:contents` da ese ancestro sin meterse en la colocacion. */
+.pzas-todo{ display:contents; }
+
+/* Sin plan, el engranaje lleva su candado.
+
+   Se sigue pudiendo pulsar: lo de dentro se ve, apagado. Un candado que no
+   deja pasar no vende nada -quien no ha pagado no llega a saber que se
+   pierde-, asi que esto avisa de lo que hay detras, no lo tapa.
+
+   Un punto y no un rotulo: son cinco filas seguidas, y cinco veces la
+   palabra «Premium» convierte la lista en un anuncio. Lo que dice de verdad
+   quien puede tocarlo es el propio panel al abrirse. */
+[data-pro] .pza__cfg{ position:relative; }
+[data-pro] .pza__cfg::after{
+  content:'';
+  position:absolute; top:9px; right:9px;
+  width:7px; height:7px;
+  border-radius:50%;
+  background:var(--pro, #E8B54B);
+  box-shadow:0 0 0 2px var(--surface);
+}
+[data-pro] .pza__cfg--flota::after{ top:6px; right:6px; }
+
 /* El avatar y el fondo son imagenes: su control es la caja donde se
    sueltan, y el engranaje se le posa encima en una esquina. */
 .pza-fila{ margin-bottom:var(--s3); }
@@ -2996,6 +3021,46 @@
   flex:1; min-height:0;
   overflow-y:auto; overscroll-behavior:contain;
   padding:16px 18px 28px;
+}
+
+/* ---- mirar sin tocar ------------------------------------------------
+   Lo que hay detras del engranaje es de pago, pero se abre igual: se ve la
+   lista entera de mandos, apagada, con lo que cuesta encenderla arriba. */
+.ovl__pro{
+  display:flex; align-items:center; gap:var(--s3);
+  margin-bottom:var(--s4);
+  padding:var(--s3);
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-md);
+  background:var(--surface-2);
+}
+.ovl__pro-ic{
+  width:30px; height:30px; flex:none;
+  display:grid; place-items:center;
+  border-radius:var(--radius-sm);
+  background:var(--surface-3);
+  color:var(--pro, #E8B54B);
+}
+.ovl__pro-ic svg{ width:15px; height:15px; }
+.ovl__pro-txt{ min-width:0; flex:1; }
+.ovl__pro-txt strong{ display:block; font-size:var(--t2); }
+.ovl__pro-txt p{
+  margin:2px 0 0;
+  font-size:var(--t1); line-height:1.4; color:var(--text-muted);
+}
+.ovl__pro .btn{ flex:none; }
+
+/* Un `fieldset` trae borde, relleno y un `min-width` propio que rompe
+   cualquier rejilla de dentro. Se le quita todo: aqui no esta por como se
+   ve, sino porque `disabled` apaga de golpe todos los campos que contiene.
+
+   La opacidad dice «esto no responde» antes de que nadie lo intente, y
+   `pointer-events` remata lo que no es un campo -las muestras de color, las
+   rejillas de iconos-, donde un `disabled` no llega. */
+.ovl__mirar{
+  border:0; padding:0; margin:0; min-width:0;
+  opacity:.55;
+  pointer-events:none;
 }
 
 /* ---- elegir tipografia viendola ------------------------------------- */
