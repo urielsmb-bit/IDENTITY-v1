@@ -1,4 +1,4 @@
-# IDENTITY — Términos del servicio
+# sharee — Términos del servicio
 
 > **Borrador.** Escrito para que se entienda, no para sonar a abogado. No soy
 > abogado: conviene que lo revise uno antes de abrir al público, sobre todo las
@@ -12,7 +12,7 @@
 
 ## Lo corto
 
-IDENTITY es una página pública donde reúnes tus enlaces. **Todo lo que publiques
+sharee es una página pública donde reúnes tus enlaces. **Todo lo que publiques
 lo puede ver cualquiera.** Eres responsable de lo que subes. Nosotros podemos
 retirar contenido o cerrar cuentas que rompan estas reglas. Tú sigues siendo
 dueño de lo tuyo.
@@ -21,7 +21,7 @@ dueño de lo tuyo.
 
 ## 1. Qué es esto y qué aceptas
 
-IDENTITY es una plataforma que te permite reunir tus enlaces, imágenes y música
+sharee es una plataforma que te permite reunir tus enlaces, imágenes y música
 en una página compartible. Al usarla aceptas estos Términos y las leyes que te
 apliquen.
 
@@ -45,7 +45,7 @@ desconocido.
 Tu nombre de usuario es tu dirección: `[tudominio]/tunombre`. Reglas:
 
 - No puede ser ilegal, engañoso, ofensivo ni infringir derechos de otros.
-- **No puede hacerse pasar por IDENTITY** ni por sus responsables. Nombres como
+- **No puede hacerse pasar por sharee** ni por sus responsables. Nombres como
   `soporte`, `admin`, `oficial` o `staff` están reservados y no se pueden
   registrar.
 - Hay nombres reservados por motivos técnicos, porque coinciden con
@@ -77,7 +77,7 @@ personas, la estabilidad del servicio o su legalidad, actuamos.
 
 **Conductas prohibidas:**
 
-- Hacerte pasar por otra persona, empresa o marca, o sugerir que IDENTITY te
+- Hacerte pasar por otra persona, empresa o marca, o sugerir que sharee te
   patrocina cuando no es así.
 - Estafas, phishing, spam, o recoger datos de otros sin su permiso.
 - Subir o enlazar software malicioso.
@@ -138,7 +138,7 @@ Puedes vincular Discord o Spotify. Es opcional; el perfil funciona sin ellas.
 
 Al vincular, nos autorizas a leer y guardar lo que ese servicio nos permita
 según los permisos que concedas, y solo para mostrarlo en tu perfil. Lo que
-guardamos exactamente está en la [Política de privacidad](IDENTITY_PRIVACIDAD.md).
+guardamos exactamente está en la [Política de privacidad](sharee_PRIVACIDAD.md).
 
 Tu relación con Discord y con Spotify se rige por **sus** términos. No
 respondemos de lo que hagan o dejen de hacer, ni de que cambien su API y algo
@@ -162,7 +162,7 @@ o contrarios a estos Términos.
 > Rellenar cuando exista un plan de pago. Debe cubrir: qué incluye, precio e
 > impuestos, renovación automática y cómo cancelarla, política de reembolso, y el
 > **derecho de desistimiento de 14 días** si vendes a consumidores de la Unión
-> Europea. Hasta que exista, esta sección se puede publicar como «IDENTITY es
+> Europea. Hasta que exista, esta sección se puede publicar como «sharee es
 > gratuito».
 
 ---
@@ -196,7 +196,7 @@ lucro cesante, ni de la pérdida de datos derivada del uso del servicio.
 ## 11. Copyright
 
 Las reclamaciones de derechos de autor van por su propio cauce, descrito en la
-[Política de derechos de autor y DMCA](IDENTITY_COPYRIGHT.md).
+[Política de derechos de autor y DMCA](sharee_COPYRIGHT.md).
 
 ---
 

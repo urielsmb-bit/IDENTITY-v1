@@ -19,12 +19,12 @@ import {
 describe('el título de la tarjeta', () => {
   it('lleva el nombre y el @usuario', () => {
     expect(tituloTarjeta({ username: 'shark', name: 'Uriel' }))
-      .toBe('Uriel (@shark) · IDENTITY');
+      .toBe('Uriel (@shark) · sharee');
   });
 
   it('sin nombre, usa el usuario en su lugar', () => {
-    // Un «(@shark) · IDENTITY» suelto, empezando por paréntesis, no se lee.
-    expect(tituloTarjeta({ username: 'shark' })).toBe('shark (@shark) · IDENTITY');
+    // Un «(@shark) · sharee» suelto, empezando por paréntesis, no se lee.
+    expect(tituloTarjeta({ username: 'shark' })).toBe('shark (@shark) · sharee');
   });
 
   it('un nombre kilométrico no se lleva la tarjeta entera', () => {
@@ -34,7 +34,7 @@ describe('el título de la tarjeta', () => {
 
   it('los saltos de línea se aplanan', () => {
     // En un atributo HTML un salto de línea rompe el renglón del título.
-    expect(tituloTarjeta({ username: 'a', name: 'Uri\nel' })).toBe('Uri el (@a) · IDENTITY');
+    expect(tituloTarjeta({ username: 'a', name: 'Uri\nel' })).toBe('Uri el (@a) · sharee');
   });
 });
 
@@ -52,7 +52,7 @@ describe('la descripción', () => {
     // Un `og:description` vacío deja la tarjeta con un hueco donde debería
     // estar el motivo para pulsar.
     expect(descripcionTarjeta({ username: 'shark' }))
-      .toBe('El perfil de @shark en IDENTITY.');
+      .toBe('El perfil de @shark en sharee.');
   });
 
   it('una biografía de mil caracteres se recorta', () => {

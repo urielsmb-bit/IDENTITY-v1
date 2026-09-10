@@ -2,7 +2,7 @@ import { CONFIG } from '@/config';
 import { supabase } from './supabase';
 
 /**
- * Subida de un fondo a la cuenta de Vimeo de IDENTITY.
+ * Subida de un fondo a la cuenta de Vimeo de sharee.
  *
  * El navegador NUNCA ve el token: la función de borde `vimeo-subida` pide el
  * ticket en su nombre y devuelve un enlace de un solo uso. El archivo va

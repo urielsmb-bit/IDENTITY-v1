@@ -370,7 +370,7 @@ export default function AnalyticsPage() {
           ) : nuevosEnRango === 0 ? (
             <p className="ana__vacio">
               Todavía no hay visitas en este período. Comparte tu enlace:{' '}
-              <strong>/u/{profile.username}</strong>
+              <strong>/{profile.username}</strong>
             </p>
           ) : (
             <canvas ref={lienzo} />
@@ -499,7 +499,7 @@ export default function AnalyticsPage() {
                 La más usada es <strong>«{misPlantillas.mejor}»</strong>.
               </p>
             )}
-            <Link className="btn btn--ghost btn--sm" to="/templates">
+            <Link className="btn btn--ghost btn--sm" to="/plantillas">
               Ver la biblioteca
             </Link>
           </div>

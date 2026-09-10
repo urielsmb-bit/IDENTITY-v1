@@ -153,7 +153,7 @@ export default function LeaderboardPage() {
               const cara = avatarDe(p);
               return (
                 <li key={p.username}>
-                  <Link className={`rank__f${puesto <= 3 ? ' es-top' : ''}`} to={`/u/${p.username}`}>
+                  <Link className={`rank__f${puesto <= 3 ? ' es-top' : ''}`} to={`/${p.username}`}>
                     {/* El puesto en mono tabular: es lo que hace que la
                         columna quede recta al pasar de 9 a 10. */}
                     <span className="rank__n">{puesto}</span>

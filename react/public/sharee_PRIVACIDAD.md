@@ -1,4 +1,4 @@
-# IDENTITY — Política de privacidad
+# sharee — Política de privacidad
 
 > **Borrador.** Lo he escrito para que sea claro y honesto, no para que suene a
 > abogado. No soy abogado: antes de abrir al público conviene que alguien que sí
@@ -37,7 +37,7 @@
 
 Todo esto lo pones tú y todo esto se ve. **No escribas ahí nada que no quieras
 que lea un desconocido**: dirección, teléfono, documento de identidad, el
-colegio al que vas. Un perfil de IDENTITY es una página pública, como una
+colegio al que vas. Un perfil de sharee es una página pública, como una
 cuenta abierta de cualquier red social.
 
 ### 1.2 · Lo que hace falta para tener cuenta
@@ -248,7 +248,7 @@ Superintendencia de Industria y Comercio.
 
 ## 6. Menores
 
-IDENTITY no está dirigido a menores de **13 años**, ni a quien no alcance **la
+sharee no está dirigido a menores de **13 años**, ni a quien no alcance **la
 edad mínima que exija la ley de su país, si es mayor de 13**. No recogemos a
 sabiendas datos de menores por debajo de esa edad.
 
@@ -293,9 +293,9 @@ que entre en vigor. La fecha de arriba dice cuándo se actualizó por última ve
 
 ## 10. Documentos relacionados
 
-- [Términos del servicio](IDENTITY_TERMINOS.md) — las reglas del sitio, qué se
+- [Términos del servicio](sharee_TERMINOS.md) — las reglas del sitio, qué se
   puede publicar y qué pasa si no.
-- [Política de derechos de autor y DMCA](IDENTITY_COPYRIGHT.md) — cómo denunciar
+- [Política de derechos de autor y DMCA](sharee_COPYRIGHT.md) — cómo denunciar
   una infracción y cómo responder si te retiran algo.
 
 ---

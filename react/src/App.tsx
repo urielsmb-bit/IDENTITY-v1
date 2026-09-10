@@ -1,4 +1,4 @@
-import { Routes, Route, Outlet } from 'react-router-dom';
+import { Routes, Route, Outlet, Navigate, useParams } from 'react-router-dom';
 import { Navbar } from './components/layout/Navbar';
 import { Toast } from './components/layout/Toast';
 import { Frontera } from './components/layout/Frontera';
@@ -6,6 +6,19 @@ import { ProtectedRoute } from './components/layout/ProtectedRoute';
 
 // Pages — lazy loaded for code splitting
 import { lazy, Suspense } from 'react';
+
+/**
+ * `/u/<usuario>` lleva a `/<usuario>`.
+ *
+ * `replace` y no un enlace normal: quien llegue por la direccion vieja no
+ * debe quedarse con ella en el historial, o al pulsar «atras» desde el
+ * perfil volveria a la redireccion y de ahi al perfil otra vez, sin poder
+ * salir.
+ */
+function RedirigirPerfil() {
+  const { username = '' } = useParams();
+  return <Navigate to={`/${encodeURIComponent(username)}`} replace />;
+}
 
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
@@ -25,7 +38,7 @@ function LoadingFallback() {
 }
 
 /**
- * Las paginas de IDENTITY, con su barra.
+ * Las paginas de sharee, con su barra.
  *
  * El perfil publico se queda fuera a proposito: ahi la barra tapaba el
  * disenio con nuestro logo y nuestro menu, y la pagina de alguien no es el
@@ -53,9 +66,12 @@ export default function App() {
         <Frontera donde="esta página">
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
-            {/* Sin barra. Van primero por claridad; el orden no decide nada,
-                React Router se queda siempre con la ruta mas concreta. */}
-            <Route path="/u/:username" element={<ProfilePage />} />
+            {/* La direccion de un perfil es `sharee.fun/<usuario>`, a secas.
+                `/u/<usuario>` fue la de antes y sigue viva como REDIRECCION:
+                esos enlaces estan pegados en biografias de Discord y de
+                Instagram desde hace meses, y romperlos por cambiar de forma
+                seria cobrarle el cambio a quien ya te habia enlazado. */}
+            <Route path="/u/:username" element={<RedirigirPerfil />} />
 
             <Route element={<ConBarra />}>
             <Route path="/" element={<LandingPage />} />
@@ -77,7 +93,9 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/templates" element={<TemplatesPage />} />
+            <Route path="/plantillas" element={<TemplatesPage />} />
+            {/* Igual que arriba: la de antes, redirigida. */}
+            <Route path="/templates" element={<Navigate to="/plantillas" replace />} />
             {/* Antes que `/:username`, o «probar» se leeria como el nombre
                 de alguien. */}
             <Route path="/probar/:id" element={<ProbarPlantillaPage />} />

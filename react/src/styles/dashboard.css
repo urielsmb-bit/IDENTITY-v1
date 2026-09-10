@@ -1,5 +1,5 @@
 /* ============================================================
-   IDENTITY — panel
+   sharee — panel
    Dashboard = claridad. Perfil = personalidad.
    Aquí no hay ni un efecto que no sirva para editar.
    ============================================================ */
@@ -154,7 +154,7 @@
   transition:border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 .ta{ line-height:1.55; resize:vertical; min-height:84px; }
-/* El anillo de foco es de IDENTITY, como el global: `--brand`, no
+/* El anillo de foco es de sharee, como el global: `--brand`, no
    `--accent`. Con el blanco, un campo enfocado y un campo con el raton
    encima se parecian demasiado. */
 .inp:focus,.sel:focus,.ta:focus{

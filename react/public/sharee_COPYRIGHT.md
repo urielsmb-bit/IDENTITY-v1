@@ -1,4 +1,4 @@
-# IDENTITY — Política de derechos de autor y DMCA
+# sharee — Política de derechos de autor y DMCA
 
 > **Borrador.** Este es el documento **más delicado de los tres** y el que más
 > conviene que revise un abogado, porque no es solo una promesa: es la pieza que
@@ -41,7 +41,7 @@ Colombia por su cuenta.
 
 ## Resumen
 
-IDENTITY respeta los derechos de autor y espera lo mismo de quien usa la
+sharee respeta los derechos de autor y espera lo mismo de quien usa la
 plataforma. Aquí se explica cómo denunciar un contenido, cómo responder si te
 han retirado algo por error, y qué pasa con quien reincide.
 
@@ -60,12 +60,12 @@ puede retrasarse o rechazarse.
 
 ## 2. Cómo denunciar un contenido
 
-Si crees que algo publicado en IDENTITY infringe tus derechos, escríbenos
+Si crees que algo publicado en sharee infringe tus derechos, escríbenos
 incluyendo **todo** lo siguiente. Falta uno solo y no podemos actuar:
 
 1. **Qué obra tuya** se está infringiendo, identificada con claridad. Si son
    varias, una lista representativa.
-2. **La dirección exacta** dentro de IDENTITY donde está el material, suficiente
+2. **La dirección exacta** dentro de sharee donde está el material, suficiente
    para que podamos encontrarlo.
 3. **Tu nombre completo y una forma fiable de contactarte**, incluido un correo.
 4. Una declaración de que **crees de buena fe** que ese uso no está autorizado
@@ -121,9 +121,9 @@ mala fe.
 
 ---
 
-## 6. Marcas de terceros dentro de IDENTITY
+## 6. Marcas de terceros dentro de sharee
 
-IDENTITY muestra los logotipos de unos cuarenta servicios (Discord, Spotify,
+sharee muestra los logotipos de unos cuarenta servicios (Discord, Spotify,
 Instagram…) para identificar a dónde lleva cada enlace. Es un uso nominativo:
 identificar el servicio, sin sugerir que nos patrocinen ni que estemos asociados
 a ellos. Los logotipos son de sus respectivos titulares.

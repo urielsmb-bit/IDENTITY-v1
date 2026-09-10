@@ -194,7 +194,7 @@ function createBlankProfile(username = 'usuario'): Profile {
     emoji: '✨',
     age: null,
     avatarUrl: '',
-    bio: '¡Hola! Este es mi perfil en IDENTITY.',
+    bio: '¡Hola! Este es mi perfil en sharee.',
     about: '',
     joined: new Date().toISOString(),
     theme: 'cyberpunk',
@@ -518,7 +518,7 @@ export default function DashboardPage() {
       if (dirty) await handleSave();
       // La pestaña nueva sin acceso a la que la abrió: es lo correcto aunque
       // el destino sea nuestro, y evita el aviso de los analizadores.
-      window.open(`/u/${profile.username}`, '_blank', 'noopener,noreferrer');
+      window.open(`/${profile.username}`, '_blank', 'noopener,noreferrer');
     } finally {
       setPublicando(false);
     }

@@ -1,5 +1,5 @@
 /* ============================================================
-   IDENTITY — la página de perfil  ·  v2
+   sharee — la página de perfil  ·  v2
 
    REGLA CENTRAL: no existe una tarjeta obligatoria.
    El contenido vive sobre el fondo. La "superficie" (la caja) es
@@ -1146,7 +1146,7 @@
 /* El pie va FIJO abajo, no al final del documento.
    Antes habia que desplazar hasta el fondo para verlo, y en un
    perfil de una sola pantalla eso significa que no lo ve nadie:
-   la unica puerta de vuelta a IDENTITY estaba escondida.
+   la unica puerta de vuelta a sharee estaba escondida.
 
    Se queda pegado a la ventana, discreto, y se aparta de los
    botones flotantes de la derecha. */

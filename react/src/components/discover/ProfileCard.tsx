@@ -51,7 +51,7 @@ export function ProfileCard({ profile: p }: ProfileCardProps) {
     <Link
       className="pf pcard"
       data-theme={p.theme || 'dark'}
-      to={`/u/${p.username}`}
+      to={`/${p.username}`}
       style={
         {
           '--pc-tint': tint,

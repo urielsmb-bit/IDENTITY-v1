@@ -114,7 +114,7 @@ export function CarruselPerfiles({ perfiles, cada = 5200 }: CarruselPerfilesProp
         </div>
 
         {/* La ficha del que está en medio, encima del propio perfil. */}
-        <Link className="carr__pie" to={`/u/${actual.username}`}>
+        <Link className="carr__pie" to={`/${actual.username}`}>
           <span className="carr__at">@{actual.username}</span>
           <span className="carr__v">{num(actual.views || 0)} visitas</span>
         </Link>

@@ -7,7 +7,7 @@
  * ejecuta Node, y sin esta pieza el producto pierde justo lo que lo hace
  * funcionar:
  *
- * IDENTITY es una sola pagina que se rellena en el navegador, asi que lo que
+ * sharee es una sola pagina que se rellena en el navegador, asi que lo que
  * sale por el cable es SIEMPRE el mismo cascaron, con el mismo titulo para
  * todo el mundo y sin una sola etiqueta `og:`. Cuando alguien pega su perfil
  * en Discord, en WhatsApp o en Telegram, la tarjeta de vista previa la arma
@@ -44,13 +44,13 @@ if ((!$SUPA || !$CLAVE) && is_file(__DIR__ . '/config.php')) {
 }
 
 /** El mismo `NOMBRE_SITIO` de `src/lib/tarjeta.ts`. */
-const NOMBRE_SITIO = 'IDENTITY';
+const NOMBRE_SITIO = 'sharee';
 
 /**
  * Escapar aqui no es higiene, es la diferencia entre una etiqueta y un
  * agujero. El nombre y la biografia los escribe cualquiera; metidos en un
  * atributo sin escapar, un `">` cierra la etiqueta y lo que venga detras se
- * ejecuta en el dominio de IDENTITY para todo el que abra ese perfil.
+ * ejecuta en el dominio de sharee para todo el que abra ese perfil.
  */
 function esc($v): string
 {
@@ -66,7 +66,7 @@ function linea($v, int $max): string
     return mb_substr($t, 0, $max, 'UTF-8');
 }
 
-/** «Uriel (@shark) · IDENTITY». Gemelo de `tituloTarjeta()`. */
+/** «Uriel (@shark) · sharee». Gemelo de `tituloTarjeta()`. */
 function tituloTarjeta(array $p): string
 {
     $usuario = linea($p['username'] ?? '', 32);
@@ -181,7 +181,7 @@ $imagen      = imagenTarjeta($ap['avatarUrl'] ?? '');
 
 $esquema = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $host    = (string) ($_SERVER['HTTP_HOST'] ?? '');
-$enlace  = $esquema . '://' . $host . '/u/' . $usuario;
+$enlace  = $esquema . '://' . $host . '/' . $usuario;
 
 $etiquetas = array_filter([
     '<title>' . esc($titulo) . '</title>',

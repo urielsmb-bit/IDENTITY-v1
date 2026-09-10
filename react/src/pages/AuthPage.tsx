@@ -10,7 +10,7 @@ type Modo = 'login' | 'registro' | 'olvide';
  *  repetido en el título, el subtítulo y el botón. */
 const TEXTOS: Record<Modo, { t: string; d: string; enviar: string }> = {
   login: {
-    t: 'Entrar a IDENTITY',
+    t: 'Entrar a sharee',
     d: 'Tu perfil te espera.',
     enviar: 'Entrar',
   },

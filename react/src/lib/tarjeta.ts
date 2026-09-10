@@ -14,7 +14,7 @@
  * que no tiene alias de rutas ni nada del navegador.
  */
 
-export const NOMBRE_SITIO = 'IDENTITY';
+export const NOMBRE_SITIO = 'sharee';
 
 /** Una línea, sin saltos y sin pasarse de largo: es para una tarjeta. */
 export function linea(v: unknown, max: number): string {
@@ -28,7 +28,7 @@ export interface DatosTarjeta {
   bio?: string;
 }
 
-/** «Uriel (@shark) · IDENTITY» */
+/** «Uriel (@shark) · sharee» */
 export function tituloTarjeta(p: DatosTarjeta): string {
   const usuario = linea(p.username, 32);
   const nombre = linea(p.name, 60) || usuario;

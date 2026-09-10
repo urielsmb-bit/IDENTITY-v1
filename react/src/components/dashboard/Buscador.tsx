@@ -4,7 +4,7 @@ import { buscar, type Resultado } from '@/data/buscar';
 /**
  * Buscar un ajuste.
  *
- * IDENTITY tiene once bloques y casi cien controles. Es más de lo que ofrece
+ * sharee tiene once bloques y casi cien controles. Es más de lo que ofrece
  * la competencia — y no servía de nada, porque encontrar «el degradado del
  * nombre» exigía saber ya que vive en Bloques → Nombre → Color. Una opción
  * que no se encuentra no existe.

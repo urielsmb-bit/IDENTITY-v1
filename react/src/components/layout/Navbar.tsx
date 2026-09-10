@@ -29,16 +29,16 @@ export function Navbar() {
 
   return (
     <header className={`nav${shadow ? ' nav--shadow' : ''}`} id="nav">
-      <Link className="nav__mark" to="/" aria-label="IDENTITY — inicio">
+      <Link className="nav__mark" to="/" aria-label="sharee — inicio">
         <span className="nav__glyph" aria-hidden="true" />
-        <span>IDENTITY</span>
+        <span>sharee</span>
       </Link>
 
       <nav className="nav__links" aria-label="Principal">
         <Link to="/top" className={isActive('/top') ? 'on' : ''}>
           Ranking
         </Link>
-        <Link to="/templates" className={isActive('/templates') ? 'on' : ''}>
+        <Link to="/plantillas" className={isActive('/plantillas') ? 'on' : ''}>
           Plantillas
         </Link>
         <Link to="/pricing" className={isActive('/pricing') ? 'on' : ''}>

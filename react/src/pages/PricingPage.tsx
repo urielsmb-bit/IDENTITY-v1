@@ -47,7 +47,7 @@ const PLANS = [
       'Badge exclusivo "Founder 👑"',
       'Verificación oficial de identidad',
       'Publicación de plantillas en el marketplace',
-      'Sin marca de agua IDENTITY en pie de página',
+      'Sin marca de agua sharee en pie de página',
       'Soporte prioritario 24/7',
     ],
     cta: 'Obtener Creator',

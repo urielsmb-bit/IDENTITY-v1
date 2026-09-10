@@ -112,7 +112,7 @@ export interface ProfileAudio {
 }
 
 export interface Profile {
-  /* identity */
+  /* sharee */
   username: string;
   name: string;
   title: string;

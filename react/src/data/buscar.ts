@@ -3,7 +3,7 @@ import { BLOQUES, type ControlId, type DefBloque } from './bloques';
 /**
  * El catálogo de lo que se puede encontrar.
  *
- * IDENTITY tiene 11 bloques y casi cien controles repartidos entre ellos.
+ * sharee tiene 11 bloques y casi cien controles repartidos entre ellos.
  * Eso es más de lo que ofrece nadie — y no vale nada, porque para cambiar
  * «el degradado del nombre» hay que saber de antemano que vive en Bloques →
  * Nombre → Color. Si no lo sabes, la opción no existe.

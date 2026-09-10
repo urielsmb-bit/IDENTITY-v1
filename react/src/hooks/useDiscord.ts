@@ -323,8 +323,8 @@ export function useDecoracionDeLaSesion(): ExtrasDiscord {
           primary_guild?: {
             tag?: unknown;
             badge?: unknown;
-            identity_guild_id?: unknown;
-            identity_enabled?: unknown;
+            sharee_guild_id?: unknown;
+            sharee_enabled?: unknown;
           };
         };
         if (!vivo) return;
@@ -341,9 +341,9 @@ export function useDecoracionDeLaSesion(): ExtrasDiscord {
         }
 
         const pg = j?.primary_guild;
-        if (pg?.identity_enabled !== false && typeof pg?.tag === 'string') {
+        if (pg?.sharee_enabled !== false && typeof pg?.tag === 'string') {
           salida.tag = pg.tag.slice(0, 8);
-          const g = pg.identity_guild_id;
+          const g = pg.sharee_guild_id;
           const b = pg.badge;
           if (
             typeof g === 'string' && /^\d{17,20}$/.test(g) &&

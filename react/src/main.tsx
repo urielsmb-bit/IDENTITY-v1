@@ -20,7 +20,7 @@ import './styles/guia.css';
  *
  * Cada seccion se carga en su propio trozo de codigo, y al publicar una
  * version nueva esos trozos cambian de nombre: los de la anterior dejan de
- * existir. Quien tuviera IDENTITY abierta en ese momento seguia con el
+ * existir. Quien tuviera sharee abierta en ese momento seguia con el
  * indice viejo en memoria, asi que al pasar a otra seccion pedia un archivo
  * que ya no esta, y lo unico que veia era «Algo se rompio en esta pagina»
  * sobre un hueco negro. No estaba roto: estaba desactualizado.

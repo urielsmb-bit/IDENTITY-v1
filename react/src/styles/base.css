@@ -1,5 +1,5 @@
 /* ============================================================
-   IDENTITY — sistema de diseño
+   sharee — sistema de diseño
    Dark-first. El acento es del usuario, no de la marca: por eso
    el valor por defecto es blanco y sólo se usa en highlights,
    estados activos, glow y detalles. Nunca como relleno.
@@ -54,7 +54,7 @@
   /* ---- marca: del envoltorio, nunca del perfil ------------
      `--accent` sigue siendo blanco y sigue siendo del usuario: esa
      decision de arriba no se toca. El problema era que entonces
-     IDENTITY no tenia NINGUN color propio, y un producto que vende
+     sharee no tenia NINGUN color propio, y un producto que vende
      identidad no puede no tener ninguna.
 
      Asi que la marca vive aparte, en un token que el usuario no
@@ -65,7 +65,7 @@
      vuelve al blanco. Lo que NO vuelve atras es la estructura: la
      marca sigue siendo un token propio y separado de `--accent`, y
      los 35 sitios que la usan salen todos de aqui. Cambiar el color
-     de IDENTITY es cambiar estas cuatro lineas y nada mas.
+     de sharee es cambiar estas cuatro lineas y nada mas.
 
      Con el blanco se pierde una cosa que si valia: el foco y la
      seleccion vuelven a verse igual, porque los dos son blancos.
@@ -187,7 +187,7 @@ a{ color:inherit; text-decoration:none; }
 
 ::selection{ background:var(--accent); color:var(--accent-ink); }
 
-/* El anillo de foco es de IDENTITY, no del usuario: por eso usa
+/* El anillo de foco es de sharee, no del usuario: por eso usa
    `--brand` y no `--accent`. Antes era blanco puro, que sobre casi-negro
    es un anillo durisimo y ademas se confundia con el texto y con los
    botones primarios, que tambien son blancos. En ambar se distingue de
@@ -426,7 +426,7 @@ h1,h2,h3,h4{ margin:0; font-weight:600; letter-spacing:-.03em; line-height:1.1; 
 
 /* ---- el gesto de "atras" de iOS -----------------------------
    Un desplazamiento horizontal accidental en una pagina que no lo
-   necesita se siente como un fallo. Ninguna vista de IDENTITY
+   necesita se siente como un fallo. Ninguna vista de sharee
    requiere desplazamiento lateral del documento: el que aparezca es
    un error de maquetacion, y asi se nota en vez de deslizarse.
    ------------------------------------------------------------ */
@@ -442,7 +442,7 @@ html, body{ overflow-x:clip; }
    En Grid y en Flex, un hijo NO se encoge por debajo de su
    `min-content` salvo que se le diga. Un `1fr` es en realidad
    `minmax(auto,1fr)`, y ese `auto` es el suelo. El campo de la
-   portada («identity.gg/» + el input + «Crear») mide unos 394 px
+   portada («sharee.fun/» + el input + «Crear») mide unos 394 px
    juntos, asi que la columna se plantaba en 394 y arrastraba consigo
    el titulo, el parrafo y el resto.
 

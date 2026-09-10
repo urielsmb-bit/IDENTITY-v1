@@ -52,7 +52,7 @@ export default function ProbarPlantillaPage() {
     void cargar();
   }, [cargar]);
 
-  /* Mientras se prueba, la pagina es el perfil: la barra de IDENTITY
+  /* Mientras se prueba, la pagina es el perfil: la barra de sharee
      arriba rompe la ilusion de tenerlo puesto, que es justo lo que hay
      que ver. Se quita al entrar y se repone al salir. */
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function ProbarPlantillaPage() {
     return (
       <div className="wrap probar__esperando">
         <p>Esta plantilla ya no está disponible.</p>
-        <Link className="btn btn--primary" to="/templates">
+        <Link className="btn btn--primary" to="/plantillas">
           Ver las demás
         </Link>
       </div>
@@ -112,7 +112,7 @@ export default function ProbarPlantillaPage() {
           </span>
         </div>
         <div className="probar__acc">
-          <button className="btn btn--quiet btn--sm" onClick={() => navigate('/templates')}>
+          <button className="btn btn--quiet btn--sm" onClick={() => navigate('/plantillas')}>
             Salir
           </button>
           <button className="btn btn--primary btn--sm" onClick={usar}>

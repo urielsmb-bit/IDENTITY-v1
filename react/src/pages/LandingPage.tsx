@@ -11,7 +11,7 @@ import * as backend from '@/lib/backend';
 import { hasBackend } from '@/lib/supabase';
 
 /**
- * Lo que hace IDENTITY. Todo esto existe y funciona hoy: no hay una sola
+ * Lo que hace sharee. Todo esto existe y funciona hoy: no hay una sola
  * linea aqui prometiendo algo sin construir.
  *
  * El texto va corto a proposito —dos lineas— porque en una rejilla de
@@ -98,7 +98,7 @@ const RASGOS = [
  *
  * La referencia que se pidio pone la cifra en el titular («mas de
  * 2.270.000 personas usan...»). Aqui no: con cuatro perfiles, «mas de 4
- * personas usan IDENTITY» hunde la pagina en vez de levantarla. El
+ * personas usan sharee» hunde la pagina en vez de levantarla. El
  * numero vive en su tarjeta, que se lee bien hoy y mejor cuando crezca.
  */
 const CIFRAS_VISIBLES = [
@@ -255,7 +255,7 @@ const INITIAL_DEMO: Profile = {
   ],
   projects: [
     {
-      title: 'IDENTITY Web',
+      title: 'sharee Web',
       desc: 'Plataforma de perfiles web personalizables y modernos',
       url: '#',
       tag: 'React / TS',
@@ -382,7 +382,7 @@ export default function LandingPage() {
           </p>
 
           <form className="claim" id="claimForm" onSubmit={handleClaimSubmit}>
-            <span className="claim__pre">identity.gg/</span>
+            <span className="claim__pre">sharee.fun/</span>
             <input
               type="text"
               placeholder="tunombre"
@@ -449,7 +449,7 @@ export default function LandingPage() {
               hasta las cifras ya no tiene el de arriba a la vista, y
               hacerle subir a buscarlo es la forma mas tonta de perderlo. */}
           <form className="claim cifras__claim" onSubmit={handleClaimSubmit}>
-            <span className="claim__pre">identity.gg/</span>
+            <span className="claim__pre">sharee.fun/</span>
             <input
               type="text"
               placeholder="tunombre"
@@ -467,7 +467,7 @@ export default function LandingPage() {
         </section>
       )}
 
-      {/* ---- Lo que hace IDENTITY. Todo lo de aqui existe y funciona hoy:
+      {/* ---- Lo que hace sharee. Todo lo de aqui existe y funciona hoy:
               no hay una sola linea prometiendo algo sin construir. */}
       <section className="qhace wrap">
         <header className="sec__cab">
@@ -530,7 +530,7 @@ export default function LandingPage() {
         <details className="faq__i">
           <summary>¿Puedo usar mi propio dominio?</summary>
           <p>
-            Todavía no. Tu perfil vive en una dirección de IDENTITY, y ese enlace
+            Todavía no. Tu perfil vive en una dirección de sharee, y ese enlace
             no cambia mientras conserves tu nombre de usuario.
           </p>
         </details>
@@ -572,7 +572,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="foot">
-        <span>IDENTITY</span>
+        <span>sharee</span>
         <Link to="/top">Ranking</Link>
         <Link to="/pricing">Precios</Link>
         <Link to="/terminos">Términos</Link>

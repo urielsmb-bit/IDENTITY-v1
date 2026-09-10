@@ -1,6 +1,6 @@
 {
-  "name": "IDENTITY",
-  "short_name": "IDENTITY",
+  "name": "sharee",
+  "short_name": "sharee",
   "description": "Crea un perfil que se sienta como tú.",
   "lang": "es",
   "start_url": "/",

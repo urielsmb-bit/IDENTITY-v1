@@ -2,9 +2,9 @@ import { useLocation, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
 const DOCS: Record<string, { file: string; title: string }> = {
-  '/terminos': { file: 'IDENTITY_TERMINOS.md', title: 'Términos del servicio' },
-  '/privacidad': { file: 'IDENTITY_PRIVACIDAD.md', title: 'Política de privacidad' },
-  '/copyright': { file: 'IDENTITY_COPYRIGHT.md', title: 'Derechos de autor y DMCA' },
+  '/terminos': { file: 'sharee_TERMINOS.md', title: 'Términos del servicio' },
+  '/privacidad': { file: 'sharee_PRIVACIDAD.md', title: 'Política de privacidad' },
+  '/copyright': { file: 'sharee_COPYRIGHT.md', title: 'Derechos de autor y DMCA' },
 };
 
 function esc(s: string) {

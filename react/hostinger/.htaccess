@@ -1,5 +1,5 @@
 # ============================================================
-# IDENTITY · Apache/LiteSpeed (Hostinger)
+# sharee · Apache/LiteSpeed (Hostinger)
 #
 # Traduce lo que en Vercel hacia `vercel.json`: el encaminamiento de una
 # sola pagina, la pieza que pone las etiquetas de cada perfil, y las
@@ -15,16 +15,32 @@ DirectoryIndex index.html
   RewriteEngine On
   RewriteBase /
 
-  # ---- 1 · el perfil pasa por PHP ----------------------------------
-  # Antes que nada, porque es lo unico que NO puede resolver el navegador:
-  # la tarjeta de vista previa la lee un robot que no ejecuta JavaScript.
-  # `perfil.php` devuelve el mismo index.html con las etiquetas puestas.
+  # ---- 1 · la direccion vieja, redirigida ---------------------------
+  # `/u/<usuario>` fue la forma anterior. Se redirige con un 301 en el
+  # SERVIDOR y no solo en el navegador: un robot que lea la tarjeta no
+  # ejecuta JavaScript, asi que una redireccion hecha en React no la ve.
+  RewriteRule ^u/([A-Za-z0-9_.-]{1,32})/?$ /$1 [R=301,L]
+
+  # ---- 2 · el perfil pasa por PHP ----------------------------------
+  # Un solo segmento que no sea una ruta de la aplicacion ni un fichero de
+  # verdad es un nombre de usuario. Es lo unico que NO puede resolver el
+  # navegador: la tarjeta de vista previa la lee un robot que no ejecuta
+  # JavaScript, y `perfil.php` le devuelve el index.html con las etiquetas
+  # ya puestas.
+  #
+  # La lista de rutas va aqui Y en la tabla `nombres_reservados` de la base:
+  # aqui decide como se sirve una direccion, y alli impide que alguien se
+  # registre con ese nombre y se quede sin perfil accesible. Si se añade una
+  # ruta, se añade en los dos sitios.
   #
   # `[L]` y no `[R]`: se sirve aqui mismo. Una redireccion cambiaria la
   # direccion que ve quien comparte el enlace.
-  RewriteRule ^u/([A-Za-z0-9_.-]{1,32})/?$ perfil.php?u=$1 [L,QSA]
+  RewriteCond %{REQUEST_URI} !^/(dashboard|entrar|top|analytics|plantillas|templates|probar|pricing|terminos|privacidad|copyright|assets|fuentes|api)(/|$)
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^([A-Za-z0-9_.-]{1,32})/?$ perfil.php?u=$1 [L,QSA]
 
-  # ---- 2 · el resto, a la aplicacion -------------------------------
+  # ---- 3 · el resto, a la aplicacion -------------------------------
   # Todo lo que no sea un fichero de verdad lo pinta React. Sin esto,
   # entrar directo a /top o recargar dentro de /dashboard da 404: esas
   # rutas no existen en el disco, existen en el navegador.
@@ -33,7 +49,7 @@ DirectoryIndex index.html
   RewriteRule . index.html [L]
 </IfModule>
 
-# ---- 3 · las cabeceras de seguridad -------------------------------
+# ---- 4 · las cabeceras de seguridad -------------------------------
 # Las mismas de `react/vercel.json`, palabra por palabra. La CSP es la que
 # decide que se puede incrustar y a donde se puede llamar: si se queda
 # corta, deja de sonar la musica o de verse el fondo de video; si se pasa,
@@ -59,12 +75,12 @@ DirectoryIndex index.html
   </FilesMatch>
 </IfModule>
 
-# ---- 4 · comprimir ------------------------------------------------
+# ---- 5 · comprimir ------------------------------------------------
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/css text/plain application/javascript application/json image/svg+xml
 </IfModule>
 
-# ---- 5 · la configuracion no se sirve ------------------------------
+# ---- 6 · la configuracion no se sirve ------------------------------
 # `config.php` lleva la clave anonima —la misma que ya va dentro del
 # JavaScript, o sea que no es un secreto— pero servir un `.php` como texto
 # por un fallo de configuracion es la clase de accidente que conviene

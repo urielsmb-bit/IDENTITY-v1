@@ -1,4 +1,4 @@
-# Subir IDENTITY a Hostinger
+# Subir sharee a Hostinger
 
 Hostinger Premium es hosting compartido: sirve ficheros y ejecuta PHP, pero
 no Node. La aplicación es un `dist/` estático y todo el backend vive en
@@ -8,7 +8,7 @@ carpeta.
 ## La pieza
 
 `api/perfil.ts` es una función que en Vercel se pone delante de
-`/u/<usuario>` y devuelve el HTML con las etiquetas `og:` ya puestas. No es
+`/<usuario>` y devuelve el HTML con las etiquetas `og:` ya puestas. No es
 un detalle de posicionamiento: **el producto es el enlace**. Cuando alguien
 pega su perfil en Discord, en WhatsApp o en Telegram, la tarjeta de vista
 previa la arma un robot que **no ejecuta JavaScript** — lee el HTML tal como
@@ -84,11 +84,12 @@ Cuatro pruebas, en este orden. Las cuatro fallan de formas distintas y las
 cuatro son silenciosas:
 
 1. **La portada carga.** Si no, es que `index.html` no está en la raíz.
-2. **Entra a `TU-DOMINIO/u/shark` y recarga.** Si sale 404, falta el
-   `.htaccess`.
+2. **Entra a `TU-DOMINIO/shark` y recarga.** Si sale 404, falta el
+   `.htaccess`. Prueba tambien `TU-DOMINIO/u/shark`: debe llevarte a
+   `TU-DOMINIO/shark` — esa es la direccion vieja, redirigida.
 3. **La tarjeta.** Pega la dirección de un perfil en el validador de Meta
    (`developers.facebook.com/tools/debug`) o en un chat de Discord: tiene que
-   salir el nombre y la foto. Si sale «IDENTITY — Tu identidad, en línea», es
+   salir el nombre y la foto. Si sale «sharee — Tu identidad, en línea», es
    que `perfil.php` no se está ejecutando; si sale el nombre pero sin foto,
    es que ese perfil no tiene avatar.
 4. **Inicia sesión.** Si te devuelve a la portada sin sesión, es el punto 3b.

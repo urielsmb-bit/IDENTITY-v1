@@ -1,5 +1,5 @@
 /* ============================================================
-   IDENTITY — paneles: descubrir, ranking, analytics, IA, precios
+   sharee — paneles: descubrir, ranking, analytics, IA, precios
    ============================================================ */
 
 .page{
@@ -1307,7 +1307,7 @@ a.tpl__a:hover{ color:var(--text-secondary); }
 }
 .probar__acc{ display:flex; gap:6px; margin-left:auto; flex:none; }
 
-/* Mientras se prueba, la pagina ES el perfil: la barra de IDENTITY
+/* Mientras se prueba, la pagina ES el perfil: la barra de sharee
    arriba rompe la ilusion de tenerlo puesto. */
 body.probando .nav{ display:none; }
 body.probando .view{ padding-top:0; }

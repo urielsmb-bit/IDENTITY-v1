@@ -441,7 +441,7 @@ export function AjustesCuenta({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `identity-${profile.username || 'perfil'}.json`;
+    a.download = `sharee-${profile.username || 'perfil'}.json`;
     a.click();
     URL.revokeObjectURL(url);
     toast('Perfil descargado en JSON');
@@ -509,7 +509,7 @@ export function AjustesCuenta({
             {cambiaNombre && (
               <p className="f__d">
                 Cambia la dirección de tu perfil: pasaría a ser{' '}
-                <b>/u/{b.username || '…'}</b>. Los enlaces viejos dejan de
+                <b>/{b.username || '…'}</b>. Los enlaces viejos dejan de
                 funcionar.
               </p>
             )}
@@ -677,7 +677,7 @@ export function AjustesCuenta({
       <Bloque
         icono={ICO.enchufe}
         titulo="Cuentas conectadas"
-        desc="Servicios enlazados a tu cuenta de IDENTITY."
+        desc="Servicios enlazados a tu cuenta de sharee."
       >
         {!conCuenta ? (
           <p className="f__d" style={{ marginTop: 0 }}>
@@ -911,7 +911,7 @@ export function AjustesCuenta({
           <>
             <ul className="acc__lista">
               <li>
-                Tu perfil y su dirección <b>/u/{profile.username}</b>
+                Tu perfil y su dirección <b>/{profile.username}</b>
               </li>
               <li>El avatar y las imágenes que hayas subido</li>
               <li>Las visitas y las valoraciones recibidas</li>

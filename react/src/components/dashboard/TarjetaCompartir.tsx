@@ -32,7 +32,7 @@ export function TarjetaCompartir({ profile }: { profile: Profile }) {
 
   /* El dominio real cuando lo hay. En local sale `localhost`, que es
      justo lo que se vería si compartieras desde aquí. */
-  const host = typeof window !== 'undefined' ? window.location.host : 'identity';
+  const host = typeof window !== 'undefined' ? window.location.host : 'sharee';
 
   return (
     <div>

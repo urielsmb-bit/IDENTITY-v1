@@ -376,7 +376,7 @@ export default function TemplatesPage() {
                         {p.nombre}
                       </h2>
                       {p.autor ? (
-                        <Link className="tpl__a" to={`/u/${p.autor}`}>
+                        <Link className="tpl__a" to={`/${p.autor}`}>
                           @{p.autor}
                         </Link>
                       ) : (

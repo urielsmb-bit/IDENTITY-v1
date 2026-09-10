@@ -1,7 +1,7 @@
 /**
  * Las etiquetas de un perfil, puestas en el servidor.
  *
- * IDENTITY es una sola pagina que se rellena en el navegador. Eso significa
+ * sharee es una sola pagina que se rellena en el navegador. Eso significa
  * que lo que sale por el cable es SIEMPRE el mismo cascaron de 1.4 kB, con
  * el mismo titulo para todo el mundo y sin una sola etiqueta `og:`.
  *
@@ -10,7 +10,7 @@
  * Twitter o en Telegram, lo que decide si lo abren es la tarjeta de vista
  * previa — y esa tarjeta la arma un robot que NO ejecuta JavaScript. Lee el
  * HTML tal como llega y se va. Con el cascaron a secas, todos los perfiles
- * de IDENTITY se veian iguales: sin nombre, sin foto, sin nada.
+ * de sharee se veian iguales: sin nombre, sin foto, sin nada.
  *
  * Esto se pone delante de `/u/<usuario>`, pregunta a la vista publica —la
  * misma que lee el navegador, con las mismas politicas— y devuelve el mismo
@@ -43,7 +43,7 @@ const ESCAPES: Record<string, string> = {
  * Escapar aqui no es higiene, es la diferencia entre una etiqueta y un
  * agujero. El nombre y la biografia los escribe cualquiera; metidos en un
  * atributo sin escapar, un `">` cierra la etiqueta y lo que venga detras se
- * ejecuta en el dominio de IDENTITY para todo el que abra ese perfil.
+ * ejecuta en el dominio de sharee para todo el que abra ese perfil.
  */
 function esc(v: unknown): string {
   return String(v ?? '').replace(/[&<>"']/g, (c) => ESCAPES[c] as string);
@@ -177,7 +177,7 @@ export default async function handler(req: Request): Promise<Response> {
   const descripcion = descripcionTarjeta(datos);
   const imagen = imagenTarjeta(ap.avatarUrl);
 
-  const enlace = `${origen}/u/${usuario}`;
+  const enlace = `${origen}/${usuario}`;
 
   const etiquetas = [
     `<title>${esc(titulo)}</title>`,
@@ -238,7 +238,7 @@ export default async function handler(req: Request): Promise<Response> {
      Y eso llego a pasar. El cascaron no tenia etiquetas `og:` cuando esto
      se escribio; se le pusieron unas por defecto despues —para que la
      portada tambien tuviera tarjeta— y desde entonces cada perfil salia
-     con DOS `og:title`: el suyo y «IDENTITY — Tu identidad, en linea».
+     con DOS `og:title`: el suyo y «sharee — Tu identidad, en linea».
      Por eso ahora se barren todas las `og:` y `twitter:` en vez de sólo
      las dos que habia el primer dia. */
   const salida = html

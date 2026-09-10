@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { supabase, hasBackend } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 
-/** Los proveedores que IDENTITY ofrece enlazar a una cuenta ya abierta. */
+/** Los proveedores que sharee ofrece enlazar a una cuenta ya abierta. */
 export type ProveedorEnlazable = 'discord' | 'google' | 'spotify' | 'github';
 
 /**
