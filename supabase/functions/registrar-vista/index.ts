@@ -1,5 +1,5 @@
 // ============================================================
-// IDENTITY · función de borde · registrar una visita
+// sharee · función de borde · registrar una visita
 //
 // Existe por una razón: la IP de quien visita solo la ve el
 // servidor. Si el contador lo llevara el navegador, subir en

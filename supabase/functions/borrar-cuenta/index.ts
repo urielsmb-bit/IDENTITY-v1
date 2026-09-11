@@ -1,5 +1,5 @@
 // ============================================================
-// IDENTITY · función de borde · borrar la cuenta
+// sharee · función de borde · borrar la cuenta
 //
 // La política de privacidad promete: "Puedes borrar tu cuenta, y
 // con ella se va todo". Esa promesa no se podía cumplir: desde el

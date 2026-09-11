@@ -1,5 +1,5 @@
 // ============================================================
-// IDENTITY · función de borde · la foto del estado de Discord
+// sharee · función de borde · la foto del estado de Discord
 //
 // Discord no publica la presencia por su API REST: no existe el
 // endpoint, ni siquiera para uno mismo con su propio token. Solo la
@@ -387,7 +387,7 @@ function tomarFoto(
           d: {
             token,
             intents: INTENTS,
-            properties: { os: 'linux', browser: 'identity', device: 'identity' },
+            properties: { os: 'linux', browser: 'sharee', device: 'sharee' },
           },
         }));
         return;

@@ -14,7 +14,7 @@ import { tituloTarjeta } from '@/lib/tarjeta';
 export default function ProfilePage() {
   const { username } = useParams<{ username: string }>();
   const cleanUsername = username?.toLowerCase().trim();
-  const { profile, isLoading, error, refetch } = useProfile(cleanUsername);
+  const { profile, esperando, sinRed, error, refetch } = useProfile(cleanUsername);
   /* «Este perfil es mío» pide las dos cosas.
      `mineName` vive en el navegador y sólo lo escribe quien ha entrado de
      verdad — pero al SALIR se borra y al CADUCAR la sesión no. Sin mirar
@@ -45,7 +45,7 @@ export default function ProfilePage() {
           title: profile.title,
           bio: profile.bio,
         })
-      : isLoading
+      : esperando
         ? null
         : `@${cleanUsername ?? ''} · sharee`,
   );
@@ -76,7 +76,10 @@ export default function ProfilePage() {
     }
   };
 
-  if (isLoading) {
+  /* Se espera solo mientras se esta preguntando de verdad. Si la consulta
+     quedo EN PAUSA por falta de red, esperar seria esperar a nada: eso va
+     por el aviso de abajo, que al menos dice que pasa. */
+  if (esperando && !sinRed) {
     return <div className="cargando" aria-busy="true" />;
   }
 
@@ -85,14 +88,18 @@ export default function ProfilePage() {
      o si a alguien se le iba la conexion, su propia pagina le decia «este
      perfil no existe» — y a quien vive de repartir ese enlace, eso le
      dice que se ha quedado sin pagina. Se distinguen porque son cosas
-     distintas y porque una de las dos se arregla volviendo a probar. */
-  if (!profile && error) {
+     distintas y porque una de las dos se arregla volviendo a probar.
+
+     El 404 de abajo se reserva para el unico caso en que se puede afirmar:
+     el servidor contesto y no hay nadie con ese nombre. */
+  if (!profile && (error || sinRed)) {
     return (
       <section className="pf-404" style={{ textAlign: 'center', padding: '120px 20px' }}>
         <h1 style={{ fontSize: 'var(--t6)', marginBottom: '16px' }}>No se pudo cargar</h1>
         <p style={{ fontSize: 'var(--t4)', color: 'var(--text-muted, #888)', marginBottom: '32px' }}>
-          El perfil <strong>@{cleanUsername}</strong> existe o no —eso no lo sabemos ahora
-          mismo—, pero no hemos podido preguntarlo. Suele ser la conexión.
+          {sinRed
+            ? 'Este aparato no tiene conexión ahora mismo. En cuanto vuelva, se carga solo.'
+            : 'No hemos podido preguntar por este perfil. Suele ser la conexión.'}
         </p>
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button type="button" className="btn btn--primary" onClick={() => void refetch()}>

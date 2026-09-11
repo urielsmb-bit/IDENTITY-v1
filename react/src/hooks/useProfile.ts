@@ -34,7 +34,24 @@ export function useProfile(username: string | undefined) {
 
   return {
     profile: query.data ?? localProfile ?? null,
-    isLoading: query.isLoading,
+    /**
+     * Todavía no hay respuesta.
+     *
+     * Es `isPending` y no `isLoading`, que no son lo mismo y la diferencia
+     * se paga cara aquí. `isLoading` quiere decir «pendiente Y pidiendo
+     * ahora mismo», así que se apaga en cuanto la consulta deja de estar en
+     * el aire — incluido cuando queda EN PAUSA porque el navegador se ha
+     * quedado sin red. En esa pausa no hay perfil, no hay error y no hay
+     * carga: los tres a la vez, que es justo el hueco por el que la página
+     * se iba a «este perfil no existe». A alguien sin cobertura se le decía
+     * que su página había desaparecido.
+     *
+     * `isPending` dice lo que de verdad hace falta saber: no se sabe nada
+     * todavía.
+     */
+    esperando: query.isPending,
+    /** En pausa por falta de red: pendiente, pero sin pedir nada. */
+    sinRed: query.isPending && query.fetchStatus === 'paused',
     error: query.error,
     refetch: query.refetch,
   };

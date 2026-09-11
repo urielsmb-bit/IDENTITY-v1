@@ -1,0 +1,18 @@
+# sharee
+#
+# No habia ninguno. Y en este sitio no es un detalle: la direccion de un
+# perfil es un segmento suelto —sharee.fun/shark— asi que `/robots.txt`
+# encajaba en la regla que manda los nombres de usuario a la funcion de las
+# etiquetas, y lo que recibia un robot al pedirlo era la pagina entera en
+# HTML. La mayoria lo interpreta como «pasa, no hay reglas», pero eso es
+# suerte, no una decision.
+#
+# Los perfiles se indexan: ES el producto. Lo que no tiene nada que hacer en
+# un buscador es la parte de dentro, que ademas pide sesion y devuelve una
+# redireccion a quien no la tenga.
+
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /analytics
+Disallow: /entrar

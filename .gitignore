@@ -30,7 +30,15 @@ __pycache__/
 node_modules/
 
 .vercel
+
+# La configuracion de verdad, nunca. El EJEMPLO, siempre: es el unico sitio
+# donde pone que variables hay que definir para que esto arranque, y con
+# `.env*` a secas se estaba quedando fuera del repositorio. Quien clonara
+# esto no tenia forma de saber que necesita VITE_SUPABASE_URL, ni que sin
+# ella la aplicacion arranca en modo local en vez de fallar.
 .env*
+!.env.example
+!**/.env.example
 
 # ---- documentacion interna ------------------------------------
 # Enumeran lo que TODAVIA no esta protegido: riesgos sin cerrar,

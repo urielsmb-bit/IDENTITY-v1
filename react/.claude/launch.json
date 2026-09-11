@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "identity",
+      "name": "sharee",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
         "run",
@@ -15,7 +15,7 @@
       "port": 5199
     },
     {
-      "name": "identity-prod",
+      "name": "sharee-prod",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
         "run",

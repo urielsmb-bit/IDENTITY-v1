@@ -112,8 +112,9 @@ export default async function handler(req: Request): Promise<Response> {
     return Response.redirect(salida.toString(), 302);
   }
 
-  const respuesta = (cuerpo: string, segundos: number) =>
+  const respuesta = (cuerpo: string, segundos: number, estado = 200) =>
     new Response(cuerpo, {
+      status: estado,
       headers: {
         'content-type': 'text/html; charset=utf-8',
         /* Se guarda en el borde, no en el navegador: un perfil muy
@@ -156,7 +157,16 @@ export default async function handler(req: Request): Promise<Response> {
     );
     if (!r.ok) return respuesta(html, 60);
     const filas = (await r.json()) as Array<Record<string, unknown>>;
-    if (!filas?.[0]) return respuesta(html, 300);
+    /* Un nombre que no existe se contesta con 404, no con 200.
+       La pagina que se devuelve es la misma —el navegador pinta el cuerpo
+       de un 404 igual que el de un 200, asi que quien llegue sigue viendo
+       la pantalla de «este perfil no existe» y sus dos botones— pero un
+       buscador ya no se lleva mil paginas distintas diciendo todas que
+       estan bien. Eso es un «404 blando», y lo que consigue es que el
+       buscador desconfie tambien de los perfiles que SI existen.
+       Este camino es solo «la consulta fue bien y no hay fila»: si la
+       consulta falla, se sale antes y con 200. */
+    if (!filas?.[0]) return respuesta(html, 300, 404);
     fila = filas[0];
   } catch {
     return respuesta(html, 60);

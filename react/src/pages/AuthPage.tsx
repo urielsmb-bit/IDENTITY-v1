@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { CONFIG } from '@/config';
 import { useTitulo } from '@/hooks/useTitulo';
+import { rutaSegura } from '@/lib/utils';
 
 type Modo = 'login' | 'registro' | 'olvide';
 
@@ -27,23 +28,12 @@ const TEXTOS: Record<Modo, { t: string; d: string; enviar: string }> = {
   },
 };
 
-/**
- * A donde volver despues de entrar.
- *
- * Sale de la barra de direcciones, asi que se trata como lo que es: texto
- * que escribe cualquiera. Solo se admite una ruta de ESTA pagina —empieza
- * por una barra y no por dos— porque `//otro.sitio` es una direccion
- * absoluta disfrazada, y un «vuelve aqui» que acepta direcciones de fuera
- * es un redirector abierto con el que se montan las paginas de phishing:
- * el enlace lo firma nuestro dominio y termina en el suyo.
- *
- * El camino de Discord y Google ya lo comprobaba; el del correo no. El
- * mismo valor, filtrado en una rama y no en la otra.
- */
-function rutaSegura(v: string | null): string {
-  const s = String(v ?? '');
-  return s.startsWith('/') && !s.startsWith('//') ? s : '/dashboard';
-}
+/** Lo que pone en la pestana. No es el encabezado: ese ya dice «sharee». */
+const TITULOS_PESTANA: Record<Modo, string> = {
+  login: 'Entrar',
+  registro: 'Crear cuenta',
+  olvide: 'Recuperar contraseña',
+};
 
 /** El modo viaja en la URL: así se puede enlazar directo al registro. */
 const MODOS: Record<string, Modo> = {
@@ -98,7 +88,10 @@ export default function AuthPage() {
   const { session, user, signIn, signUp, signInWithProvider, resetPassword, signOut } = useAuth();
 
   const [modo, setModo] = useState<Modo>(MODOS[searchParams.get('modo') ?? ''] ?? 'login');
-  useTitulo(`${TEXTOS[modo].t} · sharee`);
+  /* «Entrar a sharee · sharee» decia el titulo cuando salia del encabezado
+     de la pagina, que ya lleva el nombre dentro. El de la pestana es otro
+     texto, mas corto y sin repetir la marca. */
+  useTitulo(`${TITULOS_PESTANA[modo]} · sharee`);
   const [correo, setCorreo] = useState('');
   const [clave, setClave] = useState('');
   const [verClave, setVerClave] = useState(false);

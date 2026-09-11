@@ -1,5 +1,5 @@
 // ============================================================
-// IDENTITY · función de borde · meter a alguien en el servidor
+// sharee · función de borde · meter a alguien en el servidor
 //
 // El problema que resuelve: para que se vea tu estado de Discord hace
 // falta que un bot nuestro comparta servidor contigo. Eso, hasta ahora,

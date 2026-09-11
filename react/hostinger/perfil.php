@@ -104,8 +104,9 @@ function imagenTarjeta($url): string
  * navegador a proposito: asi un cambio en el perfil se ve en minutos y no
  * cuando le caduque la copia a cada visitante.
  */
-function servir(string $cuerpo, int $segundos): void
+function servir(string $cuerpo, int $segundos, int $estado = 200): void
 {
+    http_response_code($estado);
     header('Content-Type: text/html; charset=utf-8');
     header("Cache-Control: public, max-age=0, s-maxage=$segundos, stale-while-revalidate=86400");
     echo $cuerpo;
@@ -159,9 +160,14 @@ if ($cuerpo === false || $estado !== 200) servir($html, 60);
 
 $filas = json_decode($cuerpo, true);
 if (!is_array($filas) || !isset($filas[0]) || !is_array($filas[0])) {
-    /* No existe ese perfil. Se cachea mas rato: la respuesta a «no existe»
-       no va a cambiar en el minuto siguiente. */
-    servir($html, 300);
+    /* No existe ese perfil: 404, no 200. El navegador pinta el cuerpo de un
+       404 igual, asi que quien llegue sigue viendo la pantalla de «este
+       perfil no existe»; lo que cambia es que un buscador deja de llevarse
+       mil paginas distintas diciendo todas que estan bien. Se cachea mas
+       rato: la respuesta a «no existe» no va a cambiar en el minuto
+       siguiente. Aqui solo se entra cuando la consulta FUE BIEN y no hay
+       fila; si falla, se ha salido antes con 200. */
+    servir($html, 300, 404);
 }
 $fila = $filas[0];
 $ap   = is_array($fila['apariencia'] ?? null) ? $fila['apariencia'] : [];

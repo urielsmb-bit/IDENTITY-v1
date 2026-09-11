@@ -1,10 +1,10 @@
 // ============================================================
-// IDENTITY · función de borde · subir un fondo a Vimeo
+// sharee · función de borde · subir un fondo a Vimeo
 //
 // POR QUÉ EXISTE
 //
 // Subir a Vimeo necesita un token con permiso de escritura sobre
-// LA CUENTA DE IDENTITY. Ese token no puede pisar el navegador:
+// LA CUENTA DE sharee. Ese token no puede pisar el navegador:
 // quien lo saque del bundle puede subir lo que quiera a la cuenta,
 // y también borrar lo que ya hay. Así que el token vive aquí, en
 // las variables de la función, y el navegador nunca lo ve.
@@ -24,7 +24,7 @@
 //
 // Desplegar:
 //   supabase secrets set VIMEO_TOKEN="..."
-//   supabase secrets set VIMEO_DOMINIOS="identity-v2.vercel.app"
+//   supabase secrets set VIMEO_DOMINIOS="sharee.fun"
 //   supabase functions deploy vimeo-subida
 // ============================================================
 
@@ -122,7 +122,7 @@ Deno.serve(async (req: Request) => {
     /* `view: disable` + `embed: whitelist` es lo que hace que el
        vídeo NO aparezca en vimeo.com y solo se pueda ver incrustado
        en los dominios permitidos. Sin esto, los fondos de la gente
-       serían una galería pública en la cuenta de IDENTITY.
+       serían una galería pública en la cuenta de sharee.
 
        Pero la privacidad por dominio no está en todos los planes. Si
        el plan no la admite, Vimeo responde 400 y ANTES eso dejaba la
@@ -132,7 +132,7 @@ Deno.serve(async (req: Request) => {
        ve con el enlace directo. Es un escalón menos, y se dice cuál
        se usó en vez de callarlo. */
     const nombre = `fondo-${usuario.id}-${Date.now()}`;
-    const descripcion = `Fondo de perfil subido desde IDENTITY por ${usuario.id}`;
+    const descripcion = `Fondo de perfil subido desde sharee por ${usuario.id}`;
 
     const pedir = (privacy: Record<string, unknown>) =>
       api('/me/videos', {

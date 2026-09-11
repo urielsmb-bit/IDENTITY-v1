@@ -122,6 +122,12 @@ export function useDiscord(id: string | undefined, activo = true) {
     const cliente = supabase;
 
     const traer = async () => {
+      /* En una pestaña que no se ve, no. Un perfil abierto de fondo
+         preguntaba igual una vez por minuto, para siempre: nadie estaba
+         mirando el puntito verde y cada pestaña olvidada seguia gastando
+         una consulta al minuto de la cuota del proyecto. Al volver a la
+         pestaña se pregunta enseguida, que es cuando importa. */
+      if (typeof document !== 'undefined' && document.hidden) return;
       setCargando(true);
       const { data, error: fallo } = await cliente
         .from('presencia')
@@ -206,9 +212,17 @@ export function useDiscord(id: string | undefined, activo = true) {
 
     void traer();
     const reloj = window.setInterval(traer, 60_000);
+    /* Y al volver a mirar, una lectura inmediata: mientras la pestaña
+       estuvo escondida no se pregunto nada, asi que lo que hay en pantalla
+       es de antes de irse. */
+    const alVolver = () => {
+      if (!document.hidden) void traer();
+    };
+    document.addEventListener('visibilitychange', alVolver);
     return () => {
       vivo = false;
       window.clearInterval(reloj);
+      document.removeEventListener('visibilitychange', alVolver);
     };
   }, [id, activo]);
 

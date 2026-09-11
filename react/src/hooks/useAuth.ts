@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { supabase, hasBackend } from '@/lib/supabase';
+import { rutaSegura } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
 
 /** Los proveedores que sharee ofrece enlazar a una cuenta ya abierta. */
@@ -71,16 +72,15 @@ export function useAuth() {
   /**
    * `volverA` es una ruta de esta misma app. Se concatena al origen, nunca
    * se acepta una URL entera: si no, `?volver=https://otro.sitio` convertiria
-   * el login en un redirector abierto.
+   * el login en un redirector abierto. La comprobacion esta en `rutaSegura`,
+   * en un solo sitio.
    */
   const signInWithProvider = async (
     provider: 'discord' | 'google',
     volverA = '/dashboard',
   ) => {
     const client = getClient();
-    const destino = volverA.startsWith('/') && !volverA.startsWith('//')
-      ? volverA
-      : '/dashboard';
+    const destino = rutaSegura(volverA);
     const { data, error } = await client.auth.signInWithOAuth({
       provider,
       options: {
@@ -106,9 +106,7 @@ export function useAuth() {
     scopes?: string,
   ) => {
     const client = getClient();
-    const destino = volverA.startsWith('/') && !volverA.startsWith('//')
-      ? volverA
-      : '/dashboard';
+    const destino = rutaSegura(volverA);
     const { data, error } = await client.auth.linkIdentity({
       provider: proveedor,
       options: { redirectTo: window.location.origin + destino, scopes },

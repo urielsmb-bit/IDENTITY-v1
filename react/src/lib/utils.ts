@@ -7,6 +7,28 @@ export function esc(str: any): string {
     .replace(/'/g, '&#39;');
 }
 
+/**
+ * «Vuelve aquí» después de entrar, filtrado.
+ *
+ * El destino sale de la barra de direcciones —`/entrar?volver=…`— así que
+ * es texto que escribe cualquiera. Solo vale una ruta de ESTA página: que
+ * empiece por una barra y no por dos, porque `//otro.sitio` es una
+ * dirección absoluta disfrazada de ruta.
+ *
+ * Sin esto, el enlace lo firma nuestro dominio y termina en el de otro:
+ * eso es un redirector abierto, y es con lo que se montan las páginas de
+ * phishing que parecen legítimas porque el enlace que se comparte lo es.
+ *
+ * Vive aquí porque la regla estaba escrita tres veces —en el camino del
+ * correo, en el de Discord y en el de Google— y una de las tres se había
+ * quedado sin ella. Una regla de seguridad repetida es una regla que
+ * alguien va a olvidar en la cuarta copia.
+ */
+export function rutaSegura(v: unknown, porDefecto = '/dashboard'): string {
+  const s = String(v ?? '');
+  return s.startsWith('/') && !s.startsWith('//') ? s : porDefecto;
+}
+
 export function safeMedia(u: any): string {
   const str = String(u || '');
   return /^(https?:|data:image\/|blob:|media:)/i.test(str) ? str : '';

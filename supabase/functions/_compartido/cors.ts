@@ -1,11 +1,11 @@
 // ============================================================
-// IDENTITY · CORS para las funciones de borde
+// sharee · CORS para las funciones de borde
 //
 // Las dos funciones tenían `Access-Control-Allow-Origin: '*'` como
 // valor por defecto. Con `registrar-vista` eso no es un detalle:
 //
 //   Cualquier página de internet podía hacer que sus visitantes
-//   contaran como visitas de un perfil de IDENTITY. Un <script>
+//   contaran como visitas de un perfil de sharee. Un <script>
 //   escondido en un sitio con tráfico y cada persona que pasara
 //   por allí sumaba una visita ÚNICA —única de verdad, porque son
 //   IPs distintas— al perfil que quisiera quien lo puso.
@@ -31,7 +31,7 @@
 
 /** Lista blanca de orígenes, desde la variable de entorno.
  *  Se separan por comas:
- *    ORIGENES_PERMITIDOS="https://identity.vercel.app,http://localhost:8765"
+ *    ORIGENES_PERMITIDOS="https://sharee.fun,http://localhost:8765"
  */
 function permitidos(): string[] {
   const crudo = Deno.env.get('ORIGENES_PERMITIDOS')
@@ -97,7 +97,7 @@ export function origenValido(req: Request): boolean {
 /* ============================================================
    CSRF · exigir que el cuerpo venga como JSON
 
-   La autenticacion de IDENTITY va por cabecera (Bearer + apikey),
+   La autenticacion de sharee va por cabecera (Bearer + apikey),
    no por cookie, asi que un sitio ajeno no puede firmar una
    peticion en nombre de nadie: no puede leer el localStorage de la
    victima. Hasta ahi, CSRF no aplica.
