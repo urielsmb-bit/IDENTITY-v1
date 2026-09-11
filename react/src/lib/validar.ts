@@ -380,7 +380,11 @@ function esquema(ID: any) {
     cursorImg: medio,
     cursorSize: (v: any) => numOnulo(v, 12, 96),
     cursorTrail: (v: any) => numOnulo(v, 0, 12),
-    cursorTrailFx: (v: any) => deLista(v, ids(ID?.TRAIL_FX), 'chispas'),
+    cursorTrailFx: (v: any) => deLista(v, ids(ID?.ESTELAS), 'chispas'),
+    cursorTrailColor: (v: any) => color(v, ''),
+    cursorTrailInt: (v: any) => numOnulo(v, 25, 200),
+    cursorTrailDir: (v: any) =>
+      deLista(v, ['seguimiento', 'arriba', 'abajo', 'libre'], 'seguimiento'),
     bgScale: (v: any) => numero(v, 100, 300, 100),
     sHeightPx: (v: any) => numOnulo(v, 0, 4000),
     bgType: (v: any) => deLista(v, ['none', 'color', 'gradient', 'image', 'video'], 'none'),
@@ -460,6 +464,15 @@ export function perfil(p: any, defectos: any, catalogs: Record<string, unknown>)
 
      Y despues se reescribe el booleano desde el nombre, para que los dos no
      puedan discrepar: manda `nameFx`, el otro solo le sigue. */
+  /* Las seis estelas de antes eran las mismas motas con distinta fisica y
+     han cambiado de nombre. Se traducen: quien tenga «Polvo» puesto vera
+     algo parecido, no nada. Se mira `p` y no `out` por lo mismo de siempre:
+     un id retirado ya ha caido al valor por defecto para cuando llega aqui y
+     no se distingue de una eleccion de verdad. */
+  const mudada = (ID?.ESTELAS_MUDADAS as Record<string, string> | undefined)
+    ?.[String(p.cursorTrailFx ?? '')];
+  if (mudada) out.cursorTrailFx = mudada;
+
   if (!Object.prototype.hasOwnProperty.call(p, 'nameFx')) {
     out.nameFx = out.animatedName ? 'sweep' : 'none';
   } else {

@@ -1364,18 +1364,10 @@
   background:var(--p-primary,#fff);
   clip-path:polygon(0 0, 100% 62%, 44% 66%, 30% 100%);
 }
-/* Chispa del rastro. Es una estrella de cuatro puntas, no un circulo: a este
-   tamano un punto se lee como suciedad en la pantalla y una estrella se lee
-   como brillo. */
-.cur-chispa{
-  position:fixed; top:0; left:0;
-  width:7px; height:7px; margin:-3.5px 0 0 -3.5px;
-  background:var(--p-primary,#fff);
-  clip-path:polygon(50% 0%, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0% 50%, 42% 42%);
-  pointer-events:none; z-index:9989;
-  opacity:0;
-  will-change:transform, opacity;
-}
+/* Aqui vivia `.cur-chispa`: una mota del rastro, y habia hasta ciento
+   sesenta y ocho a la vez. Ahora el rastro es UN lienzo —`.estela`, mas
+   abajo— y no hay un nodo por mota. */
+
 
 /* ============================================================
    RESPONSIVE — el móvil recorta coste visual, nunca legibilidad
@@ -2934,36 +2926,10 @@
 .pf[data-curimg="on"]:not([data-curnat="on"]),
 .pf[data-curimg="on"]:not([data-curnat="on"]) *{ cursor:none !important; }
 
-/* ---- las formas de cada estela ------------------------------
-   El movimiento lo decide el JS; aquí sólo va el aspecto. */
-.cur-chispa--puntos{
-  clip-path:none; border-radius:50%;
-  width:5px; height:5px; margin:-2.5px 0 0 -2.5px;
-}
-.cur-chispa--polvo{
-  clip-path:none; border-radius:50%;
-  width:3px; height:3px; margin:-1.5px 0 0 -1.5px;
-}
-/* Huecas, como una pompa de verdad. */
-.cur-chispa--burbujas{
-  clip-path:none; border-radius:50%;
-  width:11px; height:11px; margin:-5.5px 0 0 -5.5px;
-  background:transparent;
-  border:1.5px solid var(--p-primary,#fff);
-}
-.cur-chispa--fuego{
-  clip-path:none; border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;
-  width:7px; height:9px; margin:-4.5px 0 0 -3.5px;
-  /* El calor no es del acento: una brasa es naranja mire quien la mire. */
-  background:radial-gradient(circle at 50% 70%, #ffd8a8, #ff8c1a 45%, #ff3d00 100%);
-  filter:blur(.3px);
-}
-.cur-chispa--nieve{
-  clip-path:none; border-radius:50%;
-  width:6px; height:6px; margin:-3px 0 0 -3px;
-  background:#fff;
-  box-shadow:0 0 5px rgba(255,255,255,.7);
-}
+/* Las cinco variantes de mota del rastro viejo vivian aqui. La forma la
+   decide ahora el catalogo de `data/estelas.ts` y la dibuja el lienzo,
+   asi que no hay clase que escribir por cada una. */
+
 
 /* ---- decoración de avatar de Discord ------------------------
    El marco de Nitro se dibuja MAS GRANDE que el avatar y por encima:
@@ -3139,3 +3105,20 @@
    y su `.is-on`. Lo unico propio de esta pagina es el buscador de arriba
    y la ficha de a quien se le esta dando.
    ------------------------------------------------------------------- */
+
+/* ============================================================
+   ESTELA DEL CURSOR
+   ============================================================
+   Un lienzo, del tamaño de la ventana, por debajo de todo lo que
+   se pueda pulsar. Antes esto eran hasta 168 `<div>` y en cada
+   fotograma se le escribia a cada uno su `transform` y su
+   `opacity`: mas de trescientas escrituras de estilo por
+   fotograma, cada una obligando al navegador a recalcular estilo
+   y a componer una capa mas. En un portatil se aguanta; en un
+   telefono de hace tres anos, no. */
+.estela{
+  position:fixed;
+  inset:0;
+  z-index:9989;
+  pointer-events:none;
+}

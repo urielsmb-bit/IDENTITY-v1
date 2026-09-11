@@ -4,6 +4,7 @@ import {
   cursorDeImagen, formaNativa, aplicarForma, FORMAS_NATIVAS,
   type CursorNativo, type FormaCursor,
 } from '@/lib/cursorNativo';
+import { crearEstela, type Estela, type OpcionesEstela } from '@/lib/estela';
 
 /**
  * El cursor propio del perfil. Hay uno solo en toda la página.
@@ -24,22 +25,28 @@ import {
  * además sigue funcionando encima de los paneles del editor y aunque la
  * pestaña esté ocupada.
  *
- * El `<div>` queda para dos cosas que el sistema no sabe hacer:
+ * El `<div>` queda como RESPALDO y hace falta: si la imagen viene de otro
+ * dominio sin permiso para leerla, el lienzo se contamina y no se puede
+ * sacar el `data:` que necesita el cursor del sistema. Ahí vuelve, y
+ * funciona siempre.
  *
- *   · el GLITCH, cuyo temblor se calcula a partir de la velocidad fotograma
- *     a fotograma. Un cursor del sistema es una imagen fija;
- *   · la ESTELA. Y ahí el retraso no importa: las chispas se quedan DONDE
- *     pasaste, así que ir un fotograma por detrás es lo que tienen que
- *     hacer.
+ * ────────────────────────────────────────────────────────────────────────
+ * LA ESTELA VA APARTE
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * Son dos cosas distintas y por eso ya no cuelgan una de la otra: el puntero
+ * tiene que estar exactamente donde tu mano, y la estela tiene que quedarse
+ * DONDE PASASTE. Juntarlas obligaba a la estela a montarse y desmontarse
+ * cada vez que cambiabas el cursor, y al cursor a cargar con ciento sesenta
+ * y ocho nodos que no eran suyos.
  *
  * ────────────────────────────────────────────────────────────────────────
  * Y NO SE RECONSTRUYE AL ARRASTRAR
  * ────────────────────────────────────────────────────────────────────────
  *
- * El último efecto cambia tamaño y estela sobre lo que ya existe. Antes todo
- * colgaba de un solo efecto, así que cada paso de un deslizador desmontaba
- * el cursor entero —hasta ciento sesenta y ocho nodos de chispa borrados y
- * creados otra vez— entre dos movimientos del ratón.
+ * Los efectos de abajo cambian tamaño, color y cantidad sobre lo que ya
+ * existe. Antes todo colgaba de un solo efecto, así que cada paso de un
+ * deslizador desmontaba el cursor entero entre dos movimientos del ratón.
  */
 export function useCursor(
   type: string,
@@ -50,6 +57,12 @@ export function useCursor(
     /** El acento del perfil, ya resuelto: en un lienzo no se puede leer una
      *  variable de CSS. */
     color?: string;
+    /** Color de la estela. Sin el, el de fabrica de la estela elegida. */
+    trailColor?: string;
+    /** Tamaño y brillo de la estela, en %. */
+    trailInt?: number | null;
+    /** Hacia donde se van las motas. */
+    trailDir?: string;
     /**
      * Donde se deja ver.
      *
@@ -65,6 +78,7 @@ export function useCursor(
 ): boolean {
   const {
     img = '', size = null, trail = null, trailFx = '',
+    trailColor = '', trailInt = null, trailDir = 'seguimiento',
     color = '#ffffff', ambitoRef, raizRef,
   } = opciones;
 
@@ -107,22 +121,13 @@ export function useCursor(
     };
   }, [enabled, img, size, type, color, ambitoRef, raizRef]);
 
-  /* ── 2 · el `<div>`, para lo que el sistema no sabe hacer ── */
-  const soloEstela = nativo;
-  const hacenFalta = enabled && (
-    soloEstela
-      /* Con el puntero del sistema puesto, esto solo sigue vivo si hay
-         estela que dejar. */
-      ? (trail ?? 0) > 0
-      : (type !== 'default' || !!img)
-  );
+  /* ── 2 · el `<div>`, solo si el sistema no pudo ──────────── */
+  const hacenFalta = enabled && !nativo && (type !== 'default' || !!img);
 
   useEffect(() => {
     if (!hacenFalta) return;
-
     const c = createCursor(type, {
-      img, size, trail, trailFx, soloEstela,
-      ambito: ambitoRef ? ambitoRef.current : null,
+      img, size, ambito: ambitoRef ? ambitoRef.current : null,
     });
     vivoRef.current = c;
     return () => {
@@ -133,15 +138,50 @@ export function useCursor(
        cambia si hay algo que dibujar siquiera, y eso es montar o desmontar.
        Cambiar una imagen POR OTRA se resuelve en el efecto de abajo. */
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hacenFalta, type, !!img, soloEstela, ambitoRef]);
+  }, [hacenFalta, type, !!img, ambitoRef]);
 
-  /* ── 3 · lo que se toca con un deslizador ────────────────── */
   useEffect(() => {
     vivoRef.current?.actualizar({
-      img, size, trail, trailFx, soloEstela,
-      ambito: ambitoRef ? ambitoRef.current : null,
+      img, size, ambito: ambitoRef ? ambitoRef.current : null,
     });
-  }, [img, size, trail, trailFx, soloEstela, ambitoRef]);
+  }, [img, size, ambitoRef]);
+
+  /* ── 3 · la estela ──────────────────────────────────────────
+     Va por su cuenta y en un LIENZO, no colgando del cursor. Son dos cosas
+     distintas: el puntero tiene que estar exactamente donde tu mano, y la
+     estela tiene que quedarse donde pasaste. Juntarlas obligaba a la estela
+     a montarse y desmontarse cada vez que cambiabas el cursor, y al cursor a
+     cargar con ciento sesenta y ocho nodos que no eran suyos. */
+  const estelaRef = useRef<Estela | null>(null);
+  const hayEstela = enabled && (trail ?? 0) > 0;
+
+  const ajustes = (): OpcionesEstela => ({
+    fx: trailFx || 'chispas',
+    cantidad: trail ?? 0,
+    color: trailColor || undefined,
+    intensidad: trailInt ?? 100,
+    direccion: (trailDir as OpcionesEstela['direccion']) || 'seguimiento',
+    ambito: ambitoRef ? ambitoRef.current : null,
+  });
+
+  useEffect(() => {
+    if (!hayEstela) return;
+    const e = crearEstela(ajustes());
+    estelaRef.current = e;
+    return () => {
+      e?.destruir();
+      estelaRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hayEstela, ambitoRef]);
+
+  /* Cambiar de estela, de color o de cantidad NO vuelve a montar el lienzo:
+     se le dicen los valores nuevos y sigue. Es lo que permite arrastrar un
+     deslizador sin que cada paso tire el rastro entero. */
+  useEffect(() => {
+    estelaRef.current?.actualizar(ajustes());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trailFx, trail, trailColor, trailInt, trailDir, ambitoRef]);
 
   return nativo;
 }

@@ -2,6 +2,7 @@
    orden decide quien gana cuando dos reglas empatan en especificidad.
    Invertirlo no da error en ninguna parte: simplemente algo se ve
    distinto, y no sabrias donde mirar. */
+import { SelectorEstela } from '@/components/dashboard/SelectorEstela';
 import '@/styles/panels.css';
 import '@/styles/dashboard.css';
 import '@/styles/cuenta.css';
@@ -16,8 +17,7 @@ import { useEditorStore } from '@/stores/editorStore';
 import { useToast } from '@/hooks/useToast';
 import { ProfileView } from '@/components/profile/ProfileView';
 import {
-  SURFACES, PARTICLES, CURSORS, ENTER_FX, TRAIL_FX,
-} from '@/data/themes';
+  SURFACES, PARTICLES, CURSORS, ENTER_FX, } from '@/data/themes';
 import { NETS, NET_GROUPS, NET_ORDER } from '@/data/nets';
 import {
   Campo,
@@ -1239,28 +1239,17 @@ export default function DashboardPage() {
                 )}
 
                 <Pro bloqueado={!premium}>
-                <Deslizador
-                  label="Estela"
-                  desc="Cuántas motas deja al pasar. 0 = ninguna."
-                  min={0}
-                  max={12}
-                  value={
-                    profile.cursorTrail ??
-                    (profile.cursor === 'dot' || profile.cursor === 'blade' ? 5 : 0)
-                  }
-                  onChange={(v) => updateField('cursorTrail', v)}
-                />
-
-                {(profile.cursorTrail ?? 0) > 0 && (
-                  <Campo label="Tipo de estela">
-                    <Tarjetas
-                      opciones={TRAIL_FX}
-                    dibujos={DIBUJOS.TRAIL_FX}
-                      value={profile.cursorTrailFx || 'chispas'}
-                      onChange={(v) => updateField('cursorTrailFx', v)}
-                    />
-                  </Campo>
-                )}
+                  <SelectorEstela
+                    fx={profile.cursorTrailFx || 'chispas'}
+                    color={profile.cursorTrailColor || ''}
+                    intensidad={profile.cursorTrailInt ?? 100}
+                    cantidad={
+                      profile.cursorTrail ??
+                      (profile.cursor === 'dot' || profile.cursor === 'blade' ? 5 : 0)
+                    }
+                    direccion={profile.cursorTrailDir || 'seguimiento'}
+                    onCambio={(cambio) => update(cambio)}
+                  />
                 </Pro>
             </Overlay>
 

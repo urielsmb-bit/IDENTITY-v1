@@ -8,6 +8,7 @@ import {
 } from '@/data/themes';
 import { BASES_VALIDAS } from '@/data/plantillasBase';
 import { EFECTOS_NOMBRE, EFECTOS_MUDADOS } from '@/data/efectosNombre';
+import { ESTELAS, ESTELAS_MUDADAS } from '@/data/estelas';
 
 /**
  * Catálogos que `validar.perfil` consulta para decidir qué valores son
@@ -31,6 +32,8 @@ export const CATALOGOS = {
   BASES: BASES_VALIDAS,
   EFECTOS_NOMBRE,
   EFECTOS_MUDADOS,
+  ESTELAS,
+  ESTELAS_MUDADAS,
 };
 
 /**

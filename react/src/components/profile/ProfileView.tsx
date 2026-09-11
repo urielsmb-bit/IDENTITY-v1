@@ -222,6 +222,9 @@ export function ProfileView({
     size: p.cursorSize,
     trail: p.cursorTrail,
     trailFx: p.cursorTrailFx,
+    trailColor: p.cursorTrailColor,
+    trailInt: p.cursorTrailInt,
+    trailDir: p.cursorTrailDir,
     /* El acento, ya resuelto: el lienzo donde se dibuja la forma no puede
        leer una variable de CSS. */
     color: p.accent || '#ffffff',

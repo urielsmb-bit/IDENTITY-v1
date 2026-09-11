@@ -3508,3 +3508,86 @@
       transparent 60%),
     var(--surface-2);
 }
+
+/* ============================================================
+   SELECTOR DE ESTELA
+   ============================================================
+   Quince tarjetas, y cada una es el efecto DE VERDAD corriendo en
+   su propio lienzo: mismo motor que el perfil, con un puntero de
+   mentira que recorre un ocho tumbado.
+
+   `content-visibility` ademas del vigia del componente: el vigia
+   PARA el bucle de la estela que no se ve, y esto ademas le ahorra
+   al navegador el pintado y la composicion de la tarjeta entera.
+   Son dos cosas distintas y las dos hacen falta. */
+.est{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(108px, 1fr));
+  gap:6px;
+}
+.est__b{
+  content-visibility:auto;
+  contain-intrinsic-size:auto 96px;
+  display:grid;
+  gap:4px;
+  padding:0 0 7px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#07070b;
+  color:var(--text-secondary);
+  text-align:center;
+  cursor:pointer;
+  overflow:hidden;
+  transition:border-color .15s, background .15s;
+}
+.est__b:hover{ border-color:var(--border-strong); }
+.est__b.on{
+  border-color:var(--fx-acc, #A855F7);
+  background:#0b0912;
+}
+.est__b:focus-visible{ outline:2px solid var(--fx-acc, #A855F7); outline-offset:2px; }
+
+/* El lienzo. Fondo casi negro porque la mitad de las estelas se
+   dibujan en `lighter`: sobre un gris claro, sumar luz no se ve. */
+.est__lienzo{
+  display:block;
+  width:100%;
+  height:68px;
+  border-radius:9px 9px 0 0;
+}
+.est__n{
+  font-size:11px; font-weight:600; line-height:1.2;
+  color:var(--text-secondary);
+}
+.est__b.on .est__n{ color:var(--text-primary); }
+
+.est__pie{
+  margin:8px 0 2px;
+  font-size:11px; line-height:1.45;
+  color:var(--text-muted);
+}
+
+/* --- el color ------------------------------------------- */
+.est__cols{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+.est__col{
+  width:26px; height:26px;
+  border-radius:50%;
+  border:2px solid transparent;
+  box-shadow:0 0 0 1px var(--border) inset;
+  cursor:pointer;
+  padding:0;
+  display:grid; place-items:center;
+  font-size:12px; color:var(--text-secondary);
+}
+.est__col.on{ border-color:var(--text-primary); }
+.est__col--suyo{ background:var(--surface-3); }
+.est__col--mio{ position:relative; overflow:hidden; background:var(--surface-3); }
+.est__col--mio input{
+  position:absolute; inset:-6px;
+  width:calc(100% + 12px); height:calc(100% + 12px);
+  border:0; padding:0; cursor:pointer;
+}
+
+@media (pointer:coarse){
+  .est__col{ width:32px; height:32px; }
+}

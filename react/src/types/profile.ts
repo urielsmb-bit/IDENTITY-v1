@@ -163,6 +163,12 @@ export interface Profile {
   cursorTrail?: number | null;
   /** Que clase de estela: id de TRAIL_FX. */
   cursorTrailFx?: string;
+  /** Color de la estela. Sin el, el de fabrica de esa estela. */
+  cursorTrailColor?: string;
+  /** Tamaño y brillo de la estela, en %. */
+  cursorTrailInt?: number | null;
+  /** Hacia donde se van las motas al nacer. */
+  cursorTrailDir?: string;
   particles: string;
   font: string;
   fontDisplay: string;
