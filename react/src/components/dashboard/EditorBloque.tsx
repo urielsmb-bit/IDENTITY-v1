@@ -9,8 +9,7 @@ import {
   SOCIAL_STYLES,
 } from '@/data/themes';
 import { NETS } from '@/data/nets';
-import { getBadge } from '@/data/badges';
-import { insigniasGanadas } from '@/lib/insignias';
+import { getBadge, TOPE_INSIGNIAS } from '@/data/badges';
 import { safeUrl } from '@/lib/utils';
 import { idYouTube } from '@/lib/music';
 import { Campo, ColorRGB, Deslizador, Interruptor, Pastillas, Pro, SelectorFuente, Tarjetas } from './Controles';
@@ -51,6 +50,14 @@ interface EditorBloqueProps {
    * El resto se toca igual.
    */
   premium?: boolean;
+  /**
+   * Las insignias que de verdad tiene el perfil.
+   *
+   * Vienen de fuera porque hace falta preguntárselas al servidor, y este
+   * componente se pinta dentro de otros dos que ya las tienen. Sin ellas,
+   * el selector de «cuáles se ven» no puede enseñar las concedidas.
+   */
+  insignias?: string[];
 }
 
 const ALINEACIONES = [
@@ -136,20 +143,25 @@ function MuestraRedes({ profile }: { profile: Profile }) {
 function MuestraInsignias({
   profile,
   update,
+  insignias,
 }: {
   profile: Profile;
   update: (partial: Partial<Profile>) => void;
+  /** Las que de verdad tiene, ya pedidas al servidor. */
+  insignias: string[];
 }) {
-  /* El mismo calculo que el perfil publico. Antes esta muestra leia
-     `profile.badges`, y por eso ensenaba las que uno se habia puesto a si
-     mismo aunque el perfil ya no las pintara: dos verdades distintas para
-     la misma cosa. */
-  const insignias = insigniasGanadas({
-    creado: profile.joined,
-    vistas: profile.views,
-    nota: profile.nota,
-    numNotas: profile.numNotas,
-  });
+  /* LA LISTA LLEGA DE FUERA, y esa es la corrección.
+
+     Esto la calculaba por su cuenta con las cifras del perfil —antigüedad,
+     visitas, notas— y nada más. O sea que veía las que se calculan solas y
+     NO las que concede el equipo: con doce insignias puestas, el selector
+     decía «todavía ninguna» y no dejaba elegir nada, mientras el perfil de
+     al lado las pintaba las doce.
+
+     Es la tercera copia del mismo error. El panel de Badges y la vista
+     previa hacían lo mismo y ya se unificaron en `useInsignias`; esta se
+     quedó atrás. Ahora ninguna de las tres calcula: una pregunta y las
+     tres reciben. */
   if (insignias.length === 0) {
     return (
       <p className="muestra__vacio">
@@ -171,20 +183,39 @@ function MuestraInsignias({
     update({ badgesOff: [...n] });
   };
 
+  /* CUALES CABEN DE VERDAD.
+
+     El perfil pinta las ocho primeras encendidas y ya. Antes eso pasaba en
+     silencio: con doce insignias, cuatro no salian y no habia forma de
+     saber por que — ni cuales. Aqui se marcan las que se estan quedando
+     fuera, para que apagar una sea una decision informada: apagas la que
+     no te importa y entra la siguiente. */
+  const encendidas = insignias.filter((id) => !off.has(id));
+  const dentro = new Set(encendidas.slice(0, TOPE_INSIGNIAS));
+  const sobran = encendidas.length - dentro.size;
+
   return (
+    <>
     <div className="insg" role="group" aria-label="Insignias que se ven">
       {insignias.map((id) => {
         const b = getBadge(id);
         if (!b) return null;
         const on = !off.has(id);
+        const cabe = dentro.has(id);
         return (
           <button
             key={id}
             type="button"
-            className={`insg__it${on ? ' on' : ''}`}
+            className={`insg__it${on ? ' on' : ''}${on && !cabe ? ' no-cabe' : ''}`}
             aria-pressed={on}
             onClick={() => alternar(id)}
-            title={on ? `Ocultar ${b.label}` : `Enseñar ${b.label}`}
+            title={
+              !on
+                ? `Enseñar ${b.label}`
+                : cabe
+                  ? `Ocultar ${b.label}`
+                  : `${b.label} no cabe: el perfil enseña ${TOPE_INSIGNIAS}. Apaga alguna de arriba para que entre.`
+            }
           >
             <span className="pf-badge" data-rare={b.rare}>
               <i aria-hidden="true" dangerouslySetInnerHTML={{ __html: b.icon }} />
@@ -194,6 +225,15 @@ function MuestraInsignias({
         );
       })}
     </div>
+    {sobran > 0 && (
+      <p className="insg__tope">
+        El perfil enseña {TOPE_INSIGNIAS}. Tienes {encendidas.length} encendidas,
+        así que {sobran === 1 ? 'una se queda' : `${sobran} se quedan`} fuera —
+        {sobran === 1 ? ' la marcada' : ' las marcadas'} en gris. Apaga alguna de
+        las de arriba y entra sola.
+      </p>
+    )}
+    </>
   );
 }
 
@@ -420,6 +460,7 @@ export function EditorBloque({
   compacto,
   soloContenido,
   premium = true,
+  insignias = [],
 }: EditorBloqueProps) {
   const estilo: BlockStyle = profile.bstyle?.[def.id] ?? {};
   const ocultos = profile.blocksOff ?? [];
@@ -1025,7 +1066,9 @@ export function EditorBloque({
         return <MuestraRedes key={id} profile={profile} />;
 
       case 'listaInsignias':
-        return <MuestraInsignias key={id} profile={profile} update={update} />;
+        return (
+          <MuestraInsignias key={id} profile={profile} update={update} insignias={insignias} />
+        );
 
       case 'margen':
         return (

@@ -57,6 +57,22 @@ export interface Badge {
   meta?: MetaInsignia;
 }
 
+/**
+ * Cuántas caben en el perfil.
+ *
+ * El bloque pinta las ocho primeras y nada más. El tope existe por una
+ * razón: una fila de diecisiete iconos debajo de un nombre deja de leerse
+ * como un logro y pasa a leerse como un árbol de navidad, y además empuja
+ * hacia abajo todo lo que va después.
+ *
+ * Pero estaba escrito a pelo —`slice(0, 8)`— en mitad de `ProfileView`,
+ * sin decirlo en ninguna parte. Con doce insignias puestas, cuatro no
+ * salían y no había forma de saber por qué. Ahora el número vive aquí, lo
+ * leen los dos lados, y el selector avisa de cuáles se están quedando
+ * fuera para que elegir OCHO sea una decisión y no una sorpresa.
+ */
+export const TOPE_INSIGNIAS = 8;
+
 export const BADGES: Record<string, Badge> = {
   staff: {
     label: "Staff",

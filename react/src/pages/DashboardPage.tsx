@@ -1361,6 +1361,7 @@ export default function DashboardPage() {
                 <EditorBloque
                   compacto
                   premium={premium}
+                  insignias={insigniasGanadasDelPerfil}
                   def={defAbierto}
                   profile={profile}
                   update={update}

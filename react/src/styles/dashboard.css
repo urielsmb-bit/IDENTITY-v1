@@ -3249,3 +3249,20 @@
 .insg__it:hover{ border-color:var(--border-strong); opacity:.7; }
 .insg__it.on{ opacity:1; filter:none; border-color:var(--accent); }
 .insg__it .pf-badge{ pointer-events:none; }
+
+/* Encendida pero fuera del tope: se ve que esta elegida y que no cabe.
+   Gris y con el borde de rayas, que es como se dibuja «esto esta aqui pero
+   no cuenta». Sin esto, apagar una insignia y que apareciera otra parecia
+   cosa de magia. */
+.insg__it.no-cabe{
+  opacity:.4;
+  border-style:dashed;
+  border-color:var(--border-strong);
+}
+.insg__it.no-cabe:hover{ opacity:.62; }
+
+.insg__tope{
+  margin-top:10px;
+  font-size:var(--t1); line-height:1.5;
+  color:var(--text-muted);
+}

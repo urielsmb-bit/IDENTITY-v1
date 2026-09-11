@@ -260,6 +260,7 @@ export function Piezas({
               compacto
               soloContenido
               premium={premium}
+              insignias={insignias}
               def={b}
               profile={profile}
               update={update}

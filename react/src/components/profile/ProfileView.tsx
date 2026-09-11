@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Profile, AudioTrack, BlockStyle } from '@/types';
 import { NETS } from '@/data/nets';
-import { getBadge } from '@/data/badges';
+import { getBadge, TOPE_INSIGNIAS } from '@/data/badges';
 import { insigniasGanadas } from '@/lib/insignias';
 import { FONTS, EASING_CSS } from '@/data/themes';
 import { useParticles } from '@/hooks/useParticles';
@@ -1239,7 +1239,9 @@ export function ProfileView({
           )}
           {ver('badges') && insigniasVistas.length > 0 && (
             <div className="pf-badges" data-style={p.badgeStyle || 'plain'} {...bloque('badges')}>
-              {insigniasVistas.slice(0, 8).map((bId) => {
+              {/* El tope vive en `data/badges.ts`: lo lee esto y lo lee el
+                  selector del editor, que avisa de cuales se quedan fuera. */}
+              {insigniasVistas.slice(0, TOPE_INSIGNIAS).map((bId) => {
                 const b = getBadge(bId);
                 if (!b) return null;
                 return (
