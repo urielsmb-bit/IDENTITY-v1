@@ -222,7 +222,14 @@ export function ProfileView({
     size: p.cursorSize,
     trail: p.cursorTrail,
     trailFx: p.cursorTrailFx,
+    /* El acento, ya resuelto: el lienzo donde se dibuja la forma no puede
+       leer una variable de CSS. */
+    color: p.accent || '#ffffff',
     ambitoRef: editando ? rootRef : undefined,
+    /* La raiz del perfil, SIEMPRE. Es donde se escriben las variables del
+       puntero: en un perfil publico `.pf` es la pagina entera, y en el
+       editor es justo la previa, que es donde el cursor tiene que verse. */
+    raizRef: rootRef,
   });
 
   const music = useMusic();

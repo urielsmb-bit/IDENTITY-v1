@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { cursor as createCursor } from '@/lib/effects';
-import { ponerCursorNativo, type CursorNativo } from '@/lib/cursorNativo';
+import {
+  cursorDeImagen, formaNativa, aplicarForma, FORMAS_NATIVAS,
+  type CursorNativo, type FormaCursor,
+} from '@/lib/cursorNativo';
 
 /**
  * El cursor propio del perfil. Hay uno solo en toda la página.
  *
  * ────────────────────────────────────────────────────────────────────────
- * CON IMAGEN, EL PUNTERO ES EL DEL SISTEMA
+ * EL PUNTERO ES EL DEL SISTEMA
  * ────────────────────────────────────────────────────────────────────────
  *
  * Un `<div>` que persigue al ratón va siempre, como mínimo, un fotograma por
@@ -16,24 +19,27 @@ import { ponerCursorNativo, type CursorNativo } from '@/lib/cursorNativo';
  * escribía en el propio evento desde `pointerrawupdate`—: se arregla no
  * dibujándolo nosotros.
  *
- * Así que cuando hay imagen se usa `cursor: url(...)`, que es el puntero de
- * verdad. Retraso cero, y además sigue funcionando encima de los paneles del
- * editor y aunque la pestaña esté ocupada.
+ * Así que se dibuja una vez en un lienzo —la imagen que hayas subido, o la
+ * forma que hayas elegido— y se pone con `cursor: url(...)`. Retraso cero, y
+ * además sigue funcionando encima de los paneles del editor y aunque la
+ * pestaña esté ocupada.
  *
- * El `<div>` sigue existiendo para lo que el sistema no sabe hacer: las
- * formas que reaccionan —el aro que crece al pasar por un enlace, el temblor
- * del glitch, el halo— y la ESTELA. La estela no sufre el problema del
- * retraso porque se queda donde pasaste: ir un fotograma por detrás es
- * justamente lo que tiene que hacer.
+ * El `<div>` queda para dos cosas que el sistema no sabe hacer:
+ *
+ *   · el GLITCH, cuyo temblor se calcula a partir de la velocidad fotograma
+ *     a fotograma. Un cursor del sistema es una imagen fija;
+ *   · la ESTELA. Y ahí el retraso no importa: las chispas se quedan DONDE
+ *     pasaste, así que ir un fotograma por detrás es lo que tienen que
+ *     hacer.
  *
  * ────────────────────────────────────────────────────────────────────────
  * Y NO SE RECONSTRUYE AL ARRASTRAR
  * ────────────────────────────────────────────────────────────────────────
  *
- * El segundo efecto de abajo cambia tamaño y estela sobre lo que ya existe.
- * Antes todo colgaba de un solo efecto, así que cada paso de un deslizador
- * desmontaba el cursor entero —hasta ciento sesenta y ocho nodos de chispa
- * borrados y creados otra vez— entre dos movimientos del ratón.
+ * El último efecto cambia tamaño y estela sobre lo que ya existe. Antes todo
+ * colgaba de un solo efecto, así que cada paso de un deslizador desmontaba
+ * el cursor entero —hasta ciento sesenta y ocho nodos de chispa borrados y
+ * creados otra vez— entre dos movimientos del ratón.
  */
 export function useCursor(
   type: string,
@@ -41,6 +47,9 @@ export function useCursor(
   opciones: {
     img?: string; size?: number | null;
     trail?: number | null; trailFx?: string;
+    /** El acento del perfil, ya resuelto: en un lienzo no se puede leer una
+     *  variable de CSS. */
+    color?: string;
     /**
      * Donde se deja ver.
      *
@@ -50,9 +59,14 @@ export function useCursor(
      * referencia y no el nodo: al montar el efecto todavia no hay nodo.
      */
     ambitoRef?: RefObject<HTMLElement | null>;
+    /** La raíz del perfil: donde se escriben las variables del cursor. */
+    raizRef?: RefObject<HTMLElement | null>;
   } = {},
 ): boolean {
-  const { img = '', size = null, trail = null, trailFx = '', ambitoRef } = opciones;
+  const {
+    img = '', size = null, trail = null, trailFx = '',
+    color = '#ffffff', ambitoRef, raizRef,
+  } = opciones;
 
   /** Si el puntero del sistema se hizo cargo. */
   const [nativo, setNativo] = useState(false);
@@ -60,36 +74,47 @@ export function useCursor(
 
   /* ── 1 · el puntero del sistema ──────────────────────────── */
   useEffect(() => {
-    if (!enabled || !img) {
+    const destino = raizRef?.current ?? ambitoRef?.current;
+    /* El glitch no puede ser nativo: su temblor es por fotograma. */
+    const puede = enabled && !!destino && (!!img || FORMAS_NATIVAS.has(type));
+    if (!puede) {
       setNativo(false);
       return;
     }
+
     let vivo = true;
     let puesto: CursorNativo | null = null;
-    const destino = ambitoRef?.current ?? document.documentElement;
 
-    void ponerCursorNativo(img, size, destino).then((c) => {
-      if (!vivo) {
-        c?.quitar();
-        return;
-      }
-      puesto = c;
-      setNativo(!!c);
-    });
+    const poner = (f: FormaCursor | null) => {
+      if (!vivo || !f || !destino) return;
+      puesto = aplicarForma(destino, f);
+      setNativo(true);
+    };
+
+    if (img) {
+      /* La imagen hay que cargarla y redibujarla, así que esto es asíncrono.
+         Si el lienzo se contamina —otro dominio sin CORS— devuelve `null` y
+         se queda el `<div>` de siempre, que funciona siempre. */
+      void cursorDeImagen(img, size).then(poner);
+    } else {
+      poner(formaNativa(type, color));
+    }
 
     return () => {
       vivo = false;
       puesto?.quitar();
       setNativo(false);
     };
-  }, [enabled, img, size, ambitoRef]);
+  }, [enabled, img, size, type, color, ambitoRef, raizRef]);
 
   /* ── 2 · el `<div>`, para lo que el sistema no sabe hacer ── */
   const soloEstela = nativo;
   const hacenFalta = enabled && (
-    /* Con el puntero del sistema puesto, esto solo sigue vivo si hay estela
-       que dejar. Sin estela no hay nada que dibujar y no se monta nada. */
-    soloEstela ? (trail ?? 0) > 0 : (type !== 'default' || !!img)
+    soloEstela
+      /* Con el puntero del sistema puesto, esto solo sigue vivo si hay
+         estela que dejar. */
+      ? (trail ?? 0) > 0
+      : (type !== 'default' || !!img)
   );
 
   useEffect(() => {

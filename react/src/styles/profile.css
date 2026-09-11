@@ -1320,8 +1320,19 @@
 /* Se esconde el puntero SOLO si lo dibujamos nosotros.
    `data-curnat="on"` dice que se hizo cargo el sistema con `cursor: url()`,
    y entonces esconderlo seria quedarse sin ninguno de los dos. */
-.pf[data-cursor]:not([data-cursor="default"]):not([data-curnat="on"]){ cursor:none; }
-.pf[data-cursor]:not([data-cursor="default"]):not([data-curnat="on"]) *{ cursor:none !important; }
+.pf[data-cursor]:not([data-cursor="default"]):not([data-cursor="none"]):not([data-curnat="on"]){ cursor:none; }
+.pf[data-cursor]:not([data-cursor="default"]):not([data-cursor="none"]):not([data-curnat="on"]) *{ cursor:none !important; }
+/* EL PUNTERO DEL SISTEMA.
+   `--cur-nat` la pone `cursorNativo.ts`; aqui solo se usa. Y el aro que
+   crece al pasar por un enlace es esto y nada mas: un selector. Antes eso
+   era un `closest()` preguntandole al DOM en cada movimiento del raton. */
+.pf[data-curnat="on"],
+.pf[data-curnat="on"] *{ cursor:var(--cur-nat), auto !important; }
+.pf[data-curnat="on"] :is(a, button, .pf-link, .pf-social, .pf-badge),
+.pf[data-curnat="on"] :is(a, button, .pf-link, .pf-social, .pf-badge) *{
+  cursor:var(--cur-nat-hot, var(--cur-nat)), auto !important;
+}
+
 /* La caja del cursor cuando solo se usa para la estela: existe para llevar
    las chispas, no se ve. */
 .cur--nada{ display:none; }

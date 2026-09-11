@@ -584,7 +584,12 @@ export function cursor(
 ) {
   // Con imagen propia se dibuja aunque el tipo sea "default": la imagen ES
   // la eleccion. Sin imagen y sin tipo, no hay nada que dibujar.
-  if ((!type || type === 'default') && !opciones.img && !opciones.soloEstela) return null;
+  /* `none` cuenta como «ninguno» igual que `default`: no esta en el
+     catalogo, pero puede venir escrito en perfiles guardados antes de que el
+     saneado dejara de caer ahi. Sin esto, esos perfiles montan una caja sin
+     estilos y se quedan sin puntero. */
+  const vacio = !type || type === 'default' || type === 'none';
+  if (vacio && !opciones.img && !opciones.soloEstela) return null;
   if (reduce) return null;
   if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(hover: none)').matches) return null;
 

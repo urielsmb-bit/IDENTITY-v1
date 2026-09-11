@@ -278,7 +278,13 @@ function esquema(ID: any) {
     enterFx: (v: any) => deLista(v, ids(ID?.ENTER_FX), 'rise'),
     nameWeight: (v: any) => deLista(v, ids(ID?.NAME_WEIGHTS), ''),
     nameCase: (v: any) => deLista(v, ids(ID?.NAME_CASES), ''),
-    cursor: (v: any) => deLista(v, ids(ID?.CURSORS), 'none'),
+    /* `default`, no `none`. El catalogo es default/dot/ring/glow/blade y
+       'none' no esta en el: cualquier valor raro caia ahi, y 'none' no es
+       «ninguno», es un id que nadie reconoce. El perfil escondia el puntero
+       del sistema y dibujaba un `<div>` de clase `cur--none`, que no tiene
+       ni una regla de CSS. Resultado: perfil SIN CURSOR, y en la consola
+       nada que lo explicara. */
+    cursor: (v: any) => deLista(v, ids(ID?.CURSORS), 'default'),
     particles: (v: any) => deLista(v, ids(ID?.PARTICLES), 'none'),
     font: (v: any) => texto(v, 40),
     fontDisplay: (v: any) => texto(v, 40),
