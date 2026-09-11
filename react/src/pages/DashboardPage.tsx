@@ -18,6 +18,7 @@ import {
   Interruptor,
   Tarjetas,
   Subpanel,
+  Pro,
 } from '@/components/dashboard/Controles';
 import { SubirMedio } from '@/components/dashboard/SubirMedio';
 import { EditorBloque } from '@/components/dashboard/EditorBloque';
@@ -850,6 +851,7 @@ export default function DashboardPage() {
               <ElegirPlantilla
                 profile={profile}
                 update={update}
+                premium={premium}
                 /* Sembrar el lienzo mide el DOM de la vista previa, asi que
                    vive aqui y no dentro del selector: es lo unico de esa
                    rejilla que necesita saber que hay pintado. */
@@ -942,10 +944,15 @@ export default function DashboardPage() {
             <Overlay
               abierto={pieza === 'fondo'}
               alCerrar={cerrarPieza}
-              bloqueado={!premium}
               titulo="Fondo"
               desc="La imagen, el vídeo o el color que hay detrás de todo."
             >
+              {/* El VIDEO de fondo pide plan; la imagen y el color, no.
+                  Es lo mas caro que sirve esta pagina —un video se baja
+                  entero en cada visita— y lo mas llamativo que puede
+                  tener un perfil. La imagen cubre de sobra a quien no
+                  paga. */}
+              <Pro bloqueado={!premium}>
               <Campo
                 label="…o pegar un enlace de Vimeo"
                 valor={vimeoActivo ? `ID ${idVimeo(profile.bgValue)}` : undefined}
@@ -995,6 +1002,7 @@ export default function DashboardPage() {
                   </p>
                 )}
               </Campo>
+              </Pro>
 
               {esMedia && (
                 <Deslizador
@@ -1041,14 +1049,19 @@ export default function DashboardPage() {
                   value={profile.vignette ?? 0}
                   onChange={(v) => updateField('vignette', v)}
                 />
-                <Campo label="Partículas">
-                  <Tarjetas
-                    opciones={PARTICLES}
-                    dibujos={DIBUJOS.PARTICLES}
-                    value={profile.particles || 'none'}
-                    onChange={(v) => updateField('particles', v)}
-                  />
-                </Campo>
+                {/* Las particulas caen sobre el perfil ENTERO y se ven
+                    desde el primer segundo. De todo lo que se cobra, es
+                    lo que mas se copia de un perfil ajeno. */}
+                <Pro bloqueado={!premium}>
+                  <Campo label="Partículas">
+                    <Tarjetas
+                      opciones={PARTICLES}
+                      dibujos={DIBUJOS.PARTICLES}
+                      value={profile.particles || 'none'}
+                      onChange={(v) => updateField('particles', v)}
+                    />
+                  </Campo>
+                </Pro>
               </section>
             </Overlay>
 
@@ -1060,7 +1073,6 @@ export default function DashboardPage() {
             <Overlay
               abierto={pieza === 'cursor'}
               alCerrar={cerrarPieza}
-              bloqueado={!premium}
               titulo="Cursor"
               desc="El puntero con el que se recorre tu perfil."
             >
@@ -1073,15 +1085,22 @@ export default function DashboardPage() {
                   />
                 </Campo>
 
-                {/* Con imagen propia manda la imagen, sea cual sea el tipo. */}
-                <SubirMedio
-                  titulo="Imagen del cursor"
-                  destino="cursor"
-                  lado={128}
-                  maxAnimadoMB={1}
-                  value={profile.cursorImg || ''}
-                  onChange={(r) => updateField('cursorImg', r.url)}
-                />
+                {/* Los cinco nuestros van gratis: sin ellos, un perfil
+                    que no paga se queda sin elegir puntero, que es lo
+                    contrario de lo que se busca. Lo que se cobra es
+                    SUBIR EL TUYO —ocupa nuestro almacenamiento y se ve
+                    en cada movimiento del raton— y la estela, que es lo
+                    mismo en movimiento. */}
+                <Pro bloqueado={!premium}>
+                  <SubirMedio
+                    titulo="Imagen del cursor"
+                    destino="cursor"
+                    lado={128}
+                    maxAnimadoMB={1}
+                    value={profile.cursorImg || ''}
+                    onChange={(r) => updateField('cursorImg', r.url)}
+                  />
+                </Pro>
 
                 {profile.cursorImg && (
                   <Deslizador
@@ -1095,6 +1114,7 @@ export default function DashboardPage() {
                   />
                 )}
 
+                <Pro bloqueado={!premium}>
                 <Deslizador
                   label="Estela"
                   desc="Cuántas motas deja al pasar. 0 = ninguna."
@@ -1117,12 +1137,12 @@ export default function DashboardPage() {
                     />
                   </Campo>
                 )}
+                </Pro>
             </Overlay>
 
             <Overlay
               abierto={pieza === 'tarjeta'}
               alCerrar={cerrarPieza}
-              bloqueado={!premium}
               titulo="La tarjeta"
               desc="La caja que envuelve a todas las piezas, y cómo se mueve el perfil."
             >
@@ -1179,7 +1199,12 @@ export default function DashboardPage() {
                     </>
                   )}
 
+                  {/* El desenfoque del cristal y el halo de abajo siguen la
+                      misma regla que en cada bloque: la caja es gratis —tipo,
+                      color, borde, ancho, esquinas— y lo que BRILLA, no. Sin
+                      esto, la tarjeta contradecia a sus propias piezas. */}
                   {profile.surface === 'glass' && (
+                    <Pro bloqueado={!premium}>
                     <Deslizador
                       label="Desenfoque"
                       sufijo="px"
@@ -1188,16 +1213,19 @@ export default function DashboardPage() {
                       value={profile.sBlur ?? 22}
                       onChange={(v) => updateField('sBlur', v)}
                     />
+                    </Pro>
                   )}
 
                   {profile.surface === 'glow' && (
+                    <Pro bloqueado={!premium}>
                     <Deslizador
-                      label="Intensidad del halo"
+                      label="Intensidad del resplandor"
                       min={0}
                       max={100}
                       value={profile.sGlow ?? 40}
                       onChange={(v) => updateField('sGlow', v)}
                     />
+                    </Pro>
                   )}
                 </Subpanel>
               )}
@@ -1239,8 +1267,13 @@ export default function DashboardPage() {
 
               <section className="grupo" data-guia="movimiento">
                 <h3 className="grupo__t">Movimiento</h3>
-                {/* El mismo panel que tiene cada pieza, aplicado a la
-                    superficie entera. Un solo componente para los dos. */}
+                {/* LA animacion de entrada. Antes era una de doce: cada
+                    bloque tenia la suya, con su tipo, su direccion y su
+                    velocidad, y el resultado eran once piezas entrando
+                    cada una por su lado. Ahora hay UNA, es del perfil
+                    entero, y trae el modo «Escalonado» para lo que
+                    aquello intentaba hacer y hacia mal. */}
+                <Pro bloqueado={!premium}>
                 <PanelAnimacion
                   destino=".pf-stack"
                   catalogo={ENTER_FX}
@@ -1271,6 +1304,7 @@ export default function DashboardPage() {
                   on={!!profile.tilt}
                   onChange={(v) => updateField('tilt', v)}
                 />
+                </Pro>
                 <div data-guia="portada">
                   <Interruptor
                     label="Pantalla de entrada"
@@ -1306,13 +1340,13 @@ export default function DashboardPage() {
             <Overlay
               abierto={!!defAbierto}
               alCerrar={cerrarPieza}
-              bloqueado={!premium}
               titulo={defAbierto?.nombre ?? ''}
               desc={defAbierto?.descripcion}
             >
               {defAbierto && (
                 <EditorBloque
                   compacto
+                  premium={premium}
                   def={defAbierto}
                   profile={profile}
                   update={update}
@@ -1628,6 +1662,7 @@ export default function DashboardPage() {
               <LienzoBloques
                 profile={profile}
                 update={update}
+                premium={premium}
                 vista={viewport}
                 seleccionado={pieza}
                 onAbrirBloque={(id) => {

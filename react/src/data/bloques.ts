@@ -34,8 +34,6 @@ export type ControlId =
   | 'radio'
   | 'ancho'
   | 'centrar'
-  | 'opacidad'
-  | 'anim'
   | 'borde'
   | 'desenfoque'
   | 'brillo'
@@ -57,7 +55,6 @@ export type ControlId =
   | 'bordeAvatar'
   | 'brilloAvatar'
   | 'ubicacion'
-  | 'animacion'
   | 'heredarCaja'
   | 'discordId'
   | 'marcoDiscord';
@@ -90,18 +87,24 @@ const CAJA: GrupoControles = {
   ],
 };
 
-const RESPLANDOR: GrupoControles = { titulo: 'Halo / Resplandor', controles: ['halo'] };
+const RESPLANDOR: GrupoControles = { titulo: 'Resplandor', controles: ['halo'] };
 const COMPOSICION: GrupoControles = {
   titulo: 'Posición',
   controles: ['alinear', 'margen'],
 };
 
-/** El panel de entrada. Va aparte porque es el único control que trae su
- *  propia vista previa y su botón de repetir. */
-const ENTRADA: GrupoControles = {
-  titulo: 'Animación de entrada',
-  controles: ['animacion'],
-};
+/* LA ANIMACION DE ENTRADA YA NO VIVE AQUI.
+   La tenian los once bloques, cada uno con su tipo, su direccion, su
+   duracion, su retraso, su intensidad y su curva: ocho mandos repetidos
+   doce veces, noventa y seis en total, el 39% de todo el editor para una
+   sola funcion.
+   Y ademas daba un mal resultado: once piezas entrando cada una desde un
+   lado distinto a una velocidad distinta no es una animacion, es un
+   desorden. Una entrada buena es coreografia — un movimiento, escalonado —
+   y eso ya existia arriba, en `enterFx` del perfil, con su modo
+   «Escalonado». Ahora es ese, uno solo, y se ajusta en «La tarjeta».
+   El campo `bstyle.anim` sigue existiendo y sigue pintandose: un perfil
+   que ya lo tuviera no cambia. Lo que se ha quitado son los mandos. */
 const TIPOGRAFIA: GrupoControles = {
   titulo: 'Tipografía',
   controles: ['fuente', 'tamano', 'caso', 'espaciado'],
@@ -171,7 +174,6 @@ export const BLOQUES: DefBloque[] = [
          tenia: se entraba a configurar el avatar y no se podia ni hacerlo
          mas grande. Son suyos y estan con lo suyo. */
       { titulo: 'Borde y resplandor', controles: ['bordeAvatar', 'brilloAvatar', 'halo'] },
-      ENTRADA,
     ],
   },
   {
@@ -180,7 +182,7 @@ export const BLOQUES: DefBloque[] = [
     descripcion: 'Cómo se muestra tu nombre en el perfil.',
     icono: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7V5h16v2"/><path d="M12 5v14"/><path d="M9 19h6"/></svg>`,
     campoTexto: 'name',
-    grupos: [conTexto(), TIPOGRAFIA, COLOR_NOMBRE, RESPLANDOR, COMPOSICION, ENTRADA],
+    grupos: [conTexto(), TIPOGRAFIA, COLOR_NOMBRE, RESPLANDOR, COMPOSICION],
   },
   {
     id: 'handle',
@@ -188,7 +190,7 @@ export const BLOQUES: DefBloque[] = [
     descripcion: 'Tu identificador único.',
     icono: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/></svg>`,
     campoTexto: 'username',
-    grupos: [conTexto(), TIPOGRAFIA, COLOR, RESPLANDOR, COMPOSICION, ENTRADA],
+    grupos: [conTexto(), TIPOGRAFIA, COLOR, RESPLANDOR, COMPOSICION],
   },
   {
     id: 'meta',
@@ -200,7 +202,7 @@ export const BLOQUES: DefBloque[] = [
        bloque y se escribia en otra seccion. */
     grupos: [
       { titulo: 'Texto', controles: ['texto', 'ubicacion', 'visible'] },
-      TIPOGRAFIA, COLOR, COMPOSICION, ENTRADA,
+      TIPOGRAFIA, COLOR, COMPOSICION,
     ],
   },
   {
@@ -208,7 +210,7 @@ export const BLOQUES: DefBloque[] = [
     nombre: 'Fecha de registro',
     descripcion: 'Desde cuándo tienes el perfil.',
     icono: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>`,
-    grupos: [soloVisible, TEXTO_FINO, COLOR, COMPOSICION, ENTRADA],
+    grupos: [soloVisible, TEXTO_FINO, COLOR, COMPOSICION],
   },
   {
     id: 'discord',
@@ -219,7 +221,6 @@ export const BLOQUES: DefBloque[] = [
       { titulo: 'Cuenta', controles: ['discordId', 'visible'] },
       CAJA,
       COMPOSICION,
-      ENTRADA,
     ],
   },
   {
@@ -228,21 +229,21 @@ export const BLOQUES: DefBloque[] = [
     descripcion: 'El párrafo que cuenta quién eres.',
     icono: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 11h16M4 16h10"/></svg>`,
     campoTexto: 'bio',
-    grupos: [conTexto(), TIPOGRAFIA, COLOR, COMPOSICION, ENTRADA],
+    grupos: [conTexto(), TIPOGRAFIA, COLOR, COMPOSICION],
   },
   {
     id: 'badges',
     nombre: 'Insignias',
     descripcion: 'Las insignias que has desbloqueado.',
     icono: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 3 8l9 14 9-14-9-6Z"/><path d="M3 8h18M9 8l3 14M15 8l-3 14"/></svg>`,
-    grupos: [LISTA_INSIGNIAS, FORMA_INSIGNIAS, CAJA, RESPLANDOR, COMPOSICION, ENTRADA],
+    grupos: [LISTA_INSIGNIAS, FORMA_INSIGNIAS, CAJA, RESPLANDOR, COMPOSICION],
   },
   {
     id: 'socials',
     nombre: 'Redes',
     descripcion: 'Los iconos de tus redes enlazadas.',
     icono: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13.5a4 4 0 0 0 5.7.3l2.6-2.6a4 4 0 0 0-5.7-5.7l-1.5 1.5"/><path d="M14 10.5a4 4 0 0 0-5.7-.3l-2.6 2.6a4 4 0 0 0 5.7 5.7l1.5-1.5"/></svg>`,
-    grupos: [LISTA_REDES, FORMA_REDES, CAJA, RESPLANDOR, COMPOSICION, ENTRADA],
+    grupos: [LISTA_REDES, FORMA_REDES, CAJA, RESPLANDOR, COMPOSICION],
   },
   {
     id: 'music',
@@ -255,7 +256,6 @@ export const BLOQUES: DefBloque[] = [
       { titulo: 'Pista', controles: ['enlaceMusica', 'portadaMusica', 'visible'] },
       CAJA,
       COMPOSICION,
-      ENTRADA,
     ],
   },
   {
@@ -263,7 +263,7 @@ export const BLOQUES: DefBloque[] = [
     nombre: 'Visitas',
     descripcion: 'El contador de visitas al perfil.',
     icono: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`,
-    grupos: [soloVisible, TEXTO_FINO, COLOR, COMPOSICION, ENTRADA],
+    grupos: [soloVisible, TEXTO_FINO, COLOR, COMPOSICION],
   },
 ];
 

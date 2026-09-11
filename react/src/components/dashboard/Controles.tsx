@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { acotarCanal, hexARgb, rgbAHex, type Rgb } from '@/lib/color';
 import { FONTS } from '@/data/themes';
+import { fuenteEsPro } from '@/data/premium';
 
 /**
  * Controles del editor.
@@ -9,6 +11,45 @@ import { FONTS } from '@/data/themes';
  * .sw-box, .chip, .col-custom). No se estilan en línea: el editor tenía cien
  * `style={{}}` sueltos y una hoja de estilos entera sin usar.
  */
+
+/** El rombo del plan. El mismo dibujo que la insignia del diamante, que es
+ *  lo que de verdad concede el plan: si se parecieran a medias, nadie ataria
+ *  una cosa con la otra. */
+const ROMBO = (
+  <svg viewBox="23 32 465 448" fill="currentColor" aria-hidden="true">
+    <path d="M396.31 32H264l84.19 112.26L396.31 32zm-280.62 0l48.12 112.26L248 32H115.69zM256 74.67L192 160h128l-64-85.33zm166.95-23.61L376.26 160H488L422.95 51.06zm-333.9 0L23 160h112.74L89.05 51.06zM146.68 192H24l222.8 288h.53L146.68 192zm218.64 0L264.67 480h.53L488 192H365.32zm-35.93 0H182.61L256 400l73.39-208z" />
+  </svg>
+);
+
+/**
+ * Un control que pide el plan.
+ *
+ * Se VE, con su nombre y su valor, y no se puede tocar. Es lo contrario de
+ * esconderlo: un ajuste que no existe no vende nada —nadie echa de menos lo
+ * que no sabe que hay— y un candado en mitad de la lista, sin decir qué hay
+ * detrás, solo molesta. Aquí se lee lo que hace, se ve apagado, y el rombo
+ * lleva a los planes.
+ *
+ * Sin plan y sin ser de pago, esto no pinta nada: devuelve el control tal
+ * cual, sin una caja de más en el árbol.
+ */
+export function Pro({ bloqueado, children }: { bloqueado: boolean; children: ReactNode }) {
+  if (!bloqueado) return <>{children}</>;
+  return (
+    <div className="pro">
+      <Link className="pro__eti" to="/pricing" title="Esto lo trae el plan">
+        <span className="pro__ic">{ROMBO}</span>
+        Premium
+      </Link>
+      {/* `fieldset disabled` apaga todo lo de dentro de una vez y ademas lo
+          saca del recorrido del teclado. Hacerlo mando a mando seria pasar
+          una prop por veinte componentes y olvidarla en el proximo. */}
+      <fieldset className="pro__campos" disabled>
+        {children}
+      </fieldset>
+    </div>
+  );
+}
 
 /** Campo con etiqueta a la izquierda y lectura del valor a la derecha. */
 export function Campo({
@@ -191,24 +232,45 @@ export function Tarjetas<T extends string>({
 export function SelectorFuente({
   value,
   onChange,
+  premium = true,
 }: {
   value: string;
   onChange: (v: string) => void;
+  /** Sin plan, las decorativas se ven y no se eligen. */
+  premium?: boolean;
 }) {
-  const opcion = (id: string, nombre: string, stack?: string) => (
-    <button
-      key={id || 'perfil'}
-      type="button"
-      className={`fnt${value === id ? ' on' : ''}`}
-      aria-pressed={value === id}
-      onClick={() => onChange(id)}
-      title={nombre}
-    >
-      <span className="fnt__m" style={stack ? { fontFamily: stack } : undefined}>
-        {nombre}
-      </span>
-    </button>
-  );
+  const opcion = (id: string, nombre: string, stack?: string) => {
+    /* Las decorativas piden plan. Se cierra la FUENTE, no la tipografia:
+       cerrar el grupo entero dejaria a un perfil gratis sin poder cambiar el
+       tamaño de su propio nombre, y eso no es una limitacion, es un fallo.
+
+       Y se enseñan con su muestra de verdad, escritas con su propia letra.
+       Una lista de nombres apagados no dice nada; ver «Death Note» escrito
+       en Death Note es el anuncio. */
+    const cerrada = !premium && fuenteEsPro(id);
+    return (
+      <button
+        key={id || 'perfil'}
+        type="button"
+        className={`fnt${value === id ? ' on' : ''}${cerrada ? ' fnt--pro' : ''}`}
+        aria-pressed={value === id}
+        aria-disabled={cerrada || undefined}
+        onClick={() => (cerrada ? undefined : onChange(id))}
+        title={cerrada ? `${nombre} — la trae el plan` : nombre}
+      >
+        <span className="fnt__m" style={stack ? { fontFamily: stack } : undefined}>
+          {nombre}
+        </span>
+        {cerrada && (
+          <span className="fnt__pro" aria-hidden="true">
+            {ROMBO}
+          </span>
+        )}
+      </button>
+    );
+  };
+
+  const deco = FONTS.filter((f) => f.grupo === 'deco');
 
   return (
     <div className="fnts" role="group" aria-label="Fuente">
@@ -219,8 +281,15 @@ export function SelectorFuente({
       <span className="fnts__g">De texto</span>
       {FONTS.filter((f) => f.grupo !== 'deco').map((f) => opcion(f.id, f.name, f.stack))}
 
-      <span className="fnts__g">Decorativas</span>
-      {FONTS.filter((f) => f.grupo === 'deco').map((f) => opcion(f.id, f.name, f.stack))}
+      <span className="fnts__g">
+        Decorativas
+        {!premium && (
+          <Link className="fnts__pro" to="/pricing">
+            {deco.length} con Premium
+          </Link>
+        )}
+      </span>
+      {deco.map((f) => opcion(f.id, f.name, f.stack))}
     </div>
   );
 }

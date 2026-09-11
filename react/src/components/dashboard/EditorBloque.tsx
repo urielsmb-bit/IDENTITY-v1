@@ -5,7 +5,6 @@ import {
   AV_POS,
   AV_SHAPES,
   BADGE_STYLES,
-  BLOCK_ANIMS,
   BLOCK_SURFACES,
   SOCIAL_STYLES,
 } from '@/data/themes';
@@ -14,9 +13,9 @@ import { getBadge } from '@/data/badges';
 import { insigniasGanadas } from '@/lib/insignias';
 import { safeUrl } from '@/lib/utils';
 import { idYouTube } from '@/lib/music';
-import { Campo, ColorRGB, Deslizador, Interruptor, Pastillas, SelectorFuente, Tarjetas } from './Controles';
+import { Campo, ColorRGB, Deslizador, Interruptor, Pastillas, Pro, SelectorFuente, Tarjetas } from './Controles';
+import { controlEsPro } from '@/data/premium';
 import { DIBUJOS } from './dibujos';
-import { PanelAnimacion } from './PanelAnimacion';
 import {
   useDiscord,
   useIdDiscordDeLaSesion,
@@ -44,6 +43,14 @@ interface EditorBloqueProps {
    * estaba. Lo demas sigue entero detras del engranaje.
    */
   soloContenido?: boolean;
+  /**
+   * Si tiene el plan.
+   *
+   * No apaga el panel entero —eso hacia que un perfil gratis no se pudiera
+   * ni centrar— sino los seis controles que `premium.ts` declara de pago.
+   * El resto se toca igual.
+   */
+  premium?: boolean;
 }
 
 const ALINEACIONES = [
@@ -412,6 +419,7 @@ export function EditorBloque({
   update,
   compacto,
   soloContenido,
+  premium = true,
 }: EditorBloqueProps) {
   const estilo: BlockStyle = profile.bstyle?.[def.id] ?? {};
   const ocultos = profile.blocksOff ?? [];
@@ -477,8 +485,15 @@ export function EditorBloque({
 
       case 'fuente':
         return (
+          /* La tipografia NO se cierra: lo que se cierra son las
+             decorativas, una a una, dentro del selector. Un perfil gratis
+             tiene diez letras y puede cambiarles el tamaño. */
           <Campo key={id} label="Fuente">
-            <SelectorFuente value={estilo.font || ''} onChange={(v) => setEstilo('font', v)} />
+            <SelectorFuente
+              value={estilo.font || ''}
+              onChange={(v) => setEstilo('font', v)}
+              premium={premium}
+            />
           </Campo>
         );
 
@@ -564,8 +579,12 @@ export function EditorBloque({
             />
             {estilo.halo && (
               <>
+                {/* «Color del halo» decia esto, «Resplandor» el interruptor
+                    de arriba y «Intensidad del resplandor» el deslizador de
+                    abajo: tres nombres para una sola cosa, en tres lineas
+                    seguidas. Se llama resplandor. */}
                 <ColorRGB
-                  label="Color del halo"
+                  label="Color del resplandor"
                   value={estilo.halo}
                   porDefecto={profile.accent || '#A855F7'}
                   onChange={(hex) => setEstilo('halo', hex)}
@@ -595,18 +614,6 @@ export function EditorBloque({
               onChange={(v) => setEstilo('s', v)}
             />
           </Campo>
-        );
-
-      case 'animacion':
-        return (
-          <PanelAnimacion
-            key={id}
-            destino={`[data-bloque="${def.id}"]`}
-            catalogo={BLOCK_ANIMS}
-            queEs="esta pieza"
-            estilo={estilo}
-            set={(k, v) => setEstilo(k as keyof BlockStyle, v)}
-          />
         );
 
       case 'marcoDiscord':
@@ -666,18 +673,6 @@ export function EditorBloque({
           </Campo>
         );
       }
-
-      case 'anim':
-        return (
-          <Campo key={id} label="Animación de entrada">
-            <Tarjetas
-              opciones={BLOCK_ANIMS}
-                  dibujos={DIBUJOS.BLOCK_ANIMS}
-              value={estilo.anim || ''}
-              onChange={(v) => setEstilo('anim', v)}
-            />
-          </Campo>
-        );
 
       case 'relleno':
         return (
@@ -743,17 +738,16 @@ export function EditorBloque({
           />
         );
 
-      case 'opacidad':
       case 'borde':
         return (
           <Deslizador
             key={id}
-            label={id === 'borde' ? 'Borde' : 'Opacidad'}
+            label="Borde"
             sufijo="%"
             min={0}
             max={100}
-            value={(id === 'borde' ? estilo.bd : estilo.op) ?? (id === 'borde' ? 18 : 100)}
-            onChange={(v) => setEstilo(id === 'borde' ? 'bd' : 'op', v)}
+            value={estilo.bd ?? 18}
+            onChange={(v) => setEstilo('bd', v)}
           />
         );
 
@@ -1066,7 +1060,6 @@ export function EditorBloque({
     'borde',
     'desenfoque',
     'brillo',
-    'opacidad',
   ];
   if (!modoLibre) dependeDeCaja.push('ancho');
 
@@ -1117,7 +1110,13 @@ export function EditorBloque({
         return (
           <section className="grupo" key={grupo.titulo}>
             {!soloContenido && <h3 className="grupo__t">{grupo.titulo}</h3>}
-            {controles.map(control)}
+            {/* Control a control, no el panel entero. La lista de cuales
+                pagan vive en `premium.ts`; aqui solo se consulta. */}
+            {controles.map((c) => (
+              <Pro key={c} bloqueado={!premium && controlEsPro(c)}>
+                {control(c)}
+              </Pro>
+            ))}
           </section>
         );
       })}

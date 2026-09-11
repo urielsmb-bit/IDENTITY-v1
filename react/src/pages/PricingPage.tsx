@@ -1,58 +1,70 @@
 import { Link } from 'react-router-dom';
 import { useTitulo } from '@/hooks/useTitulo';
+import { CUENTA_FUENTES } from '@/data/premium';
 
+/**
+ * Los planes.
+ *
+ * Esta pagina decia cosas que el producto no hacia, y no una ni dos:
+ *
+ *   · Gratis prometia «efectos de particulas y 3D tilt» — las dos se pagan.
+ *   · Pro vendia «analiticas completas (90 dias)» frente a «basicas (30)»:
+ *     `analiticasDe()` tiene un solo valor, 30, y no mira el plan.
+ *   · Pro vendia «prioridad en el ranking», que no existe — y que ademas no
+ *     deberia existir: un top que se compra deja de valer para todos.
+ *   · Pro vendia «widget de musica de Spotify», que es gratis.
+ *   · Habia un tercer plan, «Creator», con verificacion oficial, quitar una
+ *     marca de agua que no existe, y publicar plantillas —que ya puede
+ *     hacer cualquiera—. El codigo tiene UN booleano: `tienePlan()`, que
+ *     lee la insignia del diamante. No hay un segundo nivel que dar.
+ *
+ * Vender lo que no se entrega no es un descuido de copia: es lo primero que
+ * mira quien paga y no recibe. Ahora esta lista es exactamente lo que
+ * `data/premium.ts` bloquea, ni una linea mas.
+ */
 const PLANS = [
   {
     id: 'free',
     name: 'Gratis',
     price: '$0',
     period: 'para siempre',
-    desc: 'Todo lo esencial para crear tu identidad digital.',
+    desc: 'Un perfil completo, tuyo y presentable. Sin recortes tontos.',
     features: [
-      'Perfil personalizado @tu-nombre',
-      '14 temas prediseñados',
-      'Enlaces a redes sociales ilimitados',
-      'Efectos de partículas y 3D tilt',
-      'Analíticas básicas (30 días)',
-      'Subida de avatar e imágenes',
+      'Tu dirección: sharee.fun/tu-nombre',
+      'Las cinco plantillas y toda la galería de la comunidad',
+      'Todas tus redes y tus enlaces, sin limite',
+      `${CUENTA_FUENTES.libres} tipografías, con su tamaño, sus mayúsculas y su espaciado`,
+      'El color de cada pieza, y dónde se coloca cada una',
+      'La caja de cada pieza: tipo, relleno, esquinas, ancho y borde',
+      'Avatar y fondo de imagen, con desenfoque y viñeta',
+      'Cinco punteros, y música en tu perfil',
+      'Widget de Discord en vivo',
+      'Tus analíticas: visitas, países, horas y clics',
     ],
-    cta: 'Comenzar gratis',
+    cta: 'Empezar gratis',
     highlight: false,
   },
   {
     id: 'pro',
-    name: 'Pro',
+    name: 'Premium',
     price: '$4.99',
-    period: 'pago único de por vida',
-    desc: 'Para creadores y desarrolladores que quieren destacar.',
+    period: 'pago único, para siempre',
+    desc: 'Para que tu perfil no se parezca al de nadie.',
     features: [
       'Todo lo del plan Gratis',
-      'Badge exclusivo "Premium 💎"',
-      'Fondos de video MP4/WebM de hasta 64MB',
-      'Efectos de cursor avanzados y halo interactivo',
-      'Analíticas completas (90 días)',
-      'Widget de música de Spotify e integraciones',
-      'Prioridad en el ranking',
+      'La insignia del diamante',
+      'Rejilla libre: coloca cada pieza donde quieras, arrastrándola',
+      `${CUENTA_FUENTES.pro} tipografías decorativas`,
+      'Resplandor en el nombre, el @usuario, las insignias, las redes y el avatar',
+      'Barrido de luz y degradado en el nombre',
+      'Animación de entrada del perfil',
+      'Partículas de fondo',
+      'Fondo de vídeo',
+      'Tu propia imagen de cursor, con estela',
+      'Inclinación 3D de la tarjeta',
     ],
-    cta: 'Obtener Pro',
+    cta: 'Conseguir Premium',
     highlight: true,
-  },
-  {
-    id: 'creator',
-    name: 'Creator',
-    price: '$12.99',
-    period: 'pago único de por vida',
-    desc: 'El control total de tu marca personal y presencia web.',
-    features: [
-      'Todo lo del plan Pro',
-      'Badge exclusivo "Founder 👑"',
-      'Verificación oficial de identidad',
-      'Publicación de plantillas en el marketplace',
-      'Sin marca de agua sharee en pie de página',
-      'Soporte prioritario 24/7',
-    ],
-    cta: 'Obtener Creator',
-    highlight: false,
   },
 ];
 
@@ -82,9 +94,9 @@ export default function PricingPage() {
           lineHeight: 1.6,
         }}
       >
-        Los planes de pago todavía no están abiertos. Mientras tanto{' '}
-        <strong>todo lo de esta página funciona sin pagar nada</strong>: no hay
-        nada bloqueado.
+        Todavía no hay forma de pagar esto. El diamante lo concede el equipo
+        a mano, así que <strong>por ahora Premium no se puede comprar</strong>:
+        la lista de la derecha es lo que traerá cuando se abra.
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', alignItems: 'stretch' }}>

@@ -15,12 +15,17 @@ interface Props {
   /** Las insignias que de verdad tiene, para enseñarlas y no contarlas mal. */
   insignias?: string[];
   /**
-   * Si tiene el plan. Lo que hay en la FILA es de todos —encender la pieza,
-   * escribir lo que dice—; lo que hay detrás del engranaje es de pago.
+   * Si tiene el plan.
    *
-   * El engranaje se pulsa igual sin plan: lo que cambia es que lo de dentro
-   * sale apagado. Aquí solo se dibuja el candado, para que se sepa antes de
-   * pulsar y no después.
+   * Ya no marca el engranaje. Lo hacia cuando detras del engranaje estaba
+   * TODO de pago; ahora cada panel tiene sus ajustes gratis —la letra, el
+   * color, el tamaño, la caja, donde se coloca— y dentro solo estan
+   * cerrados los seis que adornan. Un punto en las doce filas diciendo
+   * «esto es de pago» seria mentira doce veces, y ademas la peor clase de
+   * mentira: la que hace que alguien no entre a mirar.
+   *
+   * Se sigue pasando porque el editor de contenido que se despliega en la
+   * propia fila tambien lo necesita.
    */
   premium?: boolean;
   /** Las dos cajas de subir, ya cableadas. Vienen de fuera porque llevan
@@ -254,6 +259,7 @@ export function Piezas({
             <EditorBloque
               compacto
               soloContenido
+              premium={premium}
               def={b}
               profile={profile}
               update={update}
@@ -266,10 +272,9 @@ export function Piezas({
   };
 
   return (
-    /* `display:contents`: envuelve para poder marcar los engranajes de una
-       vez —son cinco repartidos por el archivo— sin meter una caja que
-       cambie la colocación de nada. */
-    <div className="pzas-todo" data-pro={premium ? undefined : 'on'}>
+    /* `display:contents`: envuelve sin meter una caja que cambie la
+       colocación de nada. */
+    <div className="pzas-todo">
       {/* Las dos imágenes, en fila y con su engranaje en la esquina. */}
       <div className="f-row pza-fila">
         <div className="pza-caja">

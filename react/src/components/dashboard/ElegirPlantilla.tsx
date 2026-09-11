@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { Profile } from '@/types';
 import {
   BASE_PERSONALIZADA,
@@ -26,6 +27,8 @@ interface Props {
    * coordenadas exige medir la vista previa que hay en pantalla.
    */
   alLienzoLibre?: () => void;
+  /** Si tiene el plan. La rejilla libre lo pide. */
+  premium?: boolean;
 }
 
 /**
@@ -47,6 +50,7 @@ export function ElegirPlantilla({
   variante = 'panel',
   alElegir,
   alLienzoLibre,
+  premium = true,
 }: Props) {
   const [porConfirmar, setPorConfirmar] = useState<PlantillaBase | null>(null);
 
@@ -134,21 +138,43 @@ export function ElegirPlantilla({
             siete deslizadores, con el nombre «Colocación de los bloques»:
             la capacidad mas llamativa del editor, invisible. */}
         {alLienzoLibre && (
-          <button
-            type="button"
-            className={`plbase__it plbase__it--libre${libre ? ' on' : ''}`}
-            aria-pressed={libre}
-            onClick={() => !libre && alLienzoLibre()}
+          /* Pide plan, y es la unica de las seis que lo pide.
+
+             Las cinco plantillas colocan tus piezas por ti; esta te deja
+             colocarlas a ti. Es la diferencia entre un perfil que se
+             parece a otros y uno que no se parece a ninguno, que es
+             exactamente lo que alguien esta dispuesto a pagar. Y no es
+             una limitacion artificial: con las cinco plantillas se hace
+             un perfil bueno sin tocar esto.
+
+             Se VE, con su dibujo y su explicacion, y lleva a los planes
+             en vez de no hacer nada. Esconderla no vende: nadie echa de
+             menos lo que no sabe que existe. */
+          <Link
+            to="/pricing"
+            className={`plbase__it plbase__it--libre${libre ? ' on' : ''}${
+              premium ? '' : ' plbase__it--pro'
+            }`}
+            onClick={(e: React.MouseEvent) => {
+              /* Con plan es un boton: se queda aqui y suelta las piezas.
+                 Sin plan es un enlace de verdad y lleva a los planes. */
+              if (!premium) return;
+              e.preventDefault();
+              if (!libre) alLienzoLibre();
+            }}
           >
             <span className="plbase__fig" aria-hidden="true">
               {DIBUJOS.LAYOUT_MODES?.free}
             </span>
-            <span className="plbase__n">Rejilla libre</span>
+            <span className="plbase__n">
+              Rejilla libre
+              {!premium && <em className="plbase__pro">Premium</em>}
+            </span>
             <span className="plbase__d">
               Coloca cada bloque donde quieras arrastrándolo en la vista previa.
               Parte de donde esté tu diseño ahora.
             </span>
-          </button>
+          </Link>
         )}
       </div>
 

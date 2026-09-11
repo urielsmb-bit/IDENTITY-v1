@@ -52,8 +52,6 @@ const CONTROL: Record<ControlId, Ficha> = {
   radio: { nombre: 'Radio de las esquinas', alias: ['esquinas', 'redondeo', 'bordes redondos'] },
   ancho: { nombre: 'Ancho', alias: ['anchura', 'más ancho', 'estrecho'] },
   centrar: { nombre: 'Centrar', alias: ['centrado', 'al medio'] },
-  opacidad: { nombre: 'Opacidad', alias: ['transparencia', 'translúcido'] },
-  anim: { nombre: 'Animación de la caja', alias: ['movimiento', 'latido'] },
   borde: { nombre: 'Borde', alias: ['contorno', 'línea', 'marco'] },
   desenfoque: { nombre: 'Desenfoque', alias: ['blur', 'difuminado', 'cristal esmerilado'] },
   brillo: { nombre: 'Brillo', alias: ['luminosidad', 'claro', 'oscuro'] },
@@ -78,7 +76,6 @@ const CONTROL: Record<ControlId, Ficha> = {
   brilloAvatar: { nombre: 'Resplandor del avatar', alias: ['halo', 'brillo', 'glow'] },
   ubicacion: { nombre: 'Ciudad', alias: ['ubicación', 'dónde vives', 'país', 'lugar'] },
 
-  animacion: { nombre: 'Animación de entrada', alias: ['aparecer', 'entrada', 'transición'] },
 
   discordId: { nombre: 'Tu cuenta de Discord', alias: ['discord', 'presencia', 'estado'] },
   marcoDiscord: { nombre: 'Marco de Discord', alias: ['nitro', 'decoración', 'avatar'] },

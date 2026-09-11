@@ -34,6 +34,17 @@ interface LienzoBloquesProps {
   seleccionado?: string | null;
   /** Vista previa activa. Solo sirve para remedir cuando cambia. */
   vista?: string;
+  /**
+   * Si tiene el plan. Arrastrar es lo que se paga.
+   *
+   * Un perfil puede ACABAR en rejilla libre sin haberla comprado: basta
+   * con aplicarse una plantilla de la galeria que venga colocada asi, y
+   * de las dos publicadas hoy, una lo esta. Eso no se impide —la
+   * plantilla tiene que verse igual que en su vista previa, o la previa
+   * miente— pero MOVER las piezas es otra cosa: es la capacidad, no el
+   * resultado. Te la puedes poner; no te la puedes arreglar.
+   */
+  premium?: boolean;
   children: React.ReactNode;
 }
 
@@ -58,6 +69,7 @@ export function LienzoBloques({
   seleccionado,
   vista,
   children,
+  premium = true,
 }: LienzoBloquesProps) {
   const contRef = useRef<HTMLDivElement>(null);
   const [cajas, setCajas] = useState<Caja[]>([]);
@@ -170,6 +182,13 @@ export function LienzoBloques({
   function iniciar(e: React.PointerEvent, id: string, modo: 'mover' | 'ancho') {
     e.preventDefault();
     e.stopPropagation();
+    /* Sin plan no se arrastra, pero la pieza sigue abriendose al
+       tocarla: el lienzo no se convierte en una pared, solo deja de
+       recolocar. */
+    if (!premium) {
+      onAbrirBloque(id);
+      return;
+    }
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
 
     const xInicio = e.clientX;

@@ -51,6 +51,16 @@
   --dnd:     #E5544B;
   --offline: #6E6E6E;
 
+  /* El ambar del plan. Estaba escrito a mano como `#E8B54B` en ocho sitios,
+     siempre detras de un `var(--pro, ...)` que no existia: la variable se
+     usaba y no estaba declarada en ninguna parte, asi que lo que pintaba
+     era el respaldo. Un color repetido a mano en ocho sitios es un color
+     que el dia que se retoque va a quedarse a medias.
+
+     No es `--brand`, que es blanco, ni `--idle`, que es semaforo: es el del
+     rombo del diamante, y solo aparece donde algo lo pide. */
+  --pro:     #E8B54B;
+
   /* ---- marca: del envoltorio, nunca del perfil ------------
      `--accent` sigue siendo blanco y sigue siendo del usuario: esa
      decision de arriba no se toca. El problema era que entonces
