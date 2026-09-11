@@ -60,6 +60,8 @@ const CONTROL: Record<ControlId, Ficha> = {
   margen: { nombre: 'Margen', alias: ['separación', 'espacio arriba', 'espacio entre bloques'] },
 
   estiloRedes: { nombre: 'Estilo de las redes', alias: ['iconos', 'redes sociales'] },
+  tamInsignias: { nombre: 'Tamaño de las insignias', alias: ['insignias grandes', 'badges tamaño'] },
+  espacioInsignias: { nombre: 'Hueco entre insignias', alias: ['separación', 'espaciado badges'] },
   estiloInsignias: { nombre: 'Estilo de las insignias', alias: ['badges', 'insignias', 'verificado'] },
   listaRedes: { nombre: 'Tus redes', alias: ['instagram', 'tiktok', 'twitter', 'añadir red'] },
   listaInsignias: { nombre: 'Tus insignias', alias: ['badges', 'logros'] },

@@ -365,6 +365,8 @@ export function ProfileView({
     vars['--u-radius'] = `${p.radius || 0}px`;
     vars['--u-av'] = `${p.avSize || 112}px`;
     vars['--u-ico'] = `${p.iconSize || 20}px`;
+    if (p.badgeSize) vars['--u-badge'] = `${p.badgeSize}px`;
+    if (p.badgeGap != null) vars['--u-badge-gap'] = `${p.badgeGap}px`;
     if (p.pad != null) vars['--u-pad'] = `${p.pad}px`;
     if (p.nameSize) vars['--u-name'] = `${p.nameSize}px`;
     if (p.bioSize) vars['--u-bio'] = `${p.bioSize}px`;

@@ -288,6 +288,11 @@ function esquema(ID: any) {
     gap: (v: any) => numero(v, 0, 80, 16),
     radius: (v: any) => numero(v, 0, 60, 18),
     iconSize: (v: any) => numero(v, 12, 64, 20),
+    /* Nulos mientras nadie los toque: asi una insignia sigue con el
+       tamaño de la hoja de estilos en vez de con un numero escrito
+       aqui, que es otro sitio donde podrian discrepar. */
+    badgeSize: (v: any) => numOnulo(v, 8, 28),
+    badgeGap: (v: any) => numOnulo(v, 0, 32),
     nameSize: (v: any) => numero(v, 0, 120, 0),
     bioSize: (v: any) => numero(v, 0, 40, 0),
     sBlur: (v: any) => numero(v, 0, 60, 22),

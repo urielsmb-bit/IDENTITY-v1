@@ -1035,6 +1035,33 @@ export function EditorBloque({
         );
       }
 
+      case 'tamInsignias':
+        return (
+          <Deslizador
+            key={id}
+            label="Tamaño de las insignias"
+            desc="Manda sobre la pastilla entera: el icono, el texto y el relleno"
+            sufijo="px"
+            min={8}
+            max={28}
+            value={profile.badgeSize ?? 11}
+            onChange={(v) => update({ badgeSize: v })}
+          />
+        );
+
+      case 'espacioInsignias':
+        return (
+          <Deslizador
+            key={id}
+            label="Hueco entre insignias"
+            sufijo="px"
+            min={0}
+            max={32}
+            value={profile.badgeGap ?? 7}
+            onChange={(v) => update({ badgeGap: v })}
+          />
+        );
+
       case 'tamRedes':
         return (
           <Deslizador

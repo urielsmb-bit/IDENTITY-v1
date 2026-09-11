@@ -173,6 +173,11 @@ export interface Profile {
   gap: number;
   radius: number;
   iconSize: number;
+  /** Tamaño de las insignias, en px. Manda sobre la pastilla entera:
+   *  el icono, el texto y el relleno van en `em` sobre esto. */
+  badgeSize?: number;
+  /** Hueco entre insignias, en px. */
+  badgeGap?: number;
   nameSize: number;
   bioSize: number;
   sBlur: number;

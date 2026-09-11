@@ -44,6 +44,8 @@ export type ControlId =
   | 'estiloRedes'
   | 'tamRedes'
   | 'estiloInsignias'
+  | 'tamInsignias'
+  | 'espacioInsignias'
   | 'listaRedes'
   | 'listaInsignias'
   | 'monoRedes'
@@ -129,7 +131,9 @@ const FORMA_REDES: GrupoControles = {
 };
 const FORMA_INSIGNIAS: GrupoControles = {
   titulo: 'Forma de las insignias',
-  controles: ['estiloInsignias'],
+  /* El tamaño y el hueco son composicion, no adorno: van gratis, igual
+     que los de las redes. */
+  controles: ['estiloInsignias', 'tamInsignias', 'espacioInsignias'],
 };
 
 /* El CONTENIDO de estas dos piezas es su lista: que redes tienes puestas y

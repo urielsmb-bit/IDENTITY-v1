@@ -646,19 +646,32 @@
 }
 
 /* --- badges --- */
-.pf-badges{ display:flex; flex-wrap:wrap; gap:7px; justify-content:var(--u-just, flex-start); }
+/* El hueco entre insignias, ajustable. 7px es lo que habia. */
+.pf-badges{
+  display:flex; flex-wrap:wrap;
+  gap:var(--u-badge-gap, 7px);
+  justify-content:var(--u-just, flex-start);
+}
 .pf-badge{
   position:relative;
   /* No se encoge: si no caben, la fila las envuelve (flex-wrap). Encogerlas
      es lo que las aplastaba hasta dejar el nombre en 4px de ancho. */
   flex:none;
-  display:inline-flex; align-items:center; gap:6px;
-  padding:5px 11px 5px 8px;
+  display:inline-flex; align-items:center;
+  /* TODO EN `em`, y ese es el truco para que se pueda cambiar el tamaño
+     con un solo mando. El icono ya se dimensionaba asi; el relleno y el
+     hueco iban en pixeles, asi que agrandar la letra dejaba la pastilla
+     con el mismo relleno de antes y las proporciones rotas. Convertidos
+     sobre la base de 11px que tenia: 6px = .55em, 5px = .45em,
+     11px = 1em, 8px = .73em. A tamaño por defecto se ve exactamente
+     igual que antes. */
+  gap:.55em;
+  padding:.45em 1em .45em .73em;
   border-radius:var(--p-chip-r);
   border:1px solid var(--p-line);
   background:var(--p-surface-2);
   font-family:var(--p-fm);
-  font-size:var(--t1); font-weight:600;
+  font-size:var(--u-badge, var(--t1)); font-weight:600;
   cursor:default;
   transition:transform var(--transition-fast), border-color var(--transition-fast);
 }
@@ -667,7 +680,14 @@
    tiene ancho propio, asi que como hijo de un flex se le deja encoger por
    debajo de su contenido: el sello de "Verificado" salia de 14x19 en vez
    de 19x19, medio ovalo, sin que ninguna regla dijera nada de eso. */
-.pf-badge i{ font-style:normal; font-size:var(--t2); display:inline-flex; flex:none; }
+/* El `em` del icono cuelga de AQUI, y por eso esto no puede ser `--t2`.
+   El SVG mide 1.5em, pero de la caja que lo contiene — y esta caja fijaba
+   su propio tamaño en `--t2`, o sea 13px pase lo que pase. Resultado: se
+   agrandaba la pastilla entera y el icono se quedaba clavado en 19px,
+   cada vez mas pequeño en proporcion. 1.18em son los mismos 13px sobre la
+   base de 11, asi que por defecto no cambia nada; la diferencia es que
+   ahora sigue al tamaño. */
+.pf-badge i{ font-style:normal; font-size:1.18em; display:inline-flex; flex:none; }
 /* Los iconos de insignia son SVG y heredan el color: se dimensionan en em
    para seguir al tamaño de la píldora, igual que hacían los emoji. */
 .pf-badge i svg{ width:1.25em; height:1.25em; display:block; }
@@ -683,7 +703,7 @@
    del bloque unos pixeles y no pasa nada: el bloque no tiene borde. */
 .pf-badge b{ flex:none; overflow-wrap:normal; word-break:normal; }
 .pf-badges[data-style="icons"] .pf-badge i svg{ width:1.5em; height:1.5em; }
-.pf-badges[data-style="icons"] .pf-badge{ padding:4px 6px; gap:0; border-color:transparent; background:transparent; }
+.pf-badges[data-style="icons"] .pf-badge{ padding:.36em .55em; gap:0; border-color:transparent; background:transparent; }
 .pf-badges[data-style="icons"] .pf-badge b{
   /* Se va de la VISTA, no del arbol. Con display:none una insignia en modo
      icono no existe para un lector de pantalla y lo unico que quedaba era

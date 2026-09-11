@@ -46,6 +46,7 @@ export const CAMPOS_PLANTILLA = [
 
   /* medidas */
   'avSize', 'stackWidth', 'gap', 'radius', 'iconSize', 'nameSize', 'bioSize',
+  'badgeSize', 'badgeGap',
   'sBlur', 'sGlow', 'sBorderW', 'sWidthPct', 'sHeightPx', 'bgOpacity',
   'bgBlur', 'bgScale', 'bgDim', 'vignette', 'nameSpacing', 'lineHeight',
   'pad', 'sOpacity', 'sBorder', 'blockRadius', 'sColor', 'sBorderColor',
