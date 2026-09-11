@@ -1,5 +1,6 @@
 import { Routes, Route, Outlet, Navigate, useParams } from 'react-router-dom';
 import { Navbar } from './components/layout/Navbar';
+import { Pie } from './components/layout/Pie';
 import { Toast } from './components/layout/Toast';
 import { Frontera } from './components/layout/Frontera';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
@@ -58,6 +59,29 @@ function ConBarra() {
   );
 }
 
+/**
+ * Las páginas que además llevan pie.
+ *
+ * No es lo mismo que «las que llevan barra». El panel y las analíticas la
+ * llevan porque hay que poder salir de ellas, pero son PANTALLAS DE
+ * TRABAJO: ocupan el alto entero, se desplazan por dentro, y un pie con
+ * «Términos del servicio» debajo del editor sólo estorba. Lo mismo con la
+ * prueba de una plantilla a pantalla completa.
+ *
+ * Aquí están las páginas que se LEEN: la portada, los planes, el ranking,
+ * la galería y los tres documentos legales. En esas, no tener pie es lo
+ * que se nota — un documento legal que termina y no ofrece a dónde ir es
+ * un callejón.
+ */
+function ConPie() {
+  return (
+    <>
+      <Outlet />
+      <Pie />
+    </>
+  );
+}
+
 export default function App() {
   useAuthInit();
 
@@ -78,7 +102,8 @@ export default function App() {
             <Route path="/u/:username" element={<RedirigirPerfil />} />
 
             <Route element={<ConBarra />}>
-            <Route path="/" element={<LandingPage />} />
+            {/* Las de trabajo: barra si, pie no. Ocupan el alto entero y
+                se desplazan por dentro. */}
             <Route
               path="/dashboard"
               element={
@@ -88,7 +113,6 @@ export default function App() {
               }
             />
             <Route path="/entrar" element={<AuthPage />} />
-            <Route path="/top" element={<LeaderboardPage />} />
             <Route
               path="/analytics"
               element={
@@ -97,13 +121,20 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/plantillas" element={<TemplatesPage />} />
             {/* Igual que arriba: la de antes, redirigida. */}
             <Route path="/templates" element={<Navigate to="/plantillas" replace />} />
             {/* Antes que `/:username`, o «probar» se leeria como el nombre
-                de alguien. */}
+                de alguien. A pantalla completa y sin pie: es una prueba del
+                diseño, no una pagina que se lee. */}
             <Route path="/probar/:id" element={<ProbarPlantillaPage />} />
-            <Route path="/pricing" element={<PricingPage />} />
+
+            {/* Y las que se LEEN, que ademas llevan pie. */}
+            <Route element={<ConPie />}>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/top" element={<LeaderboardPage />} />
+              <Route path="/plantillas" element={<TemplatesPage />} />
+              <Route path="/pricing" element={<PricingPage />} />
+            </Route>
             {/* `admin` esta en `nombres_reservados` desde la migracion
                 fundacional, asi que nadie puede tener un perfil que
                 choque con esta ruta. Quien entre sin permiso ve una
@@ -117,9 +148,13 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/terminos" element={<LegalPage />} />
-            <Route path="/privacidad" element={<LegalPage />} />
-            <Route path="/copyright" element={<LegalPage />} />
+            {/* Los tres documentos, con pie: uno que termina y no ofrece a
+                donde ir es un callejon. */}
+            <Route element={<ConPie />}>
+              <Route path="/terminos" element={<LegalPage />} />
+              <Route path="/privacidad" element={<LegalPage />} />
+              <Route path="/copyright" element={<LegalPage />} />
+            </Route>
             </Route>
 
             {/* Un solo segmento que no sea ninguna de las rutas de arriba se

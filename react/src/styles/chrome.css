@@ -479,15 +479,101 @@
   font-size:var(--t4);
 }
 
-.foot{
+/* El campo de reclamo, repetido al final. Centrado y un poco mas ancho
+   que el del heroe: aqui no compite con nada, es lo unico que hay. */
+.claim--band{ margin:0 auto; max-width:470px; }
+
+/* ---- pie del sitio ----------------------------------------------------
+   Era una fila de cinco enlaces terminada en «Hecho con React +
+   TypeScript» -el pie de un proyecto, no el de un producto-. Ahora tiene
+   la marca a la izquierda y las columnas a la derecha, que es la forma que
+   deja leer de un vistazo que hay y donde.
+
+   Las columnas se colocan con `auto-fit`: con tres caben en fila, con
+   cuatro tambien, y en un movil se apilan solas. Asi anadir una el dia que
+   exista un centro de ayuda no obliga a tocar nada de aqui. */
+.pie{
   border-top:1px solid var(--border);
-  padding:var(--s5) var(--pad) var(--s7);
-  display:flex; flex-wrap:wrap; gap:var(--s3) var(--s5);
-  align-items:center;
-  font-size:var(--t2); color:var(--text-muted);
+  padding:clamp(40px,6vw,72px) var(--pad) var(--s5);
+  font-size:var(--t2);
+  color:var(--text-muted);
 }
-.foot a:hover{ color:var(--text-primary); }
-.foot__sep{ margin-left:auto; }
+.pie__in{
+  max-width:var(--maxw); margin:0 auto;
+  display:grid;
+  grid-template-columns:minmax(0,1.2fr) minmax(0,2fr);
+  gap:var(--s7) var(--s6);
+}
+.pie__marca{ min-width:0; }
+.pie__logo{
+  display:inline-flex; align-items:center; gap:9px;
+  color:var(--text-primary);
+  font-size:var(--t4); font-weight:600; letter-spacing:-.02em;
+  text-decoration:none;
+}
+.pie__glifo{ width:26px; height:26px; flex:none; }
+.pie__lema{
+  margin-top:var(--s3);
+  max-width:34ch;
+  line-height:1.6;
+}
+
+.pie__cols{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));
+  gap:var(--s6) var(--s5);
+}
+.pie__col{ min-width:0; }
+.pie__t{
+  margin:0 0 var(--s3);
+  font-size:var(--t2); font-weight:600;
+  color:var(--text-primary);
+}
+.pie__col ul{ list-style:none; margin:0; padding:0; display:grid; gap:9px; }
+.pie__col a{
+  color:var(--text-muted);
+  text-decoration:none;
+  transition:color var(--transition-fast);
+}
+.pie__col a:hover{ color:var(--text-primary); }
+
+.pie__abajo{
+  max-width:var(--maxw); margin:var(--s7) auto 0;
+  padding-top:var(--s4);
+  border-top:1px solid var(--border);
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px;
+  font-size:var(--t1);
+}
+.pie__punto{ opacity:.5; }
+
+@media (max-width:720px){
+  /* La marca encima y las columnas debajo: en una pantalla estrecha, dos
+     columnas de ochenta pixeles no son dos columnas, son un amasijo. */
+  .pie__in{ grid-template-columns:1fr; gap:var(--s6); }
+}
+
+/* Con el dedo, no con el raton.
+
+   Los diez enlaces del pie median veinte pixeles de alto con nueve de
+   separacion: veintinueve de paso entre el centro de uno y el del
+   siguiente, cuando un pulgar cubre cuarenta y cinco. Eso no se falla de
+   vez en cuando, se falla siempre.
+
+   Se le da alto al enlace y se quita casi toda la separacion, para que la
+   zona que responde sea continua y el aspecto no cambie: la misma lista,
+   con cada linea ocupando lo que de verdad hace falta para acertarla.
+
+   Va por `pointer:coarse` y no por ancho, porque lo que decide no es el
+   tamaño de la pantalla sino con QUE se apunta: una tableta de mil pixeles
+   se toca con el dedo y un portatil de mil, con un raton. */
+@media (pointer:coarse){
+  .pie__logo{ min-height:44px; }
+  .pie__col ul{ gap:2px; }
+  .pie__col a{
+    display:flex; align-items:center;
+    min-height:44px;
+  }
+}
 
 /* ---- campo de reclamo del heroe ------------------------------ */
 .claim{

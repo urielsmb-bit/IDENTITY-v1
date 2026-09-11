@@ -565,24 +565,38 @@ export default function LandingPage() {
         </details>
       </section>
 
-      {/* Call to action footer banner */}
+      {/* El último empujón, y con el mismo gesto que el de arriba.
+
+          Antes aquí había un botón a «Crear mi perfil», que lleva al panel
+          y le pide a alguien que decida entrar sin haber elegido todavía
+          cómo se va a llamar. El campo es más fácil: se escribe un nombre
+          —la parte divertida— y el registro viene después, ya con la
+          decisión tomada.
+
+          Es el mismo formulario del héroe, con el mismo manejador. Quien
+          llega hasta aquí ha leído la página entera y no debería tener que
+          subir hasta arriba para hacer lo que vino a hacer. */}
       <section className="close-band">
         <h2>Deja de explicar quién eres.</h2>
         <p>Muéstralo. Un enlace, todo tu mundo.</p>
-        <Link className="btn btn--primary btn--lg" to="/dashboard">
-          Crear mi perfil
-        </Link>
-      </section>
 
-      {/* Footer */}
-      <footer className="foot">
-        <span>sharee</span>
-        <Link to="/top">Ranking</Link>
-        <Link to="/pricing">Precios</Link>
-        <Link to="/terminos">Términos</Link>
-        <Link to="/privacidad">Privacidad</Link>
-        <span className="foot__sep">Hecho con React + TypeScript</span>
-      </footer>
+        <form className="claim claim--band" onSubmit={handleClaimSubmit}>
+          <span className="claim__pre">sharee.fun/</span>
+          <input
+            type="text"
+            placeholder="tunombre"
+            maxLength={24}
+            value={claimName}
+            onChange={(e) => setClaimName(e.target.value)}
+            aria-label="Elige tu nombre de usuario"
+            autoComplete="off"
+            spellCheck="false"
+          />
+          <button className="btn btn--primary btn--sm" type="submit">
+            Reclamarlo
+          </button>
+        </form>
+      </section>
     </div>
   );
 }
