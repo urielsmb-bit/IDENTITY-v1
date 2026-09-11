@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useProfileStore } from '@/stores/profileStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useMyProfile } from '@/hooks/useProfile';
@@ -174,6 +174,19 @@ const VISTAS = [
  * tres sitios —el contenido de una pieza, si se ve, y como se ve— y
  * ninguna se explicaba sin las otras dos.
  */
+/**
+ * Qué artículo de la ayuda habla de lo que tienes delante.
+ *
+ * Sólo las secciones para las que hay un artículo de verdad. Las demás no
+ * salen: mandar a alguien a un artículo que no contesta su pregunta es
+ * peor que no ofrecerle nada, porque además le hace perder el viaje.
+ */
+const AYUDA_DE_SECCION: Record<string, { slug: string; titulo: string }> = {
+  design: { slug: 'las-piezas', titulo: 'Las piezas de tu perfil' },
+  badges: { slug: 'insignias', titulo: 'Las insignias' },
+  links: { slug: 'compartir-tu-enlace', titulo: 'Compartir tu enlace' },
+};
+
 const SECTIONS = [
   { id: 'design', name: 'Diseño', desc: 'Tu foto, tus textos y el aspecto de cada pieza.', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 20 4"/><path d="M4 20h6"/><path d="M4 20v-6"/><path d="M14 4h6v6"/></svg>` },
   /* Sin `desc`: «Bloques» trae su propio encabezado, porque el suyo
@@ -560,6 +573,33 @@ export default function DashboardPage() {
     }
   }, [profile?.username, dirty, handleSave, toast]);
 
+  /**
+   * El enlace, al portapapeles.
+   *
+   * No existía en ninguna parte. La tarjeta de «Al compartir tu enlace»
+   * enseña cómo se va a ver, que es otra cosa: para copiarlo había que ir
+   * a la barra del navegador y seleccionarlo a mano, y ahí es donde se
+   * copia mal —con el `https://`, sin él, con un espacio detrás—.
+   *
+   * `navigator.clipboard` sólo existe en un sitio seguro (https o
+   * localhost). Fuera de eso no se finge que ha funcionado: se dice el
+   * enlace para que se pueda copiar a mano.
+   */
+  const copiarEnlace = useCallback(async () => {
+    const usuario = profile?.username;
+    if (!usuario) {
+      toast('Ponle un nombre de usuario antes de compartir', true);
+      return;
+    }
+    const enlace = `${window.location.origin}/${usuario}`;
+    try {
+      await navigator.clipboard.writeText(enlace);
+      toast('Enlace copiado');
+    } catch {
+      toast(enlace, true);
+    }
+  }, [profile?.username, toast]);
+
   // Autosave when dirty after 1.5s debounce
   useEffect(() => {
     if (!dirty || !profile) return;
@@ -732,6 +772,67 @@ export default function DashboardPage() {
               </button>
             ))}
           </nav>
+        </div>
+
+        {/* ── El fondo de la barra ──────────────────────────────
+            Aquí había un hueco vacío de media pantalla, y tres cosas que
+            hacen falta justo al terminar de editar y no estaban a mano:
+            preguntar, mirar cómo ha quedado, y repartirlo.
+
+            La ayuda es CONTEXTUAL: primero el artículo de lo que tienes
+            delante, y debajo el centro entero. «Ayuda» a secas obliga a
+            buscar; «Las insignias» mientras editas insignias, no.
+
+            No lleva la tarjeta de cuenta que tienen otros aquí: el nombre
+            ya está arriba de esta misma barra y la cara y su menú están en
+            la barra de navegación. Tres sitios diciendo quién eres en la
+            misma pantalla es ruido, no orientación. */}
+        <div className="dash__fondo">
+          <div className="dash__ayuda">
+            <p>¿Alguna duda?</p>
+            {AYUDA_DE_SECCION[section] && (
+              <Link
+                className="dash__ayuda-art"
+                to={`/ayuda/${AYUDA_DE_SECCION[section]!.slug}`}
+              >
+                {AYUDA_DE_SECCION[section]!.titulo}
+              </Link>
+            )}
+            <Link className="btn btn--quiet btn--sm dash__ayuda-todo" to="/ayuda">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+                   strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M9.5 9a2.6 2.6 0 0 1 5 .9c0 1.7-2.5 2.1-2.5 3.6M12 17h.01" />
+              </svg>
+              Centro de ayuda
+            </Link>
+          </div>
+
+          <div className="dash__acc">
+            <button
+              type="button"
+              className="btn btn--quiet btn--sm"
+              onClick={publicarYVer}
+              disabled={publicando}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+                   strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M14 3h7v7M21 3l-9 9" />
+                <path d="M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5" />
+              </svg>
+              {publicando ? 'Guardando…' : 'Mi página'}
+            </button>
+            <button type="button" className="btn btn--quiet btn--sm" onClick={copiarEnlace}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+                   strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4" />
+              </svg>
+              Compartir
+            </button>
+          </div>
         </div>
 
         {/* Undo/Redo and Save Status Footer */}

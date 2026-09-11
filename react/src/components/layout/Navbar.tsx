@@ -191,6 +191,13 @@ export function Navbar() {
                     Repartir insignias
                   </Link>
                 )}
+                {/* Aqui y no solo en el editor: la barra lateral se convierte
+                    en una tira horizontal en pantalla estrecha y alli el
+                    bloque de ayuda no cabe. Este menu esta en todos los
+                    tamaños. */}
+                <Link role="menuitem" to="/ayuda">
+                  Centro de ayuda
+                </Link>
                 {/* En rojo y el ultimo. Es la unica de la lista que
                     deshace algo, y va separada del resto para que no se
                     pulse de paso. */}

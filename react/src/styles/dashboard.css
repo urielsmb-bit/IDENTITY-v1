@@ -3266,3 +3266,63 @@
   font-size:var(--t1); line-height:1.5;
   color:var(--text-muted);
 }
+
+/* ---- el fondo de la barra del editor ---------------------------------
+   Aqui habia medio panel vacio. Ahora lleva lo que hace falta justo al
+   terminar de editar: preguntar, mirar como ha quedado, y repartirlo.
+   ------------------------------------------------------------------- */
+.dash__fondo{
+  margin-top:auto;
+  padding:var(--s4) 12px 0;
+  display:grid; gap:12px;
+}
+
+.dash__ayuda{
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--surface-2);
+  display:grid; gap:8px;
+}
+.dash__ayuda p{
+  margin:0;
+  font-size:var(--t2); font-weight:600;
+  color:var(--text-primary);
+}
+/* El articulo de lo que tienes delante. Va ANTES del centro entero y con
+   mas peso visual: es la respuesta probable, y el indice es el respaldo. */
+.dash__ayuda-art{
+  display:block;
+  font-size:var(--t2); line-height:1.35;
+  color:var(--brand);
+  text-decoration:none;
+}
+.dash__ayuda-art:hover{ text-decoration:underline; }
+.dash__ayuda-todo{ justify-content:flex-start; gap:8px; width:100%; }
+.dash__ayuda-todo svg{ width:15px; height:15px; flex:none; opacity:.8; }
+
+.dash__acc{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.dash__acc .btn{ justify-content:center; gap:7px; padding-inline:8px; }
+.dash__acc svg{ width:14px; height:14px; flex:none; opacity:.8; }
+
+@media (pointer:coarse){
+  .dash__ayuda-todo,
+  .dash__acc .btn{ min-height:44px; }
+}
+
+/* Por debajo de 1100 la barra lateral deja de ser una columna y pasa a ser
+   una TIRA horizontal con las secciones. Ahi este bloque no cabe: `>
+   div` lo convierte en una fila y los dos botones se aplastaron a
+   dieciocho pixeles con el texto desbordando.
+
+   Se esconde, y la ayuda no se pierde: esta en el menu de la cuenta de la
+   barra de navegacion —que si esta en todos los tamaños— y en el pie de
+   las paginas publicas. Meter una tarjeta en una barra de herramientas
+   para no perder un enlace que ya esta en otros dos sitios seria pagar la
+   colocacion de todo el editor por nada. */
+@media (max-width:1100px){
+  /* Con el nombre solo NO gana: `.dashboard__sidebar > div` de arriba
+     lleva un elemento de mas y se lleva la puja. Por eso va con el
+     padre delante. */
+  .dashboard__sidebar > .dash__fondo{ display:none; }
+}
