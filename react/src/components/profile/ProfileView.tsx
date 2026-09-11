@@ -5,6 +5,7 @@ import { getBadge, TOPE_INSIGNIAS } from '@/data/badges';
 import { insigniasGanadas } from '@/lib/insignias';
 import { FONTS, EASING_CSS } from '@/data/themes';
 import { rellenaElNombre } from '@/data/efectosNombre';
+import { NombreMaquina } from './NombreMaquina';
 import { useParticles } from '@/hooks/useParticles';
 import { useTilt } from '@/hooks/useTilt';
 import { useCursor } from '@/hooks/useCursor';
@@ -393,11 +394,6 @@ export function ProfileView({
       vars['--u-namegrad'] =
         'linear-gradient(90deg, var(--p-primary), var(--p-accent))';
     }
-    /* Cuantas letras tiene el nombre, para la maquina de escribir: `steps()`
-       necesita un numero y el CSS no sabe contar. Se cuenta por PUNTOS DE
-       CODIGO y no con `.length`, que parte los emoji por la mitad y daria
-       el doble de pasos para un nombre con una bandera dentro. */
-    if (p.name) vars['--u-name-n'] = String([...p.name.trim()].length || 1);
     return vars;
   }, [p]);
 
@@ -1027,7 +1023,11 @@ export function ProfileView({
                 pseudo-elementos, y un pseudo-elemento no puede copiar el
                 texto de su elemento —solo puede leer un atributo—. */}
             <h1 className="pf-name" data-texto={p.name || p.username}>
-              {p.name || p.username}
+              {p.nameFx === 'maquina' ? (
+                <NombreMaquina texto={p.name || p.username} />
+              ) : (
+                p.name || p.username
+              )}
               {p.verified && (
                 <svg
                   className="pf-verified"

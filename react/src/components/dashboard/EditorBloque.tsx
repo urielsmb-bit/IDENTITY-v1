@@ -15,6 +15,7 @@ import { safeUrl } from '@/lib/utils';
 import { idYouTube } from '@/lib/music';
 import { Campo, ColorRGB, Deslizador, Interruptor, Pastillas, Pro, ROMBO, SelectorFuente, Tarjetas } from './Controles';
 import { EFECTOS_NOMBRE, efectoNombre, rellenaElNombre } from '@/data/efectosNombre';
+import { NombreMaquina } from '../profile/NombreMaquina';
 import { controlEsPro } from '@/data/premium';
 import { DIBUJOS } from './dibujos';
 import {
@@ -173,11 +174,6 @@ function EfectosDelNombre({
   /* Tu nombre si lo tienes, tu usuario si no, y algo si no hay ninguno de
      los dos: una tarjeta vacia no ensena ningun efecto. */
   const muestra = profile.name || profile.username || 'Tu nombre';
-  /* El mismo recuento que hace el perfil, por puntos de codigo: `.length`
-     parte los emoji en dos y la maquina de escribir daria el doble de
-     pasos que letras hay. */
-  const letras = String([...muestra.trim()].length || 1);
-
   return (
     <Campo label="Efecto del nombre">
       <div
@@ -197,12 +193,10 @@ function EfectosDelNombre({
                 data-namefill={rellenaElNombre(e.id) ? 'on' : 'off'}
                 aria-hidden="true"
               >
-                <span
-                  className="pf-name"
-                  data-texto={muestra}
-                  style={{ '--u-name-n': letras } as React.CSSProperties}
-                >
-                  {muestra}
+                <span className="pf-name" data-texto={muestra}>
+                  {/* La maquina es el MISMO componente que usa el perfil, no
+                      una imitacion: si cambia el ritmo, cambia en los dos. */}
+                  {e.id === 'maquina' ? <NombreMaquina texto={muestra} /> : muestra}
                 </span>
               </span>
               <span className="fx__n">

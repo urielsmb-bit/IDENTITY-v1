@@ -27,8 +27,6 @@ export interface DefEfectoNombre {
    * `drop-shadow`, que sigue la silueta. El perfil lo decide con esto.
    */
   rellena?: boolean;
-  /** Si necesita saber cuántas letras tiene el nombre (la máquina de escribir). */
-  cuentaLetras?: boolean;
   pro?: boolean;
 }
 
@@ -67,7 +65,6 @@ export const EFECTOS_NOMBRE: readonly DefEfectoNombre[] = [
     id: 'maquina',
     nombre: 'Máquina de escribir',
     desc: 'Se escribe letra a letra, se borra y vuelve a empezar.',
-    cuentaLetras: true,
     pro: true,
   },
   {
