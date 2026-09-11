@@ -156,7 +156,19 @@
   /* ---- métrica ------------------------------------------- */
   --pad:   clamp(16px,4vw,48px);
   --maxw:  1200px;
-  --nav-h: 60px;
+
+  /* La barra flota: es una pastilla centrada con aire alrededor, no una
+     franja pegada al borde de arriba.
+
+     Por eso son TRES medidas y no una. `--nav-alto` es lo que mide la
+     pastilla; `--nav-sep`, el aire que la separa del borde; y `--nav-h`
+     sigue siendo lo que la barra OCUPA, que es lo que miran los quince
+     `calc(100dvh - var(--nav-h))` repartidos por la hoja y el
+     `padding-top` de `.view`. Definiendolo asi, la barra pasa a flotar
+     sin tocar ni uno de ellos. */
+  --nav-alto: 56px;
+  --nav-sep:  12px;
+  --nav-h: calc(var(--nav-alto) + var(--nav-sep) * 2);
 }
 
 *,*::before,*::after{ box-sizing:border-box; }
@@ -416,7 +428,10 @@ h1,h2,h3,h4{ margin:0; font-weight:600; letter-spacing:-.03em; line-height:1.1; 
    siguen cuadrando solos.
    ============================================================ */
 @supports (padding: env(safe-area-inset-top)) {
-  :root { --nav-h: calc(60px + env(safe-area-inset-top)); }
+  /* Crece el AIRE, no la pastilla: con la muesca, la barra baja un poco
+     y sigue midiendo lo mismo. Estirarla en cambio le daria una altura
+     distinta segun el telefono. `--nav-h` sale solo de los otros dos. */
+  :root { --nav-sep: calc(12px + env(safe-area-inset-top)); }
 }
 
 .toast{
