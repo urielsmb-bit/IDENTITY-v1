@@ -29,11 +29,19 @@
   left:0; right:0;
   margin-inline:auto;
   z-index:900;
-  /* Setenta pixeles mas estrecha que el contenido. Pierde el plomo con
-     el titulo de la portada -eso lo daba el ancho exacto- y a cambio la
-     pastilla se lee como una pieza aparte, posada encima, que es lo que
-     se buscaba. */
-  width:min(calc(var(--maxw) - 70px), calc(100% - var(--pad)));
+  /* Dos limites, y el segundo es el que faltaba.
+
+     El tope de 1130 -setenta menos que el contenido- solo manda en
+     pantallas anchas. Por debajo de ~1490 quien decidia era
+     `100% - var(--pad)`, que resta cuarenta pixeles en total: en una
+     ventana de mil, la pastilla salia al 96% y se leia como una franja
+     pegada a los bordes, justo lo que no se queria.
+
+     Con el 76% el aire de los lados crece con la ventana en vez de
+     quedarse en cuarenta pixeles, y la pastilla se ve posada encima a
+     cualquier tamaño. Por debajo de 820 los enlaces se esconden, asi que
+     lo que queda -marca y cuenta- cabe de sobra. */
+  width:min(calc(var(--maxw) - 70px), 76%);
   height:var(--nav-alto);
   display:flex; align-items:center; gap:var(--s5);
   padding-inline:var(--s4);
@@ -44,6 +52,20 @@
   background:rgba(10,10,10,.72);
   backdrop-filter:var(--blur);
   -webkit-backdrop-filter:var(--blur);
+  /* Lo que la despega del fondo, y son dos cosas a la vez:
+
+     La sombra, muy difuminada y desplazada hacia abajo, es la que dice
+     que hay distancia. Va con radio grande y extension negativa para que
+     se note DEBAJO y no como un halo alrededor: un halo parece un borde
+     encendido, no una sombra.
+
+     Y el filo de luz de arriba -un pixel por dentro- es lo que la hace
+     parecer una pieza fisica: un objeto iluminado desde arriba tiene el
+     canto superior mas claro. Sin eso la pastilla es una mancha oscura
+     con sombra; con eso, algo posado. */
+  box-shadow:
+    0 18px 40px -22px rgba(0,0,0,.95),
+    inset 0 1px 0 rgba(255,255,255,.06);
   transition:border-color var(--transition-normal), background var(--transition-normal),
              box-shadow var(--transition-normal);
 }
@@ -53,7 +75,11 @@
 .nav.is-scrolled{
   border-color:var(--border-strong);
   background:rgba(10,10,10,.9);
-  box-shadow:0 10px 34px -18px rgba(0,0,0,.9);
+  /* Al bajar sube: la sombra se alarga y el filo se aclara. Es el mismo
+     objeto un poco mas alto, no otro estilo. */
+  box-shadow:
+    0 24px 52px -20px rgba(0,0,0,1),
+    inset 0 1px 0 rgba(255,255,255,.09);
 }
 
 .nav__mark{
