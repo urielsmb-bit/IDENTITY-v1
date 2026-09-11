@@ -110,18 +110,42 @@ export function Guia({ candidatas, aprendidas, total, onDescartar, onApagar }: P
       setSitio({ top, left, arriba, flecha, sinFlecha });
     };
 
+    /* Una medida por FOTOGRAMA, no una por evento.
+    
+       `medir` lee la posición del ancla y hace un `setSitio`, o sea un
+       renderizado de React. Colgado directamente del scroll, eso ocurría
+       una vez por cada evento de scroll: en un ratón de rueda libre o un
+       panel táctil son decenas por segundo, y la pantalla solo se pinta
+       sesenta veces. El trabajo de más no se veía; el tirón al arrastrar,
+       sí.
+    
+       Y `passive`. Sin él, el navegador tiene que esperar a que el
+       manejador termine ANTES de mover la página, por si llama a
+       `preventDefault`. Este no lo llama nunca —solo mide— pero el
+       navegador no puede saberlo sin preguntar. */
+    let pedido = 0;
+    const alMoverse = () => {
+      if (pedido) return;
+      pedido = requestAnimationFrame(() => {
+        pedido = 0;
+        medir();
+      });
+    };
+
     medir();
-    const ro = new ResizeObserver(medir);
+    const ro = new ResizeObserver(alMoverse);
     ro.observe(el);
     if (cajaRef.current) ro.observe(cajaRef.current);
-    // `true` para capturar también el scroll de los paneles interiores, que
-    // no burbujea hasta window.
-    window.addEventListener('scroll', medir, true);
-    window.addEventListener('resize', medir);
+    // `capture` para pillar también el scroll de los paneles interiores,
+    // que no burbujea hasta window.
+    const opciones = { capture: true, passive: true } as const;
+    window.addEventListener('scroll', alMoverse, opciones);
+    window.addEventListener('resize', alMoverse);
     return () => {
+      if (pedido) cancelAnimationFrame(pedido);
       ro.disconnect();
-      window.removeEventListener('scroll', medir, true);
-      window.removeEventListener('resize', medir);
+      window.removeEventListener('scroll', alMoverse, opciones);
+      window.removeEventListener('resize', alMoverse);
     };
   }, [pista]);
 

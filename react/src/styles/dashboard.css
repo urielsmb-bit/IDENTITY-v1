@@ -3351,7 +3351,29 @@
   gap:6px;
 }
 
+/* SOLO SE PINTA LO QUE SE VE.
+
+   Veinticuatro tarjetas, y cada una es un efecto DE VERDAD corriendo: capas
+   con mezcla, desenfoques, degradados moviendose y, en cuatro de ellas, un
+   filtro SVG con ruido animado. Todas a la vez, y en el panel caben nueve.
+   Las otras quince gastaban lo mismo estando fuera de la pantalla.
+
+   `content-visibility:auto` es exactamente para esto: el navegador se salta
+   el pintado, la composicion y las animaciones de lo que no esta a la vista,
+   y lo retoma al acercarse. No hay que apagar nada a mano ni volver a
+   encenderlo, ni decidir que efecto es caro: lo decide el navegador, que es
+   quien sabe donde esta la ventana.
+
+   `contain-intrinsic-size: auto 82px` es el alto que reserva mientras no lo
+   ha pintado. Sin eso la rejilla se colapsaria y la barra de desplazamiento
+   iria dando saltos. Con `auto` delante, ademas, recuerda el alto real de la
+   ultima vez que SI lo pinto.
+
+   El recorte que trae consigo no cambia nada: la tarjeta ya llevaba
+   `overflow:hidden`. */
 .fx__b{
+  content-visibility:auto;
+  contain-intrinsic-size:auto 82px;
   display:grid;
   gap:6px;
   padding:10px 8px 8px;

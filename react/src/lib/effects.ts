@@ -478,7 +478,10 @@ export function tilt(root: HTMLElement | null, card: HTMLElement | null, max: nu
      pasar por medio. Los angulos se siguen midiendo contra la tarjeta, asi
      que el resultado es el mismo; lo que cambia es donde se deja de
      escuchar, que ahora es al salir del perfil entero. */
-  root.addEventListener('mousemove', onMove);
+  /* `passive`: este manejador solo mide y escribe dos variables CSS, nunca
+     llama a `preventDefault`. Los otros cinco `mousemove` de este fichero
+     ya lo llevaban; este se quedo sin el. */
+  root.addEventListener('mousemove', onMove, { passive: true });
   root.addEventListener('mouseenter', measure);
   root.addEventListener('mouseleave', onLeave);
   window.addEventListener('scroll', measure, { passive: true });
