@@ -46,6 +46,14 @@ const COLUMNAS: { titulo: string; enlaces: Enlace[] }[] = [
     ],
   },
   {
+    titulo: 'Ayuda',
+    enlaces: [
+      { a: '/ayuda', texto: 'Centro de ayuda' },
+      { a: '/ayuda/crear-tu-perfil', texto: 'Crear tu perfil' },
+      { a: '/ayuda/problemas', texto: 'Cuando algo no va' },
+    ],
+  },
+  {
     titulo: 'Legal',
     enlaces: [
       { a: '/terminos', texto: 'Términos del servicio' },

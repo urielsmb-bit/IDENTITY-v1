@@ -35,6 +35,7 @@ const LegalPage = lazy(() => import('./pages/LegalPage'));
    normal porque no es una seccion del editor: no edita tu perfil, edita
    el de otra persona. */
 const AdminPage = lazy(() => import('./pages/AdminPage'));
+const AyudaPage = lazy(() => import('./pages/AyudaPage'));
 
 import { useAuthInit } from './hooks/useAuth';
 
@@ -134,6 +135,13 @@ export default function App() {
               <Route path="/top" element={<LeaderboardPage />} />
               <Route path="/plantillas" element={<TemplatesPage />} />
               <Route path="/pricing" element={<PricingPage />} />
+              {/* `ayuda` lleva reservado desde la migracion fundacional,
+                  asi que ningun perfil puede chocar con esta ruta. En una
+                  ruta y no en un subdominio: `help.sharee.fun` pediria DNS,
+                  otro despliegue y su propia copia de la barra, del pie y
+                  de los estilos para acabar en el mismo sitio. */}
+              <Route path="/ayuda" element={<AyudaPage />} />
+              <Route path="/ayuda/:articulo" element={<AyudaPage />} />
             </Route>
             {/* `admin` esta en `nombres_reservados` desde la migracion
                 fundacional, asi que nadie puede tener un perfil que

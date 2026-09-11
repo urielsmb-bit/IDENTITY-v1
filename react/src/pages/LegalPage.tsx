@@ -1,6 +1,7 @@
 import { useLocation, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useTitulo } from '@/hooks/useTitulo';
+import { markdownAHtml } from '@/lib/markdown';
 
 const DOCS: Record<string, { file: string; title: string }> = {
   '/terminos': { file: 'sharee_TERMINOS.md', title: 'Términos del servicio' },
@@ -8,49 +9,12 @@ const DOCS: Record<string, { file: string; title: string }> = {
   '/copyright': { file: 'sharee_COPYRIGHT.md', title: 'Derechos de autor y DMCA' },
 };
 
-function esc(s: string) {
-  return String(s).replace(/[&<>"]/g, (c) => {
-    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' } as Record<string, string>)[c] || c;
-  });
-}
-
-function parseMarkdownToHtml(md: string): string {
-  // Clean developer notes
-  let cleaned = md.split(/\n#{1,3} Notas para ti/)[0] || '';
-  cleaned = cleaned.replace(
-    /^(#{1,4})\s+[^\n]*(?:para ti|borrar antes de publicar)[^\n]*\n[\s\S]*?(?=^#{1,4}\s|(?![\s\S]))/gim,
-    '',
-  );
-  cleaned = cleaned.replace(/^> \*\*(?:Nota para ti|Borrador|Ojo con esto)[\s\S]*?(?=\n\n)/gim, '');
-
-  const lines = cleaned.split('\n');
-  const out: string[] = [];
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]?.trimEnd() ?? '';
-
-    // Headers
-    if (/^#\s+/.test(line)) {
-      out.push(`<h1>${esc(line.replace(/^#\s+/, ''))}</h1>`);
-    } else if (/^##\s+/.test(line)) {
-      out.push(`<h2>${esc(line.replace(/^##\s+/, ''))}</h2>`);
-    } else if (/^###\s+/.test(line)) {
-      out.push(`<h3>${esc(line.replace(/^###\s+/, ''))}</h3>`);
-    } else if (/^>\s+/.test(line)) {
-      out.push(`<blockquote>${esc(line.replace(/^>\s+/, ''))}</blockquote>`);
-    } else if (/^[-*]\s+/.test(line)) {
-      out.push(`<li>${esc(line.replace(/^[-*]\s+/, ''))}</li>`);
-    } else if (line.trim().length > 0) {
-      const formatted = esc(line)
-        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-        .replace(/`([^`]+)`/g, '<code>$1</code>');
-      out.push(`<p>${formatted}</p>`);
-    }
-  }
-
-  return out.join('');
-}
+/* El analizador vivia aqui. Ahora es `lib/markdown.ts`, porque la ayuda
+   pinta los mismos ficheros y dos copias del mismo analizador acaban
+   soportando cosas distintas. De paso gano tres cosas que aqui
+   faltaban: enlaces, listas envueltas en `<ul>`, y negrita y codigo
+   dentro de titulos y de listas —donde antes salian los asteriscos a
+   la vista—. */
 
 export default function LegalPage() {
   const location = useLocation();
@@ -66,7 +30,7 @@ export default function LegalPage() {
     fetch(`/${docInfo.file}`)
       .then((res) => (res.ok ? res.text() : Promise.reject(new Error('Not found'))))
       .then((md) => {
-        setHtml(parseMarkdownToHtml(md));
+        setHtml(markdownAHtml(md));
         setLoading(false);
       })
       .catch(() => {

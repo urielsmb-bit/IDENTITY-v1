@@ -1728,3 +1728,190 @@ body.probando .view{ padding-top:0; }
   font-family:var(--font-mono); font-size:.94em;
   color:var(--text-secondary);
 }
+
+/* ---- centro de ayuda --------------------------------------------------
+   Barra lateral fija a la izquierda y el texto a la derecha, que es la
+   forma que tiene la documentacion en todas partes porque funciona: la
+   lista entera siempre a la vista, y el articulo sin nada alrededor.
+   ------------------------------------------------------------------- */
+.ayu{
+  max-width:var(--maxw);
+  margin:0 auto;
+  padding:var(--s6) var(--pad) var(--s8);
+  display:grid;
+  grid-template-columns:210px minmax(0,1fr);
+  gap:var(--s7);
+  align-items:start;
+}
+
+.ayu__lat{
+  position:sticky;
+  /* Debajo de la barra flotante, no debajo del borde de la ventana. */
+  top:calc(var(--nav-h) + var(--s4));
+  display:grid; gap:var(--s5);
+  font-size:var(--t2);
+}
+.ayu__lat-raiz{
+  display:block;
+  padding:7px 10px;
+  border-radius:var(--radius-sm);
+  color:var(--text-secondary);
+  text-decoration:none;
+}
+.ayu__lat-raiz.on,
+.ayu__lat-raiz:hover{ background:var(--surface-2); color:var(--text-primary); }
+
+.ayu__grupo-t{
+  display:block;
+  margin-bottom:8px; padding-left:10px;
+  font-size:var(--t1); font-weight:600;
+  letter-spacing:.06em; text-transform:uppercase;
+  color:var(--text-faint);
+}
+.ayu__grupo ul{
+  list-style:none; margin:0; padding:0 0 0 10px;
+  /* La linea que ata los hijos a su grupo. Sin ella, con cuatro grupos
+     seguidos no se sabe donde acaba uno y empieza el otro. */
+  border-left:1px solid var(--border);
+  display:grid; gap:1px;
+}
+.ayu__grupo a{
+  display:block;
+  padding:6px 10px;
+  margin-left:-1px;
+  border-left:1px solid transparent;
+  color:var(--text-muted);
+  text-decoration:none;
+  transition:color var(--transition-fast), border-color var(--transition-fast);
+}
+.ayu__grupo a:hover{ color:var(--text-primary); }
+.ayu__grupo a.on{
+  color:var(--text-primary);
+  border-left-color:var(--brand);
+  font-weight:500;
+}
+
+.ayu__main{ min-width:0; }
+
+.ayu__enc h1{
+  font-size:var(--tf-page);
+  letter-spacing:-.035em;
+  margin-bottom:var(--s3);
+}
+.ayu__enc > p{
+  max-width:52ch;
+  color:var(--text-secondary);
+  font-size:var(--t4); line-height:1.6;
+}
+
+.ayu__busca{
+  display:flex; align-items:center; gap:10px;
+  margin:var(--s5) 0 var(--s7);
+  padding:0 var(--s4);
+  border:1px solid var(--border-strong);
+  border-radius:100px;
+  background:var(--bg-secondary);
+  max-width:520px;
+  transition:border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.ayu__busca:focus-within{ border-color:var(--brand-line); box-shadow:0 0 0 3px var(--brand-soft); }
+.ayu__busca span{ display:grid; place-items:center; color:var(--text-muted); flex:none; }
+.ayu__busca svg{ width:17px; height:17px; }
+.ayu__busca .inp{
+  flex:1; min-width:0;
+  border:0; background:transparent; outline:none;
+  padding:12px 0;
+}
+/* La cruz nativa del `type=search` sale negra sobre fondo negro. */
+.ayu__busca input::-webkit-search-cancel-button{ filter:invert(.6); }
+
+.ayu__sec{ margin-bottom:var(--s7); }
+.ayu__sec h2{
+  font-size:var(--t5); letter-spacing:-.02em;
+  margin-bottom:6px;
+}
+.ayu__sec-d{
+  margin-bottom:var(--s4);
+  color:var(--text-muted); font-size:var(--t2);
+}
+.ayu__vacio{ color:var(--text-muted); max-width:52ch; line-height:1.6; }
+
+.ayu__rejilla{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(232px, 1fr));
+  gap:10px;
+}
+.ayu__tarjeta{
+  display:grid; gap:4px; align-content:start;
+  padding:14px 16px;
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--surface);
+  text-decoration:none;
+  transition:border-color var(--transition-fast), background var(--transition-fast);
+}
+.ayu__tarjeta:hover{ border-color:var(--border-strong); background:var(--surface-2); }
+.ayu__tarjeta b{ color:var(--text-primary); font-size:var(--t3); font-weight:600; }
+.ayu__tarjeta span{ color:var(--text-muted); font-size:var(--t2); line-height:1.45; }
+
+.ayu__miga{
+  display:flex; align-items:center; gap:8px;
+  margin-bottom:var(--s4);
+  font-size:var(--t2); color:var(--text-muted);
+}
+.ayu__miga a{ color:var(--text-muted); text-decoration:none; }
+.ayu__miga a:hover{ color:var(--text-primary); }
+
+/* El articulo y su indice, uno al lado del otro. */
+.ayu__doc{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 180px;
+  gap:var(--s6);
+  align-items:start;
+}
+.ayu__enesta{
+  position:sticky; top:calc(var(--nav-h) + var(--s4));
+  font-size:var(--t2);
+}
+.ayu__enesta b{
+  display:block; margin-bottom:10px;
+  font-size:var(--t1); font-weight:600;
+  letter-spacing:.06em; text-transform:uppercase;
+  color:var(--text-faint);
+}
+.ayu__enesta ul{ list-style:none; margin:0; padding:0; display:grid; gap:7px; }
+.ayu__enesta a{
+  color:var(--text-muted); text-decoration:none;
+  display:block; line-height:1.4;
+}
+.ayu__enesta a:hover{ color:var(--text-primary); }
+
+.ayu__pie-art{
+  margin-top:var(--s7);
+  padding-top:var(--s4);
+  border-top:1px solid var(--border);
+  color:var(--text-muted); font-size:var(--t2); line-height:1.6;
+}
+
+.ayu__vacio-pag{ padding:var(--s7) 0; }
+.ayu__vacio-pag h1{ font-size:var(--t6); margin-bottom:10px; }
+.ayu__vacio-pag p{ color:var(--text-muted); margin-bottom:var(--s5); }
+
+@media (max-width:980px){
+  /* El indice de la derecha es lo primero que sobra: ocupa una columna
+     entera para repetir lo que ya se lee bajando. */
+  .ayu__doc{ grid-template-columns:1fr; }
+  .ayu__enesta{ display:none; }
+}
+
+@media (max-width:760px){
+  /* Y la lateral pasa arriba, sin pegarse: en una pantalla estrecha una
+     columna de doscientos pixeles deja el texto en un canal. */
+  .ayu{ grid-template-columns:1fr; gap:var(--s6); }
+  .ayu__lat{ position:static; }
+}
+
+@media (pointer:coarse){
+  .ayu__lat-raiz,
+  .ayu__grupo a{ min-height:40px; display:flex; align-items:center; }
+}
