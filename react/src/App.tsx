@@ -30,6 +30,10 @@ const TemplatesPage = lazy(() => import('./pages/TemplatesPage'));
 const ProbarPlantillaPage = lazy(() => import('./pages/ProbarPlantillaPage'));
 const PricingPage = lazy(() => import('./pages/PricingPage'));
 const LegalPage = lazy(() => import('./pages/LegalPage'));
+/* El panel de quien reparte insignias. Va aparte y no dentro del panel
+   normal porque no es una seccion del editor: no edita tu perfil, edita
+   el de otra persona. */
+const AdminPage = lazy(() => import('./pages/AdminPage'));
 
 import { useAuthInit } from './hooks/useAuth';
 
@@ -100,6 +104,19 @@ export default function App() {
                 de alguien. */}
             <Route path="/probar/:id" element={<ProbarPlantillaPage />} />
             <Route path="/pricing" element={<PricingPage />} />
+            {/* `admin` esta en `nombres_reservados` desde la migracion
+                fundacional, asi que nadie puede tener un perfil que
+                choque con esta ruta. Quien entre sin permiso ve una
+                pagina que dice que no hay nada: el candado de verdad
+                esta en `es_admin()`, dentro de la base. */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/terminos" element={<LegalPage />} />
             <Route path="/privacidad" element={<LegalPage />} />
             <Route path="/copyright" element={<LegalPage />} />

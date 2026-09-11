@@ -1643,3 +1643,88 @@ body.probando .view{ padding-top:0; }
   resize:vertical;
 }
 .denun__aviso{ color:var(--dnd, #ED4245); font-size:var(--t1); line-height:1.45; }
+
+/* ---- repartir insignias ----------------------------------------------
+   El panel de quien concede. Reutiliza `.bgrid` y `.bcard`, que ya se
+   dibujaron para esto en el panel de insignias del editor: alli las
+   tarjetas solo se miran, aqui se pulsan, y `.bcard` ya traia su `:hover`
+   y su `.is-on`. Lo unico propio de esta pagina es el buscador de arriba
+   y la ficha de a quien se le esta dando.
+   ------------------------------------------------------------------- */
+.adm{ max-width:880px; padding-top:var(--s6); padding-bottom:var(--s8); }
+.adm__enc{ margin-bottom:var(--s5); }
+
+/* Mismo gesto que el «sharee.fun/___» de la portada: lo que se escribe es
+   media direccion, y verla entera evita la duda de si hay que poner la @. */
+.adm__buscar{
+  display:flex; align-items:center; gap:0;
+  border:1px solid var(--border-strong);
+  border-radius:100px;
+  background:var(--bg-secondary);
+  overflow:hidden;
+  max-width:520px;
+  transition:border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.adm__buscar:focus-within{ border-color:var(--brand-line); box-shadow:0 0 0 3px var(--brand-soft); }
+.adm__pre{
+  padding-left:var(--s4);
+  font-size:var(--t3); color:var(--text-muted); flex:none;
+}
+.adm__buscar .inp{
+  flex:1; min-width:0;
+  border:0; background:transparent; outline:none;
+  padding:12px 4px;
+}
+.adm__buscar .btn{ margin:5px; border-radius:100px; flex:none; }
+
+/* A quien se le esta dando. Con su cara, porque un nombre de usuario mal
+   tecleado y otro parecido son la misma linea de texto y caras distintas. */
+.adm__quien{
+  display:flex; align-items:center; gap:var(--s3);
+  margin:var(--s5) 0 var(--s4);
+  padding:var(--s3) var(--s4);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--surface-2);
+}
+.adm__cara{
+  width:40px; height:40px; flex:none;
+  display:grid; place-items:center;
+  border-radius:50%; overflow:hidden;
+  font-weight:700; font-size:var(--t4);
+}
+.adm__cara img{ width:100%; height:100%; object-fit:cover; }
+.adm__quien-t{ min-width:0; flex:1; display:flex; flex-direction:column; }
+.adm__quien-t b{ font-size:var(--t3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.adm__quien-t a{ font-size:var(--t2); color:var(--text-muted); text-decoration:none; }
+.adm__quien-t a:hover{ color:var(--text-primary); text-decoration:underline; }
+.adm__cuenta{ flex:none; font-size:var(--t2); color:var(--text-muted); }
+
+.adm__nota{ display:block; margin-bottom:var(--s5); }
+.adm__nota .inp{ margin-top:6px; width:100%; }
+
+.adm__grupo-d{
+  margin:-4px 0 10px;
+  font-size:var(--t2); line-height:1.45; color:var(--text-muted);
+}
+
+/* Desde cuando la tiene. Va debajo de la descripcion y en pequeno: lo que
+   importa al mirar la rejilla es cual esta puesta, no la fecha. */
+.adm__desde{
+  display:block; margin-top:3px;
+  font-size:var(--t1); color:var(--rare);
+}
+
+.adm .bcard{ text-align:left; cursor:pointer; font:inherit; }
+.adm .bcard:disabled{ opacity:.5; cursor:wait; }
+
+.adm__pie{
+  margin-top:var(--s7);
+  padding-top:var(--s4);
+  border-top:1px solid var(--border);
+  font-size:var(--t2); line-height:1.6; color:var(--text-muted);
+}
+.adm__pie code{
+  font-family:var(--font-mono); font-size:.94em;
+  color:var(--text-secondary);
+}

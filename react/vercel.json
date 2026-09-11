@@ -5,7 +5,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/:usuario((?!(?:api|assets|fuentes|dashboard|entrar|top|analytics|plantillas|templates|probar|pricing|terminos|privacidad|copyright)$)[A-Za-z0-9_.-]{1,32})",
+      "source": "/:usuario((?!(?:api|assets|fuentes|admin|dashboard|entrar|top|analytics|plantillas|templates|probar|pricing|terminos|privacidad|copyright)$)[A-Za-z0-9_.-]{1,32})",
       "missing": [
         {
           "type": "query",

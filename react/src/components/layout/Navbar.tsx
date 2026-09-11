@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { avatarDe } from '@/lib/avatar';
+import { soyAdmin } from '@/lib/admin';
 
 /**
  * Main navigation bar — mirrors the original `<header class="nav">` from index.html.
@@ -24,6 +25,28 @@ export function Navbar() {
      decide, asi que la foto de la barra no puede discrepar de la del
      perfil. */
   const cara = avatarDe(mio ?? {});
+
+  /* El panel de repartir insignias, solo para quien reparte.
+
+     Esconderlo NO es lo que lo protege —la cerradura es `es_admin()`,
+     dentro de la base, y sigue ahi aunque alguien escriba la direccion a
+     mano—. Se esconde porque una entrada de menu que lleva a una pagina
+     que dice «aqui no hay nada» no es seguridad, es ruido para el 99.9%
+     de la gente. */
+  const [reparto, setReparto] = useState(false);
+  useEffect(() => {
+    if (!session) {
+      setReparto(false);
+      return;
+    }
+    let vivo = true;
+    void soyAdmin().then((v) => {
+      if (vivo) setReparto(v);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [session]);
 
   // Add shadow on scroll (mirrors original navShadow())
   useEffect(() => {
@@ -163,6 +186,11 @@ export function Navbar() {
                 <Link role="menuitem" to="/analytics">
                   Analíticas
                 </Link>
+                {reparto && (
+                  <Link role="menuitem" to="/admin">
+                    Repartir insignias
+                  </Link>
+                )}
                 {/* En rojo y el ultimo. Es la unica de la lista que
                     deshace algo, y va separada del resto para que no se
                     pulse de paso. */}
