@@ -184,7 +184,11 @@ export function ProfileView({
      Lo decide `avatarDe` y no este componente, porque la misma cara tiene
      que salir en el ranking, en Descubrir y en la tarjeta de compartir. */
   const cara = avatarDe(p);
-  const [gateUnlocked, setGateUnlocked] = useState(!p.gate || preview);
+  /* La puerta va SIEMPRE en un perfil de verdad; en las previas y
+     miniaturas no, que alli nadie va a pulsar nada y taparia justo lo que se
+     esta enseñando. Dejo de mirar `p.gate`: era un interruptor que apagaba
+     lo unico que puede dar permiso al navegador para que suene la musica. */
+  const [gateUnlocked, setGateUnlocked] = useState(preview);
   /** Mientras dura, el perfil ENTERO entra: el fondo sube desde negro a la
    *  vez que la tarjeta, en vez de aparecer ya puesto detrás de ella. */
   const [revelando, setRevelando] = useState(false);
@@ -213,7 +217,7 @@ export function ProfileView({
      en las miniaturas de plantillas —cuatro perfiles a la vez, cada uno
      queriendo mandar en el puntero de toda la pagina—, asi que se enciende
      por `editando`, que es solo el editor, y se acota a la tarjeta. */
-  useCursor(p.cursor || 'default', !preview || editando, {
+  const cursorNativo = useCursor(p.cursor || 'default', !preview || editando, {
     img: safeMedia(p.cursorImg || ''),
     size: p.cursorSize,
     trail: p.cursorTrail,
@@ -417,11 +421,11 @@ export function ProfileView({
   // Sin puerta la entrada ocurre igual, solo que al cargar: la animacion es
   // del PERFIL, y la puerta es una forma de dispararla, no su unica forma.
   useEffect(() => {
-    if (preview || p.gate) return;
+    if (preview) return;
     setRevelando(true);
     const t = window.setTimeout(() => setRevelando(false), 1400);
     return () => window.clearTimeout(t);
-  }, [preview, p.gate]);
+  }, [preview]);
 
   /* Sin puerta no hay toque al que engancharse, y en modo ahorro de bateria
      el movil le niega el arranque hasta a un video mudo. Se reintenta con el
@@ -458,7 +462,12 @@ export function ProfileView({
     }
 
     window.setTimeout(() => setRevelando(false), 1400);
-    if (pistas.length > 0) music.play();
+    /* Sin condicion. Antes era `if (pistas.length > 0)`, y esa lista sale
+       de un `useMemo` sobre los datos del perfil: si en el momento del clic
+       todavia no estaba resuelta, el unico clic que el navegador cuenta como
+       permiso se gastaba sin pedir que sonara nada. `play()` sin pistas no
+       hace daño: avisa de que no suena y ya. */
+    music.play();
     arrancarFondo(rootRef.current);
   };
 
@@ -902,6 +911,10 @@ export function ProfileView({
       data-blockstyle={p.blockStyle || 'inherit'}
       data-cursor={p.cursor || 'default'}
       data-curimg={p.cursorImg && (!preview || editando) ? 'on' : undefined}
+      /* El puntero lo pinta el SISTEMA, no nosotros. Con esto puesto, las
+         reglas que esconden el cursor no se aplican: esconderlo aqui seria
+         quedarse sin el del sistema y sin el nuestro. */
+      data-curnat={cursorNativo ? 'on' : undefined}
       data-nameanim={p.nameFx || 'none'}
       data-namegrad={sw(p.gradient)}
       /* RELLENO no es lo mismo que degradado, aunque el degradado lo sea.
@@ -977,7 +990,7 @@ export function ProfileView({
       )}
 
       {/* Puerta de entrada */}
-      {!gateUnlocked && p.gate && (
+      {!gateUnlocked && (
         <div
           className="pf-gate"
           role="button"

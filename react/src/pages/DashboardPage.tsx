@@ -1429,16 +1429,16 @@ export default function DashboardPage() {
                   onChange={(v) => updateField('tilt', v)}
                 />
                 </Pro>
+                {/* Aqui habia un interruptor para apagar la pantalla de
+                    entrada, y apagarla tenia una consecuencia que no decia:
+                    el navegador NO deja que suene nada hasta que el visitante
+                    toca la pagina, asi que sin esa pantalla no habia clic al
+                    que engancharse y la musica no sonaba. Un interruptor que
+                    apaga en silencio otra cosa distinta de la que nombra.
+                    
+                    Ahora va siempre y lo unico que se elige es que pone. */}
                 <div data-guia="portada">
-                  <Interruptor
-                    label="Pantalla de entrada"
-                    desc="Pantalla negra hasta que el visitante hace clic; entonces entra todo el perfil"
-                    on={!!profile.gate}
-                    onChange={(v) => updateField('gate', v)}
-                  />
-                </div>
-                {profile.gate && (
-                  <Campo label="Texto de la pantalla">
+                  <Campo label="Texto de la pantalla de entrada">
                     <input
                       type="text"
                       className="inp"
@@ -1448,7 +1448,7 @@ export default function DashboardPage() {
                       onChange={(e) => updateField('gateText', e.target.value)}
                     />
                   </Campo>
-                )}
+                </div>
               </section>
 
               {/* Publicar la plantilla se hacia SOLO en la pagina de

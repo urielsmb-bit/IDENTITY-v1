@@ -1317,8 +1317,14 @@
 /* ============================================================
    CURSOR PERSONALIZADO
    ============================================================ */
-.pf[data-cursor]:not([data-cursor="default"]){ cursor:none; }
-.pf[data-cursor]:not([data-cursor="default"]) *{ cursor:none !important; }
+/* Se esconde el puntero SOLO si lo dibujamos nosotros.
+   `data-curnat="on"` dice que se hizo cargo el sistema con `cursor: url()`,
+   y entonces esconderlo seria quedarse sin ninguno de los dos. */
+.pf[data-cursor]:not([data-cursor="default"]):not([data-curnat="on"]){ cursor:none; }
+.pf[data-cursor]:not([data-cursor="default"]):not([data-curnat="on"]) *{ cursor:none !important; }
+/* La caja del cursor cuando solo se usa para la estela: existe para llevar
+   las chispas, no se ve. */
+.cur--nada{ display:none; }
 .cur{ position:fixed; top:0; left:0; z-index:9990; pointer-events:none; will-change:transform; }
 /* Fuera de su ambito. En el editor el cursor es del PERFIL, no de los
    mandos: encima de los paneles se aparta y vuelve el puntero de siempre.
@@ -2914,8 +2920,8 @@
 }
 /* Con imagen propia el puntero del sistema tambien se esconde, aunque el
    tipo siga siendo "default": la imagen es el cursor. */
-.pf[data-curimg="on"],
-.pf[data-curimg="on"] *{ cursor:none !important; }
+.pf[data-curimg="on"]:not([data-curnat="on"]),
+.pf[data-curimg="on"]:not([data-curnat="on"]) *{ cursor:none !important; }
 
 /* ---- las formas de cada estela ------------------------------
    El movimiento lo decide el JS; aquí sólo va el aspecto. */

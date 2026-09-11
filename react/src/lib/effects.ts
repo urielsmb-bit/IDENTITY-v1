@@ -533,67 +533,90 @@ const ESTELAS: Record<string, {
   nieve:    { deriva: [0.4, 0.55],   dispersa: 18, vida: 1800, tam: [0.35, 0.9], paso: 1.2 },
 };
 
+/**
+ * El cursor propio.
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ * SE ACTUALIZA, NO SE RECONSTRUYE
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * Antes esto devolvía solo una forma de destruirlo, así que cambiar
+ * CUALQUIER opción —el tamaño, la densidad del rastro, la clase de chispa—
+ * obligaba a tirarlo todo y volver a montarlo: se borraban del documento
+ * hasta ciento sesenta y ocho nodos de chispa y se creaban otros tantos.
+ *
+ * Eso no se nota al elegir una opción. Se nota al ARRASTRAR un deslizador,
+ * que es como se eligen el tamaño y el rastro: cada paso del deslizador era
+ * un ciclo completo de destrucción y creación, y el navegador tenía que
+ * hacerlo entre dos movimientos del ratón. De ahí el tirón.
+ *
+ * Ahora `actualizar()` cambia lo que hay que cambiar sobre los nodos que ya
+ * existen, y la piscina de chispas crece cuando hace falta y no se encoge
+ * nunca: bajar el rastro y volver a subirlo no cuesta un solo nodo nuevo.
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ * LA POSICIÓN
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * Se escribe EN EL EVENTO, no en el fotograma, y desde `pointerrawupdate`
+ * —que entrega todos los movimientos del ratón sin agruparlos por
+ * fotograma—. Un cursor liso no enciende ningún `requestAnimationFrame`:
+ * solo se pinta cuando el ratón se mueve.
+ */
 export function cursor(
   type: string,
   opciones: {
     img?: string; size?: number | null;
     trail?: number | null; trailFx?: string;
+    /**
+     * Solo la estela: la forma no se dibuja.
+     *
+     * Es lo que se usa cuando el puntero ya lo pinta el SISTEMA con
+     * `cursor: url(...)`. Ahi no hay nada que perseguir —el puntero es el de
+     * verdad y no tiene retraso— pero las chispas siguen haciendo falta, y
+     * esas no sufren el problema: se quedan donde pasaste, asi que ir un
+     * fotograma por detras es justo lo que tienen que hacer.
+     */
+    soloEstela?: boolean;
     /** Si se pasa, solo se deja ver encima de ese elemento. */
     ambito?: HTMLElement | null;
   } = {},
 ) {
   // Con imagen propia se dibuja aunque el tipo sea "default": la imagen ES
   // la eleccion. Sin imagen y sin tipo, no hay nada que dibujar.
-  const img = opciones.img || '';
-  if ((!type || type === 'default') && !img) return null;
+  if ((!type || type === 'default') && !opciones.img && !opciones.soloEstela) return null;
   if (reduce) return null;
   if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(hover: none)').matches) return null;
 
   const el = document.createElement('div');
-  el.className = 'cur' + (img ? ' cur--img' : ' cur--' + type);
-  if (img) {
-    const lado = Math.max(12, Math.min(96, opciones.size || 32));
-    const foto = document.createElement('img');
-    foto.src = img;
-    foto.alt = '';
-    foto.width = lado;
-    foto.height = lado;
-    /* Centrada en la punta del raton, como los demas cursores.
-       El tamaño va tambien en la CAJA, no solo en la imagen. El margen
-       negativo desplaza al contenedor media medida, asi que solo centra si
-       el contenedor mide de verdad `lado`; y no media: `.cur` es fijo y sin
-       ancho, o sea que se encogia a su contenido, y su contenido es una
-       imagen con `width:100%` — que se resuelve contra el padre que aun no
-       tiene ancho—. Salia descentrada y siempre para el mismo lado, que es
-       la firma de esto. */
-    el.style.width = `${lado}px`;
-    el.style.height = `${lado}px`;
-    el.style.margin = `${-lado / 2}px 0 0 ${-lado / 2}px`;
-    el.appendChild(foto);
-  }
+  let foto: HTMLImageElement | null = null;
   document.body.appendChild(el);
 
-  /* El rastro: chispas que se quedan DONDE paso el raton y se apagan.
-     Antes era una cadena de motas colgando del cursor —siempre las mismas,
-     siempre pegadas a el—, que es otra cosa: se movia con el puntero en vez
-     de marcar el camino recorrido. */
-  const DENSIDAD =
-    opciones.trail != null
-      ? Math.max(0, Math.min(12, opciones.trail))
-      : (type === 'dot' || type === 'blade') ? 5 : 0;
+  /* ── lo que cambia ────────────────────────────────────────
+     Todo esto eran constantes. Al ser variables, `actualizar` puede
+     moverlas sin tocar un solo nodo del documento. */
+  let tipo = type;
+  let img = '';
+  let DENSIDAD = 0;
+  let E = ESTELAS.chispas!;
+  let PASO = 0;
+  let VIDA = E.vida;
+  let RETRASO = 8;
+  let necesitaFotograma = false;
 
-  /* Piscina de tamano fijo, reutilizada. Crear y destruir nodos a cada
-     movimiento del raton es la forma segura de que el navegador acabe
-     recogiendo basura mientras el usuario mueve el cursor. */
-  const TIPO = opciones.trailFx || 'chispas';
-  const E = ESTELAS[TIPO] ?? ESTELAS.chispas!;
-
-  const MAX_CHISPAS = DENSIDAD * 14;
-  /** Cada cuantos pixeles recorridos se suelta una mota. Con la densidad al
-   *  maximo salen casi pegadas, que es el aspecto de polvo brillante; con
-   *  densidad baja quedan sueltas y se distinguen una a una. */
-  const PASO = DENSIDAD > 0 ? Math.max(2.5, 20 - DENSIDAD * 1.5) * E.paso : 0;
-  const VIDA = E.vida;
+  /**
+   * Cuanto se quedan las chispas por detras del puntero al nacer.
+   *
+   * Sale del TAMANO del cursor y no de un numero fijo: con 13 px fijos, un
+   * aro de 32 o una imagen de 48 se comian las primeras chispas, que nacian
+   * encima del propio puntero en vez de detras de el.
+   *
+   * El halo es la excepcion: mide 220 px pero es un resplandor difuso, no
+   * una figura, y empujar el rastro 118 px lo dejaria descolgado.
+   */
+  const HUELLA: Record<string, number> = {
+    dot: 6, ring: 18, blade: 16, glow: 14,
+  };
 
   interface Chispa {
     el: HTMLElement;
@@ -604,38 +627,36 @@ export function cursor(
     viva: boolean;
   }
   const chispas: Chispa[] = [];
-  for (let i = 0; i < MAX_CHISPAS; i++) {
-    const c = document.createElement('div');
-    c.className = 'cur-chispa cur-chispa--' + TIPO;
-    c.style.opacity = '0';
-    document.body.appendChild(c);
-    chispas.push({ el: c, x: 0, y: 0, vx: 0, vy: 0, tam: 1, nace: 0, viva: false });
-  }
   let siguiente = 0;
   let ultimoX = -9999, ultimoY = -9999;
 
   /**
-   * Cuanto se quedan por detras del puntero al nacer.
+   * La piscina crece y NO se encoge.
    *
-   * Tiene que salir del TAMANO del cursor, no ser un numero fijo: con 13 px
-   * fijos, un aro de 32 o una imagen de 48 se comian las primeras chispas,
-   * que nacian encima del propio puntero en vez de detras de el.
-   *
-   * El halo es la excepcion: mide 220 px pero es un resplandor difuso, no
-   * una figura, y empujar el rastro 118 px lo dejaria descolgado.
+   * Los nodos sobrantes se quedan apagados y no cuestan nada: un `div` con
+   * `opacity:0` que nadie toca no entra en ningun fotograma. Encogerla
+   * significaria borrar nodos para tener que crearlos otra vez en cuanto se
+   * suba el deslizador, que es exactamente lo que habia que quitar.
    */
-  const HUELLA: Record<string, number> = {
-    dot: 6, ring: 18, blade: 16, glow: 14,
-  };
-  const radio = img
-    ? Math.max(12, Math.min(96, opciones.size || 32)) / 2
-    : (HUELLA[type] ?? 8);
-  const RETRASO = radio + 9;
+  function asegurarPiscina(n: number) {
+    for (let i = chispas.length; i < n; i++) {
+      const c = document.createElement('div');
+      c.className = 'cur-chispa cur-chispa--' + (opciones.trailFx || 'chispas');
+      c.style.opacity = '0';
+      document.body.appendChild(c);
+      chispas.push({ el: c, x: 0, y: 0, vx: 0, vy: 0, tam: 1, nace: 0, viva: false });
+    }
+  }
 
   function soltarChispa(x: number, y: number, ahora: number, ux: number, uy: number) {
+    /* Solo se usan las primeras `DENSIDAD * 14` de la piscina. Las de mas
+       alla existen de antes y estan apagadas. */
+    const tope = Math.min(chispas.length, DENSIDAD * 14);
+    if (tope <= 0) return;
+    if (siguiente >= tope) siguiente = 0;
     const c = chispas[siguiente];
     if (!c) return;
-    siguiente = (siguiente + 1) % chispas.length;
+    siguiente = (siguiente + 1) % tope;
 
     /* Nacen DETRAS del cursor, en el sentido contrario al movimiento.
        Naciendo en el punto exacto del raton, y con la dispersion repartida
@@ -675,22 +696,7 @@ export function cursor(
    */
   const ambito = opciones.ambito || null;
   let dentro = !ambito;
-  if (ambito) el.classList.add('cur--fuera');
 
-  /**
-   * Se pinta en el EVENTO, no en el fotograma.
-   *
-   * Antes la posicion se acercaba al raton dentro de un rAF con una
-   * constante de 8 ms. Eso es retraso siempre: 8 ms de seguimiento MAS la
-   * espera al siguiente fotograma. Y el evento `mousemove` que lo
-   * alimentaba lo entrega el navegador a ritmo de pantalla, asi que un
-   * raton de 1000 Hz en un monitor de 240 Hz no servia de nada.
-   *
-   * Ahora la posicion se escribe en cuanto llega, desde `pointerrawupdate`
-   * —que si entrega al ritmo del raton, por encima del de la pantalla—. El
-   * navegador compone una sola vez por fotograma de todas formas, asi que
-   * escribir de mas entre fotogramas no pinta de mas: solo quita espera.
-   */
   function pintar() {
     let tr = 'translate3d(' + mx + 'px,' + my + 'px,0)';
     if (glx || gly) {
@@ -727,15 +733,8 @@ export function cursor(
      cortos y el temblor no llegaba a dispararse nunca. */
   let fx = -100, fy = -100;
 
-  /* Un cursor liso —un punto, un aro, una imagen— ya no necesita fotograma
-     ninguno: se pinta solo cuando el raton se mueve. Antes cada cursor
-     dejaba un rAF encendido para siempre repitiendo el mismo calculo, y
-     eso es tiempo de fotograma que le quitas a todo lo demas de la pagina
-     por algo que no cambia. */
-  const necesitaFotograma = type === 'glitch' || DENSIDAD > 0;
-
-  const soltar = !necesitaFotograma ? () => {} : ticker(() => {
-    if (type === 'glitch') {
+  function cuadro() {
+    if (tipo === 'glitch') {
       const v = Math.min(1, Math.hypot(mx - fx, my - fy) / 26);
       fx = mx; fy = my;
       el.style.setProperty('--gl', v.toFixed(3));
@@ -758,28 +757,129 @@ export function cursor(
         soltarChispa(mx, my, ahora, dx / dist, dy / dist);
         ultimoX = mx; ultimoY = my;
       }
-
-      for (let j = 0; j < chispas.length; j++) {
-        const c = chispas[j]!;
-        if (!c.viva) continue;
-        const t = (ahora - c.nace) / VIDA;
-        if (t >= 1) {
-          c.viva = false;
-          c.el.style.opacity = '0';
-          continue;
-        }
-        c.x += c.vx;
-        c.y += c.vy;
-        // Se apaga y encoge hacia el final; el brillo cae mas rapido que el
-        // tamano, que es como se ve una chispa de verdad.
-        const k = 1 - t;
-        c.el.style.opacity = (k * k).toFixed(3);
-        c.el.style.transform =
-          'translate3d(' + c.x.toFixed(1) + 'px,' + c.y.toFixed(1) + 'px,0) scale(' +
-          (c.tam * (0.35 + k * 0.65)).toFixed(2) + ')';
-      }
     }
-  });
+
+    /* Las chispas se apagan SIEMPRE, aunque la densidad baje a cero: si el
+       bucle dejara de repasarlas al soltar el deslizador, las que estuvieran
+       encendidas se quedarian clavadas en la pantalla para siempre. */
+    const ahora = performance.now();
+    let vivas = 0;
+    for (let j = 0; j < chispas.length; j++) {
+      const c = chispas[j]!;
+      if (!c.viva) continue;
+      vivas++;
+      const t = (ahora - c.nace) / VIDA;
+      if (t >= 1) {
+        c.viva = false;
+        c.el.style.opacity = '0';
+        continue;
+      }
+      c.x += c.vx;
+      c.y += c.vy;
+      // Se apaga y encoge hacia el final; el brillo cae mas rapido que el
+      // tamano, que es como se ve una chispa de verdad.
+      const k = 1 - t;
+      c.el.style.opacity = (k * k).toFixed(3);
+      c.el.style.transform =
+        'translate3d(' + c.x.toFixed(1) + 'px,' + c.y.toFixed(1) + 'px,0) scale(' +
+        (c.tam * (0.35 + k * 0.65)).toFixed(2) + ')';
+    }
+
+    /* Y cuando ya no queda nada que mover, el fotograma se apaga solo. */
+    if (!necesitaFotograma && vivas === 0) pararFotograma();
+  }
+
+  let soltarFotograma: (() => void) | null = null;
+  function arrancarFotograma() {
+    if (!soltarFotograma) soltarFotograma = ticker(cuadro);
+  }
+  function pararFotograma() {
+    if (soltarFotograma) { soltarFotograma(); soltarFotograma = null; }
+  }
+
+  /**
+   * Cambia las opciones SIN tocar los nodos que ya estan puestos.
+   *
+   * Es lo que separa arrastrar un deslizador de dar un tiron: antes cada
+   * paso reconstruia el cursor entero.
+   */
+  function actualizar(o: typeof opciones) {
+    tipo = type;
+    /* Con el puntero del sistema puesto, aqui no se dibuja ninguna forma:
+       dibujarla seria tener DOS cursores, el de verdad y una copia nuestra
+       persiguiendolo con un fotograma de retraso. */
+    img = o.soloEstela ? '' : (o.img || '');
+
+    const clase = o.soloEstela
+      ? 'cur cur--nada'
+      : 'cur' + (img ? ' cur--img' : ' cur--' + tipo);
+    if (el.className !== clase) {
+      /* Se conservan las marcas de estado: recalcular la clase no puede
+         perder «estoy fuera del ambito» ni «estoy encima de un enlace», que
+         los pone otra parte y no volverian hasta el proximo movimiento. */
+      const fuera = el.classList.contains('cur--fuera');
+      const caliente = el.classList.contains('is-hot');
+      el.className = clase + (fuera ? ' cur--fuera' : '') + (caliente ? ' is-hot' : '');
+    }
+
+    const lado = Math.max(12, Math.min(96, o.size || 32));
+    if (img) {
+      if (!foto) {
+        foto = document.createElement('img');
+        foto.alt = '';
+        el.appendChild(foto);
+      }
+      if (foto.getAttribute('src') !== img) foto.src = img;
+      foto.width = lado;
+      foto.height = lado;
+      /* Centrada en la punta del raton, como los demas cursores.
+         El tamaño va tambien en la CAJA, no solo en la imagen. El margen
+         negativo desplaza al contenedor media medida, asi que solo centra
+         si el contenedor mide de verdad `lado`; y `.cur` es fijo y sin
+         ancho, o sea que se encogia a su contenido, y su contenido es una
+         imagen con `width:100%` — que se resuelve contra el padre que aun
+         no tiene ancho—. Salia descentrada y siempre para el mismo lado,
+         que es la firma de esto. */
+      el.style.width = `${lado}px`;
+      el.style.height = `${lado}px`;
+      el.style.margin = `${-lado / 2}px 0 0 ${-lado / 2}px`;
+    } else if (foto) {
+      foto.remove();
+      foto = null;
+      el.style.width = el.style.height = el.style.margin = '';
+    }
+
+    const TIPO_E = o.trailFx || 'chispas';
+    E = ESTELAS[TIPO_E] ?? ESTELAS.chispas!;
+    VIDA = E.vida;
+    DENSIDAD = o.trail != null
+      ? Math.max(0, Math.min(12, o.trail))
+      : (tipo === 'dot' || tipo === 'blade') ? 5 : 0;
+    /** Cada cuantos pixeles recorridos se suelta una mota. Con la densidad
+     *  al maximo salen casi pegadas, que es el aspecto de polvo brillante;
+     *  con densidad baja quedan sueltas y se distinguen una a una. */
+    PASO = DENSIDAD > 0 ? Math.max(2.5, 20 - DENSIDAD * 1.5) * E.paso : 0;
+
+    const radio = img ? lado / 2 : (HUELLA[tipo] ?? 8);
+    RETRASO = radio + 9;
+
+    asegurarPiscina(DENSIDAD * 14);
+    for (const c of chispas) {
+      const cl = 'cur-chispa cur-chispa--' + TIPO_E;
+      if (c.el.className !== cl) c.el.className = cl;
+    }
+
+    /* Un cursor liso —un punto, un aro, una imagen— no necesita fotograma
+       ninguno: se pinta solo cuando el raton se mueve. Antes cada cursor
+       dejaba un rAF encendido para siempre repitiendo el mismo calculo, y
+       eso es tiempo de fotograma que le quitas a todo lo demas de la pagina
+       por algo que no cambia. */
+    necesitaFotograma = (tipo === 'glitch' && !o.soloEstela) || DENSIDAD > 0;
+    if (necesitaFotograma) arrancarFotograma();
+  }
+
+  if (ambito) el.classList.add('cur--fuera');
+  actualizar(opciones);
 
   /* `pointerrawupdate` entrega TODOS los movimientos del raton, sin
      agruparlos por fotograma, que es lo unico que permite aprovechar un
@@ -790,13 +890,15 @@ export function cursor(
   window.addEventListener(EVENTO_POS, onPos as EventListener, { passive: true });
   window.addEventListener('pointermove', onEncima as EventListener, { passive: true });
 
-  return register(() => {
-    soltar();
+  const destruir = register(() => {
+    pararFotograma();
     window.removeEventListener(EVENTO_POS, onPos as EventListener);
     window.removeEventListener('pointermove', onEncima as EventListener);
     el.remove();
     chispas.forEach((c) => c.el.remove());
   });
+
+  return { destruir, actualizar };
 }
 
 function soloPuntero() {

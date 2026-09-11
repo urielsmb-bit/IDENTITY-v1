@@ -33,6 +33,18 @@ export function useMusic() {
 
     // Devuelve null cuando no hay ninguna pista reproducible.
     if (!playerRef.current) setPlaying(false);
+
+    /* Y se prepara YA, sin sonar.
+    
+       `precalentar` existia y no lo llamaba nadie, asi que el reproductor no
+       se creaba hasta el primer `play()` — o sea DENTRO del clic. Para un
+       audio suelto eso vale; para YouTube no: hay que crear el iframe y
+       esperar a que su API diga que esta listo, y para cuando lo dice, el
+       permiso que da el clic ya se ha gastado. Resultado: unas veces sonaba
+       y otras no, sin patron visible.
+    
+       Creado de antemano, al clic solo le queda decir «suena». */
+    playerRef.current?.precalentar?.();
   }, []);
 
   const play = useCallback(() => playerRef.current?.play(), []);
