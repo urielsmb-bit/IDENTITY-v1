@@ -14,7 +14,7 @@ import { getBadge, TOPE_INSIGNIAS } from '@/data/badges';
 import { safeUrl } from '@/lib/utils';
 import { idYouTube } from '@/lib/music';
 import { Campo, ColorRGB, Deslizador, Interruptor, Pastillas, Pro, ROMBO, SelectorFuente, Tarjetas } from './Controles';
-import { EFECTOS_POR_GRUPO, efectoNombre, rellenaElNombre } from '@/data/efectosNombre';
+import { EFECTOS_POR_NIVEL, efectoNombre, rellenaElNombre } from '@/data/efectosNombre';
 import { NombreEfecto } from '../profile/NombreEfecto';
 import { controlEsPro } from '@/data/premium';
 import { DIBUJOS } from './dibujos';
@@ -183,12 +183,16 @@ function EfectosDelNombre({
 
   return (
     <Campo label="Efecto del nombre">
-      {EFECTOS_POR_GRUPO.map((g) => (
-        <div key={g.grupo} className="fx__g">
-          {/* Dieciocho tarjetas seguidas son un muro. En dos grupos con su
-              título se leen, y además dicen algo: arriba lo que le pasa a tu
-              nombre, abajo de qué está hecho. */}
-          <p className="fx__gt">{g.titulo}</p>
+      {EFECTOS_POR_NIVEL.map((g) => (
+        <div key={g.nivel} className="fx__g" data-nivel={g.nivel}>
+          {/* Veinticuatro tarjetas seguidas son un muro. En cuatro niveles
+              con su título se leen, y además el título HACE algo: quien mira
+              «Signature» ya sabe, antes de tocar nada, que lo de ahí abajo no
+              es lo mismo que lo de arriba. */}
+          <p className="fx__gt">
+            {g.titulo}
+            <span>{g.pie}</span>
+          </p>
           <div className="fx" role="group" aria-label={`Efectos ${g.titulo}`}>
             {g.items.map((e) => {
               const bloqueado = !premium && !!e.pro;

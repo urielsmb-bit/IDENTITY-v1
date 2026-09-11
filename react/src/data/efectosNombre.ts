@@ -64,42 +64,71 @@ export type MandoEfecto =
 
 export type AjustesEfecto = Partial<Record<MandoEfecto, number | string>>;
 
+/**
+ * ────────────────────────────────────────────────────────────────────────
+ * LOS NIVELES
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * `pro` dice si se paga. `nivel` dice OTRA COSA: cuánto hay dentro. Son
+ * cuatro y no se solapan:
+ *
+ *   libre       Sencillos y bonitos. No cambian la materia del nombre:
+ *               sigue siendo tu nombre con tu letra y tu color.
+ *   premium     Varias capas trabajando juntas. Se nota que alguien lo
+ *               pensó.
+ *   premium+    Cambian de qué está HECHO el nombre: vidrio, luz líquida,
+ *               un holograma.
+ *   signature   Los que existen para que alguien diga «quiero ese». Tienen
+ *               relieve, luz que vive en el espacio y reaccionan a ti.
+ *
+ * El salto de verdad está entre `premium+` y `signature`, y no es de
+ * cantidad. Todo lo anterior es una IMAGEN: muy trabajada, pero se ve igual
+ * hagas lo que hagas, y el ojo lo sabe sin poder explicarlo. Los `signature`
+ * tienen una luz en algún sitio; si la mueves, cambia el brillo. Eso es la
+ * diferencia entre un dibujo y un material.
+ */
+export type NivelEfecto = 'libre' | 'premium' | 'premium+' | 'signature';
+
 export interface DefEfectoNombre {
   id: string;
   nombre: string;
   /** Qué hace, en una línea, para la tarjeta y el buscador. */
   desc: string;
-  /**
-   * `basico` son los de siempre; `avanzado` es la familia nueva.
-   *
-   * No es una etiqueta de precio —eso es `pro`—, es de qué CLASE es el
-   * efecto. Dieciocho tarjetas seguidas sin separar son un muro; en dos
-   * grupos con su título se leen.
-   */
-  grupo: 'basico' | 'avanzado';
+  /** Cuánto hay dentro. Ver arriba; no es lo mismo que `pro`. */
+  nivel: NivelEfecto;
   /**
    * Cuántas copias del texto necesita, de 0 a 3.
    *
    * El componente pinta ese armazón y nada más; lo que cada capa hace lo
-   * decide el CSS. Asi ningun efecto tiene que inventarse su propio HTML,
-   * que es de donde salen los componentes de trescientas lineas con un
-   * `if` por efecto.
+   * decide el CSS. Así ningún efecto tiene que inventarse su propio HTML,
+   * que es de donde salen los componentes de trescientas líneas con un `if`
+   * por efecto.
    */
   capas?: 0 | 1 | 2 | 3;
   /**
    * Si RELLENA las letras: el texto queda transparente y el color sale de
    * un fondo recortado a su forma.
    *
-   * Importa fuera de aquí: sobre letras transparentes un `text-shadow` se
-   * ve POR DEBAJO del relleno y sale un manchón, así que la sombra y el
-   * resplandor tienen que dibujarse con `drop-shadow`, que sigue la
-   * silueta. El perfil lo decide con esto.
+   * Importa fuera de aquí: sobre letras transparentes un `text-shadow` se ve
+   * POR DEBAJO del relleno y sale un manchón, así que la sombra y el
+   * resplandor tienen que dibujarse con `drop-shadow`, que sigue la silueta.
    */
   rellena?: boolean;
   /**
+   * Si le hace falta LA LUZ.
+   *
+   * Los materiales se iluminan desde un punto del espacio que se mueve —te
+   * sigue, y cuando te estás quieto da una vuelta lenta por su cuenta—. Eso
+   * lo lleva `lib/luz.ts`, y sólo se pone en marcha si hay alguien que la
+   * necesite: esto es lo que lo dice.
+   */
+  luz?: boolean;
+  /** Si se dibuja en un lienzo además de en el DOM. */
+  lienzo?: boolean;
+  /**
    * Si la corrupción procedural tiene que programarle pulsos.
    *
-   * Es el único que necesita un reloj: lo suyo es ser IMPREDECIBLE, y unos
+   * Es el único con reloj propio: lo suyo es ser IMPREDECIBLE, y unos
    * fotogramas de CSS siempre caen en el mismo sitio.
    */
   pulsos?: boolean;
@@ -110,56 +139,49 @@ export interface DefEfectoNombre {
 
 /**
  * ────────────────────────────────────────────────────────────────────────
- * LOS DIECIOCHO
+ * EL CATÁLOGO
  * ────────────────────────────────────────────────────────────────────────
  *
- * Cinco libres y trece de pago. El corte no es por lo difícil que sea cada
- * uno, es por lo que hace cada uno:
+ * Cinco libres y diecinueve de pago. El corte no es por lo difícil que sea
+ * cada uno, es por lo que hace:
  *
  *   · Los LIBRES no cambian la materia del nombre. Late, flota, se escribe
- *     o cruza un color: sigue siendo tu nombre con tu letra y tu color, y
- *     un perfil sin pagar no se ve roto ni a medias.
+ *     o cruza un color: un perfil sin pagar no se ve roto ni a medias.
  *
- *   · Los de PAGO cambian de qué está HECHO el nombre. De cristal, de luz
- *     líquida, de un holograma, de algo que se come la luz de alrededor.
- *     Eso ya no es tu nombre bien puesto: es tu nombre y de nadie más, que
- *     es lo que se cobra.
- *
- * «Arcoíris» y «Máquina de escribir» eran de pago hasta hoy y bajan a
- * libres. Nadie pierde nada —quien pagaba los sigue teniendo— y el plan se
- * queda con trece efectos en vez de cuatro, así que el trato mejora por los
- * dos lados.
+ *   · Los de PAGO cambian de qué está HECHO. De obsidiana, de metal
+ *     fundido, de hielo, de algo con un agujero dentro. Eso ya no es tu
+ *     nombre bien puesto: es tu nombre y de nadie más.
  */
 export const EFECTOS_NOMBRE: readonly DefEfectoNombre[] = [
-  // ── Básicos ────────────────────────────────────────────────
-  { id: 'none',  nombre: 'Ninguno', desc: 'Tu nombre, quieto.', grupo: 'basico' },
+  // ── Libres ─────────────────────────────────────────────────
+  { id: 'none', nombre: 'Ninguno', desc: 'Tu nombre, quieto.', nivel: 'libre' },
   /* Estos dos no declaran ajustes y es a propósito: no montan armazón, así
      que no hay ningún elemento suyo donde escribirlos y su único número vive
-     en su regla de CSS. Declararlo aquí además sería tenerlo en dos sitios, y
-     dos sitios con el mismo número acaban siempre con números distintos.
-     Los dos mandos comunes sí los respetan: llegan desde la raíz del perfil. */
-  { id: 'pulse', nombre: 'Latido', desc: 'Crece y encoge, muy poco, sin parar.', grupo: 'basico' },
-  { id: 'float', nombre: 'Flotar', desc: 'Sube y baja despacio, como si no pesara.', grupo: 'basico' },
+     en su regla de CSS. Declararlo aquí sería tenerlo en dos sitios, y dos
+     sitios con el mismo número acaban siempre con números distintos. Los dos
+     mandos comunes sí los respetan: llegan desde la raíz del perfil. */
+  { id: 'pulse', nombre: 'Latido', desc: 'Crece y encoge, muy poco, sin parar.', nivel: 'libre' },
+  { id: 'float', nombre: 'Flotar', desc: 'Sube y baja despacio, como si no pesara.', nivel: 'libre' },
   {
     id: 'maquina',
     nombre: 'Máquina de escribir',
     desc: 'Se escribe letra a letra, se borra y vuelve a empezar.',
-    grupo: 'basico',
+    nivel: 'libre',
   },
   {
     id: 'arcoiris',
     nombre: 'Arcoíris',
     desc: 'Los siete colores cruzando el nombre sin parar.',
-    grupo: 'basico',
+    nivel: 'libre',
     rellena: true,
   },
 
-  // ── Avanzados ──────────────────────────────────────────────
+  // ── Premium ────────────────────────────────────────────────
   {
     id: 'sweep',
     nombre: 'Barrido de luz',
     desc: 'Un brillo recorre las letras. Con degradado propio mueve el tuyo.',
-    grupo: 'avanzado',
+    nivel: 'premium',
     rellena: true,
     pro: true,
   },
@@ -167,7 +189,7 @@ export const EFECTOS_NOMBRE: readonly DefEfectoNombre[] = [
     id: 'aura',
     nombre: 'Resplandor avanzado',
     desc: 'Luz con volumen: dos halos de distinto color y distinto ritmo, no una sombra plana.',
-    grupo: 'avanzado',
+    nivel: 'premium',
     capas: 2,
     ajustes: { blur: 0.17, glow: 0.34, op: 0.5 },
     pro: true,
@@ -176,7 +198,7 @@ export const EFECTOS_NOMBRE: readonly DefEfectoNombre[] = [
     id: 'desfase',
     nombre: 'Desfase',
     desc: 'Tres copias casi invisibles derivando a distinta velocidad. Profundidad, no temblor.',
-    grupo: 'avanzado',
+    nivel: 'premium',
     capas: 3,
     ajustes: { desp: 0.038, op: 0.15 },
     pro: true,
@@ -185,16 +207,35 @@ export const EFECTOS_NOMBRE: readonly DefEfectoNombre[] = [
     id: 'eco',
     nombre: 'Eco',
     desc: 'El nombre se expande hacia fuera en ondas que se apagan, una detrás de otra.',
-    grupo: 'avanzado',
+    nivel: 'premium',
     capas: 3,
     ajustes: { esc: 0.085, op: 0.4 },
     pro: true,
   },
   {
+    id: 'interferencia',
+    nombre: 'Interferencia',
+    desc: 'Una banda recorre el nombre de arriba abajo y deforma solo lo que toca.',
+    nivel: 'premium',
+    capas: 2,
+    ajustes: { desp: 0.055, dist: 1.07 },
+    pro: true,
+  },
+  {
+    id: 'entropia',
+    nombre: 'Entropía',
+    desc: 'Las letras respiran: se deforman un poquito, como algo vivo. Casi no se ve, y se nota.',
+    nivel: 'premium',
+    ajustes: { dist: 1.4 },
+    pro: true,
+  },
+
+  // ── Premium+ ───────────────────────────────────────────────
+  {
     id: 'prisma',
     nombre: 'Prisma vivo',
     desc: 'La luz se descompone y se recompone al pasar por las letras. Lento, no un arcoíris.',
-    grupo: 'avanzado',
+    nivel: 'premium+',
     capas: 3,
     rellena: true,
     ajustes: { crom: 0.014, op: 0.62 },
@@ -204,26 +245,17 @@ export const EFECTOS_NOMBRE: readonly DefEfectoNombre[] = [
     id: 'holograma',
     nombre: 'Holograma',
     desc: 'Capas transparentes, líneas de barrido finísimas y una luz que se mueve por dentro.',
-    grupo: 'avanzado',
+    nivel: 'premium+',
     capas: 3,
     rellena: true,
     ajustes: { crom: 0.013, op: 0.9, ruido: 0.3 },
     pro: true,
   },
   {
-    id: 'interferencia',
-    nombre: 'Interferencia',
-    desc: 'Una banda recorre el nombre de arriba abajo y deforma solo lo que toca.',
-    grupo: 'avanzado',
-    capas: 2,
-    ajustes: { desp: 0.055, dist: 1.07 },
-    pro: true,
-  },
-  {
     id: 'neon',
     nombre: 'Neón líquido',
     desc: 'El color corre por dentro de las letras como si fuera líquido, y el brillo lo sigue.',
-    grupo: 'avanzado',
+    nivel: 'premium+',
     capas: 2,
     rellena: true,
     ajustes: { blur: 0.2, op: 0.55 },
@@ -233,35 +265,35 @@ export const EFECTOS_NOMBRE: readonly DefEfectoNombre[] = [
     id: 'cristal',
     nombre: 'Cristal',
     desc: 'Vidrio de verdad: grosor, un reflejo que cruza y la luz que se dobla al atravesarlo.',
-    grupo: 'avanzado',
+    nivel: 'premium+',
     capas: 3,
     rellena: true,
     ajustes: { op: 0.26, desp: 0.022 },
     pro: true,
   },
   {
+    id: 'caustica',
+    nombre: 'Cáustica',
+    desc: 'La luz que el agua dibuja en el fondo de una piscina, moviéndose sobre tus letras.',
+    nivel: 'premium+',
+    ajustes: { op: 0.75 },
+    pro: true,
+  },
+  {
     id: 'corrupcion',
     nombre: 'Corrupción',
     desc: 'Quieto casi siempre. De vez en cuando un trozo se desencaja y vuelve. Nunca igual.',
-    grupo: 'avanzado',
+    nivel: 'premium+',
     capas: 2,
     pulsos: true,
     ajustes: { desp: 0.07 },
     pro: true,
   },
   {
-    id: 'entropia',
-    nombre: 'Entropía',
-    desc: 'Las letras respiran: se deforman un poquito, como algo vivo. Casi no se ve, y se nota.',
-    grupo: 'avanzado',
-    ajustes: { dist: 1.4 },
-    pro: true,
-  },
-  {
     id: 'materia',
     nombre: 'Materia oscura',
     desc: 'En vez de dar luz, se la come. Las letras abren un hueco negro a su alrededor.',
-    grupo: 'avanzado',
+    nivel: 'premium+',
     capas: 2,
     rellena: true,
     ajustes: { blur: 0.3, op: 0.85 },
@@ -271,9 +303,66 @@ export const EFECTOS_NOMBRE: readonly DefEfectoNombre[] = [
     id: 'singularidad',
     nombre: 'Singularidad',
     desc: 'El espacio se curva alrededor del nombre. Distorsión mínima y un filo de color.',
-    grupo: 'avanzado',
+    nivel: 'premium+',
     capas: 3,
     ajustes: { dist: 1.2, crom: 0.009, op: 0.5 },
+    pro: true,
+  },
+
+  // ── Signature ──────────────────────────────────────────────
+  // Aquí hay una luz de verdad en algún sitio. Muévela y cambia el brillo.
+  {
+    id: 'obsidiana',
+    nombre: 'Obsidiana',
+    desc: 'Vidrio volcánico pulido. El brillo recorre el canto y sigue a tu cursor.',
+    nivel: 'signature',
+    capas: 1,
+    rellena: true,
+    luz: true,
+    ajustes: { op: 0.4 },
+    pro: true,
+  },
+  {
+    id: 'fundido',
+    nombre: 'Fundido',
+    desc: 'Metal recién sacado del fuego: la superficie ondula y el aire de alrededor tiembla.',
+    nivel: 'signature',
+    capas: 2,
+    rellena: true,
+    luz: true,
+    ajustes: { op: 0.55, blur: 0.22 },
+    pro: true,
+  },
+  {
+    id: 'hielo',
+    nombre: 'Hielo',
+    desc: 'Lo que hay detrás se dobla al atravesarlo, y la luz fría se le queda dentro.',
+    nivel: 'signature',
+    capas: 2,
+    luz: true,
+    ajustes: { op: 0.45 },
+    pro: true,
+  },
+  {
+    id: 'abismo',
+    nombre: 'Abismo',
+    desc: 'Las letras son un agujero. Dentro hay profundidad, y se mueve cuando tú te mueves.',
+    nivel: 'signature',
+    capas: 1,
+    rellena: true,
+    /* No ilumina nada, pero sí necesita saber dónde está la luz: sus planos
+       de profundidad se mueven con ella, y así el abismo mira al mismo sitio
+       que el brillo de la obsidiana cuando los dos están en pantalla. */
+    luz: true,
+    ajustes: { op: 0.9 },
+    pro: true,
+  },
+  {
+    id: 'corriente',
+    nombre: 'Corriente',
+    desc: 'Energía recorriendo el contorno exacto de tus letras. Nunca hace el mismo camino.',
+    nivel: 'signature',
+    lienzo: true,
     pro: true,
   },
 ];
@@ -301,16 +390,34 @@ export const IDS_EFECTO: readonly string[] = EFECTOS_NOMBRE.map((e) => e.id);
 /**
  * Efectos que ya no existen y a dónde va cada uno.
  *
- * «Fallo de señal» era la primera version de esto: dos copias en rojo y azul
- * temblando sin parar. «Corrupción» es lo mismo hecho bien —quieta casi todo
- * el rato y rompiendo cuando no lo esperas—, asi que quien tuviera aquel se
- * queda con este y no con nada.
+ * «Fallo de señal» era la primera versión de la corrupción: dos copias en
+ * rojo y azul temblando sin parar. La de ahora es lo mismo hecho bien
+ * —quieta casi todo el rato y rompiendo cuando no lo esperas—, así que quien
+ * tuviera aquélla se queda con ésta y no con nada.
  */
 export const EFECTOS_MUDADOS: Readonly<Record<string, string>> = {
   glitch: 'corrupcion',
 };
 
-export const EFECTOS_POR_GRUPO = [
-  { grupo: 'basico' as const, titulo: 'Básicos', items: EFECTOS_NOMBRE.filter((e) => e.grupo === 'basico') },
-  { grupo: 'avanzado' as const, titulo: 'Avanzados', items: EFECTOS_NOMBRE.filter((e) => e.grupo === 'avanzado') },
-];
+const TITULOS: Record<NivelEfecto, string> = {
+  libre: 'Básicos',
+  premium: 'Premium',
+  'premium+': 'Premium +',
+  signature: 'Signature',
+};
+
+const PIES: Record<NivelEfecto, string> = {
+  libre: 'Sencillos y bonitos. Tu nombre sigue siendo tu nombre.',
+  premium: 'Varias capas trabajando juntas.',
+  'premium+': 'Cambian de qué está hecho el nombre.',
+  signature: 'Tienen luz propia y reaccionan a ti.',
+};
+
+export const EFECTOS_POR_NIVEL = (['libre', 'premium', 'premium+', 'signature'] as const).map(
+  (nivel) => ({
+    nivel,
+    titulo: TITULOS[nivel],
+    pie: PIES[nivel],
+    items: EFECTOS_NOMBRE.filter((e) => e.nivel === nivel),
+  }),
+);

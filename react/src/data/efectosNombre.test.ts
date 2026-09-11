@@ -69,17 +69,44 @@ describe('el catálogo', () => {
     }
   });
 
-  it('el reparto es el acordado: cinco libres y trece de pago', () => {
+  it('el reparto es el acordado: cinco libres y el resto de pago', () => {
     const libres = EFECTOS_NOMBRE.filter((e) => !e.pro).map((e) => e.id);
     expect(libres).toEqual(['none', 'pulse', 'float', 'maquina', 'arcoiris']);
-    expect(EFECTOS_NOMBRE.filter((e) => e.pro)).toHaveLength(13);
   });
 
-  it('todo efecto de pago es avanzado, y ninguno básico se cobra', () => {
+  /* `pro` y `nivel` dicen cosas distintas —uno si se paga, otro cuánto hay
+     dentro—, pero no pueden contradecirse: un efecto de nivel libre que se
+     cobre, o un `signature` regalado, serían un error de dedo que nadie ve
+     hasta que alguien se queja. */
+  it('el nivel y el precio no se contradicen', () => {
     for (const e of EFECTOS_NOMBRE) {
-      if (e.pro) expect(e.grupo).toBe('avanzado');
-      if (e.grupo === 'basico') expect(e.pro).toBeFalsy();
+      if (e.nivel === 'libre') expect(e.pro, `${e.id}`).toBeFalsy();
+      else expect(e.pro, `${e.id}`).toBe(true);
     }
+  });
+
+  it('hay al menos tres signature, y todos traen luz o lienzo', () => {
+    const firma = EFECTOS_NOMBRE.filter((e) => e.nivel === 'signature');
+    expect(firma.length).toBeGreaterThanOrEqual(3);
+    /* Lo que los hace signature no es el nombre del nivel: es que tengan una
+       luz de verdad o que se dibujen ellos. Si alguno deja de tener las dos
+       cosas, es un premium+ con etiqueta cara. */
+    for (const e of firma) {
+      expect(e.luz || e.lienzo, `${e.id} no tiene ni luz ni lienzo`).toBe(true);
+    }
+  });
+
+  /* Los materiales se iluminan desde una `<fePointLight>` que mueve
+     `lib/luz.ts` buscándolas por ese atributo. Si un filtro se escribe sin
+     él, la luz se queda en la esquina y el material sale plano. */
+  it('todo filtro con luz está marcado para que `luz.ts` lo encuentre', () => {
+    const filtros = readFileSync(
+      resolve(__dirname, '../components/profile/FiltrosEfectos.tsx'), 'utf8',
+    );
+    const puntos = filtros.match(/<fePointLight/g)?.length ?? 0;
+    const marcados = filtros.match(/<fePointLight[^/]*data-fx-luz/g)?.length ?? 0;
+    expect(puntos).toBeGreaterThan(0);
+    expect(marcados).toBe(puntos);
   });
 });
 

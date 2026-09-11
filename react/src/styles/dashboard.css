@@ -3459,3 +3459,30 @@
   letter-spacing:.08em; text-transform:uppercase;
   color:var(--text-muted);
 }
+
+/* El titulo de cada nivel lleva DEBAJO lo que significa. Sin esa
+   linea, «Premium +» y «Signature» son dos palabras que suenan
+   parecido; con ella, quien llega a la ultima ya sabe antes de
+   tocar nada que lo de ahi abajo no es lo mismo. */
+.fx__gt{ display:block; }
+.fx__gt span{
+  display:block;
+  margin-top:2px;
+  font-size:10px; font-weight:500;
+  letter-spacing:0; text-transform:none;
+  color:var(--text-muted);
+  opacity:.85;
+}
+/* Signature se ve distinto ANTES de leerlo. Es el unico grupo con
+   marca propia, y esa es la idea: que el ojo llegue ahi y pare. */
+.fx__g[data-nivel="signature"] .fx__gt{
+  color:color-mix(in srgb, var(--fx-acc, #A855F7) 72%, #ffffff);
+}
+.fx__g[data-nivel="signature"] .fx__b{
+  border-color:color-mix(in srgb, var(--fx-acc, #A855F7) 24%, var(--border));
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--fx-acc, #A855F7) 7%, transparent) 0%,
+      transparent 60%),
+    var(--surface-2);
+}

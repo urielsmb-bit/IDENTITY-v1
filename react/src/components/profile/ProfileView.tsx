@@ -1042,6 +1042,7 @@ export function ProfileView({
                 efecto={p.nameFx}
                 intensidad={(p.fxInt ?? 100) / 100}
                 velocidad={(p.fxVel ?? 100) / 100}
+                calma={preview && !editando}
               />
               {p.verified && (
                 <svg

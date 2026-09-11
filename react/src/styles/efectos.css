@@ -595,6 +595,247 @@
   50%    { transform:translate3d(calc(var(--fx-crom, .009) * var(--fx-int) * -.8em), calc(var(--fx-crom, .009) * var(--fx-int) * -.6em), 0); }
 }
 
+
+/* ════════════════════════════════════════════════════════════
+   SIGNATURE
+   ════════════════════════════════════════════════════════════
+   Lo que hay aquí abajo no es «más capas». Es otra cosa.
+
+   Todo lo de arriba es una IMAGEN: muy trabajada, con ruido y
+   mezclas, pero se ve igual desde donde sea y hagas lo que hagas.
+   Y el ojo, que lleva toda la vida mirando cosas de verdad, lo
+   sabe sin poder explicarlo: eso está pintado encima del texto.
+
+   Estos tienen RELIEVE y hay UNA LUZ en algún sitio. La luz se
+   mueve —te sigue, y si te estás quieto da una vuelta lenta por
+   su cuenta—, y al moverse cambia el brillo. Ésa es toda la
+   diferencia entre un dibujo y un material, y es la razón de que
+   un nombre de obsidiana no se pueda hacer con un degradado por
+   muchos colores que le pongas.
+
+   La luz vive en `lib/luz.ts` y es UNA para toda la página. Dos
+   nombres iluminados desde sitios distintos es exactamente el
+   detalle que delata que una escena es falsa.
+   ════════════════════════════════════════════════════════════ */
+
+/* ============================================================
+   OBSIDIANA
+   ============================================================
+   Vidrio volcánico pulido: casi negro, con algo de color muy
+   dentro y un filo de luz recorriendo el canto.
+
+   El cuerpo es oscuro a propósito y por eso lleva TRAZO. Una
+   piedra negra sobre un fondo oscuro se ve sólo por donde le da
+   la luz, y eso es bonito hasta que la luz está en el otro lado
+   y tu nombre desaparece. El trazo al 34 % es el suelo: la forma
+   siempre está, y lo que la luz añade es el brillo. */
+.pf[data-nameanim="obsidiana"] .fxn__b{
+  color:transparent;
+  -webkit-background-clip:text; background-clip:text;
+  /* Ni negro ni gris. Un negro puro no tiene nada que iluminar —la luz
+     multiplica, y cualquier cosa por cero es cero— y la piedra sale plana
+     por mucho brillo que se le eche encima. Estos tonos son oscuros pero
+     TIENEN valor, que es lo que la difusa necesita para modelar. */
+  background-image:linear-gradient(177deg,
+    #4a4459 0%,
+    #221e2e 32%,
+    color-mix(in srgb, var(--p-primary) 42%, #16121f) 58%,
+    #0e0c15 100%);
+  -webkit-text-stroke:.012em color-mix(in srgb, var(--p-text) 34%, transparent);
+  filter:url(#fx-obsidiana);
+}
+/* El color que la piedra deja escapar por debajo. Sin esto la
+   obsidiana es gris: con esto tiene TU color dentro. */
+.pf[data-nameanim="obsidiana"] .fxn__c[data-c="1"] > i{ color:var(--p-primary); }
+.pf[data-nameanim="obsidiana"] .fxn__c[data-c="1"]{
+  filter:blur(.3em);
+  opacity:calc(var(--fx-op, .4) * var(--fx-int));
+}
+
+/* ============================================================
+   FUNDIDO
+   ============================================================
+   Metal recién sacado del fuego. Tres cosas a la vez:
+
+     · el relleno es una colada —hierro oscuro arriba y abajo,
+       naranja al rojo en medio— que sube y baja por dentro de
+       las letras en trece segundos. Eso es el calor moviéndose;
+     · el filtro ondula la superficie antes de iluminarla, con un
+       brillo ancho y ámbar: metal fundido, no metal pulido;
+     · detrás, el aire. Una copia naranja muy desenfocada que
+       respira: el calor que sale de la pieza.
+
+   El degradado va en `background-size:100% 260%` y se mueve en
+   VERTICAL, que es la diferencia entre una colada y un barrido
+   de luz. El calor sube. */
+.pf[data-nameanim="fundido"] .fxn__b{
+  color:transparent;
+  -webkit-background-clip:text; background-clip:text;
+  background-image:linear-gradient(183deg,
+    #2b1d16 0%,
+    #75330f 20%,
+    #ff7a18 43%,
+    #ffd694 51%,
+    #cf4a0b 66%,
+    #2a1a12 100%);
+  background-size:100% 260%;
+  background-position:0 0;
+  animation:fxFundido calc(13s / var(--fx-vel)) ease-in-out infinite alternate;
+  filter:url(#fx-fundido);
+}
+@keyframes fxFundido{ to{ background-position:0 100%; } }
+
+.pf[data-nameanim="fundido"] .fxn__c[data-c="1"] > i{ color:#ff7a18; }
+.pf[data-nameanim="fundido"] .fxn__c[data-c="1"]{
+  filter:blur(calc(var(--fx-blur, .22) * var(--fx-int) * 1em));
+  opacity:calc(var(--fx-op, .55) * var(--fx-int));
+  animation:fxFundidoAire calc(5.5s / var(--fx-vel)) ease-in-out infinite;
+}
+.pf[data-nameanim="fundido"] .fxn__c[data-c="2"] > i{ color:#ffb15c; }
+.pf[data-nameanim="fundido"] .fxn__c[data-c="2"]{
+  filter:blur(calc(var(--fx-blur, .22) * var(--fx-int) * .38em));
+  opacity:calc(var(--fx-op, .55) * .7 * var(--fx-int));
+  animation:fxFundidoAire calc(7.5s / var(--fx-vel)) ease-in-out infinite reverse;
+}
+@keyframes fxFundidoAire{
+  0%,100%{ transform:scale(1.02) translateY(0); }
+  50%    { transform:scale(1.06) translateY(-.03em); }
+}
+
+/* ============================================================
+   HIELO
+   ============================================================
+   Mismo aparato, tercer material, y el que enseña para qué servía
+   montarlo así: aquí no hay código nuevo, hay otros números.
+
+   Con un paso de más, la REFRACCIÓN: el filtro dobla el propio
+   texto antes de iluminarlo. Es lo que hace un hielo con lo que
+   se ve a través, y es lo único que lo separa de un cristal. El
+   relieve es redondeado —el hielo no tiene canto vivo— y la luz,
+   fría. */
+.pf[data-nameanim="hielo"] .fxn__b{
+  color:color-mix(in srgb, #e9f8ff 80%, transparent);
+  -webkit-text-stroke:.013em color-mix(in srgb, #bce8ff 62%, transparent);
+  filter:url(#fx-hielo);
+}
+/* El frío que suelta. Va en cian y no en el acento del perfil a
+   propósito: el hielo es de un color, como lo es el oro. Un hielo
+   rosa no es hielo. */
+.pf[data-nameanim="hielo"] .fxn__c[data-c="1"] > i{ color:#7fd6ff; }
+.pf[data-nameanim="hielo"] .fxn__c[data-c="1"]{
+  filter:blur(.26em);
+  opacity:calc(var(--fx-op, .45) * var(--fx-int));
+}
+/* La escarcha: una trama finísima dentro de las letras, girada
+   para que no se lea como rayas. */
+.pf[data-nameanim="hielo"] .fxn__c[data-c="2"]{
+  z-index:2;
+  mix-blend-mode:screen;
+  opacity:calc(.3 * var(--fx-int));
+}
+.pf[data-nameanim="hielo"] .fxn__c[data-c="2"] > i{
+  color:transparent;
+  -webkit-background-clip:text; background-clip:text;
+  background-image:repeating-linear-gradient(63deg,
+    rgba(255,255,255,.75) 0 1px, rgba(255,255,255,0) 1px 5px);
+}
+
+/* ============================================================
+   ABISMO
+   ============================================================
+   Las letras no están pintadas: son un AGUJERO, y dentro hay
+   sitio.
+
+   La profundidad no se finge con una sombra. Dentro hay tres
+   planos de polvo a distinta escala —trece, veintisiete y
+   cuarenta y ocho— y los tres se mueven a distinta velocidad.
+   Eso es paralaje, y el paralaje es LA señal con la que el ojo
+   calcula distancias: si dos cosas se mueven distinto, están a
+   distinta profundidad. No hay forma de discutírselo.
+
+   Y se mueven CON LA LUZ, o sea contigo: al mover el ratón el
+   fondo lejano se queda y el cercano corre, exactamente como al
+   asomarse a un pozo. El plano más profundo corre cuatro veces
+   menos que el de arriba.
+
+   El recorrido de cada plano es una baldosa entera —trece
+   píxeles el primero— y por eso el salto del final cae encima de
+   sí mismo y no se ve el corte. */
+.pf[data-nameanim="abismo"] .fxn__b{
+  color:transparent;
+  -webkit-background-clip:text; background-clip:text;
+  background-color:#04040a;
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.95) 0 .9px, transparent 1.5px),
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--p-primary) 75%, #ffffff) 0 1.1px, transparent 1.9px),
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.42) 0 1.5px, transparent 2.6px),
+    radial-gradient(130% 170% at 50% 125%, color-mix(in srgb, var(--p-primary) 38%, transparent) 0%, transparent 60%);
+  background-size:13px 13px, 27px 27px, 48px 48px, 100% 100%;
+  background-position:
+    calc(var(--fx-lx, .5) * -16px) calc(var(--fx-ly, .5) * -11px),
+    calc(var(--fx-lx, .5) * -34px) calc(var(--fx-ly, .5) * -22px),
+    calc(var(--fx-lx, .5) * -62px) calc(var(--fx-ly, .5) * -40px),
+    50% 50%;
+  -webkit-text-stroke:.014em color-mix(in srgb, var(--p-text) 44%, transparent);
+  animation:fxAbismo calc(30s / var(--fx-vel)) linear infinite;
+}
+@keyframes fxAbismo{
+  to{
+    background-position:
+      calc(var(--fx-lx, .5) * -16px + 13px) calc(var(--fx-ly, .5) * -11px),
+      calc(var(--fx-lx, .5) * -34px + 27px) calc(var(--fx-ly, .5) * -22px),
+      calc(var(--fx-lx, .5) * -62px + 48px) calc(var(--fx-ly, .5) * -40px),
+      50% 50%;
+  }
+}
+/* El labio del agujero. Un borde superior que recoge luz es lo
+   que convierte una mancha negra en un hueco CON PARED: sin él
+   las letras son una silueta recortada, con él tienen canto y
+   hay un dentro y un fuera. */
+.pf[data-nameanim="abismo"] .fxn__c[data-c="1"]{
+  z-index:2;
+  mix-blend-mode:screen;
+  opacity:calc(var(--fx-op, .9) * .6 * var(--fx-int));
+}
+.pf[data-nameanim="abismo"] .fxn__c[data-c="1"] > i{
+  color:transparent;
+  -webkit-background-clip:text; background-clip:text;
+  background-image:linear-gradient(180deg,
+    color-mix(in srgb, var(--p-text) 90%, transparent) 0%,
+    transparent 24%);
+}
+
+/* ============================================================
+   CORRIENTE
+   ============================================================
+   El lienzo va encima del texto y no lo sustituye: debajo sigue
+   estando el nombre de verdad, que es el que se lee, el que se
+   copia y el que oye quien no ve la pantalla.
+
+   El texto se atenúa un poco para que mande la luz. Un poco, no
+   mucho: si el nombre desaparece, lo que queda es un dibujo
+   bonito de algo que ya no se puede leer. */
+.fxn__lienzo{
+  position:absolute;
+  z-index:3;
+  pointer-events:none;
+}
+.pf[data-nameanim="corriente"] .fxn__b{
+  color:color-mix(in srgb, var(--p-text) 72%, transparent);
+}
+
+/* ============================================================
+   CÁUSTICA
+   ============================================================
+   La luz que el agua dibuja en el fondo de una piscina, pasando
+   por encima de las letras. Sin capas: es el ruido apretado hasta
+   que sólo quedan sus crestas, que es literalmente lo que hace
+   una cáustica —la superficie concentra los rayos en filamentos—.
+
+   Cuelga de `.pf-name` y no de `.fxn` porque no monta armazón, y
+   así los filamentos cogen también el resplandor del perfil. */
+.pf[data-nameanim="caustica"] .pf-name{ filter:url(#fx-caustica); }
+
 /* ============================================================
    MENOS MOVIMIENTO
    ============================================================
@@ -641,8 +882,17 @@
 
    No afecta al editor: allí la previa lleva `editando` y es UNA. */
 .pf[data-fxcalma="on"][data-nameanim="entropia"] .pf-name,
+.pf[data-fxcalma="on"][data-nameanim="caustica"] .pf-name,
 .pf[data-fxcalma="on"][data-nameanim="neon"] .fxn__b,
 .pf[data-fxcalma="on"][data-nameanim="singularidad"] .fxn__b,
+.pf[data-fxcalma="on"][data-nameanim="obsidiana"] .fxn__b,
+.pf[data-fxcalma="on"][data-nameanim="fundido"] .fxn__b,
+.pf[data-fxcalma="on"][data-nameanim="hielo"] .fxn__b,
 .pf[data-fxcalma="on"][data-nameanim="cristal"] .fxn__c[data-c="2"] > i{
   filter:none;
 }
+
+/* Los materiales sin su luz se quedan planos, asi que en modo tranquilo
+   se les deja al menos el trazo y el relleno, que ya llevan de serie. El
+   lienzo de la corriente ni se monta: eso lo decide el componente, porque
+   esconderlo con CSS dejaria el bucle corriendo igual. */

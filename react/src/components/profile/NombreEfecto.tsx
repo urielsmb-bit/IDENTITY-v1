@@ -1,6 +1,8 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { efectoNombre, type DefEfectoNombre } from '@/data/efectosNombre';
 import { NombreMaquina } from './NombreMaquina';
+import { NombreLienzo } from './NombreLienzo';
+import { usarLuz } from '@/lib/luz';
 
 /**
  * El nombre, con el efecto que sea.
@@ -100,11 +102,28 @@ function variables(def: DefEfectoNombre | undefined, int: number, vel: number): 
   return v as CSSProperties;
 }
 
+/**
+ * Apuntarse a la luz mientras el efecto la necesite.
+ *
+ * La luz es una para toda la página y su bucle sólo corre si hay alguien
+ * mirando. Esto es el apuntarse y el darse de baja, y nada más: dónde está
+ * la luz no se guarda en ningún estado de React, porque volver a pintar un
+ * componente treinta veces por segundo para mover un punto de luz sería
+ * pagar el precio entero de React por escribir dos atributos.
+ */
+function useLuz(activo: boolean) {
+  useEffect(() => {
+    if (!activo) return;
+    return usarLuz();
+  }, [activo]);
+}
+
 export function NombreEfecto({
   texto,
   efecto,
   intensidad = 1,
   velocidad = 1,
+  calma = false,
 }: {
   texto: string;
   efecto?: string;
@@ -112,18 +131,27 @@ export function NombreEfecto({
   intensidad?: number;
   /** Divide las duraciones: 2 es el doble de rápido. */
   velocidad?: number;
+  /**
+   * Esto es una miniatura, no un perfil.
+   *
+   * Lo que decide es si se monta el lienzo de la corriente. Esconderlo con
+   * CSS no valdría: el bucle seguiría corriendo igual, y en una página de
+   * plantillas eso son ocho lienzos dibujando para nadie.
+   */
+  calma?: boolean;
 }) {
   const def = efectoNombre(efecto);
   const capas = def?.capas ?? 0;
   const pulso = usePulsos(!!def?.pulsos);
+  useLuz(!!def?.luz);
 
   /* La máquina de escribir cuenta letras y eso no lo hace una hoja de
      estilos. Tiene su propio componente desde antes y sigue teniéndolo. */
   if (efecto === 'maquina') return <NombreMaquina texto={texto} />;
 
-  /* Sin capas ni pulsos no hace falta armazón: el CSS del efecto le cuelga
-     directamente al nombre, como toda la vida. */
-  if (capas === 0 && !def?.pulsos) return <>{texto}</>;
+  /* Sin capas, ni pulsos, ni lienzo no hace falta armazón: el CSS del efecto
+     le cuelga directamente al nombre, como toda la vida. */
+  if (capas === 0 && !def?.pulsos && !(def?.lienzo && !calma)) return <>{texto}</>;
 
   return (
     <span
@@ -132,6 +160,11 @@ export function NombreEfecto({
       style={variables(def, intensidad, velocidad)}
     >
       <span className="fxn__b">{texto}</span>
+      {/* El lienzo va DETRÁS del texto en el orden y ENCIMA en pantalla: el
+          texto del DOM es el que se lee y el que se selecciona, y el lienzo
+          sólo pone la luz. Si el lienzo llevara el nombre, no habría nombre
+          que copiar ni que leer en voz alta. */}
+      {def?.lienzo && !calma && <NombreLienzo texto={texto} />}
       {Array.from({ length: capas }, (_, i) => (
         <span key={i} className="fxn__c" data-c={i + 1} aria-hidden="true">
           <i>{texto}</i>
