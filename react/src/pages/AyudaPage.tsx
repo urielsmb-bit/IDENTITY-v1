@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { AYUDA, ARTICULOS, articuloPorSlug } from '@/data/ayuda';
-import { markdownAHtml } from '@/lib/markdown';
+import { markdownAHtml, traerDocumento } from '@/lib/markdown';
 import { useTitulo } from '@/hooks/useTitulo';
 
 /**
@@ -164,8 +164,7 @@ function Articulo({ slug }: { slug: string }) {
     }
     let vivo = true;
     setEstado('cargando');
-    fetch(`/ayuda/${meta.slug}.md`)
-      .then((r) => (r.ok ? r.text() : Promise.reject(new Error('no está'))))
+    traerDocumento(`/ayuda/${meta.slug}.md`)
       .then((md) => {
         if (!vivo) return;
         setHtml(markdownAHtml(md));

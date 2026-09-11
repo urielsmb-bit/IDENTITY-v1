@@ -1,7 +1,7 @@
 import { useLocation, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useTitulo } from '@/hooks/useTitulo';
-import { markdownAHtml } from '@/lib/markdown';
+import { markdownAHtml, traerDocumento } from '@/lib/markdown';
 
 const DOCS: Record<string, { file: string; title: string }> = {
   '/terminos': { file: 'sharee_TERMINOS.md', title: 'Términos del servicio' },
@@ -27,8 +27,7 @@ export default function LegalPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/${docInfo.file}`)
-      .then((res) => (res.ok ? res.text() : Promise.reject(new Error('Not found'))))
+    traerDocumento(`/${docInfo.file}`)
       .then((md) => {
         setHtml(markdownAHtml(md));
         setLoading(false);

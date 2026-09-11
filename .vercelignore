@@ -32,10 +32,28 @@ __pycache__/
 supabase/
 
 # ---- documentacion interna ------------------------------------
+# La del repositorio no se sube: notas, deuda tecnica, lo que falta por
+# construir. En un sitio publico eso es una lista de por donde probar.
 *.md
 
-# ...menos los tres legales: la vista /terminos los lee de aqui,
-# para que no haya dos copias del mismo texto separandose.
+# ...MENOS LA QUE LA APLICACION SIRVE DE VERDAD.
+#
+# Esto estuvo roto y no se vio. Las excepciones decian `IDENTITY_*.md`,
+# que eran los nombres de antes del cambio de nombre del proyecto; los
+# ficheros pasaron a llamarse `sharee_*.md` y nadie toco esta lista. El
+# resultado: `*.md` se los tragaba, no llegaban al despliegue, y
+# /terminos, /privacidad y /copyright llevaban desde entonces diciendo
+# «No se pudo cargar el documento» EN PRODUCCION. En local funcionaban,
+# porque `.vercelignore` no existe para el servidor de desarrollo — que
+# es exactamente por lo que no se noto.
+#
+# Se apuntan por CARPETA y no por nombre, para que anadir un documento
+# no dependa de que alguien se acuerde de volver aqui.
+!react/public/*.md
+!react/public/ayuda/*.md
+
+# Los tres de la raiz siguen siendo los del sitio antiguo, que se
+# despliega aparte con su propio vercel.json.
 !IDENTITY_TERMINOS.md
 !IDENTITY_PRIVACIDAD.md
 !IDENTITY_COPYRIGHT.md

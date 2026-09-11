@@ -246,3 +246,36 @@ export function markdownAHtml(md: string): string {
   cerrarLista();
   return salida.join('');
 }
+
+/**
+ * Trae un documento de `public/` y se asegura de que sea un documento.
+ *
+ * EN UNA SOLA PÁGINA, UN FICHERO QUE NO ESTÁ NO DA 404. Da la aplicación
+ * entera con un 200: es la regla que hace que `sharee.fun/loquesea` abra
+ * la página en vez de morir, y se aplica igual a `/ayuda/loquesea.md`. Así
+ * que un `fetch` que sólo mira `response.ok` se cree que ha recibido el
+ * documento, y lo que tiene en la mano es el `index.html`.
+ *
+ * Eso pasó, y se vio publicado: los artículos de la ayuda salieron con el
+ * código fuente del `index.html` dentro, etiqueta a etiqueta, formateado
+ * como si fuera prosa. El fallo de verdad estaba en otro sitio —los `.md`
+ * no llegaban al despliegue— pero fue ESTO lo que lo convirtió en algo
+ * incomprensible en vez de en un «no se pudo cargar».
+ *
+ * Se mira el tipo de contenido y, por si un servidor lo etiqueta mal, el
+ * principio del texto. Un documento nuestro empieza por una almohadilla o
+ * por una cita; nunca por `<!doctype`.
+ */
+export async function traerDocumento(ruta: string): Promise<string> {
+  const r = await fetch(ruta);
+  if (!r.ok) throw new Error(`no está: ${ruta}`);
+
+  const tipo = (r.headers.get('content-type') ?? '').toLowerCase();
+  if (tipo.includes('text/html')) throw new Error(`no es un documento: ${ruta}`);
+
+  const texto = await r.text();
+  if (/^\s*<(?:!doctype|html)\b/i.test(texto)) {
+    throw new Error(`no es un documento: ${ruta}`);
+  }
+  return texto;
+}
