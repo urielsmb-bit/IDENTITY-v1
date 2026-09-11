@@ -3338,9 +3338,16 @@
    fondo del tema—, asi que hay que devolverlo a ser un trozo de
    texto. Se hace con `.fx .fx__demo`, que lleva una clase mas que
    `.pf` y por tanto gana sin recurrir a `!important`. */
+/* DOS columnas, no cuatro.
+   Con cuatro caben más tarjetas de golpe, pero la previa se queda en
+   catorce píxeles y a ese tamaño «cristal», «singularidad» y «entropía» son
+   el mismo texto blanco: la diferencia entre ellos son décimas de píxel de
+   desplazamiento y desenfoques de media eme, que a catorce píxeles no
+   existen. Y un efecto que no se puede ver no se puede elegir —ni vender—.
+   A dos columnas la previa va a veinte y se distinguen los dieciocho. */
 .fx{
   display:grid;
-  grid-template-columns:repeat(auto-fill, minmax(108px, 1fr));
+  grid-template-columns:repeat(auto-fill, minmax(142px, 1fr));
   gap:6px;
 }
 
@@ -3392,11 +3399,16 @@
   padding:0;
   margin:0;
   background:none;
-  overflow:hidden;
+  /* VISIBLE, no oculto. La mitad de los efectos avanzados vive FUERA de
+     la caja del texto: el resplandor, la materia oscura y la lente de la
+     singularidad se salen por los cuatro lados, y recortandolos a ras de
+     letra la tarjeta enseñaba justo lo que el efecto no es. Quien recorta
+     es la tarjeta, que para eso tiene su relleno. */
+  overflow:visible;
   isolation:auto;
   display:block;
-  height:26px;
-  line-height:26px;
+  height:34px;
+  line-height:34px;
 
   /* Los colores del tema que usan el barrido y el resplandor. En el
      perfil los pone el tema elegido; aqui no hay tema, asi que se
@@ -3410,9 +3422,9 @@
 .fx .fx__demo .pf-name{
   display:block;
   font-family:inherit;
-  font-size:14px;
+  font-size:20px;
   font-weight:700;
-  line-height:26px;
+  line-height:34px;
   letter-spacing:0;
   text-transform:none;
   /* De una sola linea y sin puntos suspensivos: `text-overflow` pide
@@ -3434,4 +3446,16 @@
 /* Con el dedo, las tarjetas necesitan alto suficiente para acertar. */
 @media (pointer:coarse){
   .fx__b{ padding:12px 8px 10px; }
+}
+
+/* Los dos grupos del selector de efectos. Dieciocho tarjetas seguidas
+   son un muro; partidas en «Básicos» y «Avanzados» se leen, y además
+   el corte dice algo: arriba lo que le PASA a tu nombre, abajo de qué
+   está HECHO. */
+.fx__g + .fx__g{ margin-top:14px; }
+.fx__gt{
+  margin:0 0 6px;
+  font-size:10px; font-weight:700;
+  letter-spacing:.08em; text-transform:uppercase;
+  color:var(--text-muted);
 }

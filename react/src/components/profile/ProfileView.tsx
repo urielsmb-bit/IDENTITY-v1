@@ -5,7 +5,7 @@ import { getBadge, TOPE_INSIGNIAS } from '@/data/badges';
 import { insigniasGanadas } from '@/lib/insignias';
 import { FONTS, EASING_CSS } from '@/data/themes';
 import { rellenaElNombre } from '@/data/efectosNombre';
-import { NombreMaquina } from './NombreMaquina';
+import { NombreEfecto } from './NombreEfecto';
 import { useParticles } from '@/hooks/useParticles';
 import { useTilt } from '@/hooks/useTilt';
 import { useCursor } from '@/hooks/useCursor';
@@ -394,6 +394,13 @@ export function ProfileView({
       vars['--u-namegrad'] =
         'linear-gradient(90deg, var(--p-primary), var(--p-accent))';
     }
+    /* Los dos mandos comunes van en la RAIZ y no en el nombre. Cinco de
+       los dieciocho efectos no montan armazon —les basta una regla sobre
+       `.pf-name`— y sin esto no habria ningun elemento suyo donde
+       escribirlos: la intensidad y la velocidad funcionarian en trece y
+       en cinco no, sin que se viera por que. */
+    if (p.fxInt != null) vars['--fx-int'] = String(p.fxInt / 100);
+    if (p.fxVel != null) vars['--fx-vel'] = String(p.fxVel / 100);
     return vars;
   }, [p]);
 
@@ -902,6 +909,13 @@ export function ProfileView({
          SIN degradado propio —que tambien deja las letras transparentes—
          se llevaba la sombra mala. */
       data-namefill={sw(p.gradient || rellenaElNombre(p.nameFx))}
+      /* Modo tranquilo: esto es una MINIATURA, no un perfil.
+         Las plantillas montan varios perfiles enteros a la vez dentro de
+         un `scale()`, y ahi un filtro SVG con ruido animado se recalcula
+         por cada uno y en cada fotograma, para unas letras de doce
+         pixeles donde no se ve. La previa del editor lleva `editando` y
+         es UNA, asi que esa se queda entera. */
+      data-fxcalma={sw(preview && !editando)}
       data-borde={p.sBorderOn === false ? 'off' : 'on'}
       style={styleVars as React.CSSProperties}
     >
@@ -1023,11 +1037,12 @@ export function ProfileView({
                 pseudo-elementos, y un pseudo-elemento no puede copiar el
                 texto de su elemento —solo puede leer un atributo—. */}
             <h1 className="pf-name" data-texto={p.name || p.username}>
-              {p.nameFx === 'maquina' ? (
-                <NombreMaquina texto={p.name || p.username} />
-              ) : (
-                p.name || p.username
-              )}
+              <NombreEfecto
+                texto={p.name || p.username}
+                efecto={p.nameFx}
+                intensidad={(p.fxInt ?? 100) / 100}
+                velocidad={(p.fxVel ?? 100) / 100}
+              />
               {p.verified && (
                 <svg
                   className="pf-verified"

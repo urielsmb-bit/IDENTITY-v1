@@ -2,6 +2,7 @@ import { Routes, Route, Outlet, Navigate, useParams } from 'react-router-dom';
 import { Navbar } from './components/layout/Navbar';
 import { Pie } from './components/layout/Pie';
 import { Toast } from './components/layout/Toast';
+import { FiltrosEfectos } from '@/components/profile/FiltrosEfectos';
 import { Frontera } from './components/layout/Frontera';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 
@@ -173,6 +174,7 @@ export default function App() {
         </Suspense>
         </Frontera>
       </main>
+      <FiltrosEfectos />
       <Toast />
     </>
   );

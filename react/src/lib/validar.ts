@@ -324,6 +324,11 @@ function esquema(ID: any) {
     fxMagnet: bool, fxGlow: bool, fxParallax: bool,
     gradient: bool, animatedName: bool, glowName: bool,
     nameFx: (v: any) => deLista(v, ids(ID?.EFECTOS_NOMBRE), 'none'),
+    /* Nulos mientras nadie los toque: asi el efecto sale con los valores
+       que trae de fabrica en su propia ficha, y no con un 100 escrito
+       aqui que habria que mantener a juego. */
+    fxInt: (v: any) => numOnulo(v, 25, 250),
+    fxVel: (v: any) => numOnulo(v, 25, 250),
     glowSocials: bool, glowBadges: bool, noise: bool, tilt: bool,
     gateText: (v: any) => texto(v, 40),
     gate: bool, verified: bool, premium: bool, discoverable: bool,
@@ -451,6 +456,15 @@ export function perfil(p: any, defectos: any, catalogs: Record<string, unknown>)
      puedan discrepar: manda `nameFx`, el otro solo le sigue. */
   if (!Object.prototype.hasOwnProperty.call(p, 'nameFx')) {
     out.nameFx = out.animatedName ? 'sweep' : 'none';
+  } else {
+    /* Efectos que se mudaron de nombre.
+       Se mira `p.nameFx` y no `out.nameFx`: el esquema de arriba ya ha
+       pasado el valor por la lista de los que existen, y un id retirado
+       no esta en esa lista, asi que para cuando llega aqui vale 'none' y
+       ya no se distingue de un 'none' de verdad. Lo que trae el perfil
+       sigue intacto en `p`. */
+    const mudado = (ID?.EFECTOS_MUDADOS as Record<string, string> | undefined)?.[String(p.nameFx)];
+    if (mudado) out.nameFx = mudado;
   }
   out.animatedName = out.nameFx === 'sweep';
 

@@ -2302,7 +2302,7 @@
   -webkit-background-clip:text;
   background-clip:text;
   color:transparent;
-  animation:nameSweep 5.5s linear infinite;
+  animation:nameSweep calc(5.5s / var(--fx-vel, 1)) linear infinite;
 }
 /* Con degradado propio, `sweep` mueve EL TUYO en vez de
    sustituirlo por el del tema: elegir dos colores y que la
@@ -2311,14 +2311,17 @@
   background-image:var(--u-namegrad);
   background-size:250% 100%;
 }
+/* Los dos mandos comunes tambien aqui. Que la intensidad funcione en
+   trece efectos y en los otros cinco no seria peor que no tenerla: nadie
+   sabria cuales, y el mando parece roto la primera vez que no hace nada. */
 .pf[data-nameanim="pulse"] .pf-name{
-  animation:nameLatido 2.8s var(--ease) infinite;
+  animation:nameLatido calc(2.8s / var(--fx-vel, 1)) var(--ease) infinite;
 }
-@keyframes nameLatido{ 50%{ transform:scale(1.03); } }
+@keyframes nameLatido{ 50%{ transform:scale(calc(1 + .03 * var(--fx-int, 1))); } }
 .pf[data-nameanim="float"] .pf-name{
-  animation:nameFlota 5s var(--ease) infinite;
+  animation:nameFlota calc(5s / var(--fx-vel, 1)) var(--ease) infinite;
 }
-@keyframes nameFlota{ 50%{ transform:translateY(-5px); } }
+@keyframes nameFlota{ 50%{ transform:translateY(calc(-.11em * var(--fx-int, 1))); } }
 
 /* --- arcoiris ---------------------------------------------
    Va DESPUES del degradado propio a proposito. Los dos rellenan
@@ -2331,7 +2334,7 @@
   background-size:300% 100%;
   -webkit-background-clip:text; background-clip:text;
   color:transparent;
-  animation:nameArco 6s linear infinite;
+  animation:nameArco calc(6s / var(--fx-vel, 1)) linear infinite;
 }
 @keyframes nameArco{ to{ background-position:-300% 0; } }
 
@@ -2384,47 +2387,11 @@
   clip:rect(0 0 0 0); white-space:nowrap; border:0;
 }
 
-/* --- fallo de senal ---------------------------------------
-   Dos copias del nombre, una roja y otra azul, quietas y
-   transparentes casi todo el rato y desplazadas un instante.
-
-   Van en `position:absolute` porque `.pf-name` es un flex —lleva
-   el nombre y el tic de verificado— y un pseudo-elemento suelto
-   ahi dentro seria un hijo mas del flex: contaria para el ancho y
-   empujaria el tic a la derecha.
-
-   Arrancan invisibles a proposito: asi, con la animacion apagada
-   —quien pide menos movimiento— no queda un nombre triple sino el
-   nombre y ya. */
-.pf[data-nameanim="glitch"] .pf-name{ position:relative; }
-.pf[data-nameanim="glitch"] .pf-name::before,
-.pf[data-nameanim="glitch"] .pf-name::after{
-  content:attr(data-texto);
-  position:absolute; left:0; top:0;
-  white-space:pre;
-  opacity:0;
-  pointer-events:none;
-}
-.pf[data-nameanim="glitch"] .pf-name::before{
-  color:#ff2d55;
-  animation:nameFalloA 3.2s steps(1) infinite;
-}
-.pf[data-nameanim="glitch"] .pf-name::after{
-  color:#22d3ee;
-  animation:nameFalloB 3.2s steps(1) infinite;
-}
-@keyframes nameFalloA{
-  0%, 86%, 100%{ opacity:0; transform:none; }
-  88%{ opacity:.85; transform:translate(-3px, 1px); }
-  91%{ opacity:.7;  transform:translate(2px, -2px); }
-  94%{ opacity:.8;  transform:translate(-2px, 0); }
-}
-@keyframes nameFalloB{
-  0%, 86%, 100%{ opacity:0; transform:none; }
-  88%{ opacity:.8;  transform:translate(3px, -1px); }
-  91%{ opacity:.7;  transform:translate(-2px, 2px); }
-  94%{ opacity:.85; transform:translate(2px, 0); }
-}
+/* «Fallo de senal» vivia aqui: dos copias en rojo y azul temblando
+   sin parar. Lo sustituye «Corrupcion», que es lo mismo hecho bien
+   —quieta casi todo el rato y rompiendo cuando no lo esperas— y vive
+   en `efectos.css` con los demas. El saneado traduce el id viejo, asi
+   que quien lo tuviera puesto se queda con el nuevo. */
 
 /* Quien pide menos movimiento lo pide para todo, no solo para
    lo que ya existía cuando se escribió la regla de arriba. */

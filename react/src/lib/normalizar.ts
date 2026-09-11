@@ -7,7 +7,7 @@ import {
   BLOCK_SURFACES, BLOCK_ANIMS, FONTS, ANIM_DIRS, ANIM_EASINGS, TRAIL_FX,
 } from '@/data/themes';
 import { BASES_VALIDAS } from '@/data/plantillasBase';
-import { EFECTOS_NOMBRE } from '@/data/efectosNombre';
+import { EFECTOS_NOMBRE, EFECTOS_MUDADOS } from '@/data/efectosNombre';
 
 /**
  * Catálogos que `validar.perfil` consulta para decidir qué valores son
@@ -30,6 +30,7 @@ export const CATALOGOS = {
      vacio y el editor volveria a enseñar la bienvenida en cada carga. */
   BASES: BASES_VALIDAS,
   EFECTOS_NOMBRE,
+  EFECTOS_MUDADOS,
 };
 
 /**

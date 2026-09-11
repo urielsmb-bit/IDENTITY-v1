@@ -229,6 +229,10 @@ export interface Profile {
   animatedName: boolean;
   /** Que efecto lleva el nombre. Ver `data/efectosNombre.ts`. */
   nameFx: string;
+  /** Intensidad del efecto, en %. 100 es como lo trae de fabrica. */
+  fxInt?: number;
+  /** Velocidad del efecto, en %. 200 es el doble de rapido. */
+  fxVel?: number;
   glowName: boolean;
   glowSocials: boolean;
   glowBadges: boolean;

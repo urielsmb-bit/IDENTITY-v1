@@ -263,8 +263,12 @@ describe('nameFx: el si/no que se convirtio en catalogo', () => {
     expect(normalizarPerfil({ username: 'shark', nameFx: '"><script>' }).nameFx).toBe('none');
   });
 
-  it('acepta los siete del catalogo', () => {
-    for (const id of ['none', 'pulse', 'float', 'sweep', 'arcoiris', 'maquina', 'glitch']) {
+  /* El catalogo entero se prueba en `data/efectosNombre.test.ts`, que ademas
+     de la lista lee la hoja de estilos. Aqui queda lo que le toca al saneado:
+     que un id valido pase tal cual. `glitch` ya no esta en la lista —se
+     traduce a `corrupcion`, y eso tambien se prueba alli—. */
+  it('un efecto del catalogo pasa tal cual', () => {
+    for (const id of ['none', 'pulse', 'float', 'sweep', 'arcoiris', 'maquina']) {
       expect(normalizarPerfil({ username: 'shark', nameFx: id }).nameFx).toBe(id);
     }
   });

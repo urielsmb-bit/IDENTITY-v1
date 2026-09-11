@@ -14,8 +14,8 @@ import { getBadge, TOPE_INSIGNIAS } from '@/data/badges';
 import { safeUrl } from '@/lib/utils';
 import { idYouTube } from '@/lib/music';
 import { Campo, ColorRGB, Deslizador, Interruptor, Pastillas, Pro, ROMBO, SelectorFuente, Tarjetas } from './Controles';
-import { EFECTOS_NOMBRE, efectoNombre, rellenaElNombre } from '@/data/efectosNombre';
-import { NombreMaquina } from '../profile/NombreMaquina';
+import { EFECTOS_POR_GRUPO, efectoNombre, rellenaElNombre } from '@/data/efectosNombre';
+import { NombreEfecto } from '../profile/NombreEfecto';
 import { controlEsPro } from '@/data/premium';
 import { DIBUJOS } from './dibujos';
 import {
@@ -172,74 +172,121 @@ function EfectosDelNombre({
   const actual = profile.nameFx || 'none';
   const def = efectoNombre(actual);
   /* Tu nombre si lo tienes, tu usuario si no, y algo si no hay ninguno de
-     los dos: una tarjeta vacia no ensena ningun efecto. */
+     los dos: una tarjeta vacía no enseña ningún efecto. */
   const muestra = profile.name || profile.username || 'Tu nombre';
+
+  /* «Ninguno» no tiene nada que regular y la máquina de escribir no lleva
+     ni intensidad ni velocidad —lo suyo son letras por segundo, que es otra
+     cosa—. Enseñar dos mandos que no mueven nada es peor que no enseñarlos:
+     uno los toca, no pasa nada, y a partir de ahí no se fía de ninguno. */
+  const regulable = actual !== 'none' && actual !== 'maquina';
+
   return (
     <Campo label="Efecto del nombre">
-      <div
-        className="fx"
-        role="group"
-        aria-label="Efecto del nombre"
-        style={{ '--fx-acc': profile.accent || '#A855F7' } as React.CSSProperties}
-      >
-        {EFECTOS_NOMBRE.map((e) => {
-          const bloqueado = !premium && !!e.pro;
-          const puesto = actual === e.id;
-          const demo = (
-            <>
-              <span
-                className="pf fx__demo"
-                data-nameanim={e.id}
-                data-namefill={rellenaElNombre(e.id) ? 'on' : 'off'}
-                aria-hidden="true"
-              >
-                <span className="pf-name" data-texto={muestra}>
-                  {/* La maquina es el MISMO componente que usa el perfil, no
-                      una imitacion: si cambia el ritmo, cambia en los dos. */}
-                  {e.id === 'maquina' ? <NombreMaquina texto={muestra} /> : muestra}
-                </span>
-              </span>
-              <span className="fx__n">
-                {e.nombre}
-                {bloqueado && <span className="fx__pro">{ROMBO}</span>}
-              </span>
-            </>
-          );
+      {EFECTOS_POR_GRUPO.map((g) => (
+        <div key={g.grupo} className="fx__g">
+          {/* Dieciocho tarjetas seguidas son un muro. En dos grupos con su
+              título se leen, y además dicen algo: arriba lo que le pasa a tu
+              nombre, abajo de qué está hecho. */}
+          <p className="fx__gt">{g.titulo}</p>
+          <div className="fx" role="group" aria-label={`Efectos ${g.titulo}`}>
+            {g.items.map((e) => {
+              const bloqueado = !premium && !!e.pro;
+              const puesto = actual === e.id;
 
-          /* Bloqueado es un ENLACE, no un boton apagado. Un boton que no hace
-             nada al pulsarlo deja a uno pensando que la pagina esta rota; un
-             enlace a los precios contesta la pregunta que acaba de hacerse. */
-          return bloqueado ? (
-            <Link
-              key={e.id}
-              className="fx__b fx__b--pro"
-              to="/pricing"
-              title={`${e.nombre} — lo trae el plan`}
-            >
-              {demo}
-            </Link>
-          ) : (
-            <button
-              key={e.id}
-              type="button"
-              className={`fx__b${puesto ? ' on' : ''}`}
-              aria-pressed={puesto}
-              onClick={() => update({ nameFx: e.id })}
-            >
-              {demo}
-            </button>
-          );
-        })}
-      </div>
+              const demo = (
+                <>
+                  <span
+                    className="pf fx__demo"
+                    data-nameanim={e.id}
+                    data-namefill={rellenaElNombre(e.id) ? 'on' : 'off'}
+                    aria-hidden="true"
+                  >
+                    <span className="pf-name">
+                      {/* La previa usa EL MISMO componente y el mismo CSS que
+                          el perfil público. No es un dibujo que imite el
+                          efecto: es el efecto. Un dibujo hecho a mano sería
+                          una segunda versión de cada uno, y las segundas
+                          versiones se quedan viejas. */}
+                      <NombreEfecto texto={muestra} efecto={e.id} />
+                    </span>
+                  </span>
+                  <span className="fx__n">
+                    {e.nombre}
+                    {bloqueado && <span className="fx__pro">{ROMBO}</span>}
+                  </span>
+                </>
+              );
 
-      {/* Que hace el que tienes puesto, y si se paga. La frase va DEBAJO y no
-          dentro de cada tarjeta: siete descripciones a la vez no se leen, se
-          esquivan. */}
+              /* Bloqueado es un ENLACE, no un botón apagado. Un botón que no
+                 hace nada al pulsarlo deja a uno pensando que la página está
+                 rota; un enlace a los precios contesta la pregunta que acaba
+                 de hacerse. Y se ve FUNCIONANDO: esconder lo que se vende es
+                 la peor manera de venderlo. */
+              return bloqueado ? (
+                <Link
+                  key={e.id}
+                  className="fx__b fx__b--pro"
+                  to="/pricing"
+                  title={`${e.nombre} — lo trae el plan`}
+                >
+                  {demo}
+                </Link>
+              ) : (
+                <button
+                  key={e.id}
+                  type="button"
+                  className={`fx__b${puesto ? ' on' : ''}`}
+                  aria-pressed={puesto}
+                  onClick={() => update({ nameFx: e.id })}
+                >
+                  {demo}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      {/* Qué hace el que tienes puesto, y si se paga. La frase va DEBAJO y no
+          dentro de cada tarjeta: dieciocho descripciones a la vez no se leen,
+          se esquivan. */}
       {def && (
         <p className="fx__pie">
           {def.desc}
           {def.pro && !premium && <> <Link to="/pricing">Este lo trae el plan.</Link></>}
         </p>
+      )}
+
+      {/* Dos mandos, no doce.
+          Por dentro cada efecto tiene hasta trece —escala, desenfoque,
+          distorsión, aberración cromática…— y se pueden tocar todos desde su
+          ficha. Aquí salen los dos que significan algo sin haber leído nada:
+          cuánto y cómo de rápido. Los otros once son decisiones de diseño de
+          cada efecto, no ajustes; sacarlos convertiría un selector en una
+          mesa de mezclas. */}
+      {regulable && (
+        <>
+          <Deslizador
+            label="Intensidad"
+            desc="Cuánto se nota. Al 100 está como lo trae de fábrica."
+            sufijo="%"
+            min={25}
+            max={250}
+            step={5}
+            value={profile.fxInt ?? 100}
+            onChange={(v) => update({ fxInt: v })}
+          />
+          <Deslizador
+            label="Velocidad"
+            sufijo="%"
+            min={25}
+            max={250}
+            step={5}
+            value={profile.fxVel ?? 100}
+            onChange={(v) => update({ fxVel: v })}
+          />
+        </>
       )}
     </Campo>
   );

@@ -10,6 +10,7 @@ import './styles/chrome.css';
 import './styles/themes.css';
 import './styles/fuentes.css';
 import './styles/profile.css';
+import './styles/efectos.css';
 import './styles/panels.css';
 import './styles/dashboard.css';
 import './styles/cuenta.css';

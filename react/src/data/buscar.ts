@@ -39,8 +39,13 @@ const CONTROL: Record<ControlId, Ficha> = {
   efectoNombre: {
     nombre: 'Efecto del nombre',
     alias: ['barrido', 'brillo', 'animado', 'destello', 'arcoiris', 'arcoíris',
-            'maquina', 'máquina de escribir', 'glitch', 'fallo', 'latido', 'flotar'],
+            'maquina', 'máquina de escribir', 'latido', 'flotar', 'resplandor',
+            'desfase', 'eco', 'prisma', 'holograma', 'interferencia', 'neón',
+            'neon', 'líquido', 'cristal', 'vidrio', 'corrupción', 'glitch',
+            'fallo', 'entropía', 'materia oscura', 'singularidad',
+            'intensidad', 'velocidad', 'más fuerte', 'más rápido'],
   },
+
 
   fuente: { nombre: 'Fuente', alias: ['tipografía', 'letra', 'tipo de letra'] },
   caso: { nombre: 'Mayúsculas y minúsculas', alias: ['mayúsculas', 'minúsculas', 'capitalizar'] },
