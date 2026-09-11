@@ -36,10 +36,47 @@ import { useEffect, useRef } from 'react';
  *     quieto y tenue, y se acabó. Sigue siendo un nombre con filo de luz.
  */
 
-/** Lado de la casilla, en píxeles de dibujo. Más fino no se nota y cuesta. */
-const CASILLA = 2;
-/** Cuánto se sale la luz de la caja del texto. */
-const MARGEN = 14;
+/**
+ * TODO va en proporción a la letra, y esto es lo primero que hubo que
+ * arreglar.
+ *
+ * La primera versión tenía las medidas en píxeles fijos, calibradas para un
+ * nombre de unos cuarenta. En una tarjeta del selector, que va a veinte, el
+ * resultado era un borrón blanco encima de las primeras letras, y por dos
+ * motivos a la vez:
+ *
+ *   · la casilla del contorno medía dos píxeles y el trazo de la letra
+ *     medía tres, así que TODA casilla pintada tenía una vecina vacía. El
+ *     «contorno» era la letra entera y la chispa recorría el relleno;
+ *   · el trazo ancho del resplandor medía siete sobre una letra de veinte.
+ *     Un tercio de la altura del nombre, en aditivo: dos pasadas por el
+ *     mismo sitio y aquello ya era blanco puro.
+ *
+ * Con todo referido al cuerpo de la letra, el mismo efecto vale para una
+ * tarjeta de veinte y para un nombre de sesenta sin tocar un número.
+ */
+function medidas(f: number) {
+  return {
+    /* Casilla. Cuanto más fina, mejor sigue el contorno, y lo que cuesta es
+       cuadrático: a la dieciochoava parte del cuerpo salen unas dos casillas
+       por trazo de letra, que es el mínimo para que haya un DENTRO. */
+    casilla: Math.max(1, Math.round(f / 18)),
+    /* Lo que se sale la luz de la caja. */
+    margen: Math.max(8, Math.round(f * 0.34)),
+    /* Los tres trazos: el aire, el cuerpo y el filo. */
+    ancho: [f * 0.15, f * 0.05, Math.max(0.8, f * 0.02)] as const,
+    /* Lo que avanza por cuadro, en casillas. */
+    paso: 2,
+    /* Cuánto se borra cada cuadro, o sea lo que dura la estela.
+       En letra PEQUEÑA se borra menos, y no es una manía: el contorno de un
+       nombre de veinte se recorre entero en un suspiro, así que con el mismo
+       borrado la estela cabría en dos letras y lo que se vería sería un
+       punto de luz, no un recorrido. Durando más, el arco llega a leerse
+       como movimiento incluso ahí. */
+    desvanece: 0.07 + 0.1 * Math.min(1, f / 44),
+  };
+}
+
 /** Chispas a la vez. Tres llenan un nombre corriente sin emborronarlo. */
 const CHISPAS = 3;
 
@@ -75,28 +112,46 @@ export function NombreLienzo({ texto, color }: { texto: string; color?: string }
     let chispas: Chispa[] = [];
     let latido = 0;
     let visible = true;
+    let M = medidas(40);
+    /* El color de la energía y el del texto NO son el mismo, y ahí estaba la
+       otra mitad del borrón: la chispa salía del color del nombre —casi
+       blanco— y encima de un nombre casi blanco no se lee como energía, se
+       lee como una mancha. Con el acento del perfil, la luz tiene color
+       propio y el filo blanco de encima se distingue de ella. */
     let tinte = color || '#8ad8ff';
+    let nucleo = '#ffffff';
 
     /* ── el mapa ──────────────────────────────────────────────
        Se rehace sólo cuando cambia el nombre o su caja. Dentro de un
        cuadro no se toca nada de esto. */
     const mapear = () => {
       const caja = host.getBoundingClientRect();
+      const cs = getComputedStyle(host);
       const dpr = Math.min(2, window.devicePixelRatio || 1);
-      const w = Math.ceil(caja.width) + MARGEN * 2;
-      const h = Math.ceil(caja.height) + MARGEN * 2;
+
+      /* Lo PRIMERO, el cuerpo de la letra: de él salen la casilla, el margen
+         y los tres trazos. Antes esto venía de tres constantes y por eso el
+         efecto sólo estaba bien a un tamaño. */
+      const cuerpo = parseFloat(cs.fontSize) || 40;
+      M = medidas(cuerpo);
+
+      const w = Math.ceil(caja.width) + M.margen * 2;
+      const h = Math.ceil(caja.height) + M.margen * 2;
       if (w < 4 || h < 4) return false;
 
       cv.width = Math.ceil(w * dpr);
       cv.height = Math.ceil(h * dpr);
       cv.style.width = `${w}px`;
       cv.style.height = `${h}px`;
-      cv.style.left = `${-MARGEN}px`;
-      cv.style.top = `${-MARGEN}px`;
+      cv.style.left = `${-M.margen}px`;
+      cv.style.top = `${-M.margen}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const cs = getComputedStyle(host);
-      tinte = color || cs.color || '#8ad8ff';
+      /* El acento del perfil, no el color del texto. Una energía del mismo
+         color que el nombre encima del nombre no se lee como energía: se lee
+         como que el nombre está sucio. */
+      tinte = color || cs.getPropertyValue('--p-primary').trim() || cs.color || '#8ad8ff';
+      nucleo = cs.color || '#ffffff';
 
       /* La misma letra que el DOM, o las chispas irían por el contorno de
          otro nombre. El espaciado sólo lo saben poner algunos navegadores;
@@ -112,23 +167,23 @@ export function NombreLienzo({ texto, color }: { texto: string; color?: string }
          interlineado», y sin sumarla el contorno sale desplazado. */
       const sube = m.fontBoundingBoxAscent || parseFloat(cs.fontSize) * 0.8;
       const baja = m.fontBoundingBoxDescent || parseFloat(cs.fontSize) * 0.2;
-      const base = MARGEN + (caja.height - (sube + baja)) / 2 + sube;
+      const base = M.margen + (caja.height - (sube + baja)) / 2 + sube;
 
       ctx.clearRect(0, 0, w, h);
       ctx.textBaseline = 'alphabetic';
       ctx.fillStyle = '#fff';
-      ctx.fillText(texto, MARGEN, base);
+      ctx.fillText(texto, M.margen, base);
 
       const datos = ctx.getImageData(0, 0, cv.width, cv.height).data;
-      anchoC = Math.floor(w / CASILLA);
-      altoC = Math.floor(h / CASILLA);
+      anchoC = Math.floor(w / M.casilla);
+      altoC = Math.floor(h / M.casilla);
 
       const lleno = new Uint8Array(anchoC * altoC);
       for (let cy = 0; cy < altoC; cy++) {
         for (let cx = 0; cx < anchoC; cx++) {
           /* El centro de la casilla, en píxeles del lienzo de verdad. */
-          const px = Math.floor((cx * CASILLA + CASILLA / 2) * dpr);
-          const py = Math.floor((cy * CASILLA + CASILLA / 2) * dpr);
+          const px = Math.floor((cx * M.casilla + M.casilla / 2) * dpr);
+          const py = Math.floor((cy * M.casilla + M.casilla / 2) * dpr);
           const a = datos[(py * cv.width + px) * 4 + 3] ?? 0;
           if (a > 120) lleno[cy * anchoC + cx] = 1;
         }
@@ -172,8 +227,8 @@ export function NombreLienzo({ texto, color }: { texto: string; color?: string }
       let mejorA = c.a;
       for (let i = 0; i < 12; i++) {
         const ang = c.a + (i - 6) * 0.42 + (Math.random() - 0.5) * 0.25;
-        const nx = Math.round(c.x + Math.cos(ang) * 2);
-        const ny = Math.round(c.y + Math.sin(ang) * 2);
+        const nx = Math.round(c.x + Math.cos(ang) * M.paso);
+        const ny = Math.round(c.y + Math.sin(ang) * M.paso);
         if (nx < 0 || ny < 0 || nx >= anchoC || ny >= altoC) continue;
         if (!enBorde.has(ny * anchoC + nx)) continue;
         const coste = Math.abs(i - 6);
@@ -201,7 +256,11 @@ export function NombreLienzo({ texto, color }: { texto: string; color?: string }
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.globalCompositeOperation = 'destination-out';
-      ctx.fillStyle = 'rgba(0,0,0,.10)';
+      /* Se borra MÁS de lo que se borraba. En aditivo, si lo que se pinta
+         cada cuadro no se apaga al menos igual de rápido, el mismo píxel
+         acaba saturado: la estela deja de ser una estela y es una mancha
+         blanca, que es exactamente lo que pasaba. */
+      ctx.fillStyle = `rgba(0,0,0,${M.desvanece})`;
       ctx.fillRect(0, 0, w, h);
       ctx.restore();
 
@@ -210,35 +269,51 @@ export function NombreLienzo({ texto, color }: { texto: string; color?: string }
 
       for (let i = 0; i < chispas.length; i++) {
         const c = chispas[i]!;
-        const x0 = c.x * CASILLA + CASILLA / 2;
-        const y0 = c.y * CASILLA + CASILLA / 2;
+        const x0 = c.x * M.casilla + M.casilla / 2;
+        const y0 = c.y * M.casilla + M.casilla / 2;
         c.vida -= 1;
         if (c.vida <= 0 || !siguiente(c)) {
           chispas[i] = nacer();
           continue;
         }
-        const x1 = c.x * CASILLA + CASILLA / 2;
-        const y1 = c.y * CASILLA + CASILLA / 2;
+        const x1 = c.x * M.casilla + M.casilla / 2;
+        const y1 = c.y * M.casilla + M.casilla / 2;
 
-        /* Tres trazos, del más ancho y tenue al más fino y blanco. Es lo
-           que hace que parezca que la luz TIENE una temperatura: un solo
-           trazo de color sale como una raya de rotulador. */
-        ctx.strokeStyle = tinte;
-        ctx.globalAlpha = 0.16;
-        ctx.lineWidth = 7;
+        /* Tres trazos, del más ancho y tenue al más fino y claro, y los
+           tres en proporción al cuerpo de la letra. Es lo que hace que la
+           luz parezca tener temperatura: un solo trazo de color sale como
+           una raya de rotulador.
+
+           El ancho va en `M.ancho` y el alfa es bajo a propósito. Lo que
+           pintó el borrón no fue el color, fue que un trazo grueso en
+           aditivo se suma consigo mismo cada vez que la chispa vuelve a
+           pasar por el mismo sitio, y por un contorno pequeño se vuelve a
+           pasar enseguida. */
         ctx.beginPath();
         ctx.moveTo(x0, y0);
         ctx.lineTo(x1, y1);
+
+        ctx.strokeStyle = tinte;
+        ctx.globalAlpha = 0.1;
+        ctx.lineWidth = M.ancho[0];
         ctx.stroke();
 
-        ctx.globalAlpha = 0.5;
-        ctx.lineWidth = 2.4;
+        ctx.globalAlpha = 0.32;
+        ctx.lineWidth = M.ancho[1];
         ctx.stroke();
 
-        ctx.strokeStyle = '#ffffff';
+        ctx.strokeStyle = nucleo;
+        ctx.globalAlpha = 0.85;
+        ctx.lineWidth = M.ancho[2];
+        ctx.stroke();
+
+        /* La cabeza. Un punto en la punta es lo que convierte una raya que
+           se apaga en ALGO QUE VA: sin él la estela no tiene de dónde salir
+           y se lee como un trazo pintado, no como un recorrido. */
         ctx.globalAlpha = 0.9;
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x1, y1, M.ancho[1], 0, Math.PI * 2);
+        ctx.fill();
       }
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
@@ -251,7 +326,7 @@ export function NombreLienzo({ texto, color }: { texto: string; color?: string }
       ctx.fillStyle = tinte;
       ctx.globalAlpha = 0.5;
       for (const [x, y] of bordes) {
-        ctx.fillRect(x * CASILLA, y * CASILLA, CASILLA, CASILLA);
+        ctx.fillRect(x * M.casilla, y * M.casilla, M.casilla, M.casilla);
       }
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
