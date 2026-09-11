@@ -29,7 +29,11 @@
   left:0; right:0;
   margin-inline:auto;
   z-index:900;
-  width:min(var(--maxw), calc(100% - var(--pad)));
+  /* Setenta pixeles mas estrecha que el contenido. Pierde el plomo con
+     el titulo de la portada -eso lo daba el ancho exacto- y a cambio la
+     pastilla se lee como una pieza aparte, posada encima, que es lo que
+     se buscaba. */
+  width:min(calc(var(--maxw) - 70px), calc(100% - var(--pad)));
   height:var(--nav-alto);
   display:flex; align-items:center; gap:var(--s5);
   padding-inline:var(--s4);
@@ -69,8 +73,11 @@
 .nav__glyph{
   /* Mas grande que la altura de la letra, no igual: la marca esta
      normalizada dentro de un cuadrado y su dibujo es mas ancho que alto,
-     asi que a la misma medida que el texto se veia pequeña al lado. */
-  width:27px; height:27px; flex:none;
+     asi que a la misma medida que el texto se veia pequeña al lado.
+
+     33 de 56 que mide la pastilla: pasar de ahi la deja sin aire arriba y
+     abajo y la barra empieza a verse apretada. */
+  width:33px; height:33px; flex:none;
   color:var(--brand);
   transition:transform var(--transition-large);
 }
