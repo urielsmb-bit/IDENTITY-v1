@@ -67,6 +67,11 @@ function medidas(f: number) {
     ancho: [f * 0.15, f * 0.05, Math.max(0.8, f * 0.02)] as const,
     /* Lo que avanza por cuadro, en casillas. */
     paso: 2,
+    /* Hasta dónde puede saltar, en píxeles. Medio cuerpo de letra: pasa
+       de sobra el hueco entre dos letras y no llega a la de al lado de la de
+       al lado, que se leería como un rayo suelto por encima del nombre en
+       vez de como un salto entre letras. */
+    alcance: f * 0.55,
     /* Cuánto se borra cada cuadro, o sea lo que dura la estela.
        En letra PEQUEÑA se borra menos, y no es una manía: el contorno de un
        nombre de veinte se recorre entero en un suspiro, así que con el mismo
@@ -79,7 +84,17 @@ function medidas(f: number) {
 
 /** Chispas a la vez. Tres llenan un nombre corriente sin emborronarlo. */
 const CHISPAS = 3;
+/** Con las ramas incluidas. Un tope duro: nada de esto puede crecer solo. */
+const TOPE = 9;
 
+/**
+ * Una chispa.
+ *
+ * Cada una tiene SU velocidad y SU brillo, y eso es lo primero que hacía
+ * falta: tres chispas idénticas dando vueltas a la misma velocidad no se
+ * leen como electricidad, se leen como un salvapantallas. Lo que convence
+ * de que algo es energía es que no sea regular.
+ */
 interface Chispa {
   x: number;
   y: number;
@@ -87,6 +102,12 @@ interface Chispa {
   a: number;
   /** Lo que le queda de vida, en cuadros. */
   vida: number;
+  /** Su brillo propio, entre .7 y 1.3. */
+  b: number;
+  /** Lo que avanza por cuadro, en casillas. */
+  p: number;
+  /** Las ramas mueren pronto y no se reemplazan. */
+  rama?: boolean;
 }
 
 const QUIETO =
@@ -107,6 +128,12 @@ export function NombreLienzo({ texto, color }: { texto: string; color?: string }
 
     let bordes: Array<[number, number]> = [];
     let enBorde = new Set<number>();
+    /* Qué casillas son letra. Hace falta además del contorno para saber qué
+       es HUECO, y sin saber dónde están los huecos no se pueden saltar. */
+    let lleno = new Uint8Array(0);
+    /* La carga. Sube de golpe cada pocos segundos y baja sola: es lo que le
+       da RITMO. Una corriente constante es una lámpara. */
+    let carga = 0;
     let anchoC = 0;
     let altoC = 0;
     let chispas: Chispa[] = [];
@@ -178,7 +205,7 @@ export function NombreLienzo({ texto, color }: { texto: string; color?: string }
       anchoC = Math.floor(w / M.casilla);
       altoC = Math.floor(h / M.casilla);
 
-      const lleno = new Uint8Array(anchoC * altoC);
+      lleno = new Uint8Array(anchoC * altoC);
       for (let cy = 0; cy < altoC; cy++) {
         for (let cx = 0; cx < anchoC; cx++) {
           /* El centro de la casilla, en píxeles del lienzo de verdad. */
@@ -213,22 +240,49 @@ export function NombreLienzo({ texto, color }: { texto: string; color?: string }
       return bordes.length > 8;
     };
 
-    const nacer = (): Chispa => {
+    const azar = (a: number, b: number) => a + Math.random() * (b - a);
+
+    const nacer = (rama?: Chispa): Chispa => {
+      if (rama) {
+        /* Una rama sale del mismo sitio que su madre, desviada, y con poca
+           vida. Es lo que hace que la corriente parezca BUSCAR camino en vez
+           de tener uno: se abre, prueba, y lo que no lleva a ningún sitio se
+           apaga. */
+        return {
+          x: rama.x,
+          y: rama.y,
+          a: rama.a + (Math.random() < 0.5 ? 1 : -1) * azar(0.9, 2.1),
+          vida: azar(8, 20),
+          b: rama.b * 0.7,
+          p: rama.p,
+          rama: true,
+        };
+      }
       const [x, y] = bordes[Math.floor(Math.random() * bordes.length)] ?? [0, 0];
-      return { x, y, a: Math.random() * Math.PI * 2, vida: 90 + Math.random() * 150 };
+      return {
+        x,
+        y,
+        a: Math.random() * Math.PI * 2,
+        vida: azar(90, 240),
+        /* Cada una con su brillo y su paso. Tres chispas idénticas a la misma
+           velocidad no se leen como electricidad: se leen como un
+           salvapantallas. */
+        b: azar(0.7, 1.3),
+        p: azar(1.4, 3),
+      };
     };
 
     /* Adónde va desde aquí: entre las casillas de borde que tiene cerca, la
        que menos la desvíe. Con un pelo de azar en el desempate, que es lo
        que hace que la misma letra no se recorra dos veces igual. */
-    const siguiente = (c: Chispa): boolean => {
+    const siguiente = (c: Chispa, paso: number): boolean => {
       let mejor = -1;
       let mejorCoste = Infinity;
       let mejorA = c.a;
       for (let i = 0; i < 12; i++) {
         const ang = c.a + (i - 6) * 0.42 + (Math.random() - 0.5) * 0.25;
-        const nx = Math.round(c.x + Math.cos(ang) * M.paso);
-        const ny = Math.round(c.y + Math.sin(ang) * M.paso);
+        const nx = Math.round(c.x + Math.cos(ang) * paso);
+        const ny = Math.round(c.y + Math.sin(ang) * paso);
         if (nx < 0 || ny < 0 || nx >= anchoC || ny >= altoC) continue;
         if (!enBorde.has(ny * anchoC + nx)) continue;
         const coste = Math.abs(i - 6);
@@ -245,10 +299,96 @@ export function NombreLienzo({ texto, color }: { texto: string; color?: string }
       return true;
     };
 
+    /**
+     * El salto entre letras.
+     *
+     * Esto es lo que hace la electricidad y no hace ninguna otra cosa: SALTAR
+     * un hueco. Sin esto, la corriente es una luz que da vueltas por un
+     * circuito; con esto, es algo que quiere llegar al otro lado.
+     *
+     * Se busca hacia delante: se avanza en línea recta hasta salir de la
+     * letra —hacen falta al menos dos casillas de vacío, para no «saltar» de
+     * un lado de un trazo al otro— y se sigue hasta encontrar contorno otra
+     * vez. Si aparece antes de agotar el alcance, ahí hay un hueco y hay algo
+     * al otro lado: eso es un salto.
+     */
+    const buscarSalto = (c: Chispa): [number, number] | null => {
+      const alcance = Math.max(4, Math.round((M.alcance / M.casilla) | 0));
+      for (const giro of [0, 0.5, -0.5, 1, -1]) {
+        const ang = c.a + giro + (Math.random() - 0.5) * 0.3;
+        const cx = Math.cos(ang);
+        const sy = Math.sin(ang);
+        let vacio = 0;
+        for (let k = 2; k <= alcance; k++) {
+          const nx = Math.round(c.x + cx * k);
+          const ny = Math.round(c.y + sy * k);
+          if (nx < 0 || ny < 0 || nx >= anchoC || ny >= altoC) break;
+          const i = ny * anchoC + nx;
+          if (!lleno[i]) {
+            vacio++;
+          } else if (vacio >= 2 && enBorde.has(i)) {
+            return [nx, ny];
+          }
+        }
+      }
+      return null;
+    };
+
+    /**
+     * Un rayo de un punto a otro.
+     *
+     * En zigzag, no recto. Una raya recta entre dos letras parece un guión;
+     * lo que hace que se lea como una descarga es que el camino sea
+     * quebrado, porque una descarga de verdad va buscando el aire que menos
+     * se le resiste y nunca encuentra la línea recta.
+     */
+    const rayo = (x0: number, y0: number, x1: number, y1: number, fuerza: number) => {
+      const dx = x1 - x0;
+      const dy = y1 - y0;
+      const largo = Math.hypot(dx, dy) || 1;
+      const px = -dy / largo;
+      const py = dx / largo;
+      const tramos = 5;
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      for (let i = 1; i < tramos; i++) {
+        const t = i / tramos;
+        /* La desviación es mayor en medio y nula en los extremos: el rayo
+           sale y entra pegado a la letra, y se abre por el camino. */
+        const abre = Math.sin(t * Math.PI);
+        const d = (Math.random() - 0.5) * M.ancho[0] * 1.6 * abre;
+        ctx.lineTo(x0 + dx * t + px * d, y0 + dy * t + py * d);
+      }
+      ctx.lineTo(x1, y1);
+
+      ctx.strokeStyle = tinte;
+      ctx.globalAlpha = 0.16 * fuerza;
+      ctx.lineWidth = M.ancho[0];
+      ctx.stroke();
+      ctx.globalAlpha = 0.45 * fuerza;
+      ctx.lineWidth = M.ancho[1];
+      ctx.stroke();
+      ctx.strokeStyle = nucleo;
+      ctx.globalAlpha = 0.95 * fuerza;
+      ctx.lineWidth = M.ancho[2];
+      ctx.stroke();
+    };
+
     const cuadro = () => {
       latido = requestAnimationFrame(cuadro);
       const w = cv.width;
       const h = cv.height;
+
+      /* LA CARGA. Sube de golpe cada pocos segundos —una vez cada seis, más o
+         menos— y baja sola. Todo lo demás la multiplica: el brillo, la
+         velocidad, las ganas de saltar y de ramificarse.
+
+         Es lo que le da ritmo. Una corriente constante es una lámpara; lo
+         que hace que algo parezca ENERGÍA es que se acumule y se descargue,
+         y que no se sepa cuándo toca. */
+      if (Math.random() < 0.007) carga = 1;
+      carga *= 0.94;
+      const fuerza = 1 + carga * 0.9;
 
       /* La estela. En vez de guardar los puntos de cada chispa, se borra un
          poco de TODO cada cuadro: lo viejo se apaga solo y la memoria no
@@ -267,17 +407,53 @@ export function NombreLienzo({ texto, color }: { texto: string; color?: string }
       ctx.globalCompositeOperation = 'lighter';
       ctx.lineCap = 'round';
 
-      for (let i = 0; i < chispas.length; i++) {
+      const nacidas: Chispa[] = [];
+
+      for (let i = chispas.length - 1; i >= 0; i--) {
         const c = chispas[i]!;
         const x0 = c.x * M.casilla + M.casilla / 2;
         const y0 = c.y * M.casilla + M.casilla / 2;
         c.vida -= 1;
-        if (c.vida <= 0 || !siguiente(c)) {
-          chispas[i] = nacer();
+
+        if (c.vida <= 0) {
+          /* Las ramas no se reemplazan: nacen, prueban y se apagan. Si se
+             reemplazaran, cada rama dejaría otra chispa para siempre y en un
+             minuto esto sería una maraña. */
+          if (c.rama) chispas.splice(i, 1);
+          else chispas[i] = nacer();
           continue;
         }
+
+        /* EL SALTO. Se intenta cuando la chispa se queda sin contorno por
+           delante —ha llegado al final de una letra— y, con la carga alta,
+           también porque sí. Lo segundo es lo que hace que de vez en cuando
+           cruce el nombre entero cuando no lo esperas. */
+        const avanza = siguiente(c, c.p * fuerza);
+        if (!avanza || Math.random() < 0.012 * carga) {
+          const destino = buscarSalto(c);
+          if (destino) {
+            const x1 = destino[0] * M.casilla + M.casilla / 2;
+            const y1 = destino[1] * M.casilla + M.casilla / 2;
+            rayo(x0, y0, x1, y1, c.b * fuerza);
+            c.a = Math.atan2(destino[1] - c.y, destino[0] - c.x);
+            c.x = destino[0];
+            c.y = destino[1];
+            continue;
+          }
+          if (!avanza) {
+            if (c.rama) chispas.splice(i, 1);
+            else chispas[i] = nacer();
+            continue;
+          }
+        }
+
         const x1 = c.x * M.casilla + M.casilla / 2;
         const y1 = c.y * M.casilla + M.casilla / 2;
+
+        /* El parpadeo. Nada en una descarga tiene el mismo brillo dos
+           instantes seguidos, y sin esto la estela sale como un tubo de neón
+           bien planchado. */
+        const br = c.b * fuerza * (0.78 + Math.random() * 0.34);
 
         /* Tres trazos, del más ancho y tenue al más fino y claro, y los
            tres en proporción al cuerpo de la letra. Es lo que hace que la
@@ -294,27 +470,37 @@ export function NombreLienzo({ texto, color }: { texto: string; color?: string }
         ctx.lineTo(x1, y1);
 
         ctx.strokeStyle = tinte;
-        ctx.globalAlpha = 0.1;
+        ctx.globalAlpha = 0.1 * br;
         ctx.lineWidth = M.ancho[0];
         ctx.stroke();
 
-        ctx.globalAlpha = 0.32;
+        ctx.globalAlpha = 0.32 * br;
         ctx.lineWidth = M.ancho[1];
         ctx.stroke();
 
         ctx.strokeStyle = nucleo;
-        ctx.globalAlpha = 0.85;
+        ctx.globalAlpha = Math.min(1, 0.85 * br);
         ctx.lineWidth = M.ancho[2];
         ctx.stroke();
 
         /* La cabeza. Un punto en la punta es lo que convierte una raya que
            se apaga en ALGO QUE VA: sin él la estela no tiene de dónde salir
            y se lee como un trazo pintado, no como un recorrido. */
-        ctx.globalAlpha = 0.9;
+        ctx.globalAlpha = Math.min(1, 0.9 * br);
         ctx.beginPath();
-        ctx.arc(x1, y1, M.ancho[1], 0, Math.PI * 2);
+        ctx.arc(x1, y1, M.ancho[1] * (1 + carga * 0.6), 0, Math.PI * 2);
         ctx.fill();
+
+        /* LA BIFURCACIÓN. Poca, y sólo desde las chispas madre: una rama que
+           pudiera ramificarse otra vez crece como una potencia y en cuatro
+           segundos el nombre está tapado. */
+        if (!c.rama && chispas.length + nacidas.length < TOPE && Math.random() < 0.02 + carga * 0.06) {
+          nacidas.push(nacer(c));
+        }
       }
+
+      for (const n of nacidas) chispas.push(n);
+
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
     };
@@ -345,7 +531,11 @@ export function NombreLienzo({ texto, color }: { texto: string; color?: string }
     const rehacer = () => {
       parar();
       if (!mapear()) return;
-      chispas = Array.from({ length: CHISPAS }, nacer);
+      /* Con la flecha y no `Array.from(..., nacer)` a secas: `Array.from`
+         le pasa a la funcion el valor y el indice, y `nacer` ahora recibe
+         una chispa madre. Hoy el valor es `undefined` y cuela; el dia que
+         alguien cambie el orden de los parametros, no. */
+      chispas = Array.from({ length: CHISPAS }, () => nacer());
       if (QUIETO) quieto();
       else arrancar();
     };
