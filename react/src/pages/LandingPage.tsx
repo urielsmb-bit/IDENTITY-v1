@@ -1,3 +1,4 @@
+import '@/styles/panels.css';
 import { useState, useMemo, useEffect } from 'react';
 import { BLOQUES_APAGADOS_POR_DEFECTO } from '@/data/bloques';
 import { useNavigate, Link } from 'react-router-dom';
@@ -8,7 +9,7 @@ import { CarruselPerfiles } from '@/components/landing/CarruselPerfiles';
 import { slug, num } from '@/lib/utils';
 import type { Profile } from '@/types';
 import * as backend from '@/lib/backend';
-import { hasBackend } from '@/lib/supabase';
+import { hayBackend as hasBackend } from '@/lib/publico';
 import { useTitulo } from '@/hooks/useTitulo';
 
 /**

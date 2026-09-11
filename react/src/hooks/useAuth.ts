@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { supabase, hasBackend } from '@/lib/supabase';
+import { hayBackend } from '@/lib/publico';
 import { rutaSegura } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -13,27 +13,50 @@ export type ProveedorEnlazable = 'discord' | 'google' | 'spotify' | 'github';
 export function useAuthInit() {
   const { setSession, setInitialized } = useAuthStore();
 
+  /**
+   * El SDK se pide AQUI DENTRO, no arriba del fichero.
+   *
+   * Esto lo llama `App.tsx`, o sea que se ejecuta en TODAS las rutas. Con un
+   * `import` normal, los 55 kB del cliente de Supabase entraban en el paquete
+   * de arranque de la aplicacion entera —incluido el perfil publico, que es
+   * la pagina que recibe las visitas y donde nadie ha iniciado sesion—.
+   *
+   * Ahora se pide dentro del efecto, o sea DESPUES del primer pintado. Quien
+   * tiene sesion abierta ve la barra sin su cara durante un instante; a
+   * cambio, todos los demas no se bajan un cliente de autenticacion para
+   * mirar el perfil de alguien.
+   */
   useEffect(() => {
-    if (!hasBackend()) {
+    if (!hayBackend()) {
       setInitialized();
       return;
     }
 
-    // Get initial session
-    supabase?.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setInitialized();
-    });
+    let vivo = true;
+    let cancelar: (() => void) | undefined;
 
-    // Listen for auth changes
-    const sub = supabase?.auth.onAuthStateChange(
-      (_event, session) => {
+    (async () => {
+      const { supabase } = await import('@/lib/supabase');
+      if (!vivo || !supabase) return;
+
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!vivo) return;
         setSession(session);
-      },
-    );
+        setInitialized();
+      });
+
+      const sub = supabase.auth.onAuthStateChange((_event, session) => {
+        if (vivo) setSession(session);
+      });
+      /* Si el componente se fue mientras se bajaba el SDK, el `return` de
+         abajo ya corrio y no habia nada que cancelar: se cancela aqui. */
+      cancelar = () => sub.data.subscription.unsubscribe();
+      if (!vivo) cancelar();
+    })();
 
     return () => {
-      sub?.data.subscription.unsubscribe();
+      vivo = false;
+      cancelar?.();
     };
   }, [setSession, setInitialized]);
 }
@@ -44,13 +67,25 @@ export function useAuthInit() {
 export function useAuth() {
   const store = useAuthStore();
 
-  const getClient = () => {
+  /**
+   * El cliente, pedido al vuelo.
+   *
+   * Todas las acciones de abajo ya eran `async`, asi que esperar aqui no
+   * cambia nada para quien las llama. Y el SDK deja de estar en el paquete de
+   * arranque: la barra de navegacion usa este hook y se pinta en TODAS las
+   * rutas, incluidas las de quien no ha entrado nunca.
+   *
+   * El `import()` de un modulo ya cargado no vuelve a pedir nada: la segunda
+   * accion y las siguientes lo tienen ya resuelto.
+   */
+  const getClient = async () => {
+    const { supabase } = await import('@/lib/supabase');
     if (!supabase) throw new Error('Supabase no está configurado');
     return supabase;
   };
 
   const signIn = async (email: string, password: string) => {
-    const client = getClient();
+    const client = await getClient();
     const { data, error } = await client.auth.signInWithPassword({
       email,
       password,
@@ -60,7 +95,7 @@ export function useAuth() {
   };
 
   const signUp = async (email: string, password: string) => {
-    const client = getClient();
+    const client = await getClient();
     const { data, error } = await client.auth.signUp({
       email,
       password,
@@ -79,7 +114,7 @@ export function useAuth() {
     provider: 'discord' | 'google',
     volverA = '/dashboard',
   ) => {
-    const client = getClient();
+    const client = await getClient();
     const destino = rutaSegura(volverA);
     const { data, error } = await client.auth.signInWithOAuth({
       provider,
@@ -105,7 +140,7 @@ export function useAuth() {
     /** Permisos de mas que pedirle al proveedor, separados por espacios. */
     scopes?: string,
   ) => {
-    const client = getClient();
+    const client = await getClient();
     const destino = rutaSegura(volverA);
     const { data, error } = await client.auth.linkIdentity({
       provider: proveedor,
@@ -140,12 +175,12 @@ export function useAuth() {
    * vez de ensenar el error crudo.
    */
   const desenlazarProveedor = async (proveedor: string) => {
-    const client = getClient();
+    const client = await getClient();
     const { data, error: errLista } = await client.auth.getUserIdentities();
     if (errLista) throw errLista;
 
     const todas = data?.identities ?? [];
-    const cual = todas.find((i) => i.provider === proveedor);
+    const cual = todas.find((i: { provider: string }) => i.provider === proveedor);
     if (!cual) throw new Error('Esa cuenta ya no esta conectada.');
     if (todas.length < 2) {
       throw new Error(
@@ -169,7 +204,7 @@ export function useAuth() {
    * que alguien mas entro.
    */
   const cerrarEnTodos = async () => {
-    const client = getClient();
+    const client = await getClient();
     const { error } = await client.auth.signOut({ scope: 'global' });
     if (error) throw error;
   };
@@ -183,13 +218,13 @@ export function useAuth() {
    * minuto podria llevarse la cuenta a un correo suyo.
    */
   const cambiarCorreo = async (nuevo: string) => {
-    const client = getClient();
+    const client = await getClient();
     const { error } = await client.auth.updateUser({ email: nuevo });
     if (error) throw error;
   };
 
   const resetPassword = async (email: string) => {
-    const client = getClient();
+    const client = await getClient();
     // Sin `redirectTo` el enlace del correo deja al usuario en la raiz del
     // sitio, sin nada que le pida la contrasena nueva.
     const { error } = await client.auth.resetPasswordForEmail(email, {
@@ -199,7 +234,7 @@ export function useAuth() {
   };
 
   const updatePassword = async (newPassword: string) => {
-    const client = getClient();
+    const client = await getClient();
     const { error } = await client.auth.updateUser({
       password: newPassword,
     });

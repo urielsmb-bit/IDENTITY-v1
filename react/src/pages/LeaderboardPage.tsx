@@ -1,3 +1,4 @@
+import '@/styles/panels.css';
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useProfileStore } from '@/stores/profileStore';

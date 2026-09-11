@@ -5,9 +5,9 @@ import { useProfileStore, getMyVote, setMyVote } from '@/stores/profileStore';
 import { useAuthStore } from '@/stores/authStore';
 import { ProfileView } from '@/components/profile/ProfileView';
 import { Denunciar } from '@/components/profile/Denunciar';
-import * as backend from '@/lib/backend';
+import * as publico from '@/lib/publico';
 import { useInsignias } from '@/hooks/useInsignias';
-import { hasBackend } from '@/lib/supabase';
+
 import { useTitulo } from '@/hooks/useTitulo';
 import { tituloTarjeta } from '@/lib/tarjeta';
 
@@ -52,8 +52,8 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!cleanUsername) return;
-    if (hasBackend()) {
-      backend.contarVista(cleanUsername).catch(() => {});
+    if (publico.hayBackend()) {
+      publico.contarVista(cleanUsername).catch(() => {});
     }
     setVote(getMyVote(cleanUsername));
   }, [cleanUsername]);
@@ -63,8 +63,12 @@ export default function ProfilePage() {
     setVote(score);
     setMyVote(cleanUsername, score);
 
-    if (hasBackend() && profile._id) {
+    if (publico.hayBackend() && profile._id) {
       try {
+        /* Cargado al VOTAR, no al abrir. Votar escribe, y escribir necesita
+           la sesion, o sea el SDK entero. Pedirlo aqui es pedirlo despues
+           de que la pagina este delante y solo a quien vota. */
+        const backend = await import('@/lib/backend');
         await backend.valorar(profile._id, score);
       } catch (err) {
         /* Se deshace el voto local. Antes solo se anotaba en la consola: la

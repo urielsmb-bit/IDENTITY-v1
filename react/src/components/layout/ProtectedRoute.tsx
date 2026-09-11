@@ -1,6 +1,11 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import { hasBackend } from '@/lib/supabase';
+/* De `publico` y no del SDK. Esto lo monta `App.tsx` en el arranque, asi
+   que preguntar aqui «hay servidor?» importando el cliente de Supabase
+   metia sus 55 kB en la carga inicial de TODAS las rutas —incluidas las
+   que ni siquiera estan protegidas— por un booleano que sale de la
+   configuracion. */
+import { hayBackend as hasBackend } from '@/lib/publico';
 import type { ReactNode } from 'react';
 
 /**

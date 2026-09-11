@@ -1092,3 +1092,93 @@ body.is-dashboard .nav{ border-bottom-color:var(--border); }
   font-size:var(--t3); line-height:1.65;
   color:var(--text-muted);
 }
+
+/* ============================================================
+   MODAL
+   ============================================================
+   Vivia en `cuenta.css`, que es la hoja de los ajustes de cuenta
+   y por tanto solo del editor. Pero el modal lo usa tambien
+   «Denunciar», que sale en el perfil PUBLICO: con la hoja de
+   cuenta cargandose tarde, el primero que denunciara veria la
+   ventana sin estilo. Aqui, con lo demas que comparte toda la
+   aplicacion, no puede pasar. */
+.mdl{
+  padding:0;
+  border:0;
+  background:transparent;
+  color:var(--text-primary);
+  max-width:min(440px, calc(100vw - 32px));
+  /* Un <dialog> modal se centra solo con `margin:auto`; sin esto se pega
+     arriba en algunos navegadores. */
+  margin:auto;
+  overflow:visible;
+}
+.mdl::backdrop{
+  background:rgba(0,0,0,.62);
+  backdrop-filter:blur(3px);
+}
+
+.mdl__caja{
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-lg);
+  background:var(--surface);
+  box-shadow:var(--shadow-lg);
+  padding:20px;
+}
+.mdl--peligro .mdl__caja{ border-color:rgba(248,81,73,.45); }
+
+.mdl__t{
+  margin:0;
+  font-size:var(--t4);
+  font-weight:600;
+  letter-spacing:-.01em;
+}
+.mdl--peligro .mdl__t{ color:#f85149; }
+
+.mdl__d{
+  margin:8px 0 0;
+  color:var(--text-secondary);
+  font-size:var(--t3);
+  line-height:1.55;
+}
+
+.mdl__cuerpo{
+  margin-top:16px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.mdl__pie{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  margin-top:20px;
+}
+
+.mdl__pie .btn:focus-visible{
+  outline:2px solid var(--brand);
+  outline-offset:2px;
+}
+
+/* ---------- estrecho ---------- */
+
+@media (max-width: 720px){
+  .acc__par{ grid-template-columns:1fr; }
+
+  .acc__fila{
+    flex-direction:column;
+    align-items:stretch;
+  }
+  .acc__fila .btn{ align-self:flex-start; }
+  .acc__filaD{ max-width:none; }
+
+  /* En móvil la fila del proveedor se parte en dos alturas: el nombre
+     arriba y la acción abajo, en vez de aplastar los tres a la vez. */
+  .acc__prov{ flex-wrap:wrap; }
+  .acc__provT{ flex:1 1 auto; }
+  .acc__pill{ order:3; }
+  .acc__prov .btn{ order:4; margin-left:auto; }
+}
+
+/* Tira fina: algo que está a mano sin ocupar una tarjeta entera. */

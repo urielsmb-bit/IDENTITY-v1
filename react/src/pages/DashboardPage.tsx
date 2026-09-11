@@ -1,3 +1,11 @@
+/* EN ESTE ORDEN. `panels` iba antes que `dashboard` en el arranque, y el
+   orden decide quien gana cuando dos reglas empatan en especificidad.
+   Invertirlo no da error en ninguna parte: simplemente algo se ve
+   distinto, y no sabrias donde mirar. */
+import '@/styles/panels.css';
+import '@/styles/dashboard.css';
+import '@/styles/cuenta.css';
+import '@/styles/guia.css';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useProfileStore } from '@/stores/profileStore';

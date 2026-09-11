@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Profile } from '@/types';
 import { type DatosInsignias, insigniasGanadas } from '@/lib/insignias';
-import * as backend from '@/lib/backend';
-import { hasBackend } from '@/lib/supabase';
+import * as publico from '@/lib/publico';
 
 /**
  * Las insignias de un perfil, con lo que sabe el servidor.
@@ -45,11 +44,11 @@ export function useInsignias(perfil: Profile | null | undefined) {
      mezclan abajo, ya en memoria. */
   useEffect(() => {
     setServidor({});
-    if (!hasBackend() || !usuario) return;
+    if (!publico.hayBackend() || !usuario) return;
     let vivo = true;
     const pedir = id
-      ? backend.concedidasDe(id).then((concedidas) => ({ concedidas }))
-      : backend.insigniasDe(usuario);
+      ? publico.concedidasDe(id).then((concedidas) => ({ concedidas }))
+      : publico.insigniasDe(usuario);
     pedir
       .then((d) => {
         if (vivo) setServidor(d);

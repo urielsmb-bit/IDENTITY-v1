@@ -1,3 +1,4 @@
+import '@/styles/panels.css';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';

@@ -1,3 +1,4 @@
+import '@/styles/panels.css';
 import { useLocation, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useTitulo } from '@/hooks/useTitulo';

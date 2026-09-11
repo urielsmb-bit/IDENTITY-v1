@@ -1,7 +1,21 @@
 import { supabase, hasBackend } from './supabase';
-import { CONFIG } from '@/config';
+/* Las lecturas publicas viven en `publico.ts` y se hacen con `fetch`, sin
+   SDK. Se importan de alli y se vuelven a exportar desde aqui para que
+   nada de lo que ya llamaba a `backend.cargarPerfil` tenga que cambiar, y
+   sobre todo para que `aPerfil` —el embudo por el que pasa TODA fila que
+   llega del servidor— siga siendo uno y no dos. */
+import { aPerfil } from './publico';
 import { normalizarPerfil } from './normalizar';
-import { filaPrecargada } from './precarga';
+export {
+  aPerfil,
+  conCifras,
+  hayBackend,
+  cargarPerfil,
+  insigniasDe,
+  concedidasDe,
+  contarVista,
+} from './publico';
+import { CONFIG } from '@/config';
 import type { Session, User, Provider } from '@supabase/supabase-js';
 import { extraerPlantilla, type AjustesPlantilla } from './plantilla';
 import type { Profile } from '@/types';
@@ -50,18 +64,7 @@ function urlFuncion(nombre: string): string {
 
 const COLUMNAS = ['username', 'estado', 'creado', 'actualizado'];
 
-export function aPerfil(fila: any): any {
-  if (!fila) return null;
-  const p = { ...(fila.apariencia || {}) };
-  p.username = fila.username;
-  p.joined = fila.creado || p.joined;
-  p._id = fila.id;
-  p._actualizado = fila.actualizado;
-  // Único punto por el que pasan todas las filas del servidor (cargarPerfil,
-  // cargarMio, crearPerfil, guardarPerfil, descubrir): sanear aquí cubre
-  // cualquier perfil ajeno antes de que llegue a pintarse.
-  return normalizarPerfil(p);
-}
+
 
 export function aFila(p: any): any {
   const ap: Record<string, any> = {};
@@ -196,79 +199,10 @@ export function alCambiarSesion(fn: (evento: string, sesion: Session | null) => 
 
 // ---- Profiles ----
 
-let avisadoDeLaVista = false;
 
-export async function cargarPerfil(username: string) {
-  /* Antes que nada: la fila que el servidor dejo escrita en el HTML.
-     Es la misma que devolveria la consulta de mas abajo —misma vista, mismo
-     embudo de limpieza— pero sin la ida y vuelta a otro dominio, que en la
-     primera carga es lo unico que separa la pantalla negra del perfil. */
-  const precargada = filaPrecargada(username);
-  if (precargada) return conCifras(precargada);
 
-  if (!supabase) return null;
-  const client = supabase;
 
-  const porLaTabla = async () => {
-    if (!avisadoDeLaVista) {
-      avisadoDeLaVista = true;
-      console.warn('[backend] La vista perfiles_publicos no existe todavia. Se lee de la tabla.');
-    }
-    const { data, error } = await client.from('perfiles')
-      .select('id,username,apariencia,creado,actualizado')
-      .eq('username', username)
-      .maybeSingle();
 
-    if (error) throw traducir(error);
-    return aPerfil(data);
-  };
-
-  /* Con las cifras. Desde 0008 la vista publica las trae, y sin pedirlas
-     aqui el perfil llegaba con `views` vacio: el contador del propio perfil
-     y el del carrusel salian a cero aunque la base tuviera el numero bueno,
-     mientras la tarjeta de al lado —que lee la fila de Descubrir— enseñaba
-     el de verdad. Dos fuentes para el mismo dato y una sin el campo. */
-  const CAMPOS = 'id,username,apariencia,creado,actualizado,vistas,nota,num_notas';
-
-  let { data, error } = await client.from('perfiles_publicos')
-    .select(CAMPOS)
-    .eq('username', username)
-    .maybeSingle();
-
-  // 42703 = la columna no existe: la vista es anterior a 0008.
-  if (error && (error.code === '42703' || /column .* does not exist/i.test(error.message || ''))) {
-    ({ data, error } = await client.from('perfiles_publicos')
-      .select('id,username,apariencia,creado,actualizado')
-      .eq('username', username)
-      .maybeSingle());
-  }
-
-  if (error && (error.code === '42P01' || error.code === 'PGRST205' || /does not exist|schema cache/i.test(error.message || ''))) {
-    return porLaTabla();
-  }
-  if (error) throw traducir(error);
-
-  return conCifras(data);
-}
-
-/**
- * Fila de la vista pública a perfil, cifras incluidas.
- *
- * Estaba suelto dentro de `cargarPerfil`. Ahora hay dos caminos que
- * terminan en un perfil —la red y la fila que el servidor deja escrita en
- * el HTML— y tienen que dar EXACTAMENTE lo mismo: si uno se olvida de las
- * visitas, el contador sale a cero según por dónde hayas llegado.
- */
-function conCifras(fila: unknown) {
-  const p = aPerfil(fila);
-  if (p && fila) {
-    const f = fila as Record<string, unknown>;
-    if (f.vistas != null) p.views = Number(f.vistas) || 0;
-    if (f.nota != null) p.nota = Number(f.nota);
-    if (f.num_notas != null) p.numNotas = Number(f.num_notas) || 0;
-  }
-  return p;
-}
 
 export async function cargarMio() {
   if (!supabase) return null;
@@ -384,91 +318,9 @@ export async function descubrir(opciones: OpcionesDescubrir = {}) {
   });
 }
 
-/**
- * Lo que hace falta para decidir las insignias de un perfil.
- *
- * Va aparte de `cargarPerfil` a proposito: las metricas viven en otra vista
- * y las concesiones en otra tabla, y ninguna de las dos debe poder impedir
- * que el perfil se pinte. Si algo de esto falla, se devuelven ceros y el
- * perfil sale sin insignias, que es mejor que no salir.
- */
-export async function insigniasDe(username: string) {
-  const vacio = { vistas: 0, nota: null as number | null, numNotas: 0, concedidas: [] as string[] };
-  if (!supabase) return vacio;
-  const client = supabase;
 
-  let id = '';
-  let metricas = vacio;
 
-  const leerDe = async (vista: string) => {
-    const { data, error } = await client.from(vista)
-      .select('id,vistas,nota,num_notas')
-      .eq('username', username)
-      .maybeSingle();
-    if (error) throw error;
-    return data;
-  };
 
-  try {
-    /* De `perfiles_publicos` y no de `descubrir`: desde 0008, `descubrir`
-       deja fuera a quien apaga «Perfil publico», y leer de ahi le habria
-       quitado tambien las insignias de visitas y de notas. Salir del
-       buscador y perder lo que has ganado son dos cosas distintas. */
-    let fila;
-    try {
-      fila = await leerDe('perfiles_publicos');
-    } catch {
-      // Sin la migracion 0008 esa vista todavia no trae cifras.
-      fila = await leerDe('descubrir');
-    }
-    if (fila) {
-      id = String(fila.id ?? '');
-      metricas = {
-        vistas: Number(fila.vistas) || 0,
-        nota: fila.nota == null ? null : Number(fila.nota),
-        numNotas: Number(fila.num_notas) || 0,
-        concedidas: [],
-      };
-    }
-  } catch {
-    /* sin metricas: las insignias por meta saldran sin ganar */
-  }
-
-  if (!id) return metricas;
-  metricas.concedidas = await concedidasDe(id);
-  return metricas;
-}
-
-/**
- * Las insignias que el equipo ha concedido a un perfil, por su id.
- *
- * Es la mitad de `insigniasDe` que de verdad hace falta casi siempre. La
- * otra mitad —vistas, nota, numero de notas— viene ya pegada al perfil que
- * se acaba de cargar: `cargarPerfil` la pide, `descubrir` la pide, y la fila
- * que el servidor deja escrita en el HTML tambien. Aun asi se volvia a
- * preguntar por ella, en una consulta aparte y ANTES de esta, solo para
- * averiguar un id que quien llama ya tenia en la mano.
- *
- * O sea: cada visita a un perfil costaba tres viajes al servidor en fila
- * —el perfil, las cifras otra vez, las insignias— y el segundo no traia
- * nada nuevo. Ahora son dos, y las insignias salen un viaje antes.
- */
-export async function concedidasDe(perfilId: string): Promise<string[]> {
-  if (!supabase || !perfilId) return [];
-  try {
-    const { data, error } = await supabase.from('insignias_de_perfil')
-      .select('insignia')
-      .eq('perfil_id', perfilId);
-    // 42P01 = la vista todavia no existe. Es el estado normal hasta que se
-    // aplique 0007_insignias.sql: no es un error que ensenar a nadie, y
-    // mientras tanto solo faltan las concedidas a mano y «verificado».
-    // Las de antiguedad, visitas y notas se calculan igual.
-    if (error || !data) return [];
-    return data.map((f: any) => String(f.insignia)).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
 
 /**
  * Las analiticas de un perfil propio.
@@ -694,21 +546,7 @@ export async function cifrasPublicas(): Promise<Cifras> {
   };
 }
 
-export async function contarVista(username: string) {
-  if (!supabase) return;
-  try {
-    await fetch(CONFIG.FN_VISTAS || urlFuncion('registrar-vista'), {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'authorization': 'Bearer ' + CONFIG.SUPABASE_KEY
-      },
-      body: JSON.stringify({ username })
-    });
-  } catch {
-    // ignorar
-  }
-}
+
 
 // ---- Media ----
 

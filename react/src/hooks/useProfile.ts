@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useProfileStore } from '@/stores/profileStore';
 import { useAuthStore } from '@/stores/authStore';
-import * as backend from '@/lib/backend';
-import { hasBackend } from '@/lib/supabase';
+/* De `publico` y no de `backend`: leer un perfil se hace con `fetch`, y
+   asi esta ruta —la que recibe las visitas— no arrastra los 55 kB del SDK
+   de Supabase para un GET. */
+import * as publico from '@/lib/publico';
 
 /**
  * Hook to load and access a profile by username.
@@ -17,8 +19,8 @@ export function useProfile(username: string | undefined) {
       if (!username) return null;
 
       // Try server first if backend is available
-      if (hasBackend()) {
-        const remote = await backend.cargarPerfil(username);
+      if (publico.hayBackend()) {
+        const remote = await publico.cargarPerfil(username);
         if (remote) {
           useProfileStore.getState().receiveFromServer(remote);
           return remote;
@@ -78,7 +80,11 @@ export function useMyProfile() {
     // antes de tiempo vuelve vacía y deja el editor creando un perfil nuevo.
     enabled: listaAuth,
     queryFn: async () => {
-      if (hasBackend()) {
+      if (publico.hayBackend()) {
+        /* Al vuelo. Esto es el perfil DEL DUEÑO: hace falta la sesion, y la
+           sesion es el SDK. Pero quien mira el perfil de otra persona nunca
+           llega aqui, y con un `import` normal arriba se lo bajaria igual. */
+        const backend = await import('@/lib/backend');
         const remote = await backend.cargarMio();
         if (remote) {
           useProfileStore.getState().receiveFromServer(remote);
@@ -114,7 +120,8 @@ export function useDiscoverProfiles(options?: { order?: string; limit?: number }
   return useQuery({
     queryKey: ['discover', options?.order ?? null, options?.limit ?? null],
     queryFn: async () => {
-      if (!hasBackend()) return [];
+      if (!publico.hayBackend()) return [];
+      const backend = await import('@/lib/backend');
       return backend.descubrir({
         orden: ORDEN_SERVIDOR[options?.order ?? ''] ?? 'puntuacion',
         limite: options?.limit ?? 30,

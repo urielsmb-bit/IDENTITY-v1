@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
-import { supabase } from '@/lib/supabase';
+import { hayBackend, presenciaDe } from '@/lib/publico';
 
 /** Lo que nos interesa de lo que devuelve Lanyard. */
 export interface PresenciaDiscord {
@@ -116,10 +116,9 @@ export function useDiscord(id: string | undefined, activo = true) {
     setError('');
     if (!activo || !id || !/^\d{17,20}$/.test(id)) return;
     /* Sin backend no hay tabla que leer. No es un fallo: es el modo local. */
-    if (!supabase) return;
+    if (!hayBackend()) return;
 
     let vivo = true;
-    const cliente = supabase;
 
     const traer = async () => {
       /* En una pestaña que no se ve, no. Un perfil abierto de fondo
@@ -129,23 +128,20 @@ export function useDiscord(id: string | undefined, activo = true) {
          pestaña se pregunta enseguida, que es cuando importa. */
       if (typeof document !== 'undefined' && document.hidden) return;
       setCargando(true);
-      const { data, error: fallo } = await cliente
-        .from('presencia')
-        /* Todas las columnas, sin nombrarlas.
-        
-           Nombrarlas ata esta lectura a que una migracion concreta ya se
-           haya aplicado: se pidio `cancion_id` en cuanto la funcion
-           empezo a escribirla, y como la columna todavia no existia
-           PostgREST tumbaba la consulta ENTERA —«42703: column
-           presencia.cancion_id does not exist»— y el perfil se quedaba sin
-           estado, sin cancion y sin punto. No sin lo nuevo: sin nada.
-        
-           A la escritura ya se le habia puesto ese cuidado y a la lectura
-           se me olvido. Con `*` no hay nada que desincronizar: llega lo
-           que haya, y los campos que falten se leen como vacios. */
-        .select('*')
-        .eq('discord_id', id)
-        .maybeSingle();
+      let data: any = null;
+      let fallo: unknown = null;
+      try {
+        data = await presenciaDe(id);
+      } catch (e) {
+        fallo = e;
+      }
+      /* La lectura pide TODAS las columnas, y eso no cambia por mudarse:
+         nombrarlas ata esta consulta a que una migracion concreta ya este
+         aplicada. Se pidio `cancion_id` en cuanto la funcion empezo a
+         escribirla, y como la columna todavia no existia PostgREST tumbaba la
+         consulta ENTERA —«42703: column presencia.cancion_id does not
+         exist»— y el perfil se quedaba sin estado, sin cancion y sin punto.
+         No sin lo nuevo: sin nada. Ver `presenciaDe` en `lib/publico.ts`. */
 
       if (!vivo) return;
       setCargando(false);
@@ -406,19 +402,24 @@ export function useEntrarEnElServidor(): void {
   const hecho = useRef('');
 
   useEffect(() => {
-    if (!token || !hayDiscord || !supabase) return;
+    if (!token || !hayDiscord || !hayBackend()) return;
     if (hecho.current === token) return;
     hecho.current = token;
 
     /* Sin `await` y sin contarle nada a nadie: si falla, lo unico que pasa
        es que no habra estado en vivo, que es como estaba antes. No es un
        error que merezca interrumpir a quien acaba de conectar su cuenta. */
-    void supabase.functions
-      .invoke('discord-entrar', { body: { access_token: token } })
-      .then(
-        () => {},
-        () => {},
-      );
+    /* Al vuelo: esto solo lo ejecuta quien ACABA de conectar su Discord, o
+       sea alguien con sesion abierta y dentro del editor. Importarlo arriba
+       metia el SDK en la ruta del perfil publico, donde nunca se llama. */
+    void import('@/lib/supabase').then(({ supabase }) => {
+      supabase?.functions
+        .invoke('discord-entrar', { body: { access_token: token } })
+        .then(
+          () => {},
+          () => {},
+        );
+    });
   }, [token, hayDiscord]);
 }
 

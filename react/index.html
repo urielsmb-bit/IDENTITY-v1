@@ -39,10 +39,38 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=Chakra+Petch:ital,wght@0,600;0,700;1,700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Anton&family=Pirata+One&family=VT323&family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap"
-  />
+  <!-- LAS FUENTES NO BLOQUEAN EL PINTADO.
+
+       Esto era un `<link rel="stylesheet">` normal a Google, y medido en el
+       build de produccion tardaba 267 ms. Durante esos 267 ms el navegador
+       tenia el HTML y el CSS del sitio y no pintaba NADA, porque una hoja de
+       estilo en la cabecera bloquea el render por definicion — y encima
+       esta vive en otro dominio, asi que dentro de esos milisegundos hay un
+       DNS y un TLS que no son nuestros. En un movil con datos, mas.
+
+       Son dos enlaces y hacen cosas distintas:
+
+         · el `preload` la pide YA y con prioridad alta, pero no bloquea;
+         · el segundo la aplica. Nace con `media="print"` —o sea, no aplica
+           a esta pantalla y por tanto no bloquea— y `main.tsx` lo pasa a
+           `all` en cuanto arranca. Como ya esta en la cache del primero,
+           aplicarla es instantaneo.
+
+       El volteo NO puede ir en un `onload=` aqui: el CSP de produccion dice
+       `script-src 'self'` sin `unsafe-inline`, asi que el navegador se
+       negaria a ejecutarlo y la hoja se quedaria en `print` PARA SIEMPRE.
+       El sitio entero se veria con la letra del sistema y no habria ningun
+       error visible que lo explicara. Por eso el volteo vive en el modulo,
+       que si esta permitido.
+
+       Resultado: la fuente llega igual de pronto y el texto se pinta sin
+       esperarla. La https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=Chakra+Petch:ital,wght@0,600;0,700;1,700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Anton&family=Pirata+One&family=VT323&family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap ya traia `display=swap`, asi que el cambio de letra
+       al llegar pasaba exactamente igual que antes. -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=Chakra+Petch:ital,wght@0,600;0,700;1,700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Anton&family=Pirata+One&family=VT323&family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap" />
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=Chakra+Petch:ital,wght@0,600;0,700;1,700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Anton&family=Pirata+One&family=VT323&family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap" />
+  <link id="hoja-fuentes" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=Chakra+Petch:ital,wght@0,600;0,700;1,700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Anton&family=Pirata+One&family=VT323&family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap" media="print" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=Chakra+Petch:ital,wght@0,600;0,700;1,700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Anton&family=Pirata+One&family=VT323&family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap" /></noscript>
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=Chakra+Petch:ital,wght@0,600;0,700;1,700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Anton&family=Pirata+One&family=VT323&family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap" /></noscript>
   <!-- El estilo de la entrada va AQUI DENTRO y no en la hoja del sitio,
        por lo mismo que el marcado: la hoja es un fichero aparte que hay
        que pedir, y hasta que llega no hay estilo. Incrustado, la entrada

@@ -1,3 +1,4 @@
+import '@/styles/panels.css';
 import { Link } from 'react-router-dom';
 import { useTitulo } from '@/hooks/useTitulo';
 import { CUENTA_FUENTES } from '@/data/premium';

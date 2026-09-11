@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+
 import { useProfileStore } from './profileStore';
 
 interface AuthState {
@@ -43,6 +43,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     // Cerrar en Supabase primero: si sólo se limpiara el estado local,
     // la sesión seguiría en localStorage y volvería al recargar.
     try {
+      const { supabase } = await import('@/lib/supabase');
       if (supabase) await supabase.auth.signOut({ scope: 'global' });
     } catch (err) {
       console.warn('[auth] signOut', err);

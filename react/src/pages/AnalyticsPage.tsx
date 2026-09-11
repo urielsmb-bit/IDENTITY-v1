@@ -1,3 +1,4 @@
+import '@/styles/panels.css';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useMyProfile } from '@/hooks/useProfile';

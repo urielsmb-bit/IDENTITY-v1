@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/hooks/useToast';
-import { hasBackend } from '@/lib/supabase';
-import * as backend from '@/lib/backend';
+import { hayBackend } from '@/lib/publico';
+
 
 /**
  * Denunciar un perfil.
@@ -49,7 +49,7 @@ export function Denunciar({ perfilId, username }: { perfilId?: string; username:
 
   // Sin id de perfil no hay a qué apuntar la denuncia, y sin servidor no
   // hay dónde guardarla: en los dos casos el botón mentiría.
-  if (!perfilId || !hasBackend()) return null;
+  if (!perfilId || !hayBackend()) return null;
 
   /* «Otra cosa» sin explicación es una denuncia que nadie puede atender:
      llega un aviso sobre un perfil y ni una palabra de qué pasa. */
@@ -65,6 +65,7 @@ export function Denunciar({ perfilId, username }: { perfilId?: string; username:
     if (!puedeEnviar) return;
     setEnviando(true);
     try {
+      const backend = await import('@/lib/backend');
       await backend.denunciar(perfilId, motivo, detalle.trim() || undefined);
       setAbierto(false);
       setMotivo('');

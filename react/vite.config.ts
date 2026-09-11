@@ -36,7 +36,20 @@ export default defineConfig({
          */
         manualChunks: {
           react: ['react', 'react-dom', 'react-router-dom'],
-          datos: ['@tanstack/react-query', '@supabase/supabase-js'],
+          /* SEPARADOS, y ese es el detalle que importa.
+          
+             Iban juntos en un trozo llamado `datos`. React Query se usa
+             desde `main.tsx`, o sea desde el arranque, asi que ese trozo
+             entero era de arranque… y el cliente de Supabase viajaba
+             dentro. Cincuenta y cinco kilobytes comprimidos de SDK —con
+             su motor de websockets, que esta aplicacion no usa en ninguna
+             parte— en la primera carga de un perfil publico, donde nadie
+             ha iniciado sesion y lo unico que hace falta es leer una fila.
+          
+             Aparte, el SDK solo llega a quien lo pide: el editor, entrar,
+             guardar. Quien mira un perfil no se lo baja. */
+          consultas: ['@tanstack/react-query'],
+          supabase: ['@supabase/supabase-js'],
         },
       },
     },

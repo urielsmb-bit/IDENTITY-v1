@@ -15,7 +15,7 @@ import { safeUrl, safeMedia } from '@/lib/utils';
 import { avatarDe } from '@/lib/avatar';
 import { incrustable } from '@/lib/validar';
 import { esVimeo, urlFondoVimeo } from '@/lib/vimeo';
-import { registrarClic } from '@/lib/backend';
+
 
 interface ProfileViewProps {
   profile: Profile;
@@ -545,7 +545,10 @@ export function ProfileView({
   const anotarClic = useCallback(
     (destino: string) => {
       if (preview || p.trackClick === false || !p.username || !destino) return;
-      registrarClic(p.username, destino);
+      /* Al pulsar, no al abrir. Es la unica cosa del perfil publico que
+         ESCRIBE, y escribir necesita el SDK; pedirlo aqui significa que
+         quien solo mira no se lo baja nunca. */
+      import('@/lib/backend').then((b) => b.registrarClic(p.username, destino)).catch(() => {});
     },
     [preview, p.trackClick, p.username],
   );

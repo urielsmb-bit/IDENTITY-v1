@@ -1,3 +1,5 @@
+import '@/styles/dashboard.css';
+import '@/styles/panels.css';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BADGES, COLOR_RAREZA, NOMBRE_RAREZA, type FuenteInsignia } from '@/data/badges';

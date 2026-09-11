@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { avatarDe } from '@/lib/avatar';
-import { soyAdmin } from '@/lib/admin';
+
 
 /**
  * Main navigation bar — mirrors the original `<header class="nav">` from index.html.
@@ -40,9 +40,20 @@ export function Navbar() {
       return;
     }
     let vivo = true;
-    void soyAdmin().then((v) => {
-      if (vivo) setReparto(v);
-    });
+    /* Al vuelo, y solo si hay sesion.
+    
+       `lib/admin` usa el cliente de Supabase, asi que importarlo arriba metia
+       los 55 kB del SDK en el paquete de arranque de la aplicacion ENTERA: la
+       barra se pinta en todas las rutas, incluido el perfil publico. Un
+       visitante anonimo se bajaba el cliente de autenticacion completo para
+       una pregunta que en su caso ya esta contestada —no hay sesion, no hay
+       panel— antes de preguntarla. */
+    void import('@/lib/admin')
+      .then((m) => m.soyAdmin())
+      .then((v) => {
+        if (vivo) setReparto(v);
+      })
+      .catch(() => {});
     return () => {
       vivo = false;
     };

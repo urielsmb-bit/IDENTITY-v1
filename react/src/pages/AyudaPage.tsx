@@ -1,3 +1,4 @@
+import '@/styles/panels.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { AYUDA, ARTICULOS, articuloPorSlug } from '@/data/ayuda';

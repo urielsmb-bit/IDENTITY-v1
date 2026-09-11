@@ -1,3 +1,4 @@
+import './lib/fuentes';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -11,10 +12,15 @@ import './styles/themes.css';
 import './styles/fuentes.css';
 import './styles/profile.css';
 import './styles/efectos.css';
-import './styles/panels.css';
-import './styles/dashboard.css';
-import './styles/cuenta.css';
-import './styles/guia.css';
+
+/* Aqui se quedan SOLO las hojas que hacen falta para pintar un perfil
+   publico, que es la pagina que recibe las visitas. Las demas ya no
+   estan: se las lleva cada ruta.
+   
+   Todo esto acababa en UN archivo de 247 kB que bloquea el pintado, y
+   casi la mitad eran el editor, el panel de plantillas, las analiticas,
+   la ayuda, el ranking y el admin. Quien abre el perfil de alguien no
+   entra en ninguna de esas, y aun asi las esperaba. */
 
 /**
  * La pagina quedaba rota tras cada publicacion.

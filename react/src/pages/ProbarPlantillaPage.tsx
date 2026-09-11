@@ -1,3 +1,4 @@
+import '@/styles/panels.css';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ProfileView } from '@/components/profile/ProfileView';
