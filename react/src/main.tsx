@@ -59,6 +59,25 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 2, // 2 minutes
       retry: 1,
+      /**
+       * NO se vuelve a pedir al volver a la pestaña.
+       *
+       * Viene encendido de fábrica y para una aplicación de datos que
+       * cambian solos —un panel, una bandeja— está bien. Un perfil no es
+       * eso: el nombre, los enlaces y el tema de alguien cambian cada
+       * varias semanas, y quien lo mira no va a estar pendiente de si le
+       * han cambiado el color mientras tenía la pestaña de fondo.
+       *
+       * Lo que costaba: una petición a Supabase por CADA vez que alguien
+       * vuelve a la pestaña. Y la fila del perfil viene escrita dentro del
+       * HTML —`filaPrecargada`, que se entrega una sola vez—, así que esa
+       * segunda consulta ni siquiera la aprovecha: sale a la red de verdad
+       * para traer lo que ya estaba pintado.
+       *
+       * Multiplicado por el tráfico que tiene que aguantar esto, es una
+       * petición por foco y por visitante para no enterarse de casi nada.
+       */
+      refetchOnWindowFocus: false,
     },
   },
 });

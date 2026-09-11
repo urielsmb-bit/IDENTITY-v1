@@ -954,7 +954,18 @@ export function ProfileView({
           />
         )}
         {p.bgType === 'image' && p.bgValue && (
-          <img className="pf-bgimg" src={safeMedia(p.bgValue)} alt="" />
+          <img
+            className="pf-bgimg"
+            src={safeMedia(p.bgValue)}
+            alt=""
+            /* El fondo ocupa la pantalla entera: o es el elemento mas grande
+               que se pinta, o lo es el avatar. En un perfil no hay un tercer
+               candidato. Por eso va con prioridad alta, y en una miniatura
+               no: alli hay ocho perfiles a la vez y ponerlos todos primeros
+               es no poner primero a ninguno. */
+            fetchPriority={preview ? 'auto' : 'high'}
+            decoding="async"
+          />
         )}
       </div>
       <div className="pf-veil" aria-hidden="true" />
@@ -1021,7 +1032,21 @@ export function ProfileView({
                 <img
                   src={cara.url}
                   alt={`Avatar de ${p.name || p.username}`}
-                  loading="lazy"
+                  /* NO `lazy` en el perfil de verdad, y este era un fallo de
+                     los que cuestan tiempo de carga medible.
+
+                     El avatar esta arriba del todo y es, con el fondo, el
+                     elemento mas grande que se pinta: o sea el que decide el
+                     LCP. `loading="lazy"` le dice al navegador que espere a
+                     saber si cae dentro de la pantalla antes de pedirlo, y
+                     para saberlo tiene que haber hecho el diseño. Se retrasa
+                     justo la imagen por la que se mide la pagina.
+
+                     En una miniatura si: alli hay ocho perfiles, ninguno es
+                     el LCP de nada y la mayoria no se ven sin bajar. */
+                  loading={preview ? 'lazy' : 'eager'}
+                  fetchPriority={preview ? 'auto' : 'high'}
+                  decoding="async"
                 />
               ) : (
                 <span className="pf-avatar__signo">{cara.signo}</span>
