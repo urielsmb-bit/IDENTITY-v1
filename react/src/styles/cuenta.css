@@ -368,3 +368,64 @@
   .acc__tira{ flex-direction:column; align-items:stretch; }
   .acc__tira .btn{ align-self:flex-start; }
 }
+
+
+/* ============================================================
+   TACTIL — lo que cambia cuando se toca con el dedo
+
+   Va al final y en esta hoja a proposito: es la ultima que se carga de
+   las que definen controles, asi que estas reglas ganan sin tener que
+   inflar selectores.
+
+   `pointer:coarse` y no un ancho: lo que decide no es el tamaño de la
+   pantalla sino con QUE se apunta. Una tableta de 1024 se toca con el
+   dedo y un portatil de 1024 con un raton, y necesitan cosas distintas.
+   ============================================================ */
+@media (pointer:coarse){
+  /* Dieciseis pixeles, ni uno menos.
+
+     Safari en iPhone hace zoom a la pagina cuando enfocas un campo de
+     menos de 16px, y aqui estaban a 15. O sea que escribir el nombre, la
+     biografia o un enlace daba un salto de escala en CADA campo, y al
+     salir se quedaba desencuadrado. No es una preferencia de diseño: es
+     la unica forma de que el navegador no se meta. */
+  .inp, .sel, .ta,
+  /* No solo `.inp`: el buscador de plantillas es un `input[type=search]`
+     suelto y se quedaba en 15. Se apunta a CUALQUIER campo en el que se
+     escriba, que es la condicion que dispara el zoom, y se dejan fuera
+     los que no llevan teclado -casillas, interruptores, colores y
+     deslizadores- donde 16px no significa nada y ademas les cambiaria el
+     tamaño del control. */
+  textarea, select,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]){
+    font-size:16px;
+  }
+
+  /* 44 px es lo que mide la yema de un dedo. Por debajo de eso no es que
+     se falle a veces: es que se falla y se pulsa lo de al lado.
+
+     Solo controles con nombre propio -no un `a` cualquiera-: un enlace
+     dentro de un parrafo con 44 px de alto parte el texto. */
+  .btn, .tpl__tab, .tpl__ver, .tpl__fav,
+  .pza__cfg, .pza__ojo, .nav__menu a, .nav__menu button,
+  .prog__it{
+    min-height:44px;
+  }
+
+  /* «Quitar» la foto medía 17x33. Es el control que BORRA tu avatar y
+     vive pegado a la caja de subir: con el dedo se falla, y lo que hay al
+     lado es «volver a subir».
+
+     Se agranda con relleno y se recoloca con un margen negativo del mismo
+     tamaño, no con `min-height`: asi la zona que se puede tocar crece sin
+     que el texto se mueva ni la caja cambie de alto. */
+  .drop__quitar{
+    padding:14px 12px;
+    margin:-14px -12px;
+  }
+  .btn{ display:inline-flex; align-items:center; justify-content:center; }
+
+  /* Los cuadrados se quedan cuadrados: si solo crecen de alto, un boton
+     de icono sale alargado. */
+  .tpl__ver, .tpl__fav, .pza__cfg{ min-width:44px; }
+}

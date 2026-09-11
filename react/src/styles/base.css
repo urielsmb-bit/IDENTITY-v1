@@ -166,6 +166,11 @@
      `calc(100dvh - var(--nav-h))` repartidos por la hoja y el
      `padding-top` de `.view`. Definiendolo asi, la barra pasa a flotar
      sin tocar ni uno de ellos. */
+  /* El interruptor de editar/ver del panel en telefono. Vive aqui y no
+     en `dashboard.css` porque lo miran dos: el propio interruptor y el
+     hueco que le deja el editor debajo. */
+  --dash-movil-h: 62px;
+
   --nav-alto: 56px;
   --nav-sep:  12px;
   --nav-h: calc(var(--nav-alto) + var(--nav-sep) * 2);

@@ -364,6 +364,18 @@ export default function DashboardPage() {
   /** El bloque abierto, si la pieza abierta es uno. */
   const defAbierto = pieza ? BLOQUE_POR_ID[pieza] ?? null : null;
   const [buscando, setBuscando] = useState(false);
+  /**
+   * Que se ve en un telefono: los controles o el perfil.
+   *
+   * En pantalla ancha no significa nada -caben los dos a la vez- pero en
+   * un movil el editor mide casi tres mil pixeles y la vista previa
+   * empezaba en el 3212: cambiabas un color y bajabas cuatro pantallas
+   * para ver que habias hecho. Editar a ciegas.
+   *
+   * La clase se pone siempre; es la hoja de estilos la que decide a
+   * partir de que ancho hace caso.
+   */
+  const [vistaMovil, setVistaMovil] = useState<'editar' | 'previa'>('editar');
 
   /* Las insignias de verdad, para que la vista previa enseñe lo mismo que
      el panel de Badges. Sin esto la previa las deducia de los numeros del
@@ -650,7 +662,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="dashboard-layout">
+    <div className={`dashboard-layout ve-${vistaMovil}`}>
       {/* Sidebar Navigation */}
       <aside className="dashboard__sidebar">
         <div>
@@ -1624,6 +1636,45 @@ export default function DashboardPage() {
         onDescartar={guia.descartar}
         onApagar={guia.apagar}
       />
+
+      {/* El cambiador, solo en telefono. Abajo y fijo, donde llega el
+          pulgar: es la unica zona de una pantalla de seis pulgadas que se
+          alcanza sin recolocar la mano.
+
+          No es una pestaña mas del editor: es el interruptor entre HACER y
+          VER, que en un movil son dos momentos distintos porque no caben a
+          la vez. Con las dos cosas en pantalla -en un monitor- no pinta
+          nada, y la hoja de estilos lo esconde. */}
+      <div className="dash__movil" role="tablist" aria-label="Editor o vista previa">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={vistaMovil === 'editar'}
+          className={vistaMovil === 'editar' ? 'on' : ''}
+          onClick={() => setVistaMovil('editar')}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+               strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+          </svg>
+          Editar
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={vistaMovil === 'previa'}
+          className={vistaMovil === 'previa' ? 'on' : ''}
+          onClick={() => setVistaMovil('previa')}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+               strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M2 12s3.6-6.4 10-6.4S22 12 22 12s-3.6 6.4-10 6.4S2 12 2 12Z" />
+            <circle cx="12" cy="12" r="2.5" />
+          </svg>
+          Vista previa
+        </button>
+      </div>
     </div>
   );
 }

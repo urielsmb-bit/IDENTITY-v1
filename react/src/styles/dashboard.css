@@ -2013,6 +2013,65 @@
 }
 
 /* ============================================================
+   EL EDITOR EN UN TELEFONO
+
+   Apilado, el editor medía 2817 px y la vista previa empezaba en el
+   3212: cambiabas un color y bajabas cuatro pantallas para ver qué
+   habías hecho. Eso no es una pantalla estrecha, es editar a ciegas.
+
+   Así que en un móvil NO se apilan: se ve una cosa u otra, y un
+   interruptor abajo cambia. Hacer y ver son dos momentos distintos
+   cuando no caben a la vez.
+   ============================================================ */
+.dash__movil{ display:none; }
+
+@media (max-width:860px){
+  /* Uno u otro, nunca los dos. */
+  .dashboard-layout.ve-editar .dashboard__preview,
+  .dashboard-layout.ve-previa .dashboard__editor{ display:none; }
+
+  /* La vista previa ocupa lo que queda de pantalla y no se desplaza con
+     la página: se mira, no se recorre. */
+  .dashboard-layout.ve-previa .dashboard__preview{
+    position:fixed;
+    inset:var(--nav-h) 0 var(--dash-movil-h) 0;
+    min-height:0;
+    z-index:5;
+  }
+
+  /* Hueco para el interruptor: sin esto tapa los últimos controles, que
+     es justo donde se acaba de llegar despues de bajar. */
+  .dashboard__editor{ padding-bottom:calc(var(--dash-movil-h) + var(--s6)); }
+
+  .dash__movil{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    z-index:600;
+    display:grid; grid-template-columns:1fr 1fr;
+    gap:6px;
+    padding:8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+    border-top:1px solid var(--border);
+    background:rgba(10,10,10,.94);
+    backdrop-filter:var(--blur);
+    -webkit-backdrop-filter:var(--blur);
+  }
+  .dash__movil button{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    /* 46 px de alto: por debajo de 44 un pulgar falla, y este es el
+       control que mas se pulsa de toda la pantalla. */
+    min-height:46px;
+    border:0; border-radius:var(--radius-md);
+    background:none;
+    color:var(--text-muted);
+    font-size:var(--t2); font-weight:500;
+    cursor:pointer;
+    transition:color var(--transition-fast), background var(--transition-fast);
+  }
+  .dash__movil button svg{ width:17px; height:17px; flex:none; }
+  .dash__movil button.on{ background:var(--surface-2); color:var(--text-primary); }
+}
+
+/* ============================================================
    MUESTRA — los iconos de verdad dentro del editor
    Las pastillas dicen el nombre del estilo; esto enseña el estilo.
    Reutiliza `.pf-socials` / `.pf-badges`, así que aquí sólo hacen
