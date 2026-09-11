@@ -36,7 +36,11 @@ const CONTROL: Record<ControlId, Ficha> = {
   visible: { nombre: 'Mostrar u ocultar', alias: ['ocultar', 'esconder', 'quitar', 'apagar'] },
 
   degradadoNombre: { nombre: 'Degradado en el nombre', alias: ['gradiente', 'dos colores', 'morado'] },
-  animarNombre: { nombre: 'Barrido de luz en el nombre', alias: ['brillo', 'animado', 'destello'] },
+  efectoNombre: {
+    nombre: 'Efecto del nombre',
+    alias: ['barrido', 'brillo', 'animado', 'destello', 'arcoiris', 'arcoíris',
+            'maquina', 'máquina de escribir', 'glitch', 'fallo', 'latido', 'flotar'],
+  },
 
   fuente: { nombre: 'Fuente', alias: ['tipografía', 'letra', 'tipo de letra'] },
   caso: { nombre: 'Mayúsculas y minúsculas', alias: ['mayúsculas', 'minúsculas', 'capitalizar'] },

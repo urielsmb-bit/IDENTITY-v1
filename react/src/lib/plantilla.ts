@@ -53,7 +53,7 @@ export const CAMPOS_PLANTILLA = [
 
   /* interruptores de aspecto */
   'sBorderOn', 'avBorder', 'avGlow', 'monoIcons', 'bgFixed', 'gradient',
-  'animatedName', 'glowName', 'glowSocials', 'glowBadges', 'noise', 'tilt',
+  'animatedName', 'nameFx', 'glowName', 'glowSocials', 'glowBadges', 'noise', 'tilt',
 
   /* colocacion: sin esto una plantilla de rejilla libre no se parece en
      nada a lo que se publico, porque las coordenadas son el diseño */

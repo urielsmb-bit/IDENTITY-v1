@@ -2283,12 +2283,12 @@
    letras transparentes, un `text-shadow` se ve POR DEBAJO del
    relleno y queda como un manchón. `drop-shadow` sigue la
    silueta, que es lo que uno espera de una sombra. */
-.pf:not([data-namegrad="on"]) .pf-name{
+.pf:not([data-namefill="on"]) .pf-name{
   text-shadow:
     0 0 var(--u-nameglow, 0px) color-mix(in srgb, var(--halo) 65%, transparent),
     0 2px var(--u-nameshadow, 0px) var(--u-nameshadowc, rgba(0,0,0,.45));
 }
-.pf[data-namegrad="on"] .pf-name{
+.pf[data-namefill="on"] .pf-name{
   filter:
     drop-shadow(0 0 var(--u-nameglow, 0px) var(--halo))
     drop-shadow(0 2px var(--u-nameshadow, 0px) var(--u-nameshadowc, rgba(0,0,0,.45)));
@@ -2320,10 +2320,92 @@
 }
 @keyframes nameFlota{ 50%{ transform:translateY(-5px); } }
 
+/* --- arcoiris ---------------------------------------------
+   Va DESPUES del degradado propio a proposito. Los dos rellenan
+   con `background-image` y empatan en especificidad, asi que
+   gana el ultimo: si has elegido arcoiris, sale arcoiris. Es lo
+   que uno espera del ultimo boton que ha pulsado. */
+.pf[data-nameanim="arcoiris"] .pf-name{
+  background-image:linear-gradient(92deg,
+    #ff5470, #ff9f43, #ffd93d, #4ade80, #38bdf8, #a78bfa, #ff5470);
+  background-size:300% 100%;
+  -webkit-background-clip:text; background-clip:text;
+  color:transparent;
+  animation:nameArco 6s linear infinite;
+}
+@keyframes nameArco{ to{ background-position:-300% 0; } }
+
+/* --- maquina de escribir ----------------------------------
+   Se recorta, no se estrecha. Animar el ancho de 0 a 100% seria
+   el 100% DE LA CAJA DE ALREDEDOR, no del texto, y ademas el
+   nombre empujaria a todo lo que tiene debajo en cada paso.
+   `clip-path` deja al elemento con su ancho de siempre y tapa lo
+   que aun no se ha escrito: nada se mueve de sitio.
+
+   `--u-name-n` son las letras del nombre, que las cuenta el
+   perfil: `steps()` necesita un numero y el CSS no sabe contar.
+   Y va en bucle porque quien llegue tres segundos tarde tambien
+   tiene que verlo. */
+.pf[data-nameanim="maquina"] .pf-name{
+  animation:nameEscribe 5.5s steps(var(--u-name-n, 10), end) infinite;
+}
+@keyframes nameEscribe{
+  0%,   6%{ clip-path:inset(0 100% 0 0); }
+  46%, 72%{ clip-path:inset(0 0 0 0); }
+  100%    { clip-path:inset(0 100% 0 0); }
+}
+
+/* --- fallo de senal ---------------------------------------
+   Dos copias del nombre, una roja y otra azul, quietas y
+   transparentes casi todo el rato y desplazadas un instante.
+
+   Van en `position:absolute` porque `.pf-name` es un flex —lleva
+   el nombre y el tic de verificado— y un pseudo-elemento suelto
+   ahi dentro seria un hijo mas del flex: contaria para el ancho y
+   empujaria el tic a la derecha.
+
+   Arrancan invisibles a proposito: asi, con la animacion apagada
+   —quien pide menos movimiento— no queda un nombre triple sino el
+   nombre y ya. */
+.pf[data-nameanim="glitch"] .pf-name{ position:relative; }
+.pf[data-nameanim="glitch"] .pf-name::before,
+.pf[data-nameanim="glitch"] .pf-name::after{
+  content:attr(data-texto);
+  position:absolute; left:0; top:0;
+  white-space:pre;
+  opacity:0;
+  pointer-events:none;
+}
+.pf[data-nameanim="glitch"] .pf-name::before{
+  color:#ff2d55;
+  animation:nameFalloA 3.2s steps(1) infinite;
+}
+.pf[data-nameanim="glitch"] .pf-name::after{
+  color:#22d3ee;
+  animation:nameFalloB 3.2s steps(1) infinite;
+}
+@keyframes nameFalloA{
+  0%, 86%, 100%{ opacity:0; transform:none; }
+  88%{ opacity:.85; transform:translate(-3px, 1px); }
+  91%{ opacity:.7;  transform:translate(2px, -2px); }
+  94%{ opacity:.8;  transform:translate(-2px, 0); }
+}
+@keyframes nameFalloB{
+  0%, 86%, 100%{ opacity:0; transform:none; }
+  88%{ opacity:.8;  transform:translate(3px, -1px); }
+  91%{ opacity:.7;  transform:translate(-2px, 2px); }
+  94%{ opacity:.85; transform:translate(2px, 0); }
+}
+
 /* Quien pide menos movimiento lo pide para todo, no solo para
    lo que ya existía cuando se escribió la regla de arriba. */
 @media (prefers-reduced-motion: reduce){
-  .pf[data-nameanim] .pf-name{ animation:none; }
+  .pf[data-nameanim] .pf-name,
+  .pf[data-nameanim] .pf-name::before,
+  .pf[data-nameanim] .pf-name::after{ animation:none; }
+  /* La maquina deja el nombre a medio escribir si se para en seco:
+     apagar la animacion tiene que devolverlo entero, no cortado. */
+  .pf[data-nameanim="maquina"] .pf-name{ clip-path:none; }
 }
 
 /* ============================================================

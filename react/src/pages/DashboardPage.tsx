@@ -280,6 +280,7 @@ function createBlankProfile(username = 'usuario'): Profile {
        del tema, asi que apagar el degradado fijo no bastaba —el nombre
        seguia morado— y tampoco tenia interruptor. */
     animatedName: false,
+    nameFx: 'none',
     glowName: true,
     glowSocials: true,
     glowBadges: true,

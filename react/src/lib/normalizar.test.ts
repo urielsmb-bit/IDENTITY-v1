@@ -220,3 +220,52 @@ describe('normalizarPerfil()', () => {
     expect(dos).toEqual(una);
   });
 });
+
+describe('nameFx: el si/no que se convirtio en catalogo', () => {
+  /**
+   * Esto no es una prueba de dibujo: es la unica red que tienen los perfiles
+   * que YA EXISTEN. Hasta ahora el efecto del nombre era `animatedName`, un
+   * si/no, y ahora es un nombre. Si la traduccion falla, todo el que tenia el
+   * barrido de luz puesto abre su perfil y se lo encuentra apagado, sin que
+   * nadie haya tocado nada.
+   */
+  it('traduce el barrido de luz de una fila vieja', () => {
+    expect(normalizarPerfil({ username: 'shark', animatedName: true }).nameFx)
+      .toBe('sweep');
+  });
+
+  it('una fila vieja sin el efecto se queda sin efecto', () => {
+    expect(normalizarPerfil({ username: 'shark', animatedName: false }).nameFx)
+      .toBe('none');
+  });
+
+  /* El fallo que casi se cuela: `out` arranca con los valores por defecto, y
+     alli `nameFx` ya vale 'none'. Preguntar «si no hay nameFx» nunca daria
+     verdadero —'none' es un valor con contenido— y la traduccion no llegaria
+     a ejecutarse jamas. Hay que mirar si el campo VIENE, no lo que vale. */
+  it('la traduccion mira si el campo viene, no si vale algo', () => {
+    const viejo = normalizarPerfil(
+      { username: 'shark', animatedName: true },
+      { nameFx: 'none', animatedName: false },
+    );
+    expect(viejo.nameFx).toBe('sweep');
+  });
+
+  it('cuando vienen los dos manda el nombre, no el booleano', () => {
+    const p = normalizarPerfil({ username: 'shark', animatedName: true, nameFx: 'arcoiris' });
+    expect(p.nameFx).toBe('arcoiris');
+    // y el booleano se reescribe desde el nombre para que no discrepen
+    expect(p.animatedName).toBe(false);
+  });
+
+  it('un efecto inventado no pasa', () => {
+    expect(normalizarPerfil({ username: 'shark', nameFx: 'rm -rf' }).nameFx).toBe('none');
+    expect(normalizarPerfil({ username: 'shark', nameFx: '"><script>' }).nameFx).toBe('none');
+  });
+
+  it('acepta los siete del catalogo', () => {
+    for (const id of ['none', 'pulse', 'float', 'sweep', 'arcoiris', 'maquina', 'glitch']) {
+      expect(normalizarPerfil({ username: 'shark', nameFx: id }).nameFx).toBe(id);
+    }
+  });
+});

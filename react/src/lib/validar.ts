@@ -323,6 +323,7 @@ function esquema(ID: any) {
     avBorder: bool, avGlow: bool, monoIcons: bool, bgFixed: bool,
     fxMagnet: bool, fxGlow: bool, fxParallax: bool,
     gradient: bool, animatedName: bool, glowName: bool,
+    nameFx: (v: any) => deLista(v, ids(ID?.EFECTOS_NOMBRE), 'none'),
     glowSocials: bool, glowBadges: bool, noise: bool, tilt: bool,
     gateText: (v: any) => texto(v, 40),
     gate: bool, verified: bool, premium: bool, discoverable: bool,
@@ -436,6 +437,22 @@ export function perfil(p: any, defectos: any, catalogs: Record<string, unknown>)
       : '';
   }
 
+
+  /* `animatedName` era un si/no y ahora el efecto tiene nombre. Una fila
+     vieja no trae `nameFx`, asi que se deduce del booleano: encendido era
+     el barrido, que es el unico que ese si/no sabia pedir.
+
+     Se mira si el campo VIENE, no si vale algo: `out` arranca de los
+     valores por defecto y alli `nameFx` ya es 'none', que es un valor con
+     contenido. Preguntar «si no hay nameFx» nunca daria verdadero y la
+     traduccion no llegaria a ejecutarse jamas.
+
+     Y despues se reescribe el booleano desde el nombre, para que los dos no
+     puedan discrepar: manda `nameFx`, el otro solo le sigue. */
+  if (!Object.prototype.hasOwnProperty.call(p, 'nameFx')) {
+    out.nameFx = out.animatedName ? 'sweep' : 'none';
+  }
+  out.animatedName = out.nameFx === 'sweep';
 
   if (p.audio && typeof p.audio === 'object') {
     out.audio = {

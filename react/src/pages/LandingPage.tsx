@@ -222,6 +222,7 @@ const INITIAL_DEMO: Profile = {
   bgFixed: true,
   gradient: true,
   animatedName: true,
+  nameFx: 'sweep',
   glowName: true,
   glowSocials: true,
   glowBadges: true,

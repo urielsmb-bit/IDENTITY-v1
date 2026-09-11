@@ -4,6 +4,7 @@ import { NETS } from '@/data/nets';
 import { getBadge, TOPE_INSIGNIAS } from '@/data/badges';
 import { insigniasGanadas } from '@/lib/insignias';
 import { FONTS, EASING_CSS } from '@/data/themes';
+import { rellenaElNombre } from '@/data/efectosNombre';
 import { useParticles } from '@/hooks/useParticles';
 import { useTilt } from '@/hooks/useTilt';
 import { useCursor } from '@/hooks/useCursor';
@@ -392,6 +393,11 @@ export function ProfileView({
       vars['--u-namegrad'] =
         'linear-gradient(90deg, var(--p-primary), var(--p-accent))';
     }
+    /* Cuantas letras tiene el nombre, para la maquina de escribir: `steps()`
+       necesita un numero y el CSS no sabe contar. Se cuenta por PUNTOS DE
+       CODIGO y no con `.length`, que parte los emoji por la mitad y daria
+       el doble de pasos para un nombre con una bandera dentro. */
+    if (p.name) vars['--u-name-n'] = String([...p.name.trim()].length || 1);
     return vars;
   }, [p]);
 
@@ -890,8 +896,16 @@ export function ProfileView({
       data-blockstyle={p.blockStyle || 'inherit'}
       data-cursor={p.cursor || 'default'}
       data-curimg={p.cursorImg && (!preview || editando) ? 'on' : undefined}
-      data-nameanim={p.animatedName ? 'sweep' : 'none'}
+      data-nameanim={p.nameFx || 'none'}
       data-namegrad={sw(p.gradient)}
+      /* RELLENO no es lo mismo que degradado, aunque el degradado lo sea.
+         Un efecto que pinta las letras con un fondo recortado las deja
+         transparentes, y sobre eso un `text-shadow` se ve por debajo del
+         relleno y queda como un manchon: hace falta `drop-shadow`. Antes
+         esa decision colgaba de `data-namegrad`, asi que el barrido de luz
+         SIN degradado propio —que tambien deja las letras transparentes—
+         se llevaba la sombra mala. */
+      data-namefill={sw(p.gradient || rellenaElNombre(p.nameFx))}
       data-borde={p.sBorderOn === false ? 'off' : 'on'}
       style={styleVars as React.CSSProperties}
     >
@@ -1008,7 +1022,11 @@ export function ProfileView({
           {/* Nombre */}
           {ver('name') && (
           <div className="pf-idblock" {...bloque('name')}>
-            <h1 className="pf-name">
+            {/* `data-texto` es el mismo nombre otra vez, y solo lo usa el
+                efecto «fallo de senal»: sus dos copias desplazadas salen de
+                pseudo-elementos, y un pseudo-elemento no puede copiar el
+                texto de su elemento —solo puede leer un atributo—. */}
+            <h1 className="pf-name" data-texto={p.name || p.username}>
               {p.name || p.username}
               {p.verified && (
                 <svg

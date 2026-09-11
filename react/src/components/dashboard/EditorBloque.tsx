@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { Profile, BlockStyle } from '@/types';
 import type { ControlId, DefBloque, GrupoControles } from '@/data/bloques';
 import {
@@ -12,7 +13,8 @@ import { NETS } from '@/data/nets';
 import { getBadge, TOPE_INSIGNIAS } from '@/data/badges';
 import { safeUrl } from '@/lib/utils';
 import { idYouTube } from '@/lib/music';
-import { Campo, ColorRGB, Deslizador, Interruptor, Pastillas, Pro, SelectorFuente, Tarjetas } from './Controles';
+import { Campo, ColorRGB, Deslizador, Interruptor, Pastillas, Pro, ROMBO, SelectorFuente, Tarjetas } from './Controles';
+import { EFECTOS_NOMBRE, efectoNombre, rellenaElNombre } from '@/data/efectosNombre';
 import { controlEsPro } from '@/data/premium';
 import { DIBUJOS } from './dibujos';
 import {
@@ -137,6 +139,115 @@ function MuestraRedes({ profile }: { profile: Profile }) {
         Las añades y las quitas en «Redes &amp; Enlaces».
       </p>
     </div>
+  );
+}
+
+/**
+ * Elegir el efecto del nombre VIENDOLO, con tu nombre dentro.
+ *
+ * Esto era un interruptor que decia «Barrido de luz: si / no». Dos problemas
+ * de golpe: la hoja de estilos sabia hacer tres animaciones y un si/no solo
+ * alcanza una, y aunque alcanzara las tres, «Latido» y «Flotar» escritos en
+ * una lista no le dicen a nadie como se van a ver.
+ *
+ * Cada tarjeta pinta TU nombre con el efecto puesto, usando el mismo CSS que
+ * el perfil publico: no es un dibujo que imite el efecto, es el efecto. Si
+ * manana cambia, cambia aqui solo. Una miniatura dibujada a mano seria una
+ * segunda version del efecto, y las segundas versiones se quedan viejas.
+ *
+ * Los de pago no se esconden: se ven funcionando, con su rombo, y llevan a
+ * la pagina de precios. Esconderlos haria que nadie supiera que existen, que
+ * es la peor manera posible de vender algo.
+ */
+function EfectosDelNombre({
+  profile,
+  update,
+  premium,
+}: {
+  profile: Profile;
+  update: (partial: Partial<Profile>) => void;
+  premium: boolean;
+}) {
+  const actual = profile.nameFx || 'none';
+  const def = efectoNombre(actual);
+  /* Tu nombre si lo tienes, tu usuario si no, y algo si no hay ninguno de
+     los dos: una tarjeta vacia no ensena ningun efecto. */
+  const muestra = profile.name || profile.username || 'Tu nombre';
+  /* El mismo recuento que hace el perfil, por puntos de codigo: `.length`
+     parte los emoji en dos y la maquina de escribir daria el doble de
+     pasos que letras hay. */
+  const letras = String([...muestra.trim()].length || 1);
+
+  return (
+    <Campo label="Efecto del nombre">
+      <div
+        className="fx"
+        role="group"
+        aria-label="Efecto del nombre"
+        style={{ '--fx-acc': profile.accent || '#A855F7' } as React.CSSProperties}
+      >
+        {EFECTOS_NOMBRE.map((e) => {
+          const bloqueado = !premium && !!e.pro;
+          const puesto = actual === e.id;
+          const demo = (
+            <>
+              <span
+                className="pf fx__demo"
+                data-nameanim={e.id}
+                data-namefill={rellenaElNombre(e.id) ? 'on' : 'off'}
+                aria-hidden="true"
+              >
+                <span
+                  className="pf-name"
+                  data-texto={muestra}
+                  style={{ '--u-name-n': letras } as React.CSSProperties}
+                >
+                  {muestra}
+                </span>
+              </span>
+              <span className="fx__n">
+                {e.nombre}
+                {bloqueado && <span className="fx__pro">{ROMBO}</span>}
+              </span>
+            </>
+          );
+
+          /* Bloqueado es un ENLACE, no un boton apagado. Un boton que no hace
+             nada al pulsarlo deja a uno pensando que la pagina esta rota; un
+             enlace a los precios contesta la pregunta que acaba de hacerse. */
+          return bloqueado ? (
+            <Link
+              key={e.id}
+              className="fx__b fx__b--pro"
+              to="/pricing"
+              title={`${e.nombre} — lo trae el plan`}
+            >
+              {demo}
+            </Link>
+          ) : (
+            <button
+              key={e.id}
+              type="button"
+              className={`fx__b${puesto ? ' on' : ''}`}
+              aria-pressed={puesto}
+              onClick={() => update({ nameFx: e.id })}
+            >
+              {demo}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Que hace el que tienes puesto, y si se paga. La frase va DEBAJO y no
+          dentro de cada tarjeta: siete descripciones a la vez no se leen, se
+          esquivan. */}
+      {def && (
+        <p className="fx__pie">
+          {def.desc}
+          {def.pro && !premium && <> <Link to="/pricing">Este lo trae el plan.</Link></>}
+        </p>
+      )}
+    </Campo>
   );
 }
 
@@ -598,15 +709,9 @@ export function EditorBloque({
           />
         );
 
-      case 'animarNombre':
+      case 'efectoNombre':
         return (
-          <Interruptor
-            key={id}
-            label="Barrido de luz"
-            desc="Un brillo que recorre las letras. Tambien las tiñe con los colores del tema."
-            on={!!profile.animatedName}
-            onChange={(v) => update({ animatedName: v })}
-          />
+          <EfectosDelNombre key={id} profile={profile} update={update} premium={premium} />
         );
 
       case 'halo':

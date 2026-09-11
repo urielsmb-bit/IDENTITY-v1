@@ -220,7 +220,15 @@ export interface Profile {
   monoIcons: boolean;
   bgFixed: boolean;
   gradient: boolean;
+  /**
+   * DEPRECADO: lo sustituye `nameFx`.
+   *
+   * Se queda porque las filas que ya existen lo traen y el saneado lo lee
+   * para traducirlo. Nada lo escribe ni lo mira aparte de esa traduccion.
+   */
   animatedName: boolean;
+  /** Que efecto lleva el nombre. Ver `data/efectosNombre.ts`. */
+  nameFx: string;
   glowName: boolean;
   glowSocials: boolean;
   glowBadges: boolean;

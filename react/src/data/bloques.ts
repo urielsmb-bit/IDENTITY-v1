@@ -18,7 +18,7 @@ export type ControlId =
   | 'visible'
   // color
   | 'degradadoNombre'
-  | 'animarNombre'
+  | 'efectoNombre'
   // tipografía
   | 'fuente'
   | 'caso'
@@ -117,7 +117,16 @@ const COLOR: GrupoControles = { titulo: 'Color', controles: ['color'] };
    nombre lo tiene: es una propiedad del perfil, no del bloque. */
 const COLOR_NOMBRE: GrupoControles = {
   titulo: 'Color',
-  controles: ['color', 'degradadoNombre', 'animarNombre'],
+  controles: ['color', 'degradadoNombre'],
+};
+/* Aparte de «Color» y con su propio titulo. Cuatro de los siete efectos no
+   son un color —late, flota, se escribe— y ahi debajo no los buscaria nadie.
+   Ademas eran dos interruptores: el de la animacion decia si o no a UNA de
+   las tres que la hoja de estilos ya sabia hacer, asi que las otras dos
+   estaban escritas y no habia forma de pedirlas. */
+const EFECTOS_NOMBRE_GRUPO: GrupoControles = {
+  titulo: 'Efectos',
+  controles: ['efectoNombre'],
 };
 
 /** Redes e insignias no se pintan como un texto: cada pieza tiene su
@@ -186,7 +195,7 @@ export const BLOQUES: DefBloque[] = [
     descripcion: 'Cómo se muestra tu nombre en el perfil.',
     icono: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7V5h16v2"/><path d="M12 5v14"/><path d="M9 19h6"/></svg>`,
     campoTexto: 'name',
-    grupos: [conTexto(), TIPOGRAFIA, COLOR_NOMBRE, RESPLANDOR, COMPOSICION],
+    grupos: [conTexto(), TIPOGRAFIA, COLOR_NOMBRE, EFECTOS_NOMBRE_GRUPO, RESPLANDOR, COMPOSICION],
   },
   {
     id: 'handle',

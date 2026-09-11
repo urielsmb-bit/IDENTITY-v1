@@ -3326,3 +3326,112 @@
      padre delante. */
   .dashboard__sidebar > .dash__fondo{ display:none; }
 }
+
+/* ============================================================
+   EFECTOS DEL NOMBRE
+   ============================================================ */
+
+/* Cada tarjeta pinta el nombre con el EFECTO DE VERDAD, no con un
+   dibujo que lo imite: dentro hay un `.pf` con su `data-nameanim`,
+   que es exactamente lo que lleva el perfil publico. La pega de
+   reusar `.pf` es que `.pf` es una PAGINA —`min-height:100vh` y el
+   fondo del tema—, asi que hay que devolverlo a ser un trozo de
+   texto. Se hace con `.fx .fx__demo`, que lleva una clase mas que
+   `.pf` y por tanto gana sin recurrir a `!important`. */
+.fx{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(108px, 1fr));
+  gap:6px;
+}
+
+.fx__b{
+  display:grid;
+  gap:6px;
+  padding:10px 8px 8px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--surface-2);
+  color:var(--text-secondary);
+  text-align:center;
+  cursor:pointer;
+  overflow:hidden;
+  transition:border-color .15s, background .15s;
+}
+.fx__b:hover{ background:var(--surface-3); border-color:var(--border-strong); }
+.fx__b.on{
+  border-color:var(--fx-acc, #A855F7);
+  background:color-mix(in srgb, var(--fx-acc, #A855F7) 12%, var(--surface-2));
+}
+.fx__b:focus-visible{ outline:2px solid var(--fx-acc, #A855F7); outline-offset:2px; }
+.fx__b--pro{ text-decoration:none; }
+
+/* El nombre de la tarjeta. `min-width:0` porque es hijo de un grid
+   y sin eso un nombre largo estira la columna en vez de cortarse. */
+.fx__n{
+  display:flex; align-items:center; justify-content:center; gap:4px;
+  min-width:0;
+  /* Dos lineas reservadas SIEMPRE. «Maquina de escribir» parte en dos y
+     «Latido» no, asi que sin esto la fila de abajo salia mas alta que la
+     de arriba y la rejilla quedaba escalonada. */
+  min-height:2.4em;
+  font-size:11px; font-weight:600; line-height:1.2;
+  color:var(--text-secondary);
+}
+.fx__b.on .fx__n{ color:var(--text-primary); }
+.fx__pro{ display:inline-flex; color:var(--fx-acc, #A855F7); }
+.fx__pro svg{ width:10px; height:10px; }
+
+/* --- la previa ------------------------------------------- */
+.fx .fx__demo{
+  /* `.pf` es una pagina entera; aqui es una linea. Lo de abajo no es
+     paranoia: `.pf` reserva 44px de relleno al pie para que el perfil
+     no termine pegado al borde de la pantalla, y con `border-box` eso
+     convertia una tarjeta de 26px en una de 44 con el nombre arriba y
+     un hueco debajo. */
+  min-height:0;
+  padding:0;
+  margin:0;
+  background:none;
+  overflow:hidden;
+  isolation:auto;
+  display:block;
+  height:26px;
+  line-height:26px;
+
+  /* Los colores del tema que usan el barrido y el resplandor. En el
+     perfil los pone el tema elegido; aqui no hay tema, asi que se
+     dan los del panel y el acento que la persona ya eligio, que es
+     lo mas parecido a como le va a quedar. */
+  --p-text:var(--text-primary);
+  --p-primary:var(--fx-acc, #A855F7);
+  --p-accent:color-mix(in srgb, var(--fx-acc, #A855F7) 45%, #ffffff);
+  --p-track:0;
+}
+.fx .fx__demo .pf-name{
+  display:block;
+  font-family:inherit;
+  font-size:14px;
+  font-weight:700;
+  line-height:26px;
+  letter-spacing:0;
+  text-transform:none;
+  /* De una sola linea y sin puntos suspensivos: `text-overflow` pide
+     `overflow:hidden` en este mismo elemento, y eso recortaria el
+     `clip-path` de la maquina de escribir contra la caja en vez de
+     contra el texto. Se corta en el padre. */
+  white-space:nowrap;
+}
+
+/* Qué hace el que tienes puesto. */
+.fx__pie{
+  margin:8px 0 0;
+  font-size:11px;
+  line-height:1.45;
+  color:var(--text-muted);
+}
+.fx__pie a{ color:var(--fx-acc, #A855F7); }
+
+/* Con el dedo, las tarjetas necesitan alto suficiente para acertar. */
+@media (pointer:coarse){
+  .fx__b{ padding:12px 8px 10px; }
+}

@@ -41,12 +41,16 @@ export const CONTROLES_PRO: ReadonlySet<ControlId> = new Set<ControlId>([
      lo que hay que cobrar. */
   'halo',
 
-  /* Los dos del nombre. Viven solo aquí y solo aquí tienen sentido: un
-     barrido de luz recorriendo un párrafo de biografía es ilegible, y un
-     degradado en «Desde septiembre de 2026» es ruido. Que sean del nombre
-     y de nada más los hace especiales en vez de repetidos. */
+  /* El degradado del nombre. Vive solo aquí y solo aquí tiene sentido: un
+     degradado en «Desde septiembre de 2026» es ruido. Que sea del nombre y
+     de nada más lo hace especial en vez de repetido.
+
+     `animarNombre` estaba en esta lista y ya no está. Dejó de ser un sí/no
+     para ser un catálogo de siete efectos, y allí unos son libres y otros
+     no: lo decide cada efecto en `efectosNombre.ts`. Bloquear el mando
+     entero volvería a dejar el bloque del nombre sin un solo efecto gratis,
+     que es justo lo que había que arreglar. */
   'degradadoNombre',
-  'animarNombre',
 
   /* De la caja, solo lo que brilla. El tipo de caja, el relleno, las
      esquinas, el ancho y el borde son maquetación y van gratis; el
