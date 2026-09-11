@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { subirFondoVimeo, type AvanceSubida } from '@/lib/vimeoSubida';
-import { prepararImagen } from '@/lib/imagen';
+import { prepararImagen, posterDeVideo } from '@/lib/imagen';
 import { safeMedia } from '@/lib/utils';
 import * as backend from '@/lib/backend';
 import { hasBackend } from '@/lib/supabase';
@@ -11,6 +11,9 @@ export interface FondoSubido {
   url: string;
   /** ancho/alto, solo para el vídeo: lo dice Vimeo al terminar */
   ratio?: number;
+  /** El primer fotograma, ya subido. Vacío si no se pudo sacar: sin él
+   *  el fondo se ve igual, solo que un segundo más tarde. */
+  poster?: string;
 }
 
 interface SubirFondoProps {
@@ -21,6 +24,8 @@ interface SubirFondoProps {
       al sustituirlo. No sirve `previa`: cuando el fondo es un video de
       Vimeo, `previa` trae la miniatura de Vimeo y no el archivo nuestro. */
   anterior?: string;
+  /** Y su poster, que es otro archivo y hay que barrerlo igual. */
+  anteriorPoster?: string;
   onSubido: (r: FondoSubido) => void;
   onQuitar?: () => void;
   /** Id de la pista de la guia que apunta aqui. */
@@ -92,7 +97,15 @@ const MAX_VIDEO_MB = 500;
  *   · un vídeo va entero a Vimeo, que lo transcodifica mucho mejor de lo que
  *     puede hacerlo un canvas, y tarda minutos en estar listo.
  */
-export function SubirFondo({ titulo, previa, anterior, onSubido, onQuitar, guia }: SubirFondoProps) {
+export function SubirFondo({
+  titulo,
+  previa,
+  anterior,
+  anteriorPoster,
+  onSubido,
+  onQuitar,
+  guia,
+}: SubirFondoProps) {
   const entradaRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const [fase, setFase] = useState<Fase>('quieto');
@@ -177,8 +190,33 @@ export function SubirFondo({ titulo, previa, anterior, onSubido, onQuitar, guia 
           const ratio = await medirVideo(archivo);
           const ext = (archivo.name.split('.').pop() || 'mp4').toLowerCase();
           const url = await backend.subirMedio(archivo, 'fondo', ext, anterior);
-          onSubido({ tipo: 'video', url, ratio });
-          setNota(`Subido · ${mb.toFixed(1)} MB`);
+
+          /* Y su primer fotograma, DESPUÉS del vídeo y sin poder tumbarlo.
+             Un vídeo de fondo tarda en llegar aunque pese poco, y mientras
+             tanto detrás de la tarjeta no hay nada: treinta kilobytes de
+             poster tapan ese hueco. Si el navegador no sabe decodificar
+             ese formato, se sube sin poster — es un adorno, y perder el
+             fondo entero por su miniatura sería cambiar lo importante por
+             lo accesorio. */
+          let poster = '';
+          try {
+            const img = await posterDeVideo(archivo);
+            if (img) {
+              poster = await backend.subirMedio(
+                img.blob,
+                'poster',
+                img.extension,
+                anteriorPoster,
+              );
+            }
+          } catch {
+            /* ídem: el fondo ya está arriba y es lo que se pidió. */
+          }
+
+          onSubido({ tipo: 'video', url, ratio, poster });
+          setNota(
+            `Subido · ${mb.toFixed(1)} MB` + (poster ? ' · con portada' : ''),
+          );
         } catch (e) {
           setError(explicar(e));
         } finally {

@@ -910,7 +910,19 @@ export function ProfileView({
           />
         )}
         {p.bgType === 'video' && !fondoVimeo && p.bgValue && (
-          <video src={safeMedia(p.bgValue)} autoPlay loop muted playsInline />
+          /* `poster` tapa el hueco mientras el video llega: sin el, detras
+             de la tarjeta hay un rectangulo negro durante uno o dos
+             segundos, que es justo el rato en el que alguien decide si se
+             queda. Un perfil de antes no lo tiene y se ve igual que hasta
+             ahora: el atributo sin valor no pinta nada. */
+          <video
+            src={safeMedia(p.bgValue)}
+            poster={p.bgPoster ? safeMedia(p.bgPoster) : undefined}
+            autoPlay
+            loop
+            muted
+            playsInline
+          />
         )}
         {p.bgType === 'image' && p.bgValue && (
           <img className="pf-bgimg" src={safeMedia(p.bgValue)} alt="" />

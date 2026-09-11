@@ -192,6 +192,12 @@ export function extraerPlantilla(p: Partial<Profile>): AjustesPlantilla {
     if (enlace) {
       out.bgType = tipo;
       out.bgValue = enlace;
+      /* El poster va con el fondo o no va: una plantilla con poster y sin
+         video enseñaria una foto fija que nadie puso. Y por la misma regla
+         que el fondo: si esta en nuestro cubo es un archivo de su autor, y
+         el dia que lo cambie deja a todo el que la use con otra imagen. */
+      const poster = enlaceCompartible(p.bgPoster);
+      if (poster) out.bgPoster = poster;
       /* La proporcion se lee de Vimeo al pegar el enlace. Sin ella hay
          que dar por hecho 16:9, y un video en otro formato sale con
          franjas en vez de cubrir la pantalla. */

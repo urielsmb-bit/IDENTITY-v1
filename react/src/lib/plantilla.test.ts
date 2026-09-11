@@ -110,6 +110,42 @@ describe('extraerPlantilla · el fondo', () => {
     const s = extraerPlantilla({ bgType: 'none', bgValue: '' } as Partial<Profile>);
     expect(s.bgType).toBe('none');
   });
+
+  /* La portada del video es otro archivo y va atada al fondo: sin esta
+     regla, una plantilla podria llevarse la foto y no el video, y quien la
+     aplicara veria una imagen fija que nadie puso ahi. */
+  it('la portada viaja CON el video, no sola', () => {
+    const s = extraerPlantilla({
+      bgType: 'video',
+      bgValue: 'https://vimeo.com/1',
+      bgPoster: 'https://cdn.ajeno.com/p.webp',
+    } as Partial<Profile>);
+    expect(s.bgValue).toBe('https://vimeo.com/1');
+    expect(s.bgPoster).toBe('https://cdn.ajeno.com/p.webp');
+  });
+
+  it('si el video no viaja, la portada tampoco', () => {
+    const s = extraerPlantilla({
+      bgType: 'video',
+      bgValue: 'https://x.supabase.co/storage/v1/object/public/media/uid/f.mp4',
+      bgPoster: 'https://cdn.ajeno.com/p.webp',
+    } as Partial<Profile>);
+    expect(s).not.toHaveProperty('bgValue');
+    expect(s).not.toHaveProperty('bgPoster');
+  });
+
+  /* Y una portada que es un archivo NUESTRO tampoco sale, aunque el video
+     si: es una direccion fija que su dueno reescribe, asi que el dia que
+     cambie de fondo le cambia la portada a todo el que use la plantilla. */
+  it('una portada subida al cubo no viaja aunque el video si', () => {
+    const s = extraerPlantilla({
+      bgType: 'video',
+      bgValue: 'https://vimeo.com/1',
+      bgPoster: 'https://x.supabase.co/storage/v1/object/public/media/uid/poster.webp',
+    } as Partial<Profile>);
+    expect(s.bgValue).toBe('https://vimeo.com/1');
+    expect(s).not.toHaveProperty('bgPoster');
+  });
 });
 
 describe('aplicarPlantilla · el fondo de quien la usa', () => {

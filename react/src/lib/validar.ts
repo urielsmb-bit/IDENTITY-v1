@@ -368,6 +368,9 @@ function esquema(ID: any) {
     sHeightPx: (v: any) => numOnulo(v, 0, 4000),
     bgType: (v: any) => deLista(v, ['none', 'color', 'gradient', 'image', 'video'], 'none'),
     bgValue: medio,
+    /* Una imagen, por el mismo embudo que todas: la escribe su dueno y
+       acaba en un atributo `poster` del perfil publico. */
+    bgPoster: medio,
     // De un panoramico extremo (4:1) a un vertical de movil (9:16). Fuera
     // de ese rango no es una proporcion de video, es un valor manipulado.
     bgRatio: (v: any) => numOnulo(v, 0.4, 4)

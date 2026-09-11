@@ -152,7 +152,7 @@ export async function borrarCuenta(confirmacion: string) {
   if (!supabase) throw new Error('sin backend');
   const s = await sesion();
   if (!s) throw new Error('Hay que entrar en la cuenta primero');
-  
+
   const res = await fetch(urlFuncion('borrar-cuenta'), {
     method: 'POST',
     headers: {
@@ -162,7 +162,7 @@ export async function borrarCuenta(confirmacion: string) {
     },
     body: JSON.stringify({ confirmacion })
   });
-  
+
   const j = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(j.error || 'No se pudo borrar la cuenta');
   return true;
@@ -171,7 +171,7 @@ export async function borrarCuenta(confirmacion: string) {
 export async function proveedores() {
   if (!supabase) return {};
   if (provsCache) return provsCache;
-  
+
   try {
     const res = await fetch(CONFIG.SUPABASE_URL + '/auth/v1/settings', {
       headers: { apikey: CONFIG.SUPABASE_KEY }
@@ -218,7 +218,7 @@ export async function cargarPerfil(username: string) {
       .select('id,username,apariencia,creado,actualizado')
       .eq('username', username)
       .maybeSingle();
-      
+
     if (error) throw traducir(error);
     return aPerfil(data);
   };
@@ -274,12 +274,12 @@ export async function cargarMio() {
   if (!supabase) return null;
   const u = await usuario();
   if (!u) return null;
-  
+
   const { data, error } = await supabase.from('perfiles')
     .select('id,username,apariencia,estado,creado,actualizado')
     .eq('dueno', u.id)
     .maybeSingle();
-    
+
   if (error) throw traducir(error);
   return aPerfil(data);
 }
@@ -295,17 +295,17 @@ export async function crearPerfil(p: any) {
   if (!supabase) throw new Error('sin backend');
   const u = await usuario();
   if (!u) throw new Error('Hay que entrar en la cuenta primero');
-  
+
   const fila = aFila(p);
   fila.dueno = u.id;
   fila.acepto_en = new Date().toISOString();
   fila.acepto_version = CONFIG.VERSION_LEGAL || null;
-  
+
   const { data, error } = await supabase.from('perfiles')
     .insert(fila)
     .select('id,username,apariencia,estado,creado,actualizado')
     .single();
-    
+
   if (error) throw traducir(error);
   return aPerfil(data);
 }
@@ -333,7 +333,7 @@ export async function guardarPerfil(p: any): Promise<any> {
     (e as any).code = 'sin-fila';
     throw e;
   }
-  
+
   const g2 = await escribir(data.actualizado);
   if (!g2) {
     const e2 = new Error('No se pudo guardar: el perfil cambia mas rapido de lo que se puede escribir.');
@@ -368,12 +368,12 @@ export async function descubrir(opciones: OpcionesDescubrir = {}) {
     nuevos: 'actualizado'
   };
   const orden = ORDENES[opciones.orden ?? ''] || 'puntuacion';
-  
+
   const { data, error } = await supabase.from('descubrir')
     .select('*')
     .order(orden, { ascending: false, nullsFirst: false })
     .limit(opciones.limite || 30);
-    
+
   if (error) throw traducir(error);
   return (data || []).map((f: any) => {
     const p = aPerfil(f);
@@ -764,6 +764,56 @@ export async function borrarMedioPorUrl(url: string) {
    huerfanos contaban para el tope de ocho archivos por cuenta, hasta
    que la subida empezaba a fallar con «Borra alguno antes de subir
    otro» y no habia ninguna forma de borrar nada. */
+/**
+ * Un trozo aleatorio para el nombre del archivo.
+ *
+ * Diez caracteres de un alfabeto de treinta y dos: 32^10, mas de mil
+ * billones. No es un identificador, no significa nada y no hace falta que
+ * sea unico en el mundo — solo dentro de tu propia carpeta, donde hay como
+ * mucho un puñado de archivos.
+ *
+ * Sin la `l`, la `o`, la `i` y la `u`: nadie va a teclear esto, pero si
+ * alguna vez aparece en un mensaje de error, `l1` y `lI` son la misma cosa
+ * a la vista.
+ */
+function trozoAleatorio(): string {
+  const ALFABETO = '0123456789abcdefghjkmnpqrstvwxyz';
+  const bytes = new Uint8Array(10);
+  crypto.getRandomValues(bytes);
+  let s = '';
+  for (const b of bytes) s += ALFABETO[b % ALFABETO.length];
+  return s;
+}
+
+/**
+ * Sube un archivo al cubo y devuelve su direccion publica.
+ *
+ * EL NOMBRE LLEVA UN TROZO AL AZAR, y de ahi sale todo lo demas.
+ *
+ * Antes la ruta era fija —`<uid>/avatar.webp`— y se escribia encima con
+ * `upsert`. Eso obliga a dos cosas malas y las dos se notaban:
+ *
+ *   · La direccion no cambia al cambiar la foto, asi que hay que romper la
+ *     cache a mano con un `?v=<hora>` pegado detras. Un parametro que
+ *     cambia cada vez es lo contrario de una cache: cada guardado inventa
+ *     una direccion nueva para un archivo que ademas no se podia guardar.
+ *   · Y `upsert` sobre un objeto que YA existe no refresca sus metadatos,
+ *     asi que el `cache-control` que se pedia aqui no llegaba nunca.
+ *     Medido contra produccion: todos los archivos volvian con
+ *     `Cache-Control: no-cache`, incluido el ultimo subido. Cada visitante
+ *     revalidaba cada avatar y cada fondo en cada carga.
+ *
+ * Con un trozo al azar, cada subida es un archivo NUEVO: la direccion
+ * distinta ES la prueba de que cambio. Entonces se puede decir la verdad —
+ * esto no va a cambiar nunca— y cachearlo un año. Es lo que hacen los que
+ * lo hacen bien: `cdn.bandi.lol/avatar/<usuario>/Lwj8Q3hN.webp`, un año,
+ * `immutable`.
+ *
+ * `anterior` es la direccion del archivo al que este sustituye, y AHORA ES
+ * OBLIGATORIA DE VERDAD: con nombre fijo, subir otro pisaba al de antes;
+ * con nombre al azar, el de antes se queda ahi hasta que alguien lo borre.
+ * Ese alguien es esta funcion.
+ */
 export async function subirMedio(
   blob: Blob,
   tipo: string,
@@ -773,19 +823,27 @@ export async function subirMedio(
   if (!supabase) throw new Error('sin backend');
   const u = await usuario();
   if (!u) throw new Error('Hay que entrar en la cuenta para subir archivos');
-  
+
   const cubo = CONFIG.BUCKET_MEDIA;
   const ext = String(extension || '').replace(/[^a-z0-9]/gi, '').slice(0, 5).toLowerCase() || 'bin';
   const nombre = String(tipo).replace(/[^a-z0-9-]/gi, '').slice(0, 24) || 'archivo';
-  const ruta = u.id + '/' + nombre + '.' + ext;
+  /* El tipo sigue delante —`avatar-k3m9p2xq7f.webp`— porque mirando el cubo
+     desde el panel de Supabase hay que poder saber que es cada cosa. */
+  const ruta = `${u.id}/${nombre}-${trozoAleatorio()}.${ext}`;
 
   const { error } = await supabase.storage.from(cubo).upload(ruta, blob, {
-    upsert: true,
+    /* Sin `upsert`: el nombre es nuevo cada vez, asi que no hay nada que
+       pisar. Y si por un imposible coincidiera, un error es mejor que
+       escribir en silencio encima de un archivo que ya estaba. */
     contentType: blob.type || undefined,
-    cacheControl: '3600'
+    /* Un año e inmutable. `storage-js` lo convierte en
+       `cache-control: max-age=31536000, immutable`. Lo segundo es lo que de
+       verdad ahorra: `immutable` le dice al navegador que no pregunte ni
+       siquiera al recargar. */
+    cacheControl: '31536000, immutable',
   });
   if (error) throw traducir(error);
-  
+
   /* El anterior se va DESPUES de que el nuevo este arriba: si se borrara
      antes y la subida fallara, el usuario se quedaria sin ninguno de los
      dos. Y si el borrado falla no se dice nada, porque el trabajo que
@@ -804,7 +862,9 @@ export async function subirMedio(
   const pub = supabase.storage.from(cubo).getPublicUrl(ruta);
   const url = pub?.data?.publicUrl;
   if (!url) throw new Error('No se pudo obtener la direccion del archivo');
-  return url + '?v=' + Date.now();
+  /* Sin `?v=`. Ya no hace falta —el nombre cambia solo— y dejarlo seria
+     tirar por la borda justo lo que acabamos de ganar. */
+  return url;
 }
 
 

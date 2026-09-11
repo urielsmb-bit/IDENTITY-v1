@@ -907,11 +907,22 @@ export default function DashboardPage() {
                   onSubido={(r) =>
                     update(
                       r.tipo === 'video'
-                        ? { bgType: 'video', bgValue: r.url, bgRatio: r.ratio }
-                        : { bgType: 'image', bgValue: r.url },
+                        ? {
+                            bgType: 'video',
+                            bgValue: r.url,
+                            bgRatio: r.ratio,
+                            /* Vacío si no se pudo sacar, y vacío TAMBIÉN hay
+                               que escribirlo: si no, la portada del vídeo
+                               anterior se quedaría puesta sobre el nuevo. */
+                            bgPoster: r.poster ?? '',
+                          }
+                        : /* Una imagen no tiene portada, y la del vídeo de
+                             antes no puede sobrevivirle. */
+                          { bgType: 'image', bgValue: r.url, bgPoster: '' },
                     )
                   }
                   anterior={profile.bgValue || ''}
+                  anteriorPoster={profile.bgPoster || ''}
                   onQuitar={() => {
                     /* El archivo se va del cubo, no solo del perfil. Antes
                        esto dejaba el fichero arriba para siempre, y como
@@ -924,7 +935,10 @@ export default function DashboardPage() {
                        vive en la cuenta de Vimeo de su dueño y borrarlo de
                        ahi es otra decision, no la de quitarlo del perfil. */
                     void backend.borrarMedioPorUrl(profile.bgValue || '');
-                    update({ bgType: 'none', bgValue: '' });
+                    /* Y su portada, que es otro archivo del cubo y contaba
+                       para el mismo tope de ocho por cuenta. */
+                    void backend.borrarMedioPorUrl(profile.bgPoster || '');
+                    update({ bgType: 'none', bgValue: '', bgPoster: '' });
                   }}
                 />
               }

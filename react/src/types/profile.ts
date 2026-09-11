@@ -289,6 +289,14 @@ export interface Profile {
    *  formato sale con franjas en vez de cubrir la pantalla. */
   bgRatio?: number;
 
+  /** El primer fotograma del video de fondo, como imagen.
+   *
+   *  Un video tarda en llegar aunque pese poco -hay que pedirlo, abrirlo y
+   *  decodificarlo- y mientras tanto detras de la tarjeta no hay nada. Esto
+   *  es lo que se ve en ese hueco: treinta kilobytes que el navegador pinta
+   *  enseguida y que el video sustituye cuando puede. */
+  bgPoster?: string;
+
   /** Alto del lienzo libre en px. Se toma del diseño al entrar en él: con
    *  un alto fijo, la tarjeta se recentraba sola y todo el conjunto daba un
    *  salto al cambiar de modo. */

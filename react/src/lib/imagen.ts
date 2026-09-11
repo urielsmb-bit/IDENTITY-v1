@@ -151,3 +151,106 @@ export async function prepararImagen(
     animado: false,
   };
 }
+
+/**
+ * El primer fotograma de un vídeo, listo para subir.
+ *
+ * Un fondo de vídeo tarda en llegar aunque pese poco: hay que pedirlo,
+ * abrirlo y decodificarlo. Mientras tanto, detrás de la tarjeta no hay
+ * nada — un rectángulo negro durante uno o dos segundos, que es justo el
+ * rato en el que alguien decide si se queda.
+ *
+ * Un `poster` lo tapa: es una imagen que el navegador pinta de inmediato y
+ * que el vídeo sustituye cuando puede. Treinta kilobytes contra varios
+ * megabytes. Es lo que hace bandi.lol y es la diferencia más barata que
+ * tiene un fondo de vídeo.
+ *
+ * Se saca aquí, en el navegador de quien lo sube, y no en un servidor: el
+ * archivo ya está en su máquina, y `<video>` + `<canvas>` es exactamente la
+ * misma maquinaria que ya usa `prepararImagen`.
+ *
+ * Devuelve null si el navegador no sabe decodificar ese vídeo. No es un
+ * error que enseñar: sin poster el fondo se sigue viendo, solo que un
+ * segundo más tarde.
+ */
+export async function posterDeVideo(
+  archivo: File,
+  lado = 1280,
+): Promise<ImagenLista | null> {
+  const url = URL.createObjectURL(archivo);
+  const v = document.createElement('video');
+  v.muted = true;
+  v.playsInline = true;
+  /* `preload="auto"` y no `metadata`: hace falta el pixel, no la ficha. */
+  v.preload = 'auto';
+  v.crossOrigin = 'anonymous';
+
+  try {
+    const listo = await new Promise<boolean>((resolver) => {
+      /* Un tope, porque esto es un adorno: si el vídeo tarda en dar su
+         primer fotograma, se sube sin poster y ya. Bloquear la subida de
+         un fondo por su miniatura sería cambiar lo importante por lo
+         accesorio. */
+      const rendirse = setTimeout(() => resolver(false), 5000);
+      const acabar = (ok: boolean) => {
+        clearTimeout(rendirse);
+        resolver(ok);
+      };
+      v.onerror = () => acabar(false);
+      /* No vale `loadeddata`: en algunos navegadores llega antes de que
+         haya un fotograma que dibujar, y el canvas sale en negro. `seeked`
+         garantiza que la imagen del instante pedido está puesta. */
+      v.onseeked = () => acabar(true);
+      v.onloadeddata = () => {
+        /* Un poco dentro, no el fotograma cero: muchos vídeos abren con un
+           fundido desde negro, y el primero literal es un rectángulo negro
+           — exactamente lo que el poster viene a evitar.
+
+           Un décimo del vídeo, con tope de un segundo: en uno de treinta
+           segundos eso es un segundo, y en uno de dos son doscientos
+           milisegundos. La primera versión de esto era `min(0.25, …)`, o
+           sea SIEMPRE un cuarto de segundo o menos, que en un vídeo que
+           abre con fundido sigue siendo casi negro. */
+        v.currentTime = Math.min(1, (v.duration || 1) / 10);
+      };
+      v.src = url;
+    });
+
+    if (!listo || !v.videoWidth || !v.videoHeight) return null;
+
+    const escala = Math.min(1, lado / Math.max(v.videoWidth, v.videoHeight));
+    const ancho = Math.max(1, Math.round(v.videoWidth * escala));
+    const alto = Math.max(1, Math.round(v.videoHeight * escala));
+
+    const lienzo = document.createElement('canvas');
+    lienzo.width = ancho;
+    lienzo.height = alto;
+    const ctx = lienzo.getContext('2d');
+    if (!ctx) return null;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(v, 0, 0, ancho, alto);
+
+    const { mime, extension } = formatoSalida();
+    /* Calidad más baja que una foto: esto se ve un segundo y debajo de la
+       tarjeta. Lo que importa es que pese poco y llegue antes que el vídeo. */
+    const blob = await new Promise<Blob | null>((resolver) => {
+      lienzo.toBlob(resolver, mime, 0.72);
+    });
+    if (!blob) return null;
+
+    return {
+      blob,
+      dataUri: await aDataUri(blob),
+      extension,
+      ancho,
+      alto,
+      pesoKB: Math.round(blob.size / 1024),
+      animado: false,
+    };
+  } catch {
+    return null;
+  } finally {
+    v.src = '';
+    URL.revokeObjectURL(url);
+  }
+}
