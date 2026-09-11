@@ -4,6 +4,7 @@ import { useMyProfile } from '@/hooks/useProfile';
 import { num } from '@/lib/utils';
 import * as backend from '@/lib/backend';
 import { hasBackend } from '@/lib/supabase';
+import { useTitulo } from '@/hooks/useTitulo';
 
 type Rango = 7 | 30 | 90;
 
@@ -56,6 +57,7 @@ function haceCuanto(iso: string): string {
  * desde el móvil veía ceros aunque tuviera mil visitas de verdad.
  */
 export default function AnalyticsPage() {
+  useTitulo('Analíticas · sharee');
   const [rango, setRango] = useState<Rango>(30);
   const { profile } = useMyProfile();
   const [datos, setDatos] = useState<Datos>(VACIO);

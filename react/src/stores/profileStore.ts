@@ -19,11 +19,14 @@ function write(key: string, value: unknown): void {
 }
 
 // ── Storage keys (matching original localStorage keys) ─────
+/* Los nombres llevan «identity» porque asi se llamaba esto antes, y se
+   quedan: son llaves de localStorage, no texto que lea nadie. Cambiarlas
+   por «sharee» le borraria a cada persona que ya use la pagina su perfil
+   local, sus favoritas y sus votos, que es un precio muy alto por una
+   palabra que no se ve. */
 const PROFILES_KEY = 'identity.profiles.v2';
-const STATS_KEY = 'identity.stats.v1';
 const MINE_KEY = 'identity.mine.v1';
 const VOTES_KEY = 'identity.votes.v1';
-const SEEN_KEY = 'identity.seen.v1';
 
 /** Lee el mapa de perfiles de localStorage saneando cada entrada: es
  *  contenido que el usuario puede editar a mano desde las herramientas del
@@ -40,16 +43,6 @@ function leerPerfiles(): Record<string, Profile> {
   return salida;
 }
 
-// ── Sync events ───────────────────────────────────────────
-export type SyncStatus = 'idle' | 'sending' | 'saved' | 'displaced' | 'conflict' | 'error';
-
-interface SyncEvent {
-  status: SyncStatus;
-  error?: Error;
-}
-
-type SyncListener = (event: SyncEvent) => void;
-
 // ── Profile Store ─────────────────────────────────────────
 interface ProfileState {
   /** In-memory profile map (the "espejo" / mirror) */
@@ -58,25 +51,10 @@ interface ProfileState {
   /** Username of the user's own active profile */
   mineName: string | null;
 
-  /** Sync status for cloud saves */
-  syncStatus: SyncStatus;
-
-  /** Sync listeners */
-  syncListeners: SyncListener[];
-
   // ── Actions ─────────────────────────────────────────────
-
-  /** Load profiles from localStorage into memory */
-  hydrate: () => void;
 
   /** Get a profile by username */
   get: (username: string) => Profile | undefined;
-
-  /** Check if a profile exists */
-  exists: (username: string) => boolean;
-
-  /** Get all profiles as an array */
-  list: () => Profile[];
 
   /** Save a profile locally and mark it pending cloud sync.
    *  Pass `prevUsername` when the handle changed so the entry is moved
@@ -98,37 +76,14 @@ interface ProfileState {
 
   /** Receive a profile from server (respects _sucio flag) */
   receiveFromServer: (profile: Profile) => void;
-
-  /** Record a view for analytics */
-  countView: (username: string) => void;
-
-  /** Subscribe to sync events */
-  onSync: (listener: SyncListener) => () => void;
-
-  /** Notify sync listeners */
-  notifySync: (status: SyncStatus, error?: Error) => void;
 }
 
 export const useProfileStore = create<ProfileState>((set, get) => ({
   profiles: leerPerfiles(),
   mineName: read<string | null>(MINE_KEY, null),
-  syncStatus: 'idle' as SyncStatus,
-  syncListeners: [],
-
-  hydrate: () => {
-    set({ profiles: leerPerfiles(), mineName: read<string | null>(MINE_KEY, null) });
-  },
 
   get: (username) => {
     return get().profiles[username];
-  },
-
-  exists: (username) => {
-    return username in get().profiles;
-  },
-
-  list: () => {
-    return Object.values(get().profiles);
   },
 
   save: (profile, prevUsername) => {
@@ -210,49 +165,6 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     });
   },
 
-  countView: (username) => {
-    const today = new Date().toISOString().slice(0, 10);
-    const seen = read<Record<string, string>>(SEEN_KEY, {});
-
-    // Only count once per day per profile
-    if (seen[username] === today) return;
-
-    seen[username] = today;
-    write(SEEN_KEY, seen);
-
-    // Increment view counter in stats
-    const stats = read<Record<string, Record<string, number>>>(STATS_KEY, {});
-    if (!stats[username]) stats[username] = {};
-    stats[username][today] = (stats[username][today] || 0) + 1;
-    write(STATS_KEY, stats);
-
-    // Update profile view count in memory
-    set((state) => {
-      const p = state.profiles[username];
-      if (!p) return state;
-      const next = {
-        ...state.profiles,
-        [username]: { ...p, views: (p.views || 0) + 1 },
-      };
-      return { profiles: next };
-    });
-  },
-
-  onSync: (listener) => {
-    set((state) => ({
-      syncListeners: [...state.syncListeners, listener],
-    }));
-    return () => {
-      set((state) => ({
-        syncListeners: state.syncListeners.filter((l) => l !== listener),
-      }));
-    };
-  },
-
-  notifySync: (status, error) => {
-    set({ syncStatus: status });
-    get().syncListeners.forEach((fn) => fn({ status, error }));
-  },
 }));
 
 // ── Vote helpers ──────────────────────────────────────────
@@ -267,18 +179,13 @@ export function setMyVote(username: string, score: number): void {
   write(VOTES_KEY, votes);
 }
 
-// ── Analytics helpers ─────────────────────────────────────
-export function getStats(username: string, days = 30): Record<string, number> {
-  const stats = read<Record<string, Record<string, number>>>(STATS_KEY, {});
-  const userStats = stats[username] || {};
-
-  const now = new Date();
-  const result: Record<string, number> = {};
-  for (let i = 0; i < days; i++) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
-    result[key] = userStats[key] || 0;
-  }
-  return result;
-}
+/* Aqui vivia un contador de visitas de andar por casa: `countView` apuntaba
+   en localStorage cada perfil que mirabas y `getStats` lo leia. Las
+   analiticas pasaron al servidor hace tiempo —contar visitas en el
+   navegador de quien mira significaba que desde el movil veias ceros— y al
+   mudarse se llevaron la lectura pero no la escritura. Lo que quedaba era
+   una lista que crecia sola en el disco de cada visitante, una fila por
+   cada perfil visitado y por cada dia, que no leia ni iba a leer nadie.
+   Las visitas de verdad las cuenta `registrar-vista`, que es el unico
+   sitio donde se ve la IP y por tanto el unico que puede distinguir a una
+   persona de otra. */

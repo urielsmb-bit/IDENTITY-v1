@@ -9,6 +9,7 @@ import { slug, num } from '@/lib/utils';
 import type { Profile } from '@/types';
 import * as backend from '@/lib/backend';
 import { hasBackend } from '@/lib/supabase';
+import { useTitulo } from '@/hooks/useTitulo';
 
 /**
  * Lo que hace sharee. Todo esto existe y funciona hoy: no hay una sola
@@ -282,6 +283,9 @@ const INITIAL_DEMO: Profile = {
 };
 
 export default function LandingPage() {
+  /* El de la casa. Sin esto, volver a la portada desde un perfil dejaba
+     la pestana llamandose como esa persona. */
+  useTitulo(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [claimName, setClaimName] = useState('');

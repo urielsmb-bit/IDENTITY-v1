@@ -435,25 +435,39 @@ export async function insigniasDe(username: string) {
   }
 
   if (!id) return metricas;
+  metricas.concedidas = await concedidasDe(id);
+  return metricas;
+}
 
+/**
+ * Las insignias que el equipo ha concedido a un perfil, por su id.
+ *
+ * Es la mitad de `insigniasDe` que de verdad hace falta casi siempre. La
+ * otra mitad —vistas, nota, numero de notas— viene ya pegada al perfil que
+ * se acaba de cargar: `cargarPerfil` la pide, `descubrir` la pide, y la fila
+ * que el servidor deja escrita en el HTML tambien. Aun asi se volvia a
+ * preguntar por ella, en una consulta aparte y ANTES de esta, solo para
+ * averiguar un id que quien llama ya tenia en la mano.
+ *
+ * O sea: cada visita a un perfil costaba tres viajes al servidor en fila
+ * —el perfil, las cifras otra vez, las insignias— y el segundo no traia
+ * nada nuevo. Ahora son dos, y las insignias salen un viaje antes.
+ */
+export async function concedidasDe(perfilId: string): Promise<string[]> {
+  if (!supabase || !perfilId) return [];
   try {
-    const { data, error } = await client.from('insignias_de_perfil')
+    const { data, error } = await supabase.from('insignias_de_perfil')
       .select('insignia')
-      .eq('perfil_id', id);
+      .eq('perfil_id', perfilId);
     // 42P01 = la vista todavia no existe. Es el estado normal hasta que se
     // aplique 0007_insignias.sql: no es un error que ensenar a nadie, y
     // mientras tanto solo faltan las concedidas a mano y «verificado».
     // Las de antiguedad, visitas y notas se calculan igual.
-    if (!error && data) {
-      metricas.concedidas = data
-        .map((f: any) => String(f.insignia))
-        .filter(Boolean);
-    }
+    if (error || !data) return [];
+    return data.map((f: any) => String(f.insignia)).filter(Boolean);
   } catch {
-    /* idem */
+    return [];
   }
-
-  return metricas;
 }
 
 /**

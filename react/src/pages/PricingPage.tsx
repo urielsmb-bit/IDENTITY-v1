@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTitulo } from '@/hooks/useTitulo';
 
 const PLANS = [
   {
@@ -56,6 +57,7 @@ const PLANS = [
 ];
 
 export default function PricingPage() {
+  useTitulo('Planes · sharee');
   return (
     <div className="pricing-page wrap" style={{ paddingTop: '40px', paddingBottom: '80px' }}>
       <header style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 48px' }}>

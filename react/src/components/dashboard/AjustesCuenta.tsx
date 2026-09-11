@@ -9,6 +9,7 @@ import { useAuth, type ProveedorEnlazable } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import * as backend from '@/lib/backend';
 import { hasBackend } from '@/lib/supabase';
+import { useProfileStore } from '@/stores/profileStore';
 
 /* ------------------------------------------------------------------ */
 /*  Piezas pequeñas                                                    */
@@ -422,6 +423,19 @@ export function AjustesCuenta({
     setBorrando(true);
     try {
       await backend.borrarCuenta(escrito.trim());
+      /* Y la copia de este navegador.
+
+         El servidor ya borro la cuenta entera; aqui quedaba el espejo
+         local, que es una copia completa del perfil —biografia, enlaces,
+         la direccion del avatar— escrita en el disco de esta maquina. La
+         politica de privacidad dice «puedes borrar tu cuenta, y con ella
+         se va todo», y en un ordenador compartido «todo» tiene que
+         incluir esto.
+
+         Ademas el espejo es de donde sale un perfil cuando el servidor no
+         contesta: sin quitarlo, el dia que otra persona se quedara con ese
+         nombre, esta maquina podia enseñar el perfil del anterior. */
+      useProfileStore.getState().remove(profile.username);
       await signOut();
       navegar('/');
       toast('Tu cuenta se borró. Gracias por haber estado.');
@@ -443,7 +457,11 @@ export function AjustesCuenta({
     a.href = url;
     a.download = `sharee-${profile.username || 'perfil'}.json`;
     a.click();
-    URL.revokeObjectURL(url);
+    /* La direccion se suelta en el siguiente turno, no aqui mismo: la
+       descarga empieza DESPUES del clic, y soltarla en la misma linea la
+       invalida antes de que arranque. En Chrome cuela; en Firefox el
+       archivo se quedaba a medias o no bajaba. */
+    setTimeout(() => URL.revokeObjectURL(url), 0);
     toast('Perfil descargado en JSON');
   };
 

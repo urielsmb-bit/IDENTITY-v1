@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
-import type { Profile } from '@/types/profile';
-import { estadoInsignias, type EstadoInsignia } from '@/lib/insignias';
+import { estadoInsignias, type DatosInsignias, type EstadoInsignia } from '@/lib/insignias';
 import { COLOR_RAREZA, NOMBRE_RAREZA } from '@/data/badges';
-import { useInsignias } from '@/hooks/useInsignias';
 
 /** Por qué una insignia todavía no puede darse a nadie. */
 const BLOQUEO: Record<string, string> = {
@@ -24,12 +22,17 @@ const BLOQUEO: Record<string, string> = {
  * falta para la siguiente**. Una insignia que no sabes que existe no te
  * mueve a nada; una con la barra a medias, sí.
  */
-export function PanelInsignias({ profile }: { profile: Profile }) {
-  /* De un solo sitio, el mismo que usa la vista previa del editor. Antes
-     cada uno lo pedia por su cuenta y no daban lo mismo: este veia
+export function PanelInsignias({ datos }: { datos: DatosInsignias }) {
+  /* Los datos llegan de fuera, ya pedidos.
+
+     De un solo sitio, el mismo que usa la vista previa del editor: antes
+     cada uno lo pedia por su cuenta y no daban lo mismo —este veia
      «Verificado» porque preguntaba al servidor, y la previa no, asi que
-     una decia «llevas 1» y la otra «todavia ninguna». */
-  const { datos } = useInsignias(profile);
+     una decia «llevas 1» y la otra «todavia ninguna»—. Eso se arreglo
+     poniendo a los dos a llamar al mismo gancho, pero cada uno seguia
+     llamandolo por separado: el panel montaba y repetia entera la consulta
+     que el editor ya habia hecho, con las mismas dos vueltas al servidor y
+     la misma respuesta. Pedirlo una vez y repartirlo es lo que faltaba. */
 
   /* Orden: primero las que llevas, luego las que están más cerca, y al final
      las que hoy no puede tener nadie. Así lo alcanzable queda arriba. */

@@ -8,6 +8,7 @@ import * as backend from '@/lib/backend';
 import * as local from '@/lib/plantillasLocales';
 import { aplicarPlantilla } from '@/lib/plantilla';
 import { safeMedia } from '@/lib/utils';
+import { useTitulo } from '@/hooks/useTitulo';
 
 /**
  * Probar una plantilla a pantalla completa.
@@ -36,6 +37,7 @@ export default function ProbarPlantillaPage() {
 
   const [plantilla, setPlantilla] = useState<backend.PlantillaPublica | null>(null);
   const [estado, setEstado] = useState<'cargando' | 'lista' | 'nada'>('cargando');
+  useTitulo(plantilla?.nombre ? `${plantilla.nombre} · Plantillas · sharee` : 'Plantillas · sharee');
   const mio = useProfileStore((s) => s.mine());
 
   const cargar = useCallback(async () => {

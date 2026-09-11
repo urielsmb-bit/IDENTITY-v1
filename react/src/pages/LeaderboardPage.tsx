@@ -5,6 +5,7 @@ import { useDiscoverProfiles } from '@/hooks/useProfile';
 import { num } from '@/lib/utils';
 import { avatarDe } from '@/lib/avatar';
 import type { Profile } from '@/types';
+import { useTitulo } from '@/hooks/useTitulo';
 
 /* Visitas y nota, y nada mas. «Nivel» y «likes» eran campos que nadie
    incrementaba —todo el mundo salia con Nv 1 y 0 likes—, asi que ordenar
@@ -24,6 +25,7 @@ type Metric = 'views' | 'rating';
  * «Descubrir», que enseñaba lo mismo sin orden ninguno.
  */
 export default function LeaderboardPage() {
+  useTitulo('Top · sharee');
   const [metric, setMetric] = useState<Metric>('views');
   const [busca, setBusca] = useState('');
 

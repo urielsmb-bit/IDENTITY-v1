@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { CONFIG } from '@/config';
+import { useTitulo } from '@/hooks/useTitulo';
 
 type Modo = 'login' | 'registro' | 'olvide';
 
@@ -25,6 +26,24 @@ const TEXTOS: Record<Modo, { t: string; d: string; enviar: string }> = {
     enviar: 'Enviar enlace',
   },
 };
+
+/**
+ * A donde volver despues de entrar.
+ *
+ * Sale de la barra de direcciones, asi que se trata como lo que es: texto
+ * que escribe cualquiera. Solo se admite una ruta de ESTA pagina —empieza
+ * por una barra y no por dos— porque `//otro.sitio` es una direccion
+ * absoluta disfrazada, y un «vuelve aqui» que acepta direcciones de fuera
+ * es un redirector abierto con el que se montan las paginas de phishing:
+ * el enlace lo firma nuestro dominio y termina en el suyo.
+ *
+ * El camino de Discord y Google ya lo comprobaba; el del correo no. El
+ * mismo valor, filtrado en una rama y no en la otra.
+ */
+function rutaSegura(v: string | null): string {
+  const s = String(v ?? '');
+  return s.startsWith('/') && !s.startsWith('//') ? s : '/dashboard';
+}
 
 /** El modo viaja en la URL: así se puede enlazar directo al registro. */
 const MODOS: Record<string, Modo> = {
@@ -73,12 +92,13 @@ const ICO_GOOGLE = (
 
 export default function AuthPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const volverA = searchParams.get('volver') || '/dashboard';
+  const volverA = rutaSegura(searchParams.get('volver'));
   const navigate = useNavigate();
   const { toast } = useToast();
   const { session, user, signIn, signUp, signInWithProvider, resetPassword, signOut } = useAuth();
 
   const [modo, setModo] = useState<Modo>(MODOS[searchParams.get('modo') ?? ''] ?? 'login');
+  useTitulo(`${TEXTOS[modo].t} · sharee`);
   const [correo, setCorreo] = useState('');
   const [clave, setClave] = useState('');
   const [verClave, setVerClave] = useState(false);
@@ -136,9 +156,22 @@ export default function AuthPage() {
         toast('¡Bienvenido de nuevo!');
         navigate(volverA);
       } else if (modo === 'registro') {
-        await signUp(correo, clave);
-        toast('Cuenta creada. Revisa tu correo para confirmarla.');
-        navigate(volverA);
+        const { session: recien } = await signUp(correo, clave);
+        /* Con la confirmacion de correo encendida, `signUp` NO deja sesion:
+           hay que pulsar el enlace primero. Se mandaba igual al panel, que
+           es una ruta protegida, asi que rebotaba al formulario de entrar —
+           y lo ultimo que veia quien acababa de registrarse era la pantalla
+           de la que venia, como si no hubiera pasado nada. */
+        if (recien) {
+          toast('Cuenta creada. Vamos a tu panel.');
+          navigate(volverA);
+        } else {
+          setAviso(
+            `Cuenta creada. Te hemos enviado un enlace a ${correo} para confirmarla; ` +
+              'hasta que lo pulses no se puede entrar. Mira también el spam.',
+          );
+          setClave('');
+        }
       } else {
         await resetPassword(correo);
         // Se queda en la página en vez de saltar a login: si no llega el
@@ -282,7 +315,16 @@ export default function AuthPage() {
                     aria-label={verClave ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                     aria-pressed={verClave}
                   >
-                    {verClave ? '🙈' : '👁'}
+                    {/* De trazo y no un emoji: un emoji lo dibuja el sistema, asi
+                        que cambia de forma en cada aparato y no hereda el color.
+                        Es el mismo ojo que ya usa Ajustes de cuenta. */}
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+                         stroke="currentColor" strokeWidth="1.7"
+                         strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" />
+                      <circle cx="12" cy="12" r="3" />
+                      {verClave && <path d="m4 4 16 16" />}
+                    </svg>
                   </button>
                 </div>
                 {modo === 'registro' && (
@@ -301,8 +343,15 @@ export default function AuthPage() {
                   onChange={(e) => setAcepta(e.target.checked)}
                 />
                 <span>
-                  Acepto los <Link to="/terminos" target="_blank">Términos de servicio</Link> y la{' '}
-                  <Link to="/privacidad" target="_blank">Política de privacidad</Link> (v
+                  Acepto los{' '}
+                  <Link to="/terminos" target="_blank" rel="noopener noreferrer">
+                    Términos de servicio
+                  </Link>{' '}
+                  y la{' '}
+                  <Link to="/privacidad" target="_blank" rel="noopener noreferrer">
+                    Política de privacidad
+                  </Link>{' '}
+                  (v
                   {CONFIG.VERSION_LEGAL}).
                 </span>
               </label>

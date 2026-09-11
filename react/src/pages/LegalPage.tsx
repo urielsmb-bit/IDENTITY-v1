@@ -1,5 +1,6 @@
 import { useLocation, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { useTitulo } from '@/hooks/useTitulo';
 
 const DOCS: Record<string, { file: string; title: string }> = {
   '/terminos': { file: 'sharee_TERMINOS.md', title: 'Términos del servicio' },
@@ -54,6 +55,9 @@ function parseMarkdownToHtml(md: string): string {
 export default function LegalPage() {
   const location = useLocation();
   const docInfo = DOCS[location.pathname] || DOCS['/terminos']!;
+  /* Los tres documentos se llamaban igual en la pestana. Con dos abiertos
+     para compararlos no habia forma de saber cual era cual. */
+  useTitulo(`${docInfo.title} · sharee`);
   const [html, setHtml] = useState<string>('');
   const [loading, setLoading] = useState(true);
 

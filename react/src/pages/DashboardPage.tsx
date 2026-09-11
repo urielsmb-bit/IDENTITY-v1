@@ -46,6 +46,7 @@ import { Overlay } from '@/components/ui/Overlay';
 import { safeMedia } from '@/lib/utils';
 import * as backend from '@/lib/backend';
 import { hasBackend } from '@/lib/supabase';
+import { useTitulo } from '@/hooks/useTitulo';
 import type { Profile, BlockPos, SocialLink } from '@/types';
 
 
@@ -377,6 +378,10 @@ export default function DashboardPage() {
    */
   const [vistaMovil, setVistaMovil] = useState<'editar' | 'previa'>('editar');
 
+  /* Con el nombre puesto. Editar el perfil y mirarlo son dos pestanas que
+     se tienen abiertas a la vez, y las dos se llamaban igual. */
+  useTitulo(profile?.username ? `Panel · @${profile.username}` : 'Panel · sharee');
+
   /* Las insignias de verdad, para que la vista previa enseñe lo mismo que
      el panel de Badges. Sin esto la previa las deducia de los numeros del
      perfil y se perdia las que concede el servidor —«Verificado» entre
@@ -525,12 +530,30 @@ export default function DashboardPage() {
       toast('Ponle un nombre de usuario antes de publicar', true);
       return;
     }
+    const destino = `/${profile.username}`;
+
+    /* La pestaña se pide AHORA, dentro del clic, aunque todavía no haya
+       nada que enseñar en ella.
+
+       Un navegador solo abre pestañas mientras dura el gesto que las pidió.
+       Aquí primero se guardaba —una ida y vuelta a la red— y se abría
+       después, o sea fuera del gesto: Safari lo bloquea sin decir nada, así
+       que en un iPhone «ver mi perfil» no hacía absolutamente nada. Se abre
+       en blanco y se le manda la dirección cuando el guardado termina.
+
+       Sin `opener`: la pestaña nueva no debe poder tocar esta, aunque el
+       destino sea nuestro. Es lo que daba `noopener` en la versión de
+       antes, y aquí se pone a mano porque la pestaña ya está abierta. */
+    const ventana = dirty ? window.open('', '_blank') : null;
+    if (ventana) ventana.opener = null;
+
     setPublicando(true);
     try {
       if (dirty) await handleSave();
-      // La pestaña nueva sin acceso a la que la abrió: es lo correcto aunque
-      // el destino sea nuestro, y evita el aviso de los analizadores.
-      window.open(`/${profile.username}`, '_blank', 'noopener,noreferrer');
+      if (ventana && !ventana.closed) ventana.location.replace(destino);
+      /* Sin pestaña —la bloqueó el navegador, o no había nada que
+         guardar— se abre como siempre. */
+      else window.open(destino, '_blank', 'noopener,noreferrer');
     } finally {
       setPublicando(false);
     }
@@ -1509,7 +1532,7 @@ export default function DashboardPage() {
         )}
 
         {/* SECTION: Badges */}
-        {section === 'badges' && <PanelInsignias profile={profile} />}
+        {section === 'badges' && <PanelInsignias datos={datosInsignias} />}
 
         {/* SECTION: Settings */}
         {section === 'settings' && (

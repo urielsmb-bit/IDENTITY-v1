@@ -1,38 +1,56 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useUIStore } from '@/stores/uiStore';
 
 /**
- * Toast notification overlay — mirrors the original `<div id="toast">`.
- * Displays messages for 2.6s with optional warning style.
+ * El aviso flotante de abajo.
+ *
+ * Dos cosas que estaban rotas, y las dos en silencio:
+ *
+ * 1. NO SE VEÍA. La hoja de estilos saca el aviso con `.toast.on`, y aquí
+ *    se ponía `toast--visible`, que no existe en ninguna hoja. O sea que
+ *    el aviso se pintaba con el `transform:translate(-50%,140%)` de
+ *    reposo: en una ventana de 800 px de alto quedaba de 794 a 838, seis
+ *    píxeles asomando por el borde de abajo. Los veinticuatro sitios que
+ *    avisan de algo —«Guardado», «No se pudo guardar en la nube»,
+ *    «Sesión cerrada»— llevaban desde entonces hablando solos.
+ *
+ * 2. NO SE ANUNCIABA. Un `aria-live` solo lo vigila un lector de pantalla
+ *    si ya estaba en la página ANTES de que cambie su contenido. Esto se
+ *    montaba con el mensaje ya dentro y se desmontaba al irse, así que
+ *    para un lector de pantalla no cambiaba nada: aparecía y desaparecía
+ *    una caja entera. La caja se queda siempre; lo que cambia es el texto.
+ *
+ * Y de paso, la animación de entrada. Un elemento recién insertado no
+ * transiciona —no hay estado anterior desde el que salir— así que el aviso
+ * habría aparecido de golpe. Estando ya puesto, lo que se enciende es la
+ * clase, y ahí sí desliza.
  */
 export function Toast() {
   const toast = useUIStore((s) => s.toast);
   const clearToast = useUIStore((s) => s.clearToast);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  /* El último mensaje se guarda aquí y NO se borra al esconderlo: mientras
+     el aviso se desliza hacia abajo se tiene que seguir leyendo. Vaciarlo
+     a la vez que se va dejaría medio segundo de caja vacía saliendo. */
+  const [texto, setTexto] = useState('');
+  const [aviso, setAviso] = useState(false);
 
   useEffect(() => {
     if (!toast) return;
-
-    // Auto-dismiss after 2.6s
-    timerRef.current = setTimeout(() => {
-      clearToast();
-    }, 2600);
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
+    setTexto(toast.message);
+    setAviso(!!toast.warn);
+    const t = setTimeout(clearToast, 2600);
+    return () => clearTimeout(t);
   }, [toast, clearToast]);
-
-  if (!toast) return null;
 
   return (
     <div
-      className={`toast${toast.warn ? ' toast--warn' : ''} toast--visible`}
+      className={`toast${aviso ? ' toast--warn' : ''}${toast ? ' on' : ''}`}
       id="toast"
       role="status"
       aria-live="polite"
     >
-      {toast.message}
+      {texto}
     </div>
   );
 }

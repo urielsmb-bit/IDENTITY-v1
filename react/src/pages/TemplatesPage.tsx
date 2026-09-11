@@ -8,6 +8,7 @@ import * as backend from '@/lib/backend';
 import { aplicarPlantilla } from '@/lib/plantilla';
 import * as local from '@/lib/plantillasLocales';
 import { num, safeMedia } from '@/lib/utils';
+import { useTitulo } from '@/hooks/useTitulo';
 
 /**
  * Biblioteca de plantillas.
@@ -40,6 +41,7 @@ const ORDENES = [
 type Orden = (typeof ORDENES)[number]['id'];
 
 export default function TemplatesPage() {
+  useTitulo('Plantillas · sharee');
   const navigate = useNavigate();
   const { toast } = useToast();
 
