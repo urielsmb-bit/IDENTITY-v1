@@ -106,6 +106,59 @@ const NOMBRE_ESTADO: Record<string, string> = {
  */
 const RANCIA_MS = 5 * 60 * 1000;
 
+/**
+ * Lo que se espera entre reintentos, en ms.
+ *
+ * ──────────────────────────────────────────────────────────────────────
+ * POR QUE HAY REINTENTOS
+ * ──────────────────────────────────────────────────────────────────────
+ *
+ * Una peticion puede morir sin que nadie haya hecho nada mal. Se vio en
+ * vivo: el navegador dijo «bloqueada por CORS, falta
+ * Access-Control-Allow-Origin», y el servidor mandaba esa cabecera
+ * perfectamente —comprobado con `curl`, con el vuelo previo, y con 130
+ * peticiones seguidas desde el mismo origen, las 130 en 200—. Lo que
+ * habia pasado es que la conexion se corto antes de llegar respuesta, y
+ * Chrome eso lo cuenta como fallo de CORS porque no tiene cabeceras que
+ * mirar. El mensaje acusa al servidor de algo que no ha hecho.
+ *
+ * Perder un paquete de vez en cuando es normal y no se puede arreglar
+ * desde aqui. Lo que si estaba en nuestra mano es lo que venia despues:
+ * al primer fallo esto se rendia y el siguiente intento era el del reloj
+ * de sesenta segundos. Un corte de un instante dejaba el widget en «sin
+ * conexion» durante un minuto entero, justo al abrir el perfil.
+ *
+ * Dos reintentos cortos tapan eso. No arreglan una caida de verdad —si
+ * no hay red, los tres fallan y se dice que no hay conexion, como antes—
+ * pero un tropiezo deja de costar un minuto.
+ *
+ * Las esperas son desiguales a proposito: la primera es casi inmediata,
+ * porque la mayoria de los cortes se arreglan solos al abrir otra
+ * conexion; la segunda da margen a algo que dure un poco mas.
+ */
+const PAUSAS_REINTENTO = [1200, 3500];
+
+/**
+ * Pide algo, y lo reintenta si el fallo puede salir distinto la proxima vez.
+ *
+ * Un 4xx NO se reintenta: es una respuesta, no un tropiezo. Si la tabla
+ * niega la lectura, insistir tres veces da tres negativas iguales y
+ * retrasa el aviso. Se reintenta lo que se cae —la red— y lo que el
+ * servidor mismo marca como pasajero, que son los 5xx.
+ */
+export async function conReintento<T>(pedir: () => Promise<T>): Promise<T> {
+  for (let i = 0; ; i++) {
+    try {
+      return await pedir();
+    } catch (e) {
+      const estado = (e as { estado?: number } | null)?.estado;
+      if (typeof estado === 'number' && estado < 500) throw e;
+      if (i >= PAUSAS_REINTENTO.length) throw e;
+      await new Promise((r) => setTimeout(r, PAUSAS_REINTENTO[i]));
+    }
+  }
+}
+
 export function useDiscord(id: string | undefined, activo = true) {
   const [presencia, setPresencia] = useState<PresenciaDiscord | null>(null);
   const [error, setError] = useState('');
@@ -131,7 +184,7 @@ export function useDiscord(id: string | undefined, activo = true) {
       let data: any = null;
       let fallo: unknown = null;
       try {
-        data = await presenciaDe(id);
+        data = await conReintento(() => presenciaDe(id));
       } catch (e) {
         fallo = e;
       }
