@@ -95,12 +95,31 @@ DirectoryIndex index.html
   </FilesMatch>
 </IfModule>
 
-# ---- 5 · comprimir ------------------------------------------------
+# ---- 5 · los tipos que el servidor no conoce -----------------------
+# El Apache de aqui no sabe que es un `.avif` y lo servia como
+# `text/plain`. Las imagenes se siguen viendo —el navegador las reconoce
+# por su contenido, y `nosniff` solo frena a guiones y hojas de estilo,
+# no a imagenes— asi que esto no rompia nada a la vista. Se arregla por
+# dos motivos que si se notan:
+#
+#   · la compresion de aqui abajo incluye `text/plain`, o sea que cada
+#     AVIF se gzipeaba. Un AVIF ya viene comprimido: es gastar procesador
+#     en los dos lados para acabar con un fichero un pelin mas grande;
+#   · un tipo mal puesto es una bomba de relojeria. Hoy los navegadores
+#     perdonan con las imagenes; nadie ha prometido que manana tambien.
+<IfModule mod_mime.c>
+  AddType image/avif .avif
+  AddType image/avif-sequence .avifs
+</IfModule>
+
+# ---- 6 · comprimir ------------------------------------------------
+# Solo lo que de verdad encoge. Aqui NO van imagenes ni fuentes: ya
+# vienen comprimidas, y pasarlas otra vez cuesta y no baja nada.
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/css text/plain application/javascript application/json image/svg+xml
 </IfModule>
 
-# ---- 6 · la configuracion no se sirve ------------------------------
+# ---- 7 · la configuracion no se sirve ------------------------------
 # `config.php` lleva la clave anonima —la misma que ya va dentro del
 # JavaScript, o sea que no es un secreto— pero servir un `.php` como texto
 # por un fallo de configuracion es la clase de accidente que conviene
