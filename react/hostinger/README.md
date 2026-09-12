@@ -72,11 +72,24 @@ Vimeo limita por dominio dónde se pueden incrustar sus vídeos. El dominio
 nuevo no está en esa lista, así que los fondos de vídeo salen en negro.
 
 ```bash
-npx supabase secrets set VIMEO_DOMINIOS="TU-DOMINIO,localhost"
+npx supabase secrets set VIMEO_DOMINIOS="sharee.fun,www.sharee.fun,localhost"
 ```
 
-Y en la propia cuenta de Vimeo hay que añadir el dominio a los permitidos de
-cada vídeo o de la cuenta.
+Eso vale para los que se suban A PARTIR DE AHORA. La lista blanca se escribe
+en cada vídeo al subirlo, así que cambiar la variable no toca los que ya
+están: se quedan con la del dominio anterior, y una lista blanca que no te
+incluye devuelve lo mismo que una vacía —el reproductor en negro con un «Lo
+sentimos» de Vimeo—. Desde fuera parece que se ha roto el perfil.
+
+Para alcanzarlos, una pasada de una vez. El token va por el ENTORNO y no por
+los argumentos: lo que se pasa por la línea de órdenes se ve en la lista de
+procesos y se queda en el historial del intérprete.
+
+```bash
+node scripts/vimeo-dominios.mjs sharee.fun www.sharee.fun
+```
+
+Eso sólo mira y enseña la lista. Cuando cuadre, se repite con `--aplicar`.
 
 ## 4 · Comprobar que quedó bien
 

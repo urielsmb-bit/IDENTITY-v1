@@ -81,7 +81,7 @@ Y la de Vimeo, sólo si vas a usar fondos de vídeo:
 
 ```bash
 npx supabase secrets set VIMEO_TOKEN="tu-token-de-vimeo"
-npx supabase secrets set VIMEO_DOMINIOS="TU-APP.vercel.app,localhost"
+npx supabase secrets set VIMEO_DOMINIOS="sharee.fun,www.sharee.fun,localhost"
 ```
 
 El token sale de `developer.vimeo.com` → *My Apps* → tu app → *Authentication*,
@@ -153,7 +153,7 @@ Si aparece `ORIGENES_PERMITIDOS sin configurar`, es el paso 2.
 | `ORIGENES_PERMITIDOS` | **Tú** | La lista blanca de CORS |
 | `BUCKET_MEDIA` | Tú, opcional | Nombre del cubo (por defecto `media`) |
 | `VIMEO_TOKEN` | **Tú** | Subir fondos de vídeo a Vimeo |
-| `VIMEO_DOMINIOS` | Tú, opcional | Dónde se puede incrustar el vídeo |
+| `VIMEO_DOMINIOS` | **Tú** | Dónde se puede incrustar el vídeo. Opcional sólo de nombre: sin ella la lista blanca queda vacía, y una lista blanca vacía bloquea todos los dominios |
 
 **La clave de servicio la inyecta Supabase en las funciones y no aparece en
 ningún archivo del repositorio.** Nunca la copies a `js/config.js`.
