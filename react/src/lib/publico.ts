@@ -84,6 +84,50 @@ async function leer(vista: string, consulta: string, señal?: AbortSignal): Prom
   return Array.isArray(datos) ? datos : [];
 }
 
+/** Los números que enseña la portada. */
+export interface Cifras {
+  perfiles: number;
+  visitas: number;
+  plantillas: number;
+  usosPlantillas: number;
+  nuevosSemana: number;
+}
+
+/**
+ * Las cifras de la portada, sin el SDK.
+ *
+ * La portada las pedía por `lib/backend`, y eso arrastraba el cliente de
+ * Supabase entero —215 kB— a la PRIMERA página que ve cualquiera, por una
+ * consulta a una vista pública que no necesita sesión ni tiempo real ni
+ * nada de lo que ese cliente trae dentro.
+ *
+ * Es el mismo camino que ya se cortó dos veces —`Navbar` por `lib/admin`,
+ * `ProfileView` por `useDiscord`— y que se había quedado aquí.
+ *
+ * Cero si algo falla: en la portada estos números son un adorno, y que se
+ * caiga la portada entera por un adorno sería cambiar lo importante por lo
+ * accesorio.
+ */
+export async function cifrasPublicas(señal?: AbortSignal): Promise<Cifras> {
+  const cero: Cifras = {
+    perfiles: 0, visitas: 0, plantillas: 0, usosPlantillas: 0, nuevosSemana: 0,
+  };
+  if (!hayBackend()) return cero;
+  try {
+    const filas = await leer('cifras_publicas', 'select=*&limit=1', señal);
+    const d = (filas[0] ?? {}) as Record<string, unknown>;
+    return {
+      perfiles: Number(d.perfiles) || 0,
+      visitas: Number(d.visitas) || 0,
+      plantillas: Number(d.plantillas) || 0,
+      usosPlantillas: Number(d.usos_plantillas) || 0,
+      nuevosSemana: Number(d.nuevos_semana) || 0,
+    };
+  } catch {
+    return cero;
+  }
+}
+
 /** La fila del servidor convertida en perfil, saneada. */
 export function aPerfil(fila: any): any {
   if (!fila) return null;

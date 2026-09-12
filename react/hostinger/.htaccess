@@ -21,6 +21,18 @@ DirectoryIndex index.html
   # ejecuta JavaScript, asi que una redireccion hecha en React no la ve.
   RewriteRule ^u/([A-Za-z0-9_.-]{1,32})/?$ /$1 [R=301,L]
 
+  # ---- un solo dominio ---------------------------------------------
+  # `www.sharee.fun` respondia 200 por su cuenta, o sea DOS sitios con el
+  # mismo contenido: los buscadores reparten la autoridad entre los dos y
+  # las visitas se cuentan en dos sitios. Y la lista blanca de Vimeo y la
+  # de CORS hay que mantenerla por duplicado.
+  #
+  # Se manda al dominio sin `www`, que es el que esta en los enlaces que
+  # comparte la gente. 301 y no 302: es permanente, y un 302 no traslada
+  # nada de lo ganado.
+  RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+
   # ---- 2 · el perfil pasa por PHP ----------------------------------
   # Un solo segmento que no sea una ruta de la aplicacion ni un fichero de
   # verdad es un nombre de usuario. Es lo unico que NO puede resolver el

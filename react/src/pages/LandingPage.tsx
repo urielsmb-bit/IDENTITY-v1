@@ -8,8 +8,9 @@ import { useToast } from '@/hooks/useToast';
 import { CarruselPerfiles } from '@/components/landing/CarruselPerfiles';
 import { slug, num } from '@/lib/utils';
 import type { Profile } from '@/types';
-import * as backend from '@/lib/backend';
-import { hayBackend as hasBackend } from '@/lib/publico';
+/* `lib/publico` y no `lib/backend`: el segundo trae el cliente de Supabase
+   —215 kB— y la portada solo quería cinco números de una vista pública. */
+import { hayBackend as hasBackend, cifrasPublicas, type Cifras } from '@/lib/publico';
 import { useTitulo } from '@/hooks/useTitulo';
 
 /**
@@ -337,12 +338,12 @@ export default function LandingPage() {
   /* Las cifras de la portada salen de la base, no de aqui. `totalViews`
      de arriba solo sumaba los perfiles que el navegador tenia a mano
      —seis— asi que decia «16 visitas» cuando habia muchas mas. */
-  const [cifras, setCifras] = useState<backend.Cifras | null>(null);
+  const [cifras, setCifras] = useState<Cifras | null>(null);
   useEffect(() => {
     if (!hasBackend()) return;
     let vivo = true;
-    backend.cifrasPublicas()
-      .then((c: backend.Cifras) => { if (vivo) setCifras(c); })
+    cifrasPublicas()
+      .then((c: Cifras) => { if (vivo) setCifras(c); })
       .catch(() => {});
     return () => { vivo = false; };
   }, []);

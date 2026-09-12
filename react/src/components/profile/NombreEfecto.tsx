@@ -134,9 +134,24 @@ export function NombreEfecto({
   /**
    * Esto es una miniatura, no un perfil.
    *
-   * Lo que decide es si se monta el lienzo de la corriente. Esconderlo con
-   * CSS no valdría: el bucle seguiría corriendo igual, y en una página de
-   * plantillas eso son ocho lienzos dibujando para nadie.
+   * Decide dos cosas, y las dos por el mismo motivo: en una miniatura el
+   * efecto se reconoce igual parado, y moviéndose cuesta.
+   *
+   *   · el LIENZO de la corriente no se monta. Esconderlo con CSS no
+   *     valdría: el bucle seguiría corriendo, y en la página de plantillas
+   *     eso son ocho lienzos dibujando para nadie;
+   *   · y la MÁQUINA DE ESCRIBIR no teclea, el nombre sale entero.
+   *
+   * Lo segundo no es por gasto, es por una métrica. El texto que se escribe
+   * letra a letra crece, y el navegador se queda con el ÚLTIMO repintado
+   * grande como «elemento principal» de la página: cada letra nueva empuja
+   * esa marca más tarde. En el carrusel de la portada había tres tecleando a
+   * la vez, y el nombre de una miniatura era el elemento principal de la
+   * portada entera — 17,5 s en una prueba de móvil, sobre una página que se
+   * ve en 2,3.
+   *
+   * En el editor sigue tecleando: ahí `editando` es cierto, y estás mirando
+   * justo eso.
    */
   calma?: boolean;
 }) {
@@ -147,7 +162,7 @@ export function NombreEfecto({
 
   /* La máquina de escribir cuenta letras y eso no lo hace una hoja de
      estilos. Tiene su propio componente desde antes y sigue teniéndolo. */
-  if (efecto === 'maquina') return <NombreMaquina texto={texto} />;
+  if (efecto === 'maquina') return calma ? <>{texto}</> : <NombreMaquina texto={texto} />;
 
   /* Sin capas, ni pulsos, ni lienzo no hace falta armazón: el CSS del efecto
      le cuelga directamente al nombre, como toda la vida. */

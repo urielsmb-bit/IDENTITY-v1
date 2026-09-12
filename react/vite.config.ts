@@ -15,6 +15,20 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    /**
+     * A qué navegador se compila.
+     *
+     * Sin esto, Vite baja el código a una base muy ancha: reescribe cosas que
+     * todos los navegadores de los últimos cuatro años entienden de nacimiento
+     * y añade ayudantes para sostener la reescritura. Sale más código, y más
+     * código que ejecutar antes de pintar.
+     *
+     * `es2022` es Chrome 94, Safari 15.4 y Firefox 93 — finales de 2021. Por
+     * debajo de eso esta aplicación no funciona igualmente: la CSP, el
+     * `structuredClone` del editor y los lienzos que usan los efectos piden
+     * más que eso.
+     */
+    target: 'es2022',
     // Los sourcemaps publicarían todo el código fuente legible en producción.
     sourcemap: false,
     rollupOptions: {
