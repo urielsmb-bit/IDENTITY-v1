@@ -24,3 +24,7 @@ yarn-error.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# El paquete que se sube a mano. Se rehace cuando hace falta.
+sharee-hostinger.zip
+SUBIR-A-public_html.zip
