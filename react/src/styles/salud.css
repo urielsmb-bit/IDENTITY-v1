@@ -1,0 +1,67 @@
+/* ============================================================
+   SALUD  ·  «por que no funciona»
+   Se carga con su pagina y solo con ella: quien visita un perfil
+   no descarga ni un byte de esto.
+   ============================================================ */
+
+.sal {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 48px 20px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.sal__h { display: flex; flex-direction: column; gap: 9px; align-items: flex-start; }
+.sal__h h1 { font-size: 30px; font-weight: 700; margin: 0; }
+.sal__h h2 { font-size: 19px; font-weight: 650; margin: 0; }
+.sal__sub { margin: 0; color: var(--muted, #8a93a6); font-size: 14px; line-height: 1.5; }
+.sal__sub b { color: var(--text, #e9edf4); font-weight: 600; }
+
+/* El resumen es lo unico que se lee de lejos: si esta en verde no hay que
+   bajar, y si no, ya se sabe cuanto hay que mirar antes de empezar. */
+.sal__res { margin: 4px 0 2px; font-size: 17px; font-weight: 650; }
+
+.sal__l { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+
+.sal__i {
+  display: flex; gap: 13px; align-items: flex-start;
+  padding: 13px 15px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid rgba(255, 255, 255, .06);
+}
+/* Lo roto se separa de lo que va bien sin tener que leerlo: el borde de la
+   izquierda se ve antes que el texto. */
+.sal__i[data-estado="mal"]   { border-left: 3px solid #ff5a6e; background: rgba(255, 90, 110, .06); }
+.sal__i[data-estado="aviso"] { border-left: 3px solid #ffc24b; background: rgba(255, 194, 75, .05); }
+
+.sal__p { flex: none; width: 18px; text-align: center; font-weight: 700; line-height: 1.5; }
+.sal__c { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.sal__n { font-size: 14.5px; font-weight: 620; }
+.sal__d { font-size: 13.5px; color: var(--muted, #8a93a6); line-height: 1.5; word-break: break-word; }
+
+/* La orden que lo arregla: se selecciona y se pega. Por eso es monoespaciada
+   y se puede partir — una orden cortada por el borde no se puede copiar. */
+.sal__f {
+  margin-top: 3px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px; line-height: 1.55;
+  color: var(--text, #e9edf4);
+  background: rgba(0, 0, 0, .32);
+  border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: 8px;
+  padding: 8px 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: all;
+}
+
+.sal__fila { display: flex; gap: 9px; width: 100%; flex-wrap: wrap; }
+.sal__fila .inp { flex: 1 1 260px; min-width: 0; }
+
+@media (max-width: 560px) {
+  .sal { padding: 30px 15px 60px; }
+  .sal__h h1 { font-size: 25px; }
+}

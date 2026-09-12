@@ -23,6 +23,9 @@ function RedirigirPerfil() {
 }
 
 const LandingPage = lazy(() => import('./pages/LandingPage'));
+/* Aparte, como todas: hasta que alguien escriba /salud no se descarga ni
+   un byte de ella. Es una pantalla de mantenimiento, no de visita. */
+const SaludPage = lazy(() => import('./pages/SaludPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const AuthPage = lazy(() => import('./pages/AuthPage'));
@@ -165,6 +168,10 @@ export default function App() {
               <Route path="/copyright" element={<LegalPage />} />
             </Route>
             </Route>
+
+            {/* «Por que no funciona». Va ANTES del comodin de perfiles, o
+                `/salud` se leeria como un nombre de usuario. */}
+            <Route path="/salud" element={<SaludPage />} />
 
             {/* Un solo segmento que no sea ninguna de las rutas de arriba se
                 trata como un nombre de usuario. Va fuera del grupo con barra
