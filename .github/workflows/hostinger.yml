@@ -127,45 +127,97 @@ jobs:
           npm run build
           node scripts/hostinger.mjs
 
+      # ────────────────────────────────────────────────────────────────
+      # POR SSH, NO POR FTP
+      # ────────────────────────────────────────────────────────────────
+      #
+      # La primera version subia con `lftp` sobre FTP con TLS, y se estrello
+      # contra el certificado:
+      #
+      #   mirror: Fatal error: Certificate verification:
+      #           certificate common name doesn't match requested host name
+      #
+      # El FTP de Hostinger presenta un certificado de verdad —Sectigo, para
+      # `hostinger.com` y una lista larga de dominios suyos— pero no para
+      # `ftp.sharee.fun`: el alojamiento es compartido y el certificado es del
+      # servidor, no del dominio. No existe ningun nombre que resuelva Y
+      # encaje, asi que por FTP solo quedaba relajar la comprobacion.
+      #
+      # SSH no tiene ese problema y es mejor en todo lo demas:
+      #
+      #   · no viaja ninguna contrasena. Se autentica con una clave, y la
+      #     publica la tiene Hostinger;
+      #   · el servidor se identifica con su HUELLA, fijada aqui abajo. Si
+      #     cambiara —o alguien se pusiera en medio— la conexion se corta en
+      #     vez de continuar;
+      #   · `rsync` manda solo lo que cambio, no la compilacion entera.
       - name: Subir
         env:
-          HOST: ${{ secrets.FTP_HOST }}
-          USUARIO: ${{ secrets.FTP_USER }}
-          CLAVE: ${{ secrets.FTP_PASSWORD }}
-          DESTINO: ${{ secrets.FTP_DIR || 'public_html' }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          SSH_HOSTKEY: ${{ secrets.SSH_HOSTKEY }}
+          # La ruta de SSH no es la del FTP, y esto se comprobo conectando.
+          # El FTP te deja enjaulado y `public_html` te queda al lado; SSH
+          # entra en `/home/u251278312` de verdad, donde NO hay ningun
+          # `public_html` — la web vive en `domains/<dominio>/public_html`.
+          #
+          # Con la ruta del FTP, `rsync` habria CREADO esa carpeta en el
+          # inicio y habria subido ahi los 86 ficheros. Todo en verde, cero
+          # errores, y la web sin cambiar. Ese es el peor final posible: el
+          # que no avisa.
+          DESTINO: ${{ secrets.SSH_DIR || 'domains/sharee.fun/public_html' }}
         run: |
           set -euo pipefail
-          if [ -z "$HOST" ] || [ -z "$USUARIO" ] || [ -z "$CLAVE" ]; then
-            echo "Faltan FTP_HOST, FTP_USER o FTP_PASSWORD en los secretos."
+          for v in SSH_HOST SSH_PORT SSH_USER SSH_KEY SSH_HOSTKEY; do
+            if [ -z "${!v}" ]; then
+              echo "Falta el secreto $v."
+              exit 1
+            fi
+          done
+
+          # La clave y la huella, en ficheros con permisos cerrados. Viven en
+          # la maquina de GitHub, que se destruye al terminar el trabajo.
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/despliegue
+          chmod 600 ~/.ssh/despliegue
+          printf '%s\n' "$SSH_HOSTKEY" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+          # `StrictHostKeyChecking=yes` es el punto de todo esto: sin la
+          # huella correcta en `known_hosts`, no conecta. Lo contrario
+          # —aceptar la que venga— es exactamente el agujero que se queria
+          # evitar al dejar el FTP.
+          ORDEN="ssh -i ~/.ssh/despliegue -p $SSH_PORT -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts"
+
+          # EL DESTINO TIENE QUE EXISTIR YA.
+          #
+          # `rsync` crea con gusto la carpeta que le pidas, y esa amabilidad
+          # es la trampa: con la ruta equivocada sube los 86 ficheros a un
+          # sitio nuevo, termina en verde, y la web no cambia. Un despliegue
+          # que miente es peor que uno que falla.
+          #
+          # Se comprueba antes. Si no esta, se para y se dice donde mirar.
+          if ! $ORDEN "$SSH_USER@$SSH_HOST" "test -d '$DESTINO'"; then
+            echo "El destino '$DESTINO' no existe en el servidor."
+            echo "Ojo: la ruta de SSH NO es la del FTP. Conectate y mira:"
+            echo "  ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'find ~ -maxdepth 4 -name public_html'"
+            echo "Cuando sepas cual es, ponla en el secreto SSH_DIR."
             exit 1
           fi
-          sudo apt-get update -qq && sudo apt-get install -y -qq lftp
-
-          # `lftp` y no una accion de terceros: esto maneja la contrasena del
-          # alojamiento, y una accion de terceros es codigo que no controlas
-          # ejecutandose con ella delante. Aqui se ve exactamente que corre.
-          #
-          # Los comandos van por la ENTRADA, no en la linea de ordenes: lo que
-          # se pasa por argumentos se ve en la lista de procesos de la maquina.
-          lftp -u "$USUARIO","$CLAVE" "$HOST" <<EOF
-          set ftp:ssl-force true
-          set ftp:ssl-protect-data true
-          set ssl:verify-certificate true
-          set net:max-retries 3
-          set net:timeout 20
-          set cmd:fail-exit true
 
           # Primero TODO, sin borrar nada. Si en public_html hay algo que
           # pusiste tu a mano, sigue ahi despues de esto.
-          mirror --reverse --verbose --parallel=4 --exclude-glob .git* react/salida-hostinger/ $DESTINO/
+          rsync -rlvz --checksum -e "$ORDEN" \
+            react/salida-hostinger/ "$SSH_USER@$SSH_HOST:$DESTINO/"
 
           # Y despues, solo dentro de assets/, si que se borra lo que sobra.
           # Esa carpeta la genera entera la compilacion y sus nombres llevan
           # un resumen del contenido, asi que sin esto se irian acumulando
           # los de todas las compilaciones anteriores para siempre. Ahi no
           # hay nada tuyo que perder.
-          mirror --reverse --verbose --delete --parallel=4 react/salida-hostinger/assets/ $DESTINO/assets/
+          rsync -rlvz --checksum --delete -e "$ORDEN" \
+            react/salida-hostinger/assets/ "$SSH_USER@$SSH_HOST:$DESTINO/assets/"
 
-          bye
-          EOF
           echo "Subido a $DESTINO."
