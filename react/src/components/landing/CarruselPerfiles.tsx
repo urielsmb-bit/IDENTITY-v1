@@ -32,6 +32,15 @@ interface CarruselPerfilesProps {
 }
 
 /**
+ * Lo que espera el carrusel tras la carga antes de empezar a girar.
+ *
+ * Tres segundos: bastante para que el navegador haya cerrado su medida del
+ * elemento principal, y poco para que nadie que se quede mirando note que
+ * tardó en arrancar.
+ */
+const ESPERA = 3000;
+
+/**
  * Carrusel de perfiles reales para la portada.
  *
  * Sustituye a la demo fija: enseñar perfiles de gente convence más que
@@ -53,11 +62,52 @@ export function CarruselPerfiles({ perfiles, cada = 5200 }: CarruselPerfilesProp
     if (n > 0 && i >= n) setI(0);
   }, [n, i]);
 
+  /**
+   * No empieza a girar hasta que la página se ha asentado.
+   *
+   * ────────────────────────────────────────────────────────────────────
+   * POR QUÉ ESPERA
+   * ────────────────────────────────────────────────────────────────────
+   *
+   * El navegador marca como «elemento principal» de la página el ÚLTIMO
+   * repintado grande que ve. Cada giro pinta una tarjeta de perfil nueva y
+   * grande, así que cada giro corría esa marca más tarde — y el carrusel
+   * gira cada 5,2 s, para siempre.
+   *
+   * Medido en un móvil emulado: el elemento principal salía a los 22 s en
+   * una página cuyo contenido está listo mucho antes. No es lento: es que
+   * la medida no puede cerrarse mientras algo grande siga cambiando.
+   *
+   * Es el mismo fallo que tenía la máquina de escribir de los nombres, un
+   * nivel más arriba. Se arregla igual: en los primeros segundos, quieto.
+   *
+   * Y no se pierde nada. Nadie ha terminado de leer la primera tarjeta a
+   * los dos segundos de abrir la página; el giro es para quien se queda.
+   */
+  const [asentado, setAsentado] = useState(false);
   useEffect(() => {
-    if (pausado || n < 2) return;
+    /* Desde que la carga TERMINA, no desde que monta el componente: en un
+       teléfono lento eso son dos momentos muy distintos, y el que importa
+       es el segundo. */
+    const arrancar = () => window.setTimeout(() => setAsentado(true), ESPERA);
+    if (document.readyState === 'complete') {
+      const t = arrancar();
+      return () => window.clearTimeout(t);
+    }
+    let t = 0;
+    const alCargar = () => { t = arrancar(); };
+    window.addEventListener('load', alCargar, { once: true });
+    return () => {
+      window.removeEventListener('load', alCargar);
+      if (t) window.clearTimeout(t);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (pausado || n < 2 || !asentado) return;
     const t = window.setInterval(() => setI((x) => (x + 1) % n), cada);
     return () => window.clearInterval(t);
-  }, [pausado, n, cada]);
+  }, [pausado, n, cada, asentado]);
 
   /** Los tres visibles, con su desplazamiento respecto al centro. */
   const visibles = useMemo(() => {
