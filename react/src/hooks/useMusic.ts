@@ -10,6 +10,9 @@ export function useMusic() {
   const [currentTrack, setCurrentTrack] = useState(0);
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  /* Como se llama lo que suena. Lo tuyo si lo escribiste; si no, lo que
+     diga YouTube, que lo sabe desde que el reproductor esta listo. */
+  const [ficha, setFicha] = useState({ titulo: '', autor: '' });
   const playerRef = useRef<ReturnType<typeof musicService.crearReproductor> | null>(null);
 
   const init = useCallback((
@@ -29,6 +32,7 @@ export function useMusic() {
         setTime(t);
         setDuration(d);
       },
+      alFicha: (f: { titulo: string; autor: string }) => setFicha(f),
     });
 
     // Devuelve null cuando no hay ninguna pista reproducible.
@@ -50,6 +54,9 @@ export function useMusic() {
   const play = useCallback(() => playerRef.current?.play(), []);
   const pause = useCallback(() => playerRef.current?.pause(), []);
   const next = useCallback(() => playerRef.current?.siguiente?.(), []);
+  /* Mover la aguja. El motor ya lo sabia hacer y no lo ofrecia nadie:
+     la barra de progreso era un dibujo que no se podia tocar. */
+  const seek = useCallback((seg: number) => playerRef.current?.buscar?.(seg), []);
   const prev = useCallback(() => playerRef.current?.anterior?.(), []);
 
   // Cleanup on unmount
@@ -69,6 +76,9 @@ export function useMusic() {
     currentTrack,
     time,
     duration,
+    seek,
+    titulo: ficha.titulo,
+    autor: ficha.autor,
     formatTime: musicService.mmss,
   };
 }

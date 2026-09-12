@@ -920,17 +920,23 @@
 /* ============================================================
    MÚSICA — cuatro estilos
    ============================================================ */
+/* Mismas medidas que el widget de Discord —relleno, hueco y caratula—
+   para que los dos bloques de la columna se lean como hermanos y no como
+   dos cosas pegadas. El ANCHO no se copia: el de Discord se ajusta a su
+   contenido y este ocupa la columna entera. */
 .pf-music{
-  display:flex; align-items:center; gap:13px;
+  display:flex; align-items:center; gap:12px;
   width:100%;
-  padding:11px 14px;
+  padding:10px 12px 10px 10px;
   border:1px solid var(--p-line);
   border-radius:var(--p-chip-r);
-  background:var(--p-surface);
+  background:var(--p-surface-2);
   text-align:left;
 }
+/* Un punto mas grande que la foto de Discord: esa es una cara de 38 y esto
+   es una caratula, que es lo que se mira primero del bloque. */
 .pf-music__cover{
-  width:42px; height:42px; border-radius:8px; flex:none;
+  width:44px; height:44px; border-radius:10px; flex:none;
   background:var(--p-surface-2);
   display:grid; place-items:center; font-size:var(--t4);
   overflow:hidden;
@@ -956,20 +962,21 @@
   display:flex; flex-direction:column; justify-content:center;
   overflow:hidden;
 }
-.pf-music__t{ font-size:var(--t2); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.pf-music__a{ font-size:var(--t1); color:var(--p-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.pf-music__viz{ display:flex; align-items:flex-end; gap:2.5px; height:22px; flex:none; }
-.pf-music__viz i{
-  width:3px; border-radius:2px; background:var(--p-primary);
-  animation:viz 1s var(--ease) infinite alternate;
+/* El titulo pesa como el nombre de Discord: es la unica linea que se lee
+   de un vistazo. */
+.pf-music__t{
+  font-size:var(--t3); font-weight:650; color:var(--p-text);
+  line-height:1.25;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
-.pf-music__viz i:nth-child(2){ animation-delay:.14s }
-.pf-music__viz i:nth-child(3){ animation-delay:.28s }
-.pf-music__viz i:nth-child(4){ animation-delay:.42s }
-.pf-music__viz i:nth-child(5){ animation-delay:.56s }
+.pf-music__a{ font-size:var(--t1); color:var(--p-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* La linea de la barra: tiempo, riel, tiempo. */
+.pf-music__row{
+  display:flex; align-items:center; gap:9px;
+  margin-top:2px;
+}
 @keyframes viz{ from{ height:3px; opacity:.5 } to{ height:20px; opacity:1 } }
-.pf-music.is-paused .pf-music__viz i{ animation-play-state:paused; height:4px; }
-.pf-music__btn{
+.pf-music.is-paused .pf-music__btn{
   width:34px; height:34px; flex:none;
   border-radius:50%; border:1px solid var(--p-line);
   background:var(--p-surface-2); color:var(--p-text);
@@ -988,23 +995,18 @@
 
 /* minimal: una sola línea */
 .pf-music[data-style="minimal"]{
-  border:0; background:transparent; padding:0;
-  gap:8px; width:auto; font-size:var(--t2);
+  font-size:var(--t2);
 }
 /* `minimal` quita el CROMO —el visualizador, la barra, los tiempos— pero NO
    la portada. Una pista sin su imagen no es minimalista, es una pista a la
    que le falta la mitad: el bloque se quedaba en una línea de texto de 22 px
    de alto, y quien subía una portada la veía desaparecer sin que nada lo
    explicara. La caratula se encoge, que es otra cosa que esconderla. */
-.pf-music[data-style="minimal"] .pf-music__viz,
-.pf-music[data-style="minimal"] .pf-music__bar,
-.pf-music[data-style="minimal"] .pf-music__time{ display:none; }
-.pf-music[data-style="minimal"] .pf-music__cover{
-  width:28px; height:28px; border-radius:6px;
-}
-.pf-music[data-style="minimal"] .pf-music__btn{
-  width:auto; height:auto; border:0; background:transparent; font-size:var(--t2);
-}
+/* `minimal` quita la CAJA —borde, fondo, relleno— y nada mas. Escondia
+   ademas la barra y los tiempos, y como es el estilo que ponen las
+   plantillas, la seccion entera del reproductor no la veia nadie. */
+
+
 
 /* transparent: sólo los controles */
 .pf-music[data-style="transparent"]{
@@ -1016,13 +1018,10 @@
 .pf-music[data-style="transparent"] .pf-music__bar,
 .pf-music[data-style="transparent"] .pf-music__time{ display:none; }
 
-/* compact: sin barra ni tiempos */
-.pf-music[data-style="compact"] .pf-music__bar,
-.pf-music[data-style="compact"] .pf-music__time{ display:none; }
+/* compact: la caja de siempre, con todo dentro. */
 
 /* card: portada grande, barra y tiempos */
-.pf-music[data-style="card"] .pf-music__viz{ display:none; }
-.pf-music[data-style="card"] .pf-music__cover{ width:48px; height:48px; }
+.pf-music[data-style="card"] .pf-music[data-style="card"] .pf-music__cover{ width:48px; height:48px; }
 
 /* ============================================================
    ESTADÍSTICAS
@@ -1879,7 +1878,7 @@
    Barra arrastrable, tiempos reales y anterior / pausa / siguiente.
    ============================================================ */
 
-.pf-music{ gap:11px; }
+.pf-music{ gap:12px; }
 
 .pf-music__meta{ flex:1 1 auto; }
 
@@ -1962,15 +1961,11 @@
 .pf-music:not(.is-paused) .pf-ic-pause{ display:block; }
 
 /* --- qué muestra cada estilo --- */
-.pf-music[data-style="compact"] .pf-music__bar,
-.pf-music[data-style="compact"] .pf-music__time{ display:none; }
 
-.pf-music[data-style="card"] .pf-music__viz{ display:none; }
-.pf-music[data-style="card"] .pf-music__cover{ width:46px; height:46px; }
+.pf-music[data-style="card"] .pf-music[data-style="card"] .pf-music__cover{ width:46px; height:46px; }
 
-.pf-music[data-style="minimal"] .pf-music__ctl{ gap:0; }
-.pf-music[data-style="minimal"] .pf-music__nav{ display:none; }
-.pf-music[data-style="minimal"] .pf-music__btn{ width:auto; height:auto; }
+/* Quien decide si hay anterior y siguiente es cuantas pistas hay, no el
+   estilo: escondiendolos aqui, una lista de verdad se quedaba sin ellos. */
 
 .pf-music[data-style="transparent"] .pf-music__nav{ display:grid; }
 .pf-music[data-style="transparent"] .pf-music__ctl{ gap:6px; }

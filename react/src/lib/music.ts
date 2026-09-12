@@ -118,6 +118,17 @@ export function reproductorYouTube(contenedor: HTMLElement, videoId: string, cb:
       if (arrancar) yt.loadVideoById(id); else yt.cueVideoById(id);
     },
     buscar: (seg: number) => { if (listo && yt) yt.seekTo(seg, true); },
+    /* YouTube SABE como se llama la cancion, y lo sabe desde que el
+       reproductor esta listo. No hacia falta pedirselo a nadie: solo
+       preguntarselo. Sin esto el bloque ponia «Pista de audio», que es lo
+       mismo que pone cuando no hay nada. */
+    datos: () => {
+      if (!listo || !yt || !yt.getVideoData) return null;
+      try {
+        const d = yt.getVideoData();
+        return { titulo: String(d?.title || ''), autor: String(d?.author || '') };
+      } catch { return null; }
+    },
     tiempo: () => { return (listo && yt && yt.getCurrentTime) ? yt.getCurrentTime() : 0; },
     duracion: () => { return (listo && yt && yt.getDuration) ? yt.getDuration() : 0; },
     volumen: (v: number) => { if (listo && yt) yt.setVolume(Math.round(v * 100)); },
@@ -155,6 +166,27 @@ export function crearReproductor(host: HTMLElement, pistas: any[], cb: any = {})
     if (sonando) arrancarLatido(); else pararLatido();
   }
 
+  /**
+   * Como se llama lo que suena.
+   *
+   * Se avisa al estar listo y al cambiar de pista, no en cada latido: el
+   * titulo no cambia cuatro veces por segundo y repintar el bloque a ese
+   * ritmo por un texto que es el mismo es trabajo tirado.
+   *
+   * Manda lo que hayas escrito tu. Solo si no has puesto nada se usa lo que
+   * diga YouTube — quien se molesto en titular su pista no quiere que se la
+   * renombre sola.
+   */
+  function avisarFicha() {
+    if (!cb.alFicha) return;
+    const t = actual();
+    const d = yt && yt.datos ? yt.datos() : null;
+    cb.alFicha({
+      titulo: String(t?.title || '').trim() || (d?.titulo ?? ''),
+      autor: String(t?.artist || '').trim() || (d?.autor ?? ''),
+    });
+  }
+
   function arrancarLatido() {
     pararLatido();
     latido = setInterval(() => {
@@ -174,7 +206,8 @@ export function crearReproductor(host: HTMLElement, pistas: any[], cb: any = {})
     if (!yt) {
       yt = reproductorYouTube(host, t.yt, {
         alEstado: avisarEstado,
-        alTerminar: () => { siguiente(true); }
+        alTerminar: () => { siguiente(true); },
+        alListo: avisarFicha,
       });
       if (arrancar) yt.play();
     } else {
@@ -202,6 +235,10 @@ export function crearReproductor(host: HTMLElement, pistas: any[], cb: any = {})
     const m = motor();
     if (m === 'yt') asegurarYT(false);
     else if (m === 'au') asegurarAudio(false);
+    /* La ficha, ANTES de que suene nada. Si esperara al `play`, el bloque
+       pondria «Pista de audio» hasta que alguien le diera — y hasta ese
+       momento no hay ningun motivo para darle. */
+    avisarFicha();
   }
 
   function tiempo() {
@@ -241,6 +278,7 @@ export function crearReproductor(host: HTMLElement, pistas: any[], cb: any = {})
     else if (m === 'au') { if (yt) yt.pause(); asegurarAudio(arrancar); }
     if (cb.alPista) cb.alPista(i, actual());
     if (cb.alAvanzar) cb.alAvanzar(0, duracionTrack());
+    avisarFicha();
   }
 
   function siguiente(arrancar: boolean = true) { ir(i + 1, arrancar !== false); }

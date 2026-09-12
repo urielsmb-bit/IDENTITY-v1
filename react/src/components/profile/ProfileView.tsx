@@ -325,6 +325,60 @@ export function ProfileView({
      —la píldora incrustada y el reproductor— no puedan discrepar. */
   const portada = safeMedia(portadaPista(pistas[0]));
 
+  /* Como se llama lo que suena. El motor manda lo que escribiste tu y, si no
+     escribiste nada, lo que diga YouTube — que lo sabe desde que su
+     reproductor esta listo. «Pista de audio» queda para cuando de verdad
+     no hay nombre por ninguna parte. */
+  const tituloPista = music.titulo || pistas[0]?.title || 'Pista de audio';
+
+  /* Lo andado, en tanto por ciento. Se acota: al cambiar de pista el tiempo
+     viejo puede llegar antes que la duracion nueva, y sin tope la barra se
+     sale de su caja durante un cuadro. */
+  const avance = music.duration > 0
+    ? Math.min(100, Math.max(0, (music.time / music.duration) * 100))
+    : 0;
+
+  /** Donde has soltado, en segundos. */
+  const segundoDe = useCallback((cliente: number, caja: DOMRect) => {
+    if (!(music.duration > 0) || caja.width <= 0) return 0;
+    const t = Math.min(1, Math.max(0, (cliente - caja.left) / caja.width));
+    return t * music.duration;
+  }, [music.duration]);
+
+  /* Arrastrar. Se captura el puntero para que el gesto siga siendo tuyo
+     aunque te salgas de la barra: sin eso, subir el raton tres pixeles
+     soltaba la aguja a medio camino. */
+  const alTocarBarra = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const barra = e.currentTarget;
+    const caja = barra.getBoundingClientRect();
+    barra.setPointerCapture(e.pointerId);
+    music.seek(segundoDe(e.clientX, caja));
+
+    const alMover = (m: PointerEvent) => music.seek(segundoDe(m.clientX, caja));
+    const alSoltar = () => {
+      barra.removeEventListener('pointermove', alMover);
+      barra.removeEventListener('pointerup', alSoltar);
+      barra.removeEventListener('pointercancel', alSoltar);
+    };
+    barra.addEventListener('pointermove', alMover);
+    barra.addEventListener('pointerup', alSoltar);
+    barra.addEventListener('pointercancel', alSoltar);
+  }, [music, segundoDe]);
+
+  /* Y con el teclado, que es la mitad de lo que hace que un `role="slider"`
+     sea un mando de verdad y no un div con un nombre bonito. */
+  const alTeclaBarra = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    const salto = e.shiftKey ? 30 : 5;
+    let destino: number | null = null;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') destino = music.time + salto;
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') destino = music.time - salto;
+    else if (e.key === 'Home') destino = 0;
+    else if (e.key === 'End') destino = music.duration;
+    if (destino === null) return;
+    e.preventDefault();
+    music.seek(Math.min(music.duration, Math.max(0, destino)));
+  }, [music]);
+
   // Montar el reproductor. Sin este init, crearReproductor() nunca llegaba a
   // existir y los botones de play/pausa eran decorativos.
   useEffect(() => {
@@ -1482,27 +1536,75 @@ export function ProfileView({
                     )}
                   </span>
                   <div className="pf-music__meta">
-                    <span className="pf-music__t">
-                      {pistas[0]?.title || 'Pista de audio'}
-                    </span>
-                    <span className="pf-music__a">{pistas[0]?.artist || ''}</span>
+                    <span className="pf-music__t">{tituloPista}</span>
+                    <div className="pf-music__row">
+                      <span className="pf-music__time">{music.formatTime(music.time)}</span>
+                      {/* La barra es un mando, no un dibujo: se arrastra y se
+                          mueve con las flechas. El motor ya sabia buscar, y
+                          no lo ofrecia nadie. */}
+                      <div
+                        className="pf-music__bar"
+                        role="slider"
+                        tabIndex={0}
+                        aria-label="Posición de la pista"
+                        aria-valuemin={0}
+                        aria-valuemax={Math.round(music.duration) || 0}
+                        aria-valuenow={Math.round(music.time) || 0}
+                        aria-valuetext={`${music.formatTime(music.time)} de ${music.formatTime(music.duration)}`}
+                        onPointerDown={alTocarBarra}
+                        onKeyDown={alTeclaBarra}
+                      >
+                        <i style={{ width: `${avance}%` }} />
+                      </div>
+                      <span className="pf-music__time">{music.formatTime(music.duration)}</span>
+                    </div>
                   </div>
-                  <span className="pf-music__viz" aria-hidden="true">
-                    <i />
-                    <i />
-                    <i />
-                    <i />
-                    <i />
-                  </span>
                   <div className="pf-music__ctl">
+                    {/* Con una sola pista, «anterior» y «siguiente» no
+                        llevan a ninguna parte: el motor se limita a volver
+                        al principio. Dos botones que no hacen lo que dicen
+                        es peor que no tenerlos. */}
+                    {pistas.length > 1 && (
+                      <button
+                        className="pf-music__nav"
+                        type="button"
+                        aria-label="Anterior"
+                        onClick={() => music.prev()}
+                      >
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                          <path d="M6 5h2v14H6zM20 5v14l-11-7z" />
+                        </svg>
+                      </button>
+                    )}
                     <button
                       className="pf-music__btn"
                       type="button"
                       aria-label={music.playing ? 'Pausar' : 'Reproducir'}
                       onClick={() => (music.playing ? music.pause() : music.play())}
                     >
-                      {music.playing ? '❚❚' : '▶'}
+                      {/* Los dos iconos van SIEMPRE en el arbol y los cambia
+                          el CSS. Intercambiarlos en React tiraba el boton y
+                          lo creaba de nuevo en cada pausa, y con el se iba el
+                          foco de quien navega con el teclado. */}
+                      <svg className="pf-ic-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                      <svg className="pf-ic-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" />
+                      </svg>
                     </button>
+                    {pistas.length > 1 && (
+                      <button
+                        className="pf-music__nav"
+                        type="button"
+                        aria-label="Siguiente"
+                        onClick={() => music.next()}
+                      >
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                          <path d="M16 5h2v14h-2zM4 5l11 7-11 7z" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
