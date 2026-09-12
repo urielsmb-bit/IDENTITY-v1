@@ -1,0 +1,143 @@
+# Compila sharee y lo sube a Hostinger.
+#
+# ────────────────────────────────────────────────────────────────────────
+# QUE HACE FALTA ANTES DE QUE ESTO FUNCIONE
+# ────────────────────────────────────────────────────────────────────────
+#
+# En GitHub → Settings → Secrets and variables → Actions → New repository
+# secret, cinco secretos. Los pegas tu ahi; no viajan por ningun otro sitio
+# y no aparecen en los registros —GitHub los tacha—:
+#
+#   FTP_HOST        el servidor FTP, tal cual sale en hPanel (Archivos →
+#                   Cuentas FTP). Suele ser algo como ftp.tudominio.com
+#   FTP_USER        el usuario FTP
+#   FTP_PASSWORD    su contrasena
+#   VITE_SUPABASE_URL   los mismos dos valores que tienes en
+#   VITE_SUPABASE_KEY   react/.env.local — la clave ANONIMA, la que ya
+#                       viaja dentro del JavaScript publico
+#
+# Y uno opcional, `FTP_DIR`, si tu dominio no cuelga de `public_html`. En un
+# dominio adicional suele ser algo como `domains/tudominio.com/public_html`.
+# Sin el, se usa `public_html`.
+#
+# ────────────────────────────────────────────────────────────────────────
+# CUANDO SE LANZA
+# ────────────────────────────────────────────────────────────────────────
+#
+# Al empujar a `main` algo que toque `react/`. Un cambio en un documento de
+# la raiz no reconstruye ni sube nada, que es lo suyo: desplegar por un
+# README es gastar minutos y arriesgar el sitio en vivo a cambio de nada.
+#
+# Tambien a mano, desde la pestana Actions → «Subir a Hostinger» → Run
+# workflow, por si quieres forzar una subida sin tocar codigo.
+
+name: Subir a Hostinger
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'react/**'
+      - '.github/workflows/hostinger.yml'
+  workflow_dispatch:
+
+# Dos despliegues a la vez sobre el mismo `public_html` se pisan, y lo que
+# queda arriba es una mezcla de los dos. Se encola: el nuevo espera, no
+# cancela al que ya esta subiendo ficheros.
+concurrency:
+  group: hostinger
+  cancel-in-progress: false
+
+jobs:
+  subir:
+    runs-on: ubuntu-latest
+    # Solo lectura del repositorio. Este trabajo no escribe nada en GitHub.
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: react/package-lock.json
+
+      - name: Instalar
+        working-directory: react
+        run: npm ci
+
+      - name: Comprobar
+        working-directory: react
+        run: |
+          npx tsc -b
+          npx vitest run
+          npx eslint src
+        # Si algo de esto falla, NO se sube. Es la razon de que esten aqui:
+        # un despliegue que no comprueba nada es un despliegue que un dia
+        # publica el sitio roto y nadie se entera hasta que alguien entra.
+
+      - name: La configuracion de la compilacion
+        working-directory: react
+        env:
+          URL: ${{ secrets.VITE_SUPABASE_URL }}
+          KEY: ${{ secrets.VITE_SUPABASE_KEY }}
+        run: |
+          if [ -z "$URL" ] || [ -z "$KEY" ]; then
+            echo "Faltan VITE_SUPABASE_URL o VITE_SUPABASE_KEY en los secretos."
+            echo "Sin eso la aplicacion compila, pero sale sin backend."
+            exit 1
+          fi
+          # Se escribe el fichero que `vite` y `build:hostinger` esperan.
+          # Vive solo dentro de esta maquina, que se destruye al terminar.
+          printf 'VITE_SUPABASE_URL=%s\nVITE_SUPABASE_KEY=%s\n' "$URL" "$KEY" > .env.local
+
+      - name: Compilar
+        working-directory: react
+        run: |
+          npm run build
+          node scripts/hostinger.mjs
+
+      - name: Subir
+        env:
+          HOST: ${{ secrets.FTP_HOST }}
+          USUARIO: ${{ secrets.FTP_USER }}
+          CLAVE: ${{ secrets.FTP_PASSWORD }}
+          DESTINO: ${{ secrets.FTP_DIR || 'public_html' }}
+        run: |
+          set -euo pipefail
+          if [ -z "$HOST" ] || [ -z "$USUARIO" ] || [ -z "$CLAVE" ]; then
+            echo "Faltan FTP_HOST, FTP_USER o FTP_PASSWORD en los secretos."
+            exit 1
+          fi
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+
+          # `lftp` y no una accion de terceros: esto maneja la contrasena del
+          # alojamiento, y una accion de terceros es codigo que no controlas
+          # ejecutandose con ella delante. Aqui se ve exactamente que corre.
+          #
+          # Los comandos van por la ENTRADA, no en la linea de ordenes: lo que
+          # se pasa por argumentos se ve en la lista de procesos de la maquina.
+          lftp -u "$USUARIO","$CLAVE" "$HOST" <<EOF
+          set ftp:ssl-force true
+          set ftp:ssl-protect-data true
+          set ssl:verify-certificate true
+          set net:max-retries 3
+          set net:timeout 20
+          set cmd:fail-exit true
+
+          # Primero TODO, sin borrar nada. Si en public_html hay algo que
+          # pusiste tu a mano, sigue ahi despues de esto.
+          mirror --reverse --verbose --parallel=4 --exclude-glob .git* react/salida-hostinger/ $DESTINO/
+
+          # Y despues, solo dentro de assets/, si que se borra lo que sobra.
+          # Esa carpeta la genera entera la compilacion y sus nombres llevan
+          # un resumen del contenido, asi que sin esto se irian acumulando
+          # los de todas las compilaciones anteriores para siempre. Ahi no
+          # hay nada tuyo que perder.
+          mirror --reverse --verbose --delete --parallel=4 react/salida-hostinger/assets/ $DESTINO/assets/
+
+          bye
+          EOF
+          echo "Subido a $DESTINO."
