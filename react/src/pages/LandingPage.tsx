@@ -1,13 +1,9 @@
 import '@/styles/panels.css';
-import { useState, useMemo, useEffect } from 'react';
-import { BLOQUES_APAGADOS_POR_DEFECTO } from '@/data/bloques';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useProfileStore } from '@/stores/profileStore';
-import { useDiscoverProfiles } from '@/hooks/useProfile';
 import { useToast } from '@/hooks/useToast';
-import { CarruselPerfiles } from '@/components/landing/CarruselPerfiles';
+import { TrioPerfiles } from '@/components/landing/TrioPerfiles';
 import { slug, num } from '@/lib/utils';
-import type { Profile } from '@/types';
 /* `lib/publico` y no `lib/backend`: el segundo trae el cliente de Supabase
    —215 kB— y la portada solo quería cinco números de una vista pública. */
 import { hayBackend as hasBackend, cifrasPublicas, type Cifras } from '@/lib/publico';
@@ -154,137 +150,6 @@ const CIFRAS_VISIBLES = [
   },
 ];
 
-const INITIAL_DEMO: Profile = {
-  username: 'demo',
-  name: 'Uriel Ambrosio',
-  title: 'Diseñador & Desarrollador',
-  location: 'Medellín, CO',
-  pronouns: 'él/he',
-  emoji: '⚡',
-  age: 24,
-  avatarUrl: '',
-  bio: 'Construyendo experiencias digitales inmersivas y productos web modernos. Amante del diseño minimalista y los sintetizadores.',
-  about: 'Diseñador de producto y programador frontend. Especializado en interfaces web, animación interactiva y sistemas de diseño.',
-  joined: '2025-01-15T00:00:00Z',
-  theme: 'cyberpunk',
-  accent: '#A855F7',
-  colText: '',
-  colBg: '',
-  colIcon: '',
-  align: 'center',
-  surface: 'glass',
-  avShape: 'rounded',
-  avPos: 'center',
-  avatarFx: 'pulse',
-  socialStyle: 'icons',
-  musicStyle: 'compact',
-  badgeStyle: 'plain',
-  blockStyle: 'glass',
-  layoutMode: 'stack',
-  stackPos: 'center',
-  widthMode: 'fixed',
-  hoverFx: 'lift',
-  enterFx: 'rise',
-  nameWeight: '700',
-  nameCase: 'none',
-  cursor: 'default',
-  particles: 'stars',
-  font: 'space',
-  fontDisplay: 'display',
-  avSize: 112,
-  stackWidth: 460,
-  gap: 16,
-  radius: 18,
-  iconSize: 20,
-  nameSize: 0,
-  bioSize: 0,
-  sBlur: 22,
-  sGlow: 40,
-  sBorderW: 1,
-  sWidthPct: null,
-  sHeightPx: null,
-  bgScale: 100,
-  sColor: '',
-  sBorderColor: '',
-  sBorderOn: true,
-  bgOpacity: 100,
-  bgBlur: 0,
-  bgDim: 30,
-  vignette: 40,
-  nameSpacing: 0,
-  lineHeight: 0,
-  pad: null,
-  sOpacity: null,
-  sBorder: null,
-  blockRadius: null,
-  views: 14200,
-  avBorder: true,
-  avGlow: true,
-  monoIcons: false,
-  bgFixed: true,
-  gradient: true,
-  animatedName: true,
-  nameFx: 'sweep',
-  glowName: true,
-  glowSocials: true,
-  glowBadges: true,
-  noise: true,
-  tilt: true,
-  gate: false,
-  verified: true,
-  discoverable: true,
-  showStats: true,
-  showRate: true,
-  bgType: 'gradient',
-  bgValue: 'linear-gradient(135deg, #0d0c22 0%, #1e1b4b 50%, #0f172a 100%)',
-  socials: [
-    { net: 'github', url: 'https://github.com', label: 'GitHub' },
-    { net: 'x', url: 'https://x.com', label: 'X' },
-    { net: 'discord', url: 'https://discord.com', label: 'Discord' },
-    { net: 'spotify', url: 'https://spotify.com', label: 'Spotify' },
-  ],
-  links: [
-    {
-      title: 'Portfolio & Proyectos',
-      url: 'https://github.com',
-      desc: 'Explora mis últimos proyectos de código abierto',
-      icon: '🚀',
-    },
-    {
-      title: 'Mi música favorita',
-      url: 'https://spotify.com',
-      desc: 'Playlist curated de synthwave y electrónica',
-      icon: '🎧',
-    },
-  ],
-  projects: [
-    {
-      title: 'sharee Web',
-      desc: 'Plataforma de perfiles web personalizables y modernos',
-      url: '#',
-      tag: 'React / TS',
-      img: '',
-    },
-  ],
-  gallery: [],
-  tags: ['developer', 'design'],
-  blocksOff: [...BLOQUES_APAGADOS_POR_DEFECTO],
-  blockOrder: [],
-  canvasH: null,
-  pos: {},
-  bstyle: {},
-  audio: {
-    provider: 'youtube',
-    src: 'manual',
-    title: 'Resonance',
-    artist: 'HOME',
-    cover: '',
-    yt: '',
-    ytUrl: '',
-    tracks: [],
-  },
-};
-
 export default function LandingPage() {
   /* El de la casa. Sin esto, volver a la portada desde un perfil dejaba
      la pestana llamandose como esa persona. */
@@ -292,48 +157,10 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [claimName, setClaimName] = useState('');
-  // La demo se queda con el tema y el acento con los que nace: sus
-  // selectores se cambiaron por los tres perfiles mas vistos.
-  const demoTheme = INITIAL_DEMO.theme;
-  const demoAccent = INITIAL_DEMO.accent;
-
-  const profilesMap = useProfileStore((s) => s.profiles);
-  const profiles = useMemo(() => Object.values(profilesMap), [profilesMap]);
-
-  /**
-   * Los tres más vistos, bajo la demo.
-   *
-   * Se pide al servidor ordenado por visitas; si no hay servidor —o todavía
-   * no ha contestado— se ordenan los que haya en local. Asi el hueco nunca
-   * se queda vacio mientras carga.
-   */
-  // Se piden seis: tres para la lista de mas vistos y el resto para que el
-  // carrusel tenga por donde girar.
-  const { data: masVistos = [] } = useDiscoverProfiles({ order: 'popular', limit: 6 });
-  const porVistas = useMemo(() => {
-    const fuente = masVistos.length > 0 ? (masVistos as Profile[]) : profiles;
-    return [...fuente]
-      .filter((x) => x.username && x.discoverable !== false)
-      .sort((a, b) => (b.views || 0) - (a.views || 0));
-  }, [masVistos, profiles]);
-
-
-
-  const demoProfile = useMemo<Profile>(() => {
-    return {
-      ...INITIAL_DEMO,
-      theme: demoTheme,
-      accent: demoAccent,
-      gate: false,
-      cursor: 'default',
-    };
-  }, [demoTheme, demoAccent]);
-
-  /** Lo que gira en la portada. Sin perfiles todavia, la demo de siempre. */
-  const delCarrusel = useMemo(
-    () => (porVistas.length > 0 ? porVistas.slice(0, 6) : [demoProfile]),
-    [porVistas, demoProfile],
-  );
+  /* Aqui se pedian seis perfiles al servidor para que el carrusel tuviera
+     por donde girar. Ya no gira nada: lo que se ensena son tres capturas.
+     Con la consulta se fue la ultima lectura de perfiles de la portada, y
+     con ella el `ProfileView` que arrastraba al paquete de entrada. */
 
   /* Las cifras de la portada salen de la base, no de aqui. `totalViews`
      de arriba solo sumaba los perfiles que el navegador tenia a mano
@@ -415,7 +242,7 @@ export default function LandingPage() {
 
         {/* Live Demo with theme / accent switches */}
         <div className="demo rise d2">
-          <CarruselPerfiles perfiles={delCarrusel} />
+          <TrioPerfiles />
 
         </div>
       </section>

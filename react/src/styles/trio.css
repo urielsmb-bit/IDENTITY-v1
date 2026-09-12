@@ -1,0 +1,210 @@
+/* ============================================================
+   EL TRIO DE LA PORTADA
+   Tres capturas de verdad en marco de telefono, en una escena 3D.
+   Cero lienzos, cero iframes, cero animaciones al cargar.
+   ============================================================ */
+
+/* La caja: reserva su sitio y pone la CAMARA.
+   `perspective` aqui y `preserve-3d` en la escena de dentro: son las dos
+   piezas que hacen que un `rotateY` se vea como un giro y no como un
+   aplastamiento. Con la perspectiva puesta en el mismo elemento que gira,
+   cada telefono tendria su propio punto de fuga y la escena se rompe. */
+.trio {
+  position: relative;
+  /* Su columna manda. Antes esto era `min(760px, 96vw)` y el hueco de la
+     portada mide 468: se salia 292 px POR ENCIMA del texto de al lado.
+     Un ancho fijo dentro de una rejilla es una bomba de relojeria. */
+  width: 100%;
+  /* Alto = 0.85 x ancho, y ese numero sale de una cuenta, no del ojo:
+       el del centro mide 38% del ancho -> 0.774 A de alto;
+       va despegado del suelo un 5%, y la perspectiva lo agranda 1.068.
+     Poniendo que su borde de arriba no se salga:
+       0.42H + (0.95H - 0.774A)*1.068 >= 0   ->   H >= 0.838 A
+     Con 0.85 queda un dedo de margen. Con el 0.78 de antes, el telefono
+     asomaba 34 px por encima de su hueco y se metia en el titular. */
+  aspect-ratio: 20 / 17;
+  margin-inline: auto;
+  perspective: 1100px;
+  /* Un pelin por encima del centro: se mira la escena desde arriba, que es
+     como se mira un telefono que tienes delante. */
+  perspective-origin: 50% 42%;
+}
+
+/* La escena. Es la que se inclina con el raton; los telefonos van quietos
+   dentro de ella, asi que inclinarla los mueve a los tres a la vez y el
+   conjunto se lee como UN objeto y no como tres estampas sueltas. */
+.trio__escena {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--trio-x, 0deg)) rotateY(var(--trio-y, 0deg));
+  /* Vuelve despacio al centro al salir el raton. Solo `transform`, que lo
+     resuelve el compositor sin rehacer la pagina. */
+  transition: transform .5s cubic-bezier(.22, .61, .36, 1);
+}
+
+.trio__tel {
+  position: absolute;
+  display: block;
+  bottom: 0;
+}
+.trio__tel img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ---- el del centro: de frente y ADELANTADO ----------------------------
+   Los 70 px de `translateZ` son el efecto entero. La perspectiva los
+   convierte en tamano —sale mayor que los de los lados sin tocarle la
+   escala— y en movimiento: al inclinar la escena, lo que esta mas cerca
+   se desplaza mas que lo que esta detras. Eso es el paralaje, y es lo que
+   el ojo lee como profundidad de verdad y no como un dibujo. */
+.trio__centro {
+  left: 50%;
+  /* 34% y no 36%, y separado del borde de abajo, por lo que sigue.
+     Adelantarlo 70 px lo agranda 1100/(1100-70) = 1.068, y ESE aumento no
+     crece desde su base: crece desde el punto de fuga de la caja. O sea
+     que se estira hacia los cuatro lados a la vez. Con el 36% pegado
+     abajo, lo que se veia era 14 px de telefono por debajo de su hueco,
+     metiendose en lo que hay debajo. La medida de aqui es la de DESPUES
+     del aumento, no la de antes. */
+  width: 38%;
+  bottom: 5%;
+  transform: translateX(-50%) translateZ(70px);
+  z-index: 3;
+}
+.trio__centro img {
+  /* La sombra sigue el CONTORNO del telefono, no su caja: el PNG tiene las
+     esquinas transparentes y un `box-shadow` normal dibujaria un
+     rectangulo flotando por detras. Larga y oscura, porque este esta
+     despegado del fondo. */
+  filter: drop-shadow(0 30px 44px rgba(0, 0, 0, .7));
+}
+
+/* ---- los de los lados: detras, girados hacia dentro --------------------
+   `rotateY` los pone de medio perfil, como dos puertas entornadas. Ese
+   giro es lo que separa esto de la version plana: antes estaban inclinados
+   pero mirando de frente, y un telefono inclinado de frente parece caido,
+   no colocado detras.
+
+   La geometria sale de una sola medida: el ancho de la caja (A). Un
+   telefono mide 816x1662, o sea su ancho / 0.491 de alto:
+
+     centro   36% A  ->  0.733 A de alto
+     lados    30% A  ->  0.611 A de alto
+
+   Girados en el plano, los de los lados se salen de su hueco por DOS
+   motivos, y el segundo es el que se olvida:
+
+     1. la caja que ocupan crece
+          .30A*cos9 + .611A*sin9 = 0.392 A,  o sea 0.046 A de mas por lado;
+     2. giran sobre su BASE, no sobre su centro, asi que el telefono entero
+          se corre hacia fuera  (.611A/2)*sin9 = 0.048 A.
+
+   Juntos son 0.094 A, y por eso se meten un 11% hacia dentro. Con el 6%
+   que habia —calculado solo con el primero— asomaban 16 px por fuera, y
+   como la caja llevaba entonces `overflow:hidden`, salian cortados. El
+   `rotateY` ademas los estrecha (cos 24 = 0.91), asi que ese 11% va
+   sobrado.
+
+   Van de FONDO y no de <img> a proposito: ver el comentario del
+   componente. Resumen: asi, en un movil, no se piden. Garantizado. */
+.trio__izq,
+.trio__der {
+  /* En un movil no existen. Y como su imagen solo se nombra dentro del
+     `@media` de abajo, tampoco se descarga. */
+  display: none;
+  width: 33%;
+  aspect-ratio: 816 / 1662;
+  bottom: 4%;
+  z-index: 1;
+  transform-origin: bottom center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  /* Se apagan un poco para que el ojo vaya al del medio sin tener que
+     desenfocarlos: un desenfoque de verdad costaria pintar cada fotograma.
+     Poco, eso si — al 0.82 que tenian se volvian sombras, y lo que ensenan
+     es justo lo contrario: que cada perfil es distinto.
+     `drop-shadow` sobre un fondo con transparencia sigue el contorno del
+     telefono, igual que sobre un <img>. */
+  filter: drop-shadow(0 16px 30px rgba(0, 0, 0, .6)) brightness(.88);
+}
+
+.trio__izq { left: 8%;  transform: translateZ(-90px) rotateY(24deg)  rotate(-7deg); }
+.trio__der { right: 8%; transform: translateZ(-90px) rotateY(-24deg) rotate(7deg); }
+
+@media (min-width: 560px) {
+  .trio__izq,
+  .trio__der { display: block; }
+
+  /* AVIF primero, WebP para quien no lo entienda; y de cada uno, dos
+     densidades. El elemento mide 198 px de CSS, asi que 200 para una
+     pantalla normal y 400 para una del doble. Antes habia un solo fichero
+     de 300 pensado para cuando el telefono medía 140: al agrandarlo se
+     quedo en 1,5x y en una pantalla buena se veia blando. */
+  .trio__izq {
+    background-image: image-set(
+      url('../assets/portada/izq-200.avif') type('image/avif') 1x,
+      url('../assets/portada/izq-400.avif') type('image/avif') 2x,
+      url('../assets/portada/izq-200.webp') type('image/webp') 1x,
+      url('../assets/portada/izq-400.webp') type('image/webp') 2x);
+  }
+  .trio__der {
+    background-image: image-set(
+      url('../assets/portada/der-200.avif') type('image/avif') 1x,
+      url('../assets/portada/der-400.avif') type('image/avif') 2x,
+      url('../assets/portada/der-200.webp') type('image/webp') 1x,
+      url('../assets/portada/der-400.webp') type('image/webp') 2x);
+  }
+}
+
+/* ---- el suelo ---------------------------------------------------------
+   Una mancha tenue debajo, pegada al plano del fondo. Sin algo asi los
+   telefonos no estan APOYADOS en nada: flotan, y el 3D se queda en un
+   truco de perspectiva. Va detras de todo y no recibe pulsaciones. */
+.trio__suelo {
+  position: absolute;
+  left: 50%;
+  bottom: 2%;
+  width: 80%;
+  height: 10%;
+  transform: translateX(-50%) translateZ(-120px);
+  background: radial-gradient(50% 50% at 50% 50%,
+    rgba(150, 130, 255, .20) 0%,
+    rgba(120, 100, 220, .09) 45%,
+    rgba(0, 0, 0, 0) 72%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ------------------------------------------------------------
+   EN UN MOVIL, SOLO EL DEL CENTRO
+   Tres telefonos en 340 px de ancho no se ven: se adivinan. Los de los
+   lados no se pintan —y no se descargan— porque su imagen vive dentro
+   del `@media (min-width: 560px)` de arriba.
+   ------------------------------------------------------------ */
+@media (max-width: 559px) {
+  .trio {
+    width: min(320px, 76vw);
+    /* Sin telefonos girados asomando, la caja se ajusta a lo que mide uno
+       solo. */
+    aspect-ratio: 816 / 1662;
+  }
+  /* Sin nadie detras no hay nada que adelantar: el telefono va plano,
+     pegado abajo y ocupando la caja entera. Si se dejara el `bottom: 5%`
+     y el `translateZ` de escritorio, se saldria por arriba. */
+  .trio__centro {
+    width: 100%;
+    bottom: 0;
+    transform: translateX(-50%) translateZ(0);
+  }
+  .trio__suelo { display: none; }
+}
+
+/* Con menos movimiento, la escena se queda quieta. La profundidad se
+   mantiene —es lo que le da forma— pero deja de responder al raton. */
+@media (prefers-reduced-motion: reduce) {
+  .trio__escena { transition: none; transform: none; }
+}
