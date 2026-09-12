@@ -172,7 +172,21 @@ try {
   process.exit(1);
 }
 
-console.log(`\n${vistos} vídeos en la cuenta · ${tocados} con lista blanca · ${saltados} sin tocar`);
+console.log('');
+console.log(
+  `${vistos} vídeos · ${tocados} con dominios · ${saltados} ya públicos` +
+    (pendientes.length ? ` · ${pendientes.length} cerrados` : ''),
+);
+
+/* Los cerrados se nombran APARTE. Son los unicos que quedan sin
+   arreglar, y un resumen que solo da numeros se lee como si todo
+   hubiera ido bien. */
+if (pendientes.length) {
+  console.log('');
+  console.log('Cerrados del todo (embed: private): ' + pendientes.join(', ') + '.');
+  console.log('Anadirles dominios no sirve de nada: hay que abrirlos antes.');
+  console.log('Repite anadiendo --abrir si quieres que se haga.');
+}
 if (fallos.length) {
   console.log('\nNo se pudo con ' + fallos.length + ':');
   for (const f of fallos) console.log('  ' + f);
