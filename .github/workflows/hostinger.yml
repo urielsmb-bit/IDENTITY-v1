@@ -5,13 +5,20 @@
 # ────────────────────────────────────────────────────────────────────────
 #
 # En GitHub → Settings → Secrets and variables → Actions → New repository
-# secret, cinco secretos. Los pegas tu ahi; no viajan por ningun otro sitio
-# y no aparecen en los registros —GitHub los tacha—:
+# secret. Los pegas tu ahi; no viajan por ningun otro sitio y no aparecen en
+# los registros —GitHub los tacha—:
 #
-#   FTP_HOST        el servidor FTP, tal cual sale en hPanel (Archivos →
-#                   Cuentas FTP). Suele ser algo como ftp.tudominio.com
-#   FTP_USER        el usuario FTP
-#   FTP_PASSWORD    su contrasena
+#   SSH_HOST     la IP del servidor (hPanel → Avanzado → Acceso SSH)
+#   SSH_PORT     su puerto. Hostinger no usa el 22
+#   SSH_USER     el usuario, algo como u251278312
+#   SSH_KEY      la clave PRIVADA de un par creado solo para desplegar,
+#                entera, con sus lineas BEGIN y END. La publica se anade en
+#                esa misma pantalla de hPanel, en «Agregar clave SSH»
+#   SSH_HOSTKEY  la huella del servidor, para fijarla. Se saca con:
+#                  ssh-keyscan -p <puerto> -t ed25519 <ip>
+#                No es secreta: es publica por definicion. Va en un secreto
+#                solo para no repetir la IP en el fichero
+#
 #   VITE_SUPABASE_URL   los mismos valores que ya tienes en
 #   VITE_SUPABASE_KEY   react/.env.local. La clave es la ANONIMA, la que
 #                       ya viaja dentro del JavaScript publico
@@ -21,9 +28,12 @@
 #                       de borde `vimeo-subida`, en Supabase, no aqui
 #   VITE_FN_VISTAS      la funcion que cuenta las visitas
 #
-# Y uno opcional, `FTP_DIR`, si tu dominio no cuelga de `public_html`. En un
-# dominio adicional suele ser algo como `domains/tudominio.com/public_html`.
-# Sin el, se usa `public_html`.
+# Y uno opcional, `SSH_DIR`, si la web no esta en
+# `domains/<dominio>/public_html`. OJO: la ruta de SSH NO es la del FTP —
+# el FTP te deja enjaulado y `public_html` te queda al lado, SSH entra en el
+# inicio de verdad. Para saber cual es la tuya:
+#
+#   ssh -p <puerto> <usuario>@<ip> 'find ~ -maxdepth 4 -name public_html'
 #
 # ────────────────────────────────────────────────────────────────────────
 # CUANDO SE LANZA
