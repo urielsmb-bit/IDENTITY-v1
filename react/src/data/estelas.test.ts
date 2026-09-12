@@ -25,8 +25,14 @@ describe('el catálogo de estelas', () => {
   });
 
   it('el motor sabe dibujar todas las formas que se piden', () => {
+    /* Dos maneras válidas de saber dibujar una: el `switch` de siluetas, o
+       una rama propia para las que se cuecen aparte —el pétalo sale de un
+       atlas, no de un trazado—. Lo que no vale es ninguna de las dos: eso
+       cae en el `default` y sale un círculo, sin avisar. */
     const sinDibujo = [...new Set(ESTELAS.map((e) => e.forma))]
-      .filter((f) => !MOTOR.includes(`case '${f}'`) && f !== 'punto');
+      .filter((f) => f !== 'punto'
+        && !MOTOR.includes(`case '${f}'`)
+        && !MOTOR.includes(`forma === '${f}'`));
     expect(sinDibujo, 'formas declaradas que el motor no dibuja').toEqual([]);
   });
 

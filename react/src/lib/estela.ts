@@ -344,12 +344,6 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
         ctx.fill();
         break;
       }
-      case 'petalo': {
-        ctx.beginPath();
-        ctx.ellipse(x, y, r, r * 0.45, a, 0, 6.283);
-        ctx.fill();
-        break;
-      }
       case 'humo':
       case 'punto':
       default: {
@@ -359,6 +353,112 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
         break;
       }
     }
+  }
+
+  /* ────────────────────────────────────────────────────────────────────
+     EL PÉTALO SE COCE UNA VEZ
+     ────────────────────────────────────────────────────────────────────
+
+     Un pétalo de verdad no es una silueta rellena de un color: tiene una
+     cara donde da la luz, un pliegue en sombra donde se curva, y un borde
+     tan fino que la luz lo ATRAVIESA. Eso son degradados — y un degradado
+     por mota y por cuadro no se puede pagar.
+
+     Así que se cuece uno solo, a tamaño grande y en un lienzo aparte, cada
+     vez que cambia el color. Después cada pétalo es UN `drawImage` girado:
+     una orden de dibujo, menos de las tres que costaba la silueta a mano, y
+     con un material dentro en vez de una mancha plana.
+
+     Y al llevar su propia sombra dentro, se ve tanto sobre un fondo oscuro
+     como sobre una foto a pleno sol, que es donde el relleno plano
+     desaparecía. */
+  const LADO_SPRITE = 72;
+  /* TRES siluetas, no una.
+     Un solo pétalo repetido cuarenta veces se nota: son cuarenta copias de
+     la misma cosa girada, y el ojo lo caza enseguida. Tres cambian el ancho,
+     lo afilada que es la punta y hacia qué lado carga —ningún pétalo de
+     verdad es simétrico—, y se eligen por la semilla de cada mota. Van en
+     UN lienzo, una al lado de otra: sigue siendo un horneado y una sola
+     textura. */
+  const VARIANTES = [
+    { ancho: 0.42, punta: 1.60, sesgo: 1.18 },
+    { ancho: 0.33, punta: 1.78, sesgo: 0.86 },
+    { ancho: 0.50, punta: 1.44, sesgo: 1.05 },
+  ];
+  let sprite: HTMLCanvasElement | null = null;
+  let spriteDe = '';
+
+  /** El mismo color, más claro o más oscuro. Hacia el blanco o hacia el negro. */
+  function mezcla(k: number) {
+    const d = k >= 0 ? 255 : 0;
+    const f = Math.abs(k);
+    return `${Math.round(rgb[0] + (d - rgb[0]) * f)},`
+      + `${Math.round(rgb[1] + (d - rgb[1]) * f)},`
+      + `${Math.round(rgb[2] + (d - rgb[2]) * f)}`;
+  }
+
+  function cocerPetalo() {
+    const clave = rgb.join(',') + '|' + dpr;
+    if (sprite && spriteDe === clave) return;
+    const l = Math.round(LADO_SPRITE * dpr);
+    const c = sprite ?? document.createElement('canvas');
+    c.width = l * VARIANTES.length;
+    c.height = l;
+    const g = c.getContext('2d');
+    if (!g) return;
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, c.width, c.height);
+
+    VARIANTES.forEach((v, k) => {
+      g.setTransform(dpr, 0, 0, dpr, k * l, 0);
+      const cx = LADO_SPRITE / 2, cy = LADO_SPRITE / 2;
+      /* Margen: el trazo del borde se sale medio grosor, y sin margen
+         quedaría cortado a cuchillo contra el canto de la casilla. */
+      const largo = cx - 2;
+      const ancho = largo * v.ancho;
+
+      /* La silueta: dos curvas que se encuentran en punta, y con una más
+         llena que la otra. Una elipse no vale — una elipse no tiene puntas,
+         y sin puntas es una lenteja. */
+      const silueta = () => {
+        g.beginPath();
+        g.moveTo(cx - largo, cy);
+        g.quadraticCurveTo(cx, cy - ancho * v.punta * v.sesgo, cx + largo, cy);
+        g.quadraticCurveTo(cx, cy + ancho * v.punta / v.sesgo, cx - largo, cy);
+        g.closePath();
+      };
+
+      /* El material, a lo ANCHO: del borde fino por el que pasa la luz, a la
+         cara iluminada, al pliegue en sombra del otro lado. Es lo que hace
+         que parezca que tiene una curva y no que es una pegatina. */
+      const mat = g.createLinearGradient(0, cy - ancho, 0, cy + ancho);
+      mat.addColorStop(0, `rgba(${mezcla(0.55)},0.30)`);
+      mat.addColorStop(0.28, `rgba(${mezcla(0.42)},0.96)`);
+      mat.addColorStop(0.58, `rgba(${mezcla(0)},0.92)`);
+      mat.addColorStop(1, `rgba(${mezcla(-0.45)},0.88)`);
+      silueta();
+      g.fillStyle = mat;
+      g.fill();
+
+      /* El canto. Es lo que le da SILUETA sobre un fondo claro: sin él, un
+         pétalo pálido sobre un cielo a pleno sol desaparece. */
+      silueta();
+      g.strokeStyle = `rgba(${mezcla(-0.58)},0.62)`;
+      g.lineWidth = 1.25;
+      g.stroke();
+
+      /* El nervio, sin llegar a las puntas: un pétalo tiene una sola línea
+         por el medio y muere antes del borde. */
+      g.beginPath();
+      g.moveTo(cx - largo * 0.66, cy + ancho * 0.16);
+      g.quadraticCurveTo(cx, cy - ancho * 0.10, cx + largo * 0.72, cy - ancho * 0.04);
+      g.strokeStyle = `rgba(${mezcla(-0.35)},0.4)`;
+      g.lineWidth = 0.9;
+      g.stroke();
+    });
+
+    sprite = c;
+    spriteDe = clave;
   }
 
   /**
@@ -641,7 +741,39 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
         ctx.fillStyle = guarda;
       }
 
-      dibujar(def.forma, x, y, r, giroAng);
+      if (def.forma === 'petalo' && sprite) {
+        /* EL VOLTEO.
+
+           Un pétalo que cae no gira como una rueda: se VOLTEA, y al ponerse
+           de canto se ve casi como una línea antes de volver a abrirse. Eso
+           es lo único que separa «una hoja cayendo» de «un dibujo de hoja
+           girando», y sale de aplastar el eje corto con el coseno de su
+           propia fase. Nunca llega a cero: de canto sigue viéndose el filo.
+
+           Sin `save`/`restore`: la matriz se escribe entera y se devuelve
+           después. Es la misma cuenta que hace `rotate` por dentro, sin la
+           pila. */
+        const fase = semilla[i]! * 6.283 + t * 6.283 * (def.giro ?? 0.4) * 2.6;
+        const q = 0.16 + 0.84 * Math.abs(Math.cos(fase));
+        const e = (r * 2.1) / LADO_SPRITE;
+        const co = Math.cos(giroAng) * e, si = Math.sin(giroAng) * e;
+        ctx.globalAlpha = Math.min(1, alfa);
+        ctx.setTransform(
+          dpr * co, dpr * si,
+          dpr * -si * q, dpr * co * q,
+          dpr * x, dpr * y,
+        );
+        const casilla = Math.min(VARIANTES.length - 1, (semilla[i]! * VARIANTES.length) | 0);
+        const lado = sprite.height;
+        ctx.drawImage(
+          sprite, casilla * lado, 0, lado, lado,
+          -LADO_SPRITE / 2, -LADO_SPRITE / 2, LADO_SPRITE, LADO_SPRITE,
+        );
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.globalAlpha = 1;
+      } else {
+        dibujar(def.forma, x, y, r, giroAng);
+      }
     }
     vivas = quedan;
 
@@ -679,7 +811,13 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
     if (durmiendo) despertar();
   }
 
-  const alRedimensionar = () => medir();
+  const alRedimensionar = () => {
+    medir();
+    /* Arrastrar la ventana a otra pantalla cambia la densidad de píxeles, y
+       el pétalo está cocido a la de antes: se vería borroso hasta que
+       tocaras un ajuste. */
+    if (def?.forma === 'petalo') cocerPetalo();
+  };
   const alVisibilidad = () => {
     if (document.hidden && latido) { cancelAnimationFrame(latido); latido = 0; durmiendo = true; }
   };
@@ -696,6 +834,10 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
     ambito = o.ambito ?? null;
     if (!ambito) dentro = true;
     rgb = aRgb(o.color || def?.color || '#ffffff');
+    /* El pétalo lleva el color DENTRO, así que cambiar de color es volver a
+       cocerlo. Pasa cuando arrastras el selector, no sesenta veces por
+       segundo. */
+    if (def?.forma === 'petalo') cocerPetalo();
     if (def && (cantidad > 0 || guion)) despertar();
   }
 

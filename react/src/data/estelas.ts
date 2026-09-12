@@ -284,11 +284,20 @@ export const ESTELAS: readonly DefEstela[] = [
     desc: 'Hojas y pétalos que flotan tras tu cursor.',
     color: '#ff8fa3',
     forma: 'petalo',
-    paso: 16, brote: 1, vida: 2200,
-    dispersa: 20, tam: [6, 13],
+    /* SUELTOS y TENUES, que es como cae un pétalo. Antes salían cada trece
+       píxeles y con un relleno casi opaco: al solaparse se fundían en una
+       mancha blanca, y lo que se veía no eran pétalos sino pintura. El paso
+       largo los separa, el alfa bajo deja ver lo que hay detrás —un pétalo
+       es fino, la luz lo atraviesa— y el giro entero los hace voltear
+       mientras bajan en vez de planear siempre de canto. */
+    paso: 19, brote: 1, vida: 2200,
+    dispersa: 26, tam: [7, 15],
     deriva: [0.3, 0.25], gravedad: 0.012, roce: 0.995,
-    giro: 0.25, onda: [16, 2.2],
-    alfa: 0.85,
+    giro: 0.55, onda: [16, 2.2],
+    /* Alto a propósito: la transparencia la lleva el pétalo DENTRO —el borde
+       fino por el que pasa la luz, la cara, el pliegue en sombra—. Bajarla
+       aquí apagaría el material entero en vez de afinar el borde. */
+    alfa: 0.95,
     pro: true,
   },
   {

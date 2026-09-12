@@ -53,8 +53,13 @@ function TarjetaEstela({
     const e = crearEstela({
       fx: id,
       /* Bastante para que se vea de qué va, sin que la tarjeta se convierta
-         en una mancha: la densidad de verdad la eliges tú abajo. */
-      cantidad: 7,
+         en una mancha: la densidad de verdad la eliges tú abajo.
+
+         Nueve y no siete: en una tarjeta el recorrido es corto, y las
+         estelas de paso largo —Pétalos, Ondas, Geométrico— salían con tres
+         motas contadas. Una previa que enseña de menos es una previa que
+         miente. */
+      cantidad: 9,
       color: color || undefined,
       lienzo: cv,
       guion: true,
@@ -80,7 +85,7 @@ function TarjetaEstela({
 
   /* Cambiar el color NO vuelve a montar el lienzo. */
   useEffect(() => {
-    viva.current?.actualizar({ fx: id, cantidad: 7, color: color || undefined, guion: true });
+    viva.current?.actualizar({ fx: id, cantidad: 9, color: color || undefined, guion: true });
   }, [id, color]);
 
   return (
