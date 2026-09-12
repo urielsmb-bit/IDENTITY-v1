@@ -278,7 +278,12 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
     viva[i] = 1;
   }
 
-  function dibujar(forma: FormaMota, x: number, y: number, r: number, a: number) {
+  /**
+   * `r` es el tamaño de AHORA y `base` el de partida. Hacen falta los dos:
+   * una onda que se expande necesita saber cuánto ha crecido para poder
+   * adelgazar en la misma medida.
+   */
+  function dibujar(forma: FormaMota, x: number, y: number, r: number, a: number, base: number) {
     switch (forma) {
       case 'estrella': {
         /* Cuatro puntas y no un círculo: a este tamaño un punto se lee como
@@ -304,22 +309,56 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
         break;
       }
       case 'burbuja': {
-        ctx.lineWidth = Math.max(1, r * 0.14);
+        const g = ctx.globalAlpha;
+        /* La PELÍCULA. Una pompa no es un aro vacío: tiene una lámina
+           finísima que tiñe lo que hay detrás. Casi no se ve, y es la
+           diferencia entre una pompa y un círculo dibujado. */
+        ctx.globalAlpha = g * 0.13;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, 6.283);
+        ctx.fill();
+        ctx.globalAlpha = g;
+
+        ctx.lineWidth = Math.max(1, r * 0.13);
         ctx.beginPath();
         ctx.arc(x, y, r, 0, 6.283);
         ctx.stroke();
-        /* El reflejo. Sin él una burbuja es un aro, y un aro no es una
-           burbuja: lo que dice «esto es una pompa» es el punto de luz. */
+
+        /* El reflejo de arriba: lo que dice «esto es una pompa». */
         ctx.beginPath();
-        ctx.arc(x - r * 0.33, y - r * 0.33, r * 0.17, 0, 6.283);
+        ctx.arc(x - r * 0.34, y - r * 0.34, r * 0.17, 0, 6.283);
         ctx.fill();
+
+        /* Y el rebote de abajo: la luz que entra por el otro lado y sale
+           devuelta por la pared del fondo. Es lo que la vuelve ESFERA en
+           vez de circunferencia. */
+        ctx.globalAlpha = g * 0.5;
+        ctx.lineWidth = Math.max(0.8, r * 0.1);
+        ctx.beginPath();
+        ctx.arc(x, y, r * 0.72, 0.55, 2.05);
+        ctx.stroke();
+        ctx.globalAlpha = g;
         break;
       }
       case 'anillo': {
-        ctx.lineWidth = Math.max(1, r * 0.1);
+        /* Una onda se ADELGAZA al expandirse: la misma energía repartida en
+           una circunferencia cada vez más larga. Antes el grosor salía del
+           radio, así que engordaba al crecer — y una onda que engorda no es
+           una onda, es un donut. */
+        const fino = Math.max(0.7, base * 0.55 * (base / Math.max(base, r)));
+        ctx.lineWidth = fino;
         ctx.beginPath();
         ctx.arc(x, y, r, 0, 6.283);
         ctx.stroke();
+        /* Y la segunda cresta, por dentro y más tenue. Una onda nunca viene
+           sola; una sola circunferencia es un aro dibujado. */
+        const g = ctx.globalAlpha;
+        ctx.globalAlpha = g * 0.42;
+        ctx.lineWidth = Math.max(0.6, fino * 0.66);
+        ctx.beginPath();
+        ctx.arc(x, y, r * 0.76, 0, 6.283);
+        ctx.stroke();
+        ctx.globalAlpha = g;
         break;
       }
       case 'triangulo': {
@@ -331,6 +370,15 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
           if (k === 0) ctx.moveTo(fx, fy); else ctx.lineTo(fx, fy);
         }
         ctx.closePath();
+        /* El cristal de dentro. Sin él son tres rayas sueltas y se lee como
+           un boceto; con él, el alambre es el BORDE de algo. */
+        const g = ctx.globalAlpha;
+        ctx.globalAlpha = g * 0.20;
+        ctx.fill();
+        ctx.globalAlpha = g;
+        /* Y un alambre que se vea: a un décimo del radio, en una mota de
+           cuatro píxeles, el trazo era medio píxel. */
+        ctx.lineWidth = Math.max(1, r * 0.17);
         ctx.stroke();
         break;
       }
@@ -733,12 +781,26 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
          cuesta un `arc` más: la diferencia entre las dos cosas por menos de
          lo que cuesta añadir una mota. */
       if (def.brillo) {
-        const guarda = ctx.fillStyle;
-        ctx.fillStyle = `rgba(${cr},${cg},${cb},${(alfa * 0.16).toFixed(3)})`;
-        ctx.beginPath();
-        ctx.arc(x, y, r * def.brillo, 0, 6.283);
-        ctx.fill();
-        ctx.fillStyle = guarda;
+        const guardaF = ctx.fillStyle, guardaT = ctx.strokeStyle;
+        const tenue = `rgba(${cr},${cg},${cb},${(alfa * 0.16).toFixed(3)})`;
+        ctx.fillStyle = ctx.strokeStyle = tenue;
+        if (def.forma === 'linea') {
+          /* El halo sigue a la FORMA. En una raya de treinta píxeles de
+             largo, un halo redondo de radio r·brillo es un manchón del
+             tamaño de la raya entera: se comía el efecto y lo dejaba en un
+             borrón de color. Aquí es la misma raya, más gorda y más tenue. */
+          ctx.lineWidth = Math.max(1.5, r * 0.28 * def.brillo);
+          ctx.beginPath();
+          ctx.moveTo(x - Math.cos(giroAng) * r, y - Math.sin(giroAng) * r);
+          ctx.lineTo(x + Math.cos(giroAng) * r, y + Math.sin(giroAng) * r);
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.arc(x, y, r * def.brillo, 0, 6.283);
+          ctx.fill();
+        }
+        ctx.fillStyle = guardaF;
+        ctx.strokeStyle = guardaT;
       }
 
       if (def.forma === 'petalo' && sprite) {
@@ -772,7 +834,7 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.globalAlpha = 1;
       } else {
-        dibujar(def.forma, x, y, r, giroAng);
+        dibujar(def.forma, x, y, r, giroAng, tam[i]!);
       }
     }
     vivas = quedan;

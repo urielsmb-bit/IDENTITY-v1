@@ -198,7 +198,9 @@ export const ESTELAS: readonly DefEstela[] = [
     paso: 11, brote: 1, vida: 1250,
     dispersa: 20, tam: [4, 11],
     deriva: [0.35, -0.2], roce: 0.985, giro: 0.55, crece: 0.6,
-    alfa: 0.85,
+    /* Aditivo y con halo: es lo que separa un alambre futurista de tres
+       rayas verdes. Donde se cruzan dos figuras, hay más luz. */
+    aditivo: true, alfa: 0.9, brillo: 1.9,
     pro: true,
   },
   {
@@ -275,7 +277,9 @@ export const ESTELAS: readonly DefEstela[] = [
     paso: 22, brote: 1, vida: 1200,
     dispersa: 0, tam: [6, 10],
     deriva: [0, 0], roce: 1, crece: 5,
-    alfa: 0.55,
+    /* Aditivo: dos ondas que se cruzan tienen que brillar más donde se
+       cruzan. Es lo único que hace que parezcan ondas y no aros. */
+    aditivo: true, alfa: 0.7,
     pro: true,
   },
   {
