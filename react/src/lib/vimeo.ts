@@ -11,8 +11,14 @@
 
 /**
  * Saca el id numérico de una URL de Vimeo. Acepta las formas habituales:
- * vimeo.com/123, vimeo.com/channels/x/123, player.vimeo.com/video/123 y los
- * enlaces privados vimeo.com/123/abcdef.
+ * vimeo.com/123, vimeo.com/channels/x/123, player.vimeo.com/video/123, los
+ * enlaces privados vimeo.com/123/abcdef y el de la pantalla de gestión,
+ * vimeo.com/manage/videos/123.
+ *
+ * Ese último importa más de lo que parece: es el que sale en la barra del
+ * navegador mientras estás EDITANDO el vídeo en Vimeo, o sea el que tienes
+ * delante justo cuando vas a copiarlo. Sin él, la respuesta era «no
+ * reconozco ese enlace» sobre una URL perfectamente válida.
  */
 export function idVimeo(url: string | null | undefined): string {
   const u = String(url || '').trim();
@@ -21,7 +27,7 @@ export function idVimeo(url: string | null | undefined): string {
 
   const m =
     u.match(/player\.vimeo\.com\/video\/(\d{6,12})/) ||
-    u.match(/vimeo\.com\/(?:channels\/[\w-]+\/|groups\/[\w-]+\/videos\/|album\/\d+\/video\/)?(\d{6,12})/);
+    u.match(/vimeo\.com\/(?:manage\/videos\/|channels\/[\w-]+\/|groups\/[\w-]+\/videos\/|album\/\d+\/video\/)?(\d{6,12})/);
   return m && m[1] ? m[1] : '';
 }
 
