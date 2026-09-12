@@ -79,6 +79,28 @@ export interface DefEstela {
   arrastre?: number;
 
   // ── cómo se ve ────────────────────────────────────────────
+  /**
+   * LA CINTA: una tira continua de luz por donde pasaste.
+   *
+   * Es lo que separa «puntos que te siguen» de «una línea de energía». Un
+   * rastro de motas sueltas se lee como partículas por muchas que pongas;
+   * una tira que se estrecha hacia la cola se lee como movimiento.
+   *
+   * No es más caro, es MENOS: un trazo por pasada en vez de cien círculos.
+   *
+   *   ancho  lo gruesa que es en la cabeza, en px
+   *   largo  cuántas posiciones del ratón recuerda
+   *   capas  pasadas de brillo: la ancha y tenue, la media, y el filo
+   */
+  cinta?: { ancho: number; largo: number; capas?: number };
+  /**
+   * El halo de cada mota.
+   *
+   * Una segunda pasada más ancha y muy tenue debajo de la mota. Es lo que
+   * hace que una chispa parezca que ilumina en vez de ser un recorte de
+   * papel de color. Multiplica el radio.
+   */
+  brillo?: number;
   /** Se suma a lo que hay debajo en vez de taparlo. Lo que da el brillo. */
   aditivo?: boolean;
   /** Opacidad de salida. */
@@ -99,10 +121,11 @@ export const ESTELAS: readonly DefEstela[] = [
     desc: 'Una estela etérea que se adapta a tu movimiento.',
     color: '#7fd8ff',
     forma: 'punto',
-    paso: 3, brote: 1, vida: 900,
+    paso: 6, brote: 1, vida: 900,
     dispersa: 7, tam: [3, 9],
     deriva: [0.25, -0.12], roce: 0.94, crece: 1.7,
-    arrastre: 0.25, aditivo: true, alfa: 0.5,
+    arrastre: 0.25, aditivo: true, alfa: 0.4, brillo: 2.6,
+    cinta: { ancho: 22, largo: 26, capas: 3 },
     pro: true,
   },
   {
@@ -114,7 +137,7 @@ export const ESTELAS: readonly DefEstela[] = [
     paso: 7, brote: 1, vida: 1100,
     dispersa: 16, tam: [2, 6],
     deriva: [0.5, -0.3], roce: 0.97, giro: 0.4, crece: 0.4,
-    aditivo: true, alfa: 0.95,
+    aditivo: true, alfa: 0.95, brillo: 3.2,
     pro: true,
   },
   {
@@ -123,10 +146,11 @@ export const ESTELAS: readonly DefEstela[] = [
     desc: 'Líneas de energía que siguen tu cursor con fluidez.',
     color: '#4da3ff',
     forma: 'linea',
-    paso: 2.5, brote: 1, vida: 620,
-    dispersa: 3, tam: [6, 18],
+    paso: 9, brote: 1, vida: 620,
+    dispersa: 3, tam: [3, 8],
     deriva: [0, 0], roce: 0.9, arrastre: 0.75,
-    aditivo: true, alfa: 0.8,
+    aditivo: true, alfa: 0.6, brillo: 2.2,
+    cinta: { ancho: 11, largo: 30, capas: 3 },
     pro: true,
   },
   {
@@ -147,10 +171,11 @@ export const ESTELAS: readonly DefEstela[] = [
     desc: 'Una estela de humo que se disipa con elegancia.',
     color: '#c9d4e0',
     forma: 'humo',
-    paso: 4, brote: 1, vida: 1500,
+    paso: 7, brote: 1, vida: 1500,
     dispersa: 12, tam: [10, 26],
     deriva: [0.2, -0.25], roce: 0.97, crece: 2.2, giro: 0.1,
-    alfa: 0.18,
+    alfa: 0.14,
+    cinta: { ancho: 44, largo: 22, capas: 1 },
     pro: true,
   },
   {
@@ -162,7 +187,7 @@ export const ESTELAS: readonly DefEstela[] = [
     paso: 4, brote: 1, vida: 950,
     dispersa: 13, tam: [1.5, 4.5],
     deriva: [0.7, -0.5], gravedad: 0.035, roce: 0.98, crece: 0.35,
-    aditivo: true, alfa: 1,
+    aditivo: true, alfa: 1, brillo: 3,
   },
   {
     id: 'geometrico',
@@ -182,10 +207,11 @@ export const ESTELAS: readonly DefEstela[] = [
     desc: 'Un rastro fluido que parece estar vivo.',
     color: '#ff5fa8',
     forma: 'punto',
-    paso: 2.2, brote: 1, vida: 780,
-    dispersa: 4, tam: [5, 14],
+    paso: 8, brote: 1, vida: 780,
+    dispersa: 4, tam: [4, 11],
     deriva: [0, 0.1], roce: 0.88, arrastre: 0.55, crece: 0.25,
-    aditivo: true, alfa: 0.55,
+    aditivo: true, alfa: 0.45, brillo: 2.4,
+    cinta: { ancho: 26, largo: 20, capas: 2 },
     pro: true,
   },
   {
@@ -197,7 +223,7 @@ export const ESTELAS: readonly DefEstela[] = [
     paso: 9, brote: 2, vida: 1000,
     dispersa: 22, tam: [3, 8],
     deriva: [1.1, -0.35], gravedad: 0.05, roce: 0.98, giro: 0.8,
-    aditivo: true, alfa: 0.9,
+    aditivo: true, alfa: 0.9, brillo: 2.4,
     pro: true,
   },
   {
@@ -206,9 +232,10 @@ export const ESTELAS: readonly DefEstela[] = [
     desc: 'Un efecto cambiante con colores que se mezclan.',
     color: '#ff4d6d',
     forma: 'punto',
-    paso: 3, brote: 1, vida: 1000,
+    paso: 7, brote: 1, vida: 1000,
     dispersa: 6, tam: [4, 11],
     deriva: [0.2, -0.2], roce: 0.93, crece: 0.8,
+    cinta: { ancho: 16, largo: 34, capas: 3 },
     /* Lo suyo es el color, no la forma: cada mota recorre media rueda de
        tono mientras vive, así que la estela sale degradada de principio a
        fin en vez de ser de un color. */
@@ -224,7 +251,7 @@ export const ESTELAS: readonly DefEstela[] = [
     paso: 6, brote: 2, vida: 420,
     dispersa: 26, tam: [5, 16],
     deriva: [1.6, 0], roce: 1, tono: 150,
-    aditivo: true, alfa: 0.85,
+    aditivo: true, alfa: 0.85, brillo: 2,
     pro: true,
   },
   {
@@ -236,7 +263,7 @@ export const ESTELAS: readonly DefEstela[] = [
     paso: 10, brote: 1, vida: 1400,
     dispersa: 2, tam: [2, 5],
     deriva: [0, 0], orbita: 26, roce: 1,
-    aditivo: true, alfa: 0.9,
+    aditivo: true, alfa: 0.9, brillo: 3.4,
     pro: true,
   },
   {
@@ -273,7 +300,7 @@ export const ESTELAS: readonly DefEstela[] = [
     paso: 8, brote: 1, vida: 1300,
     dispersa: 16, tam: [4, 10],
     deriva: [0.4, -0.15], roce: 0.99, giro: 0.35, crece: 0.5,
-    aditivo: true, alfa: 0.8,
+    aditivo: true, alfa: 0.8, brillo: 2.6,
     pro: true,
   },
 ];

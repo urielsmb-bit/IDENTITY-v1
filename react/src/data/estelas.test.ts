@@ -49,6 +49,58 @@ describe('el catálogo de estelas', () => {
       expect(e.tam[0], `${e.id}`).toBeLessThanOrEqual(e.tam[1]);
     }
   });
+
+  /* El motor recuerda un número fijo de posiciones. Una cinta que pida más
+     largo del que cabe no falla: se recorta en silencio, y la estela sale
+     más corta de lo que dice su ficha sin que nada lo cuente. */
+  it('ninguna cinta pide más recorrido del que el motor guarda', () => {
+    const tope = Number(MOTOR.match(/const TOPE_HIST = (\d+)/)?.[1]);
+    expect(tope, 'TOPE_HIST no encontrado en el motor').toBeGreaterThan(0);
+    for (const e of ESTELAS) {
+      if (!e.cinta) continue;
+      expect(e.cinta.largo, `${e.id}: largo por encima de TOPE_HIST`)
+        .toBeLessThanOrEqual(tope);
+      expect(e.cinta.ancho, `${e.id}`).toBeGreaterThan(0);
+      expect(e.cinta.capas ?? 1, `${e.id}`).toBeGreaterThanOrEqual(1);
+      expect(e.cinta.capas ?? 1, `${e.id}: más capas es pintar lo mismo otra vez`)
+        .toBeLessThanOrEqual(3);
+    }
+  });
+
+  /* El halo multiplica el radio de la mota. Por debajo de uno queda DENTRO
+     de ella: no se ve, y se paga igual. */
+  it('el halo es más ancho que la mota', () => {
+    for (const e of ESTELAS) {
+      if (e.brillo === undefined) continue;
+      expect(e.brillo, `${e.id}`).toBeGreaterThan(1);
+      expect(e.brillo, `${e.id}: un halo enorme es una mancha`).toBeLessThanOrEqual(5);
+    }
+  });
+});
+
+/**
+ * Y una guardia sobre el motor.
+ *
+ * Al soltar motas queda un sobrante —el trozo de camino que no llegaba a un
+ * paso entero— y `ultimoX` se deja retrasado ese sobrante para que el
+ * siguiente tramo empalme. Eso significa que la distancia medida en el cuadro
+ * siguiente NO es cero aunque no hayas movido el ratón.
+ *
+ * Si alguien vuelve a apuntar «hubo movimiento» ahí, esa distancia de nada
+ * cuenta como movimiento en cada cuadro: la cinta no se vacía nunca, el bucle
+ * no duerme nunca, y el rastro se queda congelado en la pantalla. No falla
+ * nada y en la consola no hay nada; solo se queda pegado.
+ */
+describe('el motor de la estela', () => {
+  it('solo apunta movimiento donde sabe que lo hubo', () => {
+    const marcas = MOTOR.match(/ultimoMov = (ahora|performance\.now\(\))/g) ?? [];
+    expect(marcas.length, 'hay una marca de movimiento de más: ver el bucle de soltar')
+      .toBeLessThanOrEqual(2);
+  });
+
+  it('no duerme con cinta a medio vaciar', () => {
+    expect(MOTOR).toMatch(/vivas === 0 && guardadas === 0/);
+  });
 });
 
 describe('el saneado de la estela', () => {

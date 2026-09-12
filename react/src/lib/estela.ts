@@ -107,6 +107,37 @@ function aRgb(c: string): [number, number, number] {
   return [255, 255, 255];
 }
 
+/**
+ * Girar el tono, sin salir a HSL y volver.
+ *
+ * Es una rotacion de color en el propio espacio RGB: una multiplicacion,
+ * frente a dos conversiones por mota y por cuadro. Escribe en un hueco fijo
+ * y lo devuelve, en vez de crear una tupla nueva — esto se llama una vez por
+ * mota viva y por cuadro, y ahi crear basura es crearla a sesenta por
+ * segundo. Quien lo llama tiene que USAR el resultado antes de volver a
+ * llamar; no se puede guardar.
+ */
+const TINTE: [number, number, number] = [0, 0, 0];
+function girarTono(
+  r: number, g: number, b: number, grados: number,
+): [number, number, number] {
+  const a = (grados * Math.PI) / 180;
+  const c = Math.cos(a), s = Math.sin(a);
+  TINTE[0] = Math.min(255, Math.max(0,
+    r * (0.299 + 0.701 * c + 0.168 * s)
+    + g * (0.587 - 0.587 * c + 0.330 * s)
+    + b * (0.114 - 0.114 * c - 0.497 * s))) | 0;
+  TINTE[1] = Math.min(255, Math.max(0,
+    r * (0.299 - 0.299 * c - 0.328 * s)
+    + g * (0.587 + 0.413 * c + 0.035 * s)
+    + b * (0.114 - 0.114 * c + 0.292 * s))) | 0;
+  TINTE[2] = Math.min(255, Math.max(0,
+    r * (0.299 - 0.300 * c + 1.250 * s)
+    + g * (0.587 - 0.588 * c - 1.050 * s)
+    + b * (0.114 + 0.886 * c - 0.203 * s))) | 0;
+  return TINTE;
+}
+
 export function crearEstela(opciones: OpcionesEstela): Estela | null {
   if (typeof document === 'undefined') return null;
   /* Con menos movimiento, sin rastro. No es un adorno que se pueda atenuar:
@@ -170,6 +201,28 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
   const viva = new Uint8Array(TOPE);
   let siguiente = 0;
   let vivas = 0;
+
+  /* ── por dónde has pasado ─────────────────────────────────
+     La cinta necesita el RECORRIDO, no solo la posición de ahora. Son las
+     últimas posiciones del ratón, en un anillo: `cabeza` apunta a la más
+     reciente y `guardadas` dice cuántas hay. Un anillo y no una lista porque
+     esto se escribe sesenta veces por segundo y una lista significaría
+     crear y tirar un array en cada fotograma. */
+  const TOPE_HIST = 48;
+  const hx = new Float32Array(TOPE_HIST);
+  const hy = new Float32Array(TOPE_HIST);
+  let cabeza = 0;
+  let guardadas = 0;
+  /* Las dos orillas de la cinta, y la normal de cada punto. Se llenan una vez
+     por cuadro y las tres capas las reaprovechan: la trigonometría de la
+     perpendicular es lo caro, y no cambia de una capa a otra. */
+  const nx = new Float32Array(TOPE_HIST);
+  const ny = new Float32Array(TOPE_HIST);
+  const nt = new Float32Array(TOPE_HIST);
+  const ax = new Float32Array(TOPE_HIST);
+  const ay = new Float32Array(TOPE_HIST);
+  const bx = new Float32Array(TOPE_HIST);
+  const by = new Float32Array(TOPE_HIST);
 
   let def: DefEstela | undefined;
   let rgb: [number, number, number] = [255, 255, 255];
@@ -308,6 +361,106 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
     }
   }
 
+  /**
+   * La cinta.
+   *
+   * Se dibuja como UN POLÍGONO relleno, no como veinte trazos seguidos: se
+   * recorre el camino por un lado calculando la perpendicular, y se vuelve
+   * por el otro. Sale un relleno por pasada en vez de veinte trazos, y —lo
+   * que importa— se puede ESTRECHAR hacia la cola, que es lo que hace que se
+   * lea como movimiento y no como un tubo.
+   *
+   * El desvanecido no hay que pintarlo: la cinta acaba en punta, y una punta
+   * ya se desvanece sola.
+   */
+  function dibujarCinta() {
+    const c = def?.cinta;
+    if (!c || guardadas < 4) return;
+    const n = Math.min(guardadas, c.largo, TOPE_HIST);
+    const capas = c.capas ?? 1;
+    const anchoBase = (c.ancho / 2) * intensidad;
+
+    /* Si la estela gira el tono, la cinta lo gira TAMBIEN a lo largo. Sin
+       esto Iris seria un tubo de un solo color con las motas de otro por
+       encima, que es justo lo que Iris no es: lo suyo es el color. La cabeza
+       sale del color de fabrica y la cola llega girada del todo — el mismo
+       recorrido que hace cada mota al envejecer, pero en el espacio en vez
+       de en el tiempo.
+
+       Un degradado por cuadro y no por capa: la opacidad de cada capa se
+       pone aparte, con `globalAlpha`. */
+    let pintura: string | CanvasGradient = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+    const cola = (cabeza - (n - 1) + TOPE_HIST) % TOPE_HIST;
+    if (def!.tono && Math.hypot(hx[cabeza]! - hx[cola]!, hy[cabeza]! - hy[cola]!) > 1) {
+      const gr = ctx.createLinearGradient(hx[cabeza]!, hy[cabeza]!, hx[cola]!, hy[cola]!);
+      for (let s = 0; s <= 3; s++) {
+        const tinte = girarTono(rgb[0], rgb[1], rgb[2], def!.tono * (s / 3));
+        gr.addColorStop(s / 3, `rgb(${tinte[0]},${tinte[1]},${tinte[2]})`);
+      }
+      pintura = gr;
+    }
+    ctx.fillStyle = pintura;
+
+    /* Las perpendiculares, UNA vez. El punto i de la orilla es el punto
+       del recorrido desplazado media anchura hacia su lado; lo que cambia de
+       una capa a otra es cuánto, no hacia dónde. */
+    for (let i = 0; i < n; i++) {
+      const j = (cabeza - i + TOPE_HIST) % TOPE_HIST;
+      const jn = (cabeza - Math.min(i + 1, n - 1) + TOPE_HIST) % TOPE_HIST;
+      const dx = hx[j]! - hx[jn]!;
+      const dy = hy[j]! - hy[jn]!;
+      const l = Math.hypot(dx, dy) || 1;
+      nx[i] = -dy / l;
+      ny[i] = dx / l;
+      /* Al cuadrado: estrecha despacio al principio y se va a la punta al
+         final, que es como se afila una estela y no como se corta un tubo. */
+      const t = 1 - i / n;
+      nt[i] = t * t;
+    }
+
+    for (let capa = 0; capa < capas; capa++) {
+      /* De fuera adentro: la ancha y tenue primero, el filo el último. Con
+         el aditivo encima, donde se solapan las tres es donde más luz hay,
+         o sea en el centro — que es exactamente donde tiene que estar. */
+      const k = 1 - capa / capas;
+      const w = anchoBase * (0.35 + k * 0.65);
+      ctx.globalAlpha = (def!.alfa ?? 1) * (capa === capas - 1 ? 0.85 : 0.22);
+
+      for (let i = 0; i < n; i++) {
+        const j = (cabeza - i + TOPE_HIST) % TOPE_HIST;
+        const g = w * nt[i]!;
+        const ex = nx[i]! * g, ey = ny[i]! * g;
+        ax[i] = hx[j]! + ex; ay[i] = hy[j]! + ey;
+        bx[i] = hx[j]! - ex; by[i] = hy[j]! - ey;
+      }
+
+      /* CURVAS, no tramos rectos.
+
+         Las posiciones del ratón llegan una por cuadro: unirlas con `lineTo`
+         deja una cinta de facetas, con esquinas visibles en cada giro — se
+         ve que está hecha de trozos. Cada punto se usa como TIRADOR de una
+         curva que pasa por los puntos medios: el camino sale liso y cuesta
+         lo mismo, una orden de trazado por punto igual que antes. */
+      ctx.beginPath();
+      ctx.moveTo(ax[0]!, ay[0]!);
+      for (let i = 1; i < n - 1; i++) {
+        ctx.quadraticCurveTo(ax[i]!, ay[i]!, (ax[i]! + ax[i + 1]!) / 2, (ay[i]! + ay[i + 1]!) / 2);
+      }
+      ctx.lineTo(ax[n - 1]!, ay[n - 1]!);
+      /* Se cruza por la punta y se vuelve por la otra orilla. */
+      ctx.lineTo(bx[n - 1]!, by[n - 1]!);
+      for (let i = n - 2; i > 0; i--) {
+        ctx.quadraticCurveTo(bx[i]!, by[i]!, (bx[i]! + bx[i - 1]!) / 2, (by[i]! + by[i - 1]!) / 2);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+    /* Devuelto a uno: lo que se pinte despues —las motas— tiene su propia
+       opacidad en el color, y heredar la de la ultima capa las dejaria
+       casi invisibles. */
+    ctx.globalAlpha = 1;
+  }
+
   let latido = 0;
   let durmiendo = true;
 
@@ -356,14 +509,72 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
           recorrido -= paso;
           sueltas++;
         }
-        ultimoX = mx - ux * recorrido;
-        ultimoY = my - uy * recorrido;
-        ultimoMov = ahora;
+        if (sueltas >= 24) {
+          /* Se llego al tope: esto no fue un movimiento, fue un SALTO —
+             volver a la pestaña, el raton reapareciendo en la otra punta—.
+             Guardar el sobrante haria que los cuadros siguientes siguieran
+             soltando motas por la linea del salto, y se veria una hilera
+             cruzando la pantalla hacia donde estas, despacio, sin que hayas
+             pasado por ahi. Se tira el sobrante y se empieza aqui. */
+          ultimoX = mx;
+          ultimoY = my;
+        } else {
+          ultimoX = mx - ux * recorrido;
+          ultimoY = my - uy * recorrido;
+        }
+        /* AQUÍ NO se apunta «hubo movimiento», y quitarlo fue arreglar un
+           fallo de los que no dan la cara.
+
+           Al soltar motas queda un SOBRANTE: el trozo de camino que no
+           llegaba a un paso entero. `ultimoX` se deja retrasado ese sobrante
+           para que el siguiente tramo empalme sin costura, y eso significa
+           que en el fotograma siguiente la distancia medida ya no es cero
+           aunque el ratón no se haya movido ni un píxel.
+
+           Con la marca aquí, esa distancia de nada contaba como movimiento
+           en CADA fotograma: la cinta no se vaciaba nunca, el bucle no se
+           dormía nunca, y el rastro se quedaba congelado en la pantalla para
+           siempre. Quien lo mira lo llama «se ha quedado pegado»; en la
+           consola no hay nada.
+
+           El movimiento de verdad lo apunta `alMover`, que es el único que
+           sabe si has movido el ratón. */
+      }
+    }
+
+    /* ── el recorrido ────────────────────────────────────── */
+    if (def.cinta) {
+      const salto = Math.hypot(mx - hx[cabeza]!, my - hy[cabeza]!);
+      if (!dentro) {
+        /* Fuera del ámbito la cinta se retira, igual que dejan de salir
+           motas. En el editor el ámbito es la vista previa: si siguiera
+           apuntando, al pasar por los mandos quedaría una tira de luz
+           cruzando el panel, que no es de nadie. */
+        if (guardadas > 0) guardadas--;
+      } else if (guardadas > 0 && salto > 260) {
+        /* Un SALTO, no un movimiento: volver a la pestaña, entrar otra vez
+           en la vista previa por el otro lado, o el ratón reapareciendo en
+           la otra punta. Unir los dos puntos dibujaría una raya recta
+           atravesando la pantalla. Se empieza de nuevo desde aquí. */
+        guardadas = 0;
+      } else if (guardadas === 0 || salto > 2.5) {
+        cabeza = (cabeza + 1) % TOPE_HIST;
+        hx[cabeza] = mx;
+        hy[cabeza] = my;
+        if (guardadas < TOPE_HIST) guardadas++;
+      } else if (ahora - ultimoMov > 60) {
+        /* Parado, la cinta SE VACÍA: se va soltando la cola hasta que no
+           queda nada. Sin esto se quedaría clavada en la pantalla como una
+           mancha, que es lo contrario de un rastro. */
+        guardadas--;
       }
     }
 
     /* ── mover y pintar ──────────────────────────────────── */
     ctx.globalCompositeOperation = def.aditivo ? 'lighter' : 'source-over';
+    /* La cinta va DEBAJO: las motas son lo que se ve suelto y tienen que
+       quedar por encima de la luz, no tapadas por ella. */
+    dibujarCinta();
     const roce = def.roce ?? 1;
     const grav = def.gravedad ?? 0;
     const alfaBase = (def.alfa ?? 1) * Math.min(1.4, intensidad);
@@ -402,37 +613,40 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
       if (def.crece) r *= 1 + (def.crece - 1) * t;
       if (r < 0.3) continue;
 
+      /* El color de ESTA mota. Con `tono`, girado segun lo vivida que esta:
+         la estela sale degradada de principio a fin en vez de ser de un
+         color. El halo de abajo usa el mismo — si usara el de fabrica, en
+         Iris y en Glitch la mota iria de un color y su luz de otro. */
+      let cr = rgb[0], cg = rgb[1], cb = rgb[2];
       if (def.tono) {
-        const [rr, gg, bb] = rgb;
-        /* Girar el tono sin salir a HSL y volver: una rotación de color en
-           el espacio RGB, que es una multiplicación y no tres conversiones
-           por mota y por cuadro. */
-        const a2 = (def.tono * t * Math.PI) / 180;
-        const c = Math.cos(a2), sn = Math.sin(a2);
-        const m0 = 0.299 + 0.701 * c + 0.168 * sn;
-        const m1 = 0.587 - 0.587 * c + 0.330 * sn;
-        const m2 = 0.114 - 0.114 * c - 0.497 * sn;
-        const nr = Math.min(255, Math.max(0, rr * m0 + gg * m1 + bb * m2));
-        const ng = Math.min(255, Math.max(0, rr * (0.299 - 0.299 * c - 0.328 * sn)
-          + gg * (0.587 + 0.413 * c + 0.035 * sn) + bb * (0.114 - 0.114 * c + 0.292 * sn)));
-        const nb = Math.min(255, Math.max(0, rr * (0.299 - 0.3 * c + 1.25 * sn)
-          + gg * (0.587 - 0.588 * c - 1.05 * sn) + bb * (0.114 + 0.886 * c - 0.203 * sn)));
-        ctx.fillStyle = ctx.strokeStyle =
-          `rgba(${nr | 0},${ng | 0},${nb | 0},${alfa.toFixed(3)})`;
-      } else {
-        ctx.fillStyle = ctx.strokeStyle =
-          `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alfa.toFixed(3)})`;
+        const tinte = girarTono(cr, cg, cb, def.tono * t);
+        cr = tinte[0]; cg = tinte[1]; cb = tinte[2];
       }
+      ctx.fillStyle = ctx.strokeStyle = `rgba(${cr},${cg},${cb},${alfa.toFixed(3)})`;
 
       const giroAng = def.forma === 'linea' && !def.giro
         ? Math.atan2(uy, ux)
         : ang[i]! + (def.giro ?? 0) * t * 6.283;
+
+      /* EL HALO, debajo. Una mota sin él es un recorte de papel de color;
+         con él, algo que ilumina. Es un círculo más ancho y muy tenue, y
+         cuesta un `arc` más: la diferencia entre las dos cosas por menos de
+         lo que cuesta añadir una mota. */
+      if (def.brillo) {
+        const guarda = ctx.fillStyle;
+        ctx.fillStyle = `rgba(${cr},${cg},${cb},${(alfa * 0.16).toFixed(3)})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r * def.brillo, 0, 6.283);
+        ctx.fill();
+        ctx.fillStyle = guarda;
+      }
+
       dibujar(def.forma, x, y, r, giroAng);
     }
     vivas = quedan;
 
     /* ── dormir ──────────────────────────────────────────── */
-    if (pausada || (vivas === 0 && ahora - ultimoMov > 250)) {
+    if (pausada || (vivas === 0 && guardadas === 0 && ahora - ultimoMov > 250)) {
       durmiendo = true;
       ctx.clearRect(0, 0, w, h);
       return;
