@@ -392,7 +392,6 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
         ctx.fill();
         break;
       }
-      case 'humo':
       case 'punto':
       default: {
         ctx.beginPath();
@@ -420,6 +419,87 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
      Y al llevar su propia sombra dentro, se ve tanto sobre un fondo oscuro
      como sobre una foto a pleno sol, que es donde el relleno plano
      desaparecía. */
+  /* ────────────────────────────────────────────────────────────────────
+     NADA DE CÍRCULOS RELLENOS
+     ────────────────────────────────────────────────────────────────────
+
+     Un círculo relleno tiene BORDE. Da igual lo tenue que sea el color: por
+     donde acaba, acaba de golpe. Y veinte círculos tenues superpuestos no
+     son un resplandor — son veinte burbujas con el canto a la vista, unos
+     encima de otros. Eso es exactamente lo que se veía detrás de la estela.
+
+     Una luz de verdad se apaga hacia fuera hasta no ser nada, y eso es un
+     degradado radial. Uno por mota y por cuadro no se puede pagar: se cuecen
+     dos —el halo y el humo— cuando cambia el color, y cada mota pasa a ser
+     un `drawImage`. Sin borde, y más barato que trazar el círculo. */
+  const LADO_BLANDO = 64;
+  /* Las motas de las estelas que giran el tono no son todas del mismo color,
+     así que el punto se cuece seis veces a lo largo del giro. Seis y no una
+     por mota: a esa escala el salto entre dos pasos no se ve, y son seis
+     degradados por cambio de color en vez de uno por mota y por cuadro. */
+  const PASOS_TONO = 6;
+  let blandos: HTMLCanvasElement | null = null;
+  let blandosDe = '';
+
+  function cocerBlandos() {
+    const giro = def?.tono ?? 0;
+    const clave = rgb.join(',') + '|' + dpr + '|' + giro;
+    if (blandos && blandosDe === clave) return;
+    const casillas = 2 + (giro ? PASOS_TONO : 1);
+    const l = Math.round(LADO_BLANDO * dpr);
+    const c = blandos ?? document.createElement('canvas');
+    c.width = l * casillas;
+    c.height = l;
+    const g = c.getContext('2d');
+    if (!g) return;
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, c.width, c.height);
+
+    const cocer = (k: number, col: [number, number, number], paradas: [number, number][]) => {
+      g.setTransform(dpr, 0, 0, dpr, k * l, 0);
+      const m = LADO_BLANDO / 2;
+      const gr = g.createRadialGradient(m, m, 0, m, m, m);
+      for (const [pos, a] of paradas) {
+        gr.addColorStop(pos, `rgba(${col[0]},${col[1]},${col[2]},${a})`);
+      }
+      g.fillStyle = gr;
+      g.fillRect(0, 0, LADO_BLANDO, LADO_BLANDO);
+    };
+
+    /* 0 · EL HALO. Cae deprisa al principio y se alarga al final: así la
+       mota sigue teniendo un centro y la luz no se corta en ningún sitio. */
+    cocer(0, rgb, [[0, 1], [0.3, 0.5], [0.62, 0.13], [0.85, 0.02], [1, 0]]);
+    /* 1 · EL HUMO. Más plano por dentro —el humo no tiene núcleo— y con la
+       caída más larga, que es como se deshace una voluta. */
+    cocer(1, rgb, [[0, 0.62], [0.4, 0.4], [0.75, 0.12], [1, 0]]);
+    /* 2+ · EL PUNTO. Núcleo casi macizo y el canto apagándose: de cerca
+       sigue siendo una mota, y de lejos ya no tiene borde con el que hacer
+       burbujas al solaparse. */
+    const puntoParadas: [number, number][] =
+      [[0, 1], [0.42, 0.94], [0.68, 0.44], [0.86, 0.1], [1, 0]];
+    if (giro) {
+      for (let k = 0; k < PASOS_TONO; k++) {
+        const t = giro * (k / (PASOS_TONO - 1));
+        const tinte = girarTono(rgb[0], rgb[1], rgb[2], t);
+        cocer(2 + k, [tinte[0], tinte[1], tinte[2]], puntoParadas);
+      }
+    } else {
+      cocer(2, rgb, puntoParadas);
+    }
+
+    blandos = c;
+    blandosDe = clave;
+  }
+
+  /** Una de las dos manchas cocidas, centrada en (x,y) y de radio `r`. */
+  function manchaBlanda(k: number, x: number, y: number, r: number, alfa: number) {
+    if (!blandos || r < 0.4) return;
+    const l = blandos.height;
+    ctx.globalAlpha = Math.min(1, alfa);
+    ctx.drawImage(blandos, k * l, 0, l, l, x - r, y - r, r * 2, r * 2);
+    ctx.globalAlpha = 1;
+  }
+
   const LADO_SPRITE = 72;
   /* TRES siluetas, no una.
      Un solo pétalo repetido cuarenta veces se nota: son cuarenta copias de
@@ -795,15 +875,31 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
           ctx.lineTo(x + Math.cos(giroAng) * r, y + Math.sin(giroAng) * r);
           ctx.stroke();
         } else {
-          ctx.beginPath();
-          ctx.arc(x, y, r * def.brillo, 0, 6.283);
-          ctx.fill();
+          /* La mancha cocida, no un `arc` relleno: es lo que quita las
+             burbujas. Sube el alfa de pico porque el degradado ya se come
+             la mayor parte hacia fuera — la luz total es la misma, pero
+             repartida en vez de plana. */
+          manchaBlanda(0, x, y, r * def.brillo, alfa * 0.3);
         }
         ctx.fillStyle = guardaF;
         ctx.strokeStyle = guardaT;
       }
 
-      if (def.forma === 'petalo' && sprite) {
+      if (def.forma === 'punto' && blandos) {
+        /* Un punto tampoco es un disco relleno. Es el mismo problema y la
+           misma solución: al crecer, veinte discos superpuestos enseñan
+           veinte cantos. Con `tono`, la casilla sale de lo vivida que está
+           la mota — el mismo recorrido de color que antes. */
+        const casilla = def.tono
+          ? 2 + Math.min(PASOS_TONO - 1, (t * PASOS_TONO) | 0)
+          : 2;
+        manchaBlanda(casilla, x, y, r, alfa);
+      } else if (def.forma === 'humo') {
+        /* El humo NO es un círculo relleno. Una voluta con borde es una
+           burbuja gris, y una estela de humo hecha de burbujas grises es
+           lo contrario de humo. */
+        manchaBlanda(1, x, y, r, alfa);
+      } else if (def.forma === 'petalo' && sprite) {
         /* EL VOLTEO.
 
            Un pétalo que cae no gira como una rueda: se VOLTEA, y al ponerse
@@ -879,6 +975,7 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
        el pétalo está cocido a la de antes: se vería borroso hasta que
        tocaras un ajuste. */
     if (def?.forma === 'petalo') cocerPetalo();
+    if (def?.brillo || def?.forma === 'humo' || def?.forma === 'punto') cocerBlandos();
   };
   const alVisibilidad = () => {
     if (document.hidden && latido) { cancelAnimationFrame(latido); latido = 0; durmiendo = true; }
@@ -900,6 +997,7 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
        cocerlo. Pasa cuando arrastras el selector, no sesenta veces por
        segundo. */
     if (def?.forma === 'petalo') cocerPetalo();
+    if (def?.brillo || def?.forma === 'humo' || def?.forma === 'punto') cocerBlandos();
     if (def && (cantidad > 0 || guion)) despertar();
   }
 
