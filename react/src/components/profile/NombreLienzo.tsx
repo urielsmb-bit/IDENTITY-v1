@@ -123,7 +123,13 @@ export function NombreLienzo({ texto, color }: { texto: string; color?: string }
     const host = cv?.parentElement;
     if (!cv || !host) return;
 
-    const ctx = cv.getContext('2d', { alpha: true });
+    /* `willReadFrequently` porque de este lienzo se LEE: se dibuja el
+       nombre y se saca su mapa de píxeles con `getImageData` para sacar el
+       contorno. Sin avisar, el navegador lo pone en la tarjeta gráfica y
+       cada lectura obliga a traérselo de vuelta — lo dice él mismo en la
+       consola. Avisado, lo mantiene en memoria normal, que es donde se lee
+       barato. */
+    const ctx = cv.getContext('2d', { alpha: true, willReadFrequently: true });
     if (!ctx) return;
 
     let bordes: Array<[number, number]> = [];
