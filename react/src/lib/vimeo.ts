@@ -70,6 +70,20 @@ export interface InfoVimeo {
   ratio: number;
   miniatura: string;
   titulo: string;
+  /**
+   * Si Vimeo deja incrustarlo EN ESTE DOMINIO.
+   *
+   * Un vídeo puede existir, ser público y responder a todo lo demás, y aun
+   * así negarse a reproducirse fuera de vimeo.com: eso se elige en su
+   * privacidad, en «Where can this be embedded?». Cuando está restringido, el
+   * reproductor sale en negro con un «Lo sentimos» y desde fuera parece que
+   * el fallo es de aquí.
+   *
+   * Vimeo lo dice en `domain_status_code`, y lo dice al pegar el enlace —
+   * antes de guardar nada. No avisar teniendo el dato delante es dejar que
+   * alguien publique un perfil con un rectángulo negro de fondo.
+   */
+  embebible: boolean;
 }
 
 /**
@@ -112,9 +126,15 @@ export async function infoVimeo(
   const alto = Number(o.height);
   if (!isFinite(w) || !isFinite(alto) || w <= 0 || alto <= 0) return null;
 
+  /* 200 es que sí; 403 es que no. Si Vimeo no lo manda —vídeos antiguos, o
+     una respuesta recortada— se da por bueno: es peor acusar de bloqueado a
+     un vídeo que se ve, que es lo que pasaría dando por malo lo que no
+     sabemos. */
+  const dominio = Number(o.domain_status_code);
   return {
     ratio: Math.round((w / alto) * 1000) / 1000,
     miniatura: typeof o.thumbnail_url === 'string' ? o.thumbnail_url : '',
     titulo: typeof o.title === 'string' ? o.title : '',
+    embebible: !isFinite(dominio) || dominio === 200,
   };
 }

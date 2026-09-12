@@ -1107,6 +1107,22 @@ export default function DashboardPage() {
                     incrustar.
                   </p>
                 )}
+                {/* El vídeo existe y Vimeo contesta, pero se niega a
+                    reproducirlo FUERA de vimeo.com. Sin este aviso el editor
+                    dice «listo», se guarda el perfil, y lo que ve quien entra
+                    es un rectángulo negro con un «Lo sentimos» de Vimeo —
+                    desde fuera parece que el roto es nuestro. El dato viene en
+                    la misma respuesta que la proporción: teniéndolo delante,
+                    callárselo es dejar que se publique así. */}
+                {vimeoActivo && estadoVimeo === 'listo' && fichaVimeo && !fichaVimeo.embebible && (
+                  <p className="drop__err" role="alert">
+                    Vimeo no deja incrustar este vídeo en{' '}
+                    <b>{typeof window !== 'undefined' ? window.location.hostname : 'este sitio'}</b>,
+                    así que el fondo saldría en negro. En Vimeo: el vídeo →
+                    Settings → Privacy → «Where can this be embedded?» →{' '}
+                    <b>Anywhere</b>, o añade ese dominio a la lista.
+                  </p>
+                )}
                 {vimeoActivo && (
                   <p className="vimeo__ficha">
                     {estadoVimeo === 'cargando' && 'Leyendo el vídeo…'}

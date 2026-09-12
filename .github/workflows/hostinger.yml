@@ -12,9 +12,14 @@
 #                   Cuentas FTP). Suele ser algo como ftp.tudominio.com
 #   FTP_USER        el usuario FTP
 #   FTP_PASSWORD    su contrasena
-#   VITE_SUPABASE_URL   los mismos dos valores que tienes en
-#   VITE_SUPABASE_KEY   react/.env.local — la clave ANONIMA, la que ya
-#                       viaja dentro del JavaScript publico
+#   VITE_SUPABASE_URL   los mismos valores que ya tienes en
+#   VITE_SUPABASE_KEY   react/.env.local. La clave es la ANONIMA, la que
+#                       ya viaja dentro del JavaScript publico
+#   VITE_VIMEO          cualquier valor. Enciende la subida de videos a
+#                       Vimeo; sin ella van al cubo, con un tope mucho
+#                       mas bajo. El token de verdad vive en la funcion
+#                       de borde `vimeo-subida`, en Supabase, no aqui
+#   VITE_FN_VISTAS      la funcion que cuenta las visitas
 #
 # Y uno opcional, `FTP_DIR`, si tu dominio no cuelga de `public_html`. En un
 # dominio adicional suele ser algo como `domains/tudominio.com/public_html`.
@@ -83,6 +88,8 @@ jobs:
         env:
           URL: ${{ secrets.VITE_SUPABASE_URL }}
           KEY: ${{ secrets.VITE_SUPABASE_KEY }}
+          VIMEO: ${{ secrets.VITE_VIMEO }}
+          FN_VISTAS: ${{ secrets.VITE_FN_VISTAS }}
         run: |
           if [ -z "$URL" ] || [ -z "$KEY" ]; then
             echo "Faltan VITE_SUPABASE_URL o VITE_SUPABASE_KEY en los secretos."
@@ -92,6 +99,27 @@ jobs:
           # Se escribe el fichero que `vite` y `build:hostinger` esperan.
           # Vive solo dentro de esta maquina, que se destruye al terminar.
           printf 'VITE_SUPABASE_URL=%s\nVITE_SUPABASE_KEY=%s\n' "$URL" "$KEY" > .env.local
+
+          # Las dos que NO son obligatorias, y por eso son peligrosas: si
+          # faltan, la aplicacion compila sin quejarse y lo que desaparece
+          # es una funcion entera. VITE_VIMEO apaga la subida de videos a
+          # Vimeo y los manda al cubo con un tope mucho mas bajo;
+          # VITE_FN_VISTAS deja de contar las visitas. Nada falla, nada
+          # avisa, y el dia que alguien lo note nadie lo relaciona con un
+          # despliegue de hace tres semanas.
+          #
+          # Por eso se avisa AQUI, en el registro: es el unico sitio donde
+          # alguien va a mirar cuando se pregunte que paso.
+          if [ -n "$VIMEO" ]; then
+            printf 'VITE_VIMEO=%s\n' "$VIMEO" >> .env.local
+          else
+            echo "Aviso: sin VITE_VIMEO. Los videos iran al cubo, no a Vimeo."
+          fi
+          if [ -n "$FN_VISTAS" ]; then
+            printf 'VITE_FN_VISTAS=%s\n' "$FN_VISTAS" >> .env.local
+          else
+            echo "Aviso: sin VITE_FN_VISTAS. No se contaran las visitas."
+          fi
 
       - name: Compilar
         working-directory: react

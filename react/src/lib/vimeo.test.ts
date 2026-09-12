@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { idVimeo, hashVimeo, esVimeo, urlFondoVimeo } from './vimeo';
+import { idVimeo, hashVimeo, esVimeo, urlFondoVimeo, infoVimeo } from './vimeo';
 
 /**
  * Pruebas del enlace de Vimeo.
@@ -76,5 +76,50 @@ describe('la URL del reproductor', () => {
 
   it('devuelve vacío si el enlace no es de Vimeo', () => {
     expect(urlFondoVimeo('https://example.com/video.mp4')).toBe('');
+  });
+});
+
+/**
+ * Y el permiso de incrustar.
+ *
+ * Vimeo lo manda en `domain_status_code` dentro de la misma respuesta que la
+ * proporción: 200 es que sí, 403 es que no. Un vídeo bloqueado responde a
+ * todo lo demás con normalidad, así que sin mirar este campo el editor dice
+ * «listo» y quien entra al perfil se encuentra un rectángulo negro.
+ */
+describe('el permiso para incrustar', () => {
+  const respuesta = (extra: Record<string, unknown>) => ({
+    type: 'video', version: '1.0', width: 426, height: 182,
+    title: 'Un vídeo', thumbnail_url: 'https://i.vimeocdn.com/x.jpg',
+    ...extra,
+  });
+
+  const conRespuesta = async (cuerpo: Record<string, unknown>) => {
+    const antes = globalThis.fetch;
+    globalThis.fetch = (async () => ({
+      ok: true,
+      json: async () => cuerpo,
+    })) as unknown as typeof fetch;
+    try {
+      return await infoVimeo('https://vimeo.com/1226114726');
+    } finally {
+      globalThis.fetch = antes;
+    }
+  };
+
+  it('403 es que no se puede', async () => {
+    const d = await conRespuesta(respuesta({ domain_status_code: 403 }));
+    expect(d?.embebible).toBe(false);
+    expect(d?.ratio).toBe(2.341);
+  });
+
+  it('200 es que sí', async () => {
+    expect((await conRespuesta(respuesta({ domain_status_code: 200 })))?.embebible).toBe(true);
+  });
+
+  /* Si no lo manda, se da por bueno: acusar de bloqueado a un vídeo que se ve
+     es peor fallo que no avisar de uno que no. */
+  it('si no lo dice, se da por bueno', async () => {
+    expect((await conRespuesta(respuesta({})))?.embebible).toBe(true);
   });
 });
