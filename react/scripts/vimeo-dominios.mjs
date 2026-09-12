@@ -50,6 +50,10 @@ const ACEPTA = 'application/vnd.vimeo.*+json;version=3.4';
 const token = process.env.VIMEO_TOKEN ?? '';
 const args = process.argv.slice(2);
 const aplicar = args.includes('--aplicar');
+/* Pasar a lista blanca los que están cerrados del todo. Va aparte de
+   `--aplicar` porque es otra cosa: uno añade un dominio a una lista que
+   ya existe, y el otro ABRE un vídeo que alguien cerró. */
+const abrir = args.includes('--abrir');
 const dominios = args.filter((a) => !a.startsWith('--'));
 
 if (!token) {
@@ -97,12 +101,14 @@ async function* videos() {
 }
 
 console.log(aplicar ? 'APLICANDO' : 'SOLO MIRANDO (añade --aplicar para tocar algo)');
+if (abrir) console.log('Y ABRIENDO los que estan cerrados del todo.');
 console.log('Dominios: ' + dominios.join(', ') + '\n');
 
 let vistos = 0;
 let tocados = 0;
 let saltados = 0;
 const fallos = [];
+const pendientes = [];
 
 try {
   for await (const v of videos()) {
@@ -110,17 +116,44 @@ try {
     const id = String(v.uri ?? '').split('/').pop();
     if (!id) continue;
 
-    /* Solo los de lista blanca. Un vídeo `public` ya se incrusta en todas
-       partes y meterle dominios no lo mejora; uno `private` está así porque
-       alguien lo quiso, y no es cosa de este guion cambiarlo. */
-    if (v.privacy?.embed !== 'whitelist') {
+    const nombre = (v.name ?? '').slice(0, 34).padEnd(34);
+    const embed = v.privacy?.embed ?? '?';
+
+    /* Un vídeo `public` ya se incrusta en todas partes: meterle dominios no
+       lo mejora. Los demás SÍ hay que tocarlos, cada uno de su manera. */
+    if (embed === 'public') {
       saltados++;
+      console.log(`  ${id}  ${nombre}  public      · ya se incrusta en todas partes`);
       continue;
     }
 
-    const nombre = (v.name ?? '').slice(0, 40);
+    /* `private` es «en ninguna parte»: la lista de dominios ni se mira, así
+       que añadirlos no arregla nada. Hay que pasarlo antes a lista blanca —
+       y eso es abrir un vídeo que alguien cerró, así que se pide a mano.
+
+       Antes esto caía en el mismo saco que `public` y se contaba como
+       «sin tocar», sin decir por qué. El vídeo que ibas a arreglar era justo
+       ese, y el guion terminaba diciendo que todo había ido bien. */
+    if (embed === 'private') {
+      if (!abrir) {
+        pendientes.push(id);
+        console.log(`  ${id}  ${nombre}  private     · BLOQUEADO en todas partes, hace falta --abrir`);
+        continue;
+      }
+      if (aplicar) {
+        const r = await api(`/videos/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ privacy: { embed: 'whitelist' } }),
+        });
+        if (!r.ok) {
+          fallos.push(`${id} ← abrir: ${r.status} ${(await r.text()).slice(0, 120)}`);
+          continue;
+        }
+      }
+    }
+
     if (!aplicar) {
-      console.log(`  ${id}  ${nombre}`);
+      console.log(`  ${id}  ${nombre}  ${embed.padEnd(11)} · se le añadirían los dominios`);
       tocados++;
       continue;
     }
@@ -132,7 +165,7 @@ try {
       }
     }
     tocados++;
-    console.log(`  ${id}  ${nombre}  ✓`);
+    console.log(`  ${id}  ${nombre}  ${embed.padEnd(11)} · ✓`);
   }
 } catch (e) {
   console.error('\n' + e.message);
