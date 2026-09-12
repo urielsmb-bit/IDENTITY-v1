@@ -44,6 +44,26 @@ export function miniaturaYouTube(id: string): string {
   return id ? 'https://i.ytimg.com/vi/' + id + '/mqdefault.jpg' : '';
 }
 
+/**
+ * La imagen del bloque de música: la que hayas subido, y si no, la del vídeo.
+ *
+ * La regla vive AQUÍ y no en cada sitio que pinta una portada, que eran dos y
+ * la tenían escrita a mano cada uno. Dos copias de la misma regla divergen
+ * siempre, y cuando eso pasa una de las dos empieza a enseñar el `♪` de
+ * reserva sin que nadie sepa por qué.
+ *
+ * `mqdefault` y no `hqdefault`: la segunda viene en 4:3 con franjas negras
+ * pegadas arriba y abajo, y la caja de la portada es CUADRADA y recorta por
+ * el centro — o sea que de un vídeo apaisado se quedaría con una franja
+ * negra. `mqdefault` es 16:9 de verdad, sin franjas, y a 320 px sobra para
+ * una caja de 42.
+ */
+export function portadaPista(t: { cover?: string; yt?: string } | null | undefined): string {
+  const propia = String(t?.cover || '').trim();
+  if (propia) return propia;
+  return miniaturaYouTube(String(t?.yt || '').trim());
+}
+
 let apiLista = false;
 const colaAPI: Array<() => void> = [];
 

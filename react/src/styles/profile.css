@@ -991,10 +991,17 @@
   border:0; background:transparent; padding:0;
   gap:8px; width:auto; font-size:var(--t2);
 }
-.pf-music[data-style="minimal"] .pf-music__cover,
+/* `minimal` quita el CROMO —el visualizador, la barra, los tiempos— pero NO
+   la portada. Una pista sin su imagen no es minimalista, es una pista a la
+   que le falta la mitad: el bloque se quedaba en una línea de texto de 22 px
+   de alto, y quien subía una portada la veía desaparecer sin que nada lo
+   explicara. La caratula se encoge, que es otra cosa que esconderla. */
 .pf-music[data-style="minimal"] .pf-music__viz,
 .pf-music[data-style="minimal"] .pf-music__bar,
 .pf-music[data-style="minimal"] .pf-music__time{ display:none; }
+.pf-music[data-style="minimal"] .pf-music__cover{
+  width:28px; height:28px; border-radius:6px;
+}
 .pf-music[data-style="minimal"] .pf-music__btn{
   width:auto; height:auto; border:0; background:transparent; font-size:var(--t2);
 }

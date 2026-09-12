@@ -15,6 +15,7 @@ import { safeUrl, safeMedia } from '@/lib/utils';
 import { avatarDe } from '@/lib/avatar';
 import { incrustable } from '@/lib/validar';
 import { esVimeo, urlFondoVimeo } from '@/lib/vimeo';
+import { portadaPista } from '@/lib/music';
 
 
 interface ProfileViewProps {
@@ -318,6 +319,11 @@ export function ProfileView({
        reproductor hasta el siguiente repintado por otro motivo. */
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioKey, discord?.cancion?.id, discord?.cancion?.titulo]);
+
+  /* La imagen del bloque: la tuya si la subiste, y si no la del vídeo. La
+     regla está en `music.ts` para que los dos sitios que pintan una portada
+     —la píldora incrustada y el reproductor— no puedan discrepar. */
+  const portada = safeMedia(portadaPista(pistas[0]));
 
   // Montar el reproductor. Sin este init, crearReproductor() nunca llegaba a
   // existir y los botones de play/pausa eran decorativos.
@@ -1429,8 +1435,8 @@ export function ProfileView({
                     onClick={() => setInstaOpen(!instaOpen)}
                   >
                     <span className="pf-insta__cover">
-                      {pistas[0].cover ? (
-                        <img src={safeMedia(pistas[0].cover)} alt="" loading="lazy" />
+                      {portada ? (
+                        <img src={portada} alt="" loading="lazy" />
                       ) : (
                         '♪'
                       )}
@@ -1469,8 +1475,8 @@ export function ProfileView({
                   data-src={pistas[0]?.src || 'manual'}
                 >
                   <span className="pf-music__cover" aria-hidden="true">
-                    {pistas[0]?.cover ? (
-                      <img src={safeMedia(pistas[0].cover)} alt="" />
+                    {portada ? (
+                      <img src={portada} alt="" loading="lazy" />
                     ) : (
                       '♪'
                     )}
