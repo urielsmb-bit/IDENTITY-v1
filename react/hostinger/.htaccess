@@ -79,7 +79,33 @@ DirectoryIndex index.html
   Header always set X-Content-Type-Options "nosniff"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set X-Frame-Options "SAMEORIGIN"
-  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), interest-cohort=()"
+
+  # Los permisos que este sitio NO usa, apagados de entrada. No es que hoy
+  # alguien los este pidiendo: es que si manana entra una dependencia que
+  # los pide, no los tiene. Se apaga lo que sobra, no lo que molesta.
+  #
+  # Faltan a proposito `autoplay` y `fullscreen`: los necesitan los
+  # reproductores incrustados de YouTube, Vimeo y Spotify. Apagarlos aqui
+  # dejaria la musica muda y el fondo de video quieto, que es la clase de
+  # «endurecer» que rompe el producto.
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=(), serial=(), bluetooth=(), midi=(), hid=(), display-capture=(), screen-wake-lock=(), idle-detection=(), local-fonts=(), xr-spatial-tracking=(), browsing-topics=(), interest-cohort=()"
+
+  # Corta el hilo entre esta pestana y la que la haya abierto, y al reves.
+  # Sin esto, una pagina de otro sitio que abra sharee.fun conserva una
+  # referencia a esta ventana y puede medirla de refilon —cuanto tarda en
+  # cargar, cuantos marcos tiene— para averiguar si quien mira tiene
+  # sesion. Son las fugas de canal lateral entre ventanas.
+  #
+  # Es `same-origin-allow-popups` y no `same-origin` porque la version
+  # estricta tambien corta las ventanas que abre ESTA pagina. Hoy no hace
+  # falta —se entra por redireccion completa, comprobado— pero el dia que
+  # alguien meta un acceso en ventana emergente, la version estricta lo
+  # rompe en silencio y esta no.
+  Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+
+  # Nada de politicas de dominio cruzado de Flash y compania. Estan muertas,
+  # pero un `crossdomain.xml` que alguien suba por error sigue valiendo.
+  Header always set X-Permitted-Cross-Domain-Policies "none"
 
   # Los ficheros de `assets/` llevan un resumen en el nombre: si cambia el
   # contenido, cambia el nombre. Por eso pueden guardarse un año sin riesgo
