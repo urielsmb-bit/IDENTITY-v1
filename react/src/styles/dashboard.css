@@ -3277,6 +3277,36 @@
   display:grid; gap:12px;
 }
 
+/* ---- el aviso de la prueba ------------------------------------------
+   Solo existe mientras el plan SE ACABA. Ni quien no lo tiene ni quien lo
+   tiene para siempre ven nada, asi que esto no es un cartel permanente:
+   es una cuenta atras que se va sola. Por eso puede permitirse el acento
+   —a los dos dias se pone ambar— sin volverse ruido de fondo. */
+.dash__prueba{
+  display:flex; gap:10px; align-items:flex-start;
+  padding:11px 12px;
+  border:1px solid color-mix(in oklab, var(--accent) 34%, transparent);
+  border-radius:12px;
+  background:color-mix(in oklab, var(--accent) 9%, transparent);
+  font-size:12.5px; line-height:1.45;
+}
+.dash__prueba b{ display:block; font-size:13px; font-weight:650; }
+.dash__prueba p{ margin:3px 0 6px; color:var(--text-muted); }
+.dash__prueba a{
+  color:var(--accent); font-weight:600; text-decoration:none;
+}
+.dash__prueba a:hover{ text-decoration:underline; }
+.dash__prueba-d{ color:var(--accent); font-size:15px; line-height:1.2; flex:none; }
+
+/* Los ultimos dos dias, en ambar. El color hace el trabajo de la palabra
+   «pronto»: se nota sin tener que leerlo. */
+.dash__prueba[data-poco="si"]{
+  border-color:color-mix(in oklab, #f5a524 42%, transparent);
+  background:color-mix(in oklab, #f5a524 10%, transparent);
+}
+.dash__prueba[data-poco="si"] .dash__prueba-d,
+.dash__prueba[data-poco="si"] a{ color:#f5a524; }
+
 .dash__ayuda{
   padding:12px;
   border:1px solid var(--border);

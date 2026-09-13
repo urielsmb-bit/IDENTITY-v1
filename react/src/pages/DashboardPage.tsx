@@ -45,7 +45,7 @@ import { useGuia } from '@/hooks/useGuia';
 import { PanelInsignias } from '@/components/dashboard/PanelInsignias';
 import { PublicarPlantilla } from '@/components/dashboard/PublicarPlantilla';
 import { useInsignias } from '@/hooks/useInsignias';
-import { tienePlan } from '@/lib/insignias';
+import { diasDePrueba, tienePlan } from '@/lib/insignias';
 import { DIBUJOS } from '@/components/dashboard/dibujos';
 import { BLOQUE_POR_ID, type DefBloque, BLOQUES_APAGADOS_POR_DEFECTO } from '@/data/bloques';
 import { BASE_PERSONALIZADA } from '@/data/plantillasBase';
@@ -415,6 +415,19 @@ export default function DashboardPage() {
      campo que su dueño pueda escribirse a si mismo. Lo de la FILA es de
      todos; lo de detras del engranaje, de pago. */
   const premium = tienePlan(datosInsignias);
+  /**
+   * Dias que le quedan de la prueba, o null si no hay cuenta atras.
+   *
+   * Null es quien no tiene plan Y quien lo tiene para siempre: los dos se
+   * pintan igual, sin aviso. El numero solo sale cuando el plan SE ACABA,
+   * que es lo unico que hay que contarle a alguien.
+   *
+   * Sin esto, la prueba aparecia y desaparecia en silencio: un dia el
+   * editor dejaba de ofrecerle cosas que ayer si le ofrecia, sin decir por
+   * que. Eso no se lee como «se acabo la prueba», se lee como que algo se
+   * rompio.
+   */
+  const diasPrueba = diasDePrueba(datosInsignias);
 
   /** Handle bajo el que el borrador vive hoy en el store. Cambia al renombrar. */
   const storeKeyRef = useRef('');
@@ -797,6 +810,28 @@ export default function DashboardPage() {
             la barra de navegación. Tres sitios diciendo quién eres en la
             misma pantalla es ruido, no orientación. */}
         <div className="dash__fondo">
+          {diasPrueba !== null && (
+            <div className="dash__prueba" data-poco={diasPrueba <= 2 ? 'si' : undefined}>
+              <span className="dash__prueba-d" aria-hidden="true">◆</span>
+              <div>
+                <b>
+                  {diasPrueba === 0
+                    ? 'Tu prueba termina hoy'
+                    : `Te ${diasPrueba === 1 ? 'queda' : 'quedan'} ${diasPrueba} ${diasPrueba === 1 ? 'día' : 'días'} de prueba`}
+                </b>
+                {/* Se dice QUE pasa despues, no solo cuando. «Se acaba en
+                    dos dias» sin mas da miedo de mas: lo que se pierde es
+                    poder elegir estas opciones, no la pagina. */}
+                <p>Después seguirás teniendo tu perfil tal como está, pero sin las opciones del plan.</p>
+                {/* `/pricing`, en ingles, que es como esta puesta la ruta. Con
+                    `/precios` esto caia en «este perfil no existe», porque
+                    cualquier cosa que no sea una ruta conocida se lee como un
+                    nombre de usuario. */}
+                <Link to="/pricing">Ver el plan</Link>
+              </div>
+            </div>
+          )}
+
           <div className="dash__ayuda">
             <p>¿Alguna duda?</p>
             {AYUDA_DE_SECCION[section] && (

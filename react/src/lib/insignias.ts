@@ -18,6 +18,15 @@ export interface DatosInsignias {
   numNotas?: number;
   /** Ids concedidos por el equipo. Vienen de `insignias_concedidas`. */
   concedidas?: string[];
+  /**
+   * Cuándo se le acaba el plan, en ISO.
+   *
+   * `null` o ausente significa dos cosas a la vez —no tiene plan, o lo
+   * tiene para siempre— y a propósito: las dos se pintan igual, sin
+   * cuenta atrás. Para saber SI lo tiene está `tienePlan()`, que mira las
+   * insignias; esto es solo para decir cuánto le queda.
+   */
+  caducaPlan?: string | null;
 }
 
 export interface EstadoInsignia {
@@ -119,6 +128,30 @@ export function estadoInsignias(d: DatosInsignias): EstadoInsignia[] {
  */
 export function tienePlan(d: DatosInsignias): boolean {
   return resolveBadges(d.concedidas).includes('premium');
+}
+
+/** Milisegundos de un día. */
+const DIA = 86_400_000;
+
+/**
+ * Días que le quedan de prueba, o `null` si no hay cuenta atrás.
+ *
+ * Devuelve `null` en los dos casos que se pintan igual: quien no tiene
+ * plan, y quien lo tiene para siempre. Un número solo sale cuando el plan
+ * SE ACABA, que es lo único que hay que contarle a alguien.
+ *
+ * Se redondea hacia arriba: a falta de hora y media quedan «1 día», no
+ * cero. Decirle a alguien que le quedan cero días de algo que todavía
+ * funciona es mentirle en la dirección que molesta.
+ */
+export function diasDePrueba(d: DatosInsignias, ahora = Date.now()): number | null {
+  if (!d.caducaPlan || !tienePlan(d)) return null;
+  const fin = new Date(d.caducaPlan).getTime();
+  if (!Number.isFinite(fin)) return null;
+  const quedan = Math.ceil((fin - ahora) / DIA);
+  /* Ya vencida. No deberia llegar —la vista no devuelve las vencidas— pero
+     si el reloj del navegador va adelantado, si. Cero, no negativo. */
+  return quedan > 0 ? quedan : 0;
 }
 
 /** Sólo los ids ganados, que es lo que pinta el perfil público. */

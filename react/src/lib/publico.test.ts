@@ -132,28 +132,62 @@ describe('cargarPerfil', () => {
 });
 
 describe('concedidasDe', () => {
+  const VACIO = { ids: [], caducaPlan: null };
+
   it('filtra por el id del perfil', async () => {
-    fingirRed(() => responder([{ insignia: 'premium' }, { insignia: 'staff' }]));
+    fingirRed(() => responder([
+      { insignia: 'premium', expira: null },
+      { insignia: 'staff', expira: null },
+    ]));
     const { concedidasDe } = await import('./publico');
-    const ids = await concedidasDe('abc');
+    const r = await concedidasDe('abc');
     expect(llamadas[0]!.url).toContain('/rest/v1/insignias_de_perfil?');
     expect(llamadas[0]!.url).toContain('perfil_id=eq.abc');
-    expect(ids).toEqual(['premium', 'staff']);
+    expect(r.ids).toEqual(['premium', 'staff']);
+  });
+
+  /* `expira` hay que PEDIRLO. Si alguien recorta el `select` para «pedir
+     menos», la cuenta atras de la prueba desaparece sin que falle nada:
+     el plan sigue viendose, solo que nadie avisa de que se acaba. */
+  it('pide también la caducidad, no solo el nombre', async () => {
+    fingirRed(() => responder([]));
+    const { concedidasDe } = await import('./publico');
+    await concedidasDe('abc');
+    expect(decodeURIComponent(llamadas[0]!.url)).toContain('select=insignia,expira');
+  });
+
+  it('saca la caducidad del diamante, no la de otra insignia', async () => {
+    fingirRed(() => responder([
+      { insignia: 'staff', expira: '2026-01-01T00:00:00Z' },
+      { insignia: 'premium', expira: '2026-09-19T12:00:00Z' },
+    ]));
+    const { concedidasDe } = await import('./publico');
+    const r = await concedidasDe('abc');
+    expect(r.caducaPlan).toBe('2026-09-19T12:00:00Z');
+  });
+
+  /* Null es «para siempre», que es lo que son todas las concedidas a mano.
+     No puede confundirse con «se acaba ya». */
+  it('un plan sin caducidad deja la fecha en null', async () => {
+    fingirRed(() => responder([{ insignia: 'premium', expira: null }]));
+    const { concedidasDe } = await import('./publico');
+    expect((await concedidasDe('abc')).caducaPlan).toBeNull();
   });
 
   it('sin id no sale a la red', async () => {
     fingirRed(() => responder([]));
     const { concedidasDe } = await import('./publico');
-    expect(await concedidasDe('')).toEqual([]);
+    expect(await concedidasDe('')).toEqual(VACIO);
     expect(llamadas).toHaveLength(0);
   });
 
-  /* La vista puede no existir todavía. Que falten las insignias concedidas
-     es aceptable; que reviente la carga del perfil entero, no. */
+  /* La vista puede no existir todavía —o `expira`, si la migración 0025 no
+     está aplicada—. Que falten las insignias concedidas es aceptable; que
+     reviente la carga del perfil entero, no. */
   it('si la vista no existe devuelve vacío en vez de reventar', async () => {
     fingirRed(() => responder({}, 404));
     const { concedidasDe } = await import('./publico');
-    await expect(concedidasDe('abc')).resolves.toEqual([]);
+    await expect(concedidasDe('abc')).resolves.toEqual(VACIO);
   });
 });
 

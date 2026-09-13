@@ -211,30 +211,55 @@ export async function insigniasDe(username: string) {
   }
   if (!fila) return vacio;
 
-  const metricas = {
+  const dadas = await concedidasDe(String(fila.id ?? ''));
+  return {
     vistas: Number(fila.vistas) || 0,
     nota: fila.nota == null ? null : Number(fila.nota),
     numNotas: Number(fila.num_notas) || 0,
-    concedidas: [] as string[],
+    concedidas: dadas.ids,
+    caducaPlan: dadas.caducaPlan,
   };
-  metricas.concedidas = await concedidasDe(String(fila.id ?? ''));
-  return metricas;
 }
 
-/** Las insignias que el equipo le ha dado a un perfil. */
-export async function concedidasDe(perfilId: string): Promise<string[]> {
-  if (!hayBackend() || !perfilId) return [];
+/** Lo que el servidor sabe de las insignias de un perfil. */
+export interface Concesiones {
+  /** Los ids que tiene. */
+  ids: string[];
+  /**
+   * Cuándo se le acaba el plan, en ISO. `null` si no tiene plan, o si lo
+   * tiene para siempre — que es lo que significa `expira` a null en la
+   * base. Los dos casos se pintan igual (sin cuenta atrás) y por eso
+   * comparten valor.
+   */
+  caducaPlan: string | null;
+}
+
+/**
+ * Las insignias que el equipo le ha dado a un perfil.
+ *
+ * Se pide también `expira` porque desde la migración 0025 el plan puede
+ * ser una prueba de siete días. La vista ya no devuelve las vencidas, así
+ * que para saber SI lo tiene basta con `ids`; la fecha es solo para poder
+ * decirle cuánto le queda.
+ */
+export async function concedidasDe(perfilId: string): Promise<Concesiones> {
+  const vacio: Concesiones = { ids: [], caducaPlan: null };
+  if (!hayBackend() || !perfilId) return vacio;
   try {
     const filas = await leer(
       'insignias_de_perfil',
-      `select=insignia&perfil_id=eq.${encodeURIComponent(perfilId)}`,
+      `select=insignia,expira&perfil_id=eq.${encodeURIComponent(perfilId)}`,
     );
-    return filas.map((f: any) => String(f.insignia)).filter(Boolean);
+    const ids = filas.map((f: any) => String(f.insignia)).filter(Boolean);
+    const plan = filas.find((f: any) => f.insignia === 'premium') as
+      | { expira?: string | null }
+      | undefined;
+    return { ids, caducaPlan: plan?.expira ?? null };
   } catch {
-    /* La vista puede no existir todavía. Mientras tanto solo faltan las
-       concedidas a mano y «verificado»; las de antigüedad, visitas y notas se
-       calculan igual. */
-    return [];
+    /* La vista puede no existir todavía —o `expira`, si la 0025 no está
+       aplicada—. Mientras tanto solo faltan las concedidas a mano y
+       «verificado»; las de antigüedad, visitas y notas se calculan igual. */
+    return vacio;
   }
 }
 

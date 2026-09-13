@@ -23,7 +23,20 @@ import { CUENTA_FUENTES } from '@/data/premium';
  * mira quien paga y no recibe. Ahora esta lista es exactamente lo que
  * `data/premium.ts` bloquea, ni una linea mas.
  */
-const PLANS = [
+interface Plan {
+  id: string;
+  name: string;
+  price: string;
+  period: string;
+  desc: string;
+  features: string[];
+  cta: string;
+  highlight: boolean;
+  /** Una linea bajo el boton. Solo la lleva el de pago. */
+  pie?: string;
+}
+
+const PLANS: Plan[] = [
   {
     id: 'free',
     name: 'Gratis',
@@ -52,6 +65,12 @@ const PLANS = [
     period: 'pago único, para siempre',
     desc: 'Para que tu perfil no se parezca al de nadie.',
     features: [
+      /* La prueba va la PRIMERA, y no en letra pequeña al final.
+         Quien crea su perfil ya la tiene puesta —se la da la base al
+         crearlo, migración 0025— así que esto no promete nada que haya
+         que ir a buscar: cuenta algo que ya pasó. Enterrarlo abajo seria
+         regalar una semana y que no se entere nadie. */
+      'Una semana gratis al crear tu perfil, sin poner una tarjeta',
       'Todo lo del plan Gratis',
       'La insignia del diamante',
       'Rejilla libre: coloca cada pieza donde quieras, arrastrándola',
@@ -65,6 +84,8 @@ const PLANS = [
       'Inclinación 3D de la tarjeta',
     ],
     cta: 'Conseguir Premium',
+    /* Debajo del boton, para que se lea justo antes de decidir. */
+    pie: 'Si acabas de crear tu perfil, ya lo tienes activo una semana.',
     highlight: true,
   },
 ];
@@ -182,6 +203,22 @@ export default function PricingPage() {
               >
                 Todavía no está a la venta
               </button>
+            )}
+
+            {/* Bajo el boton, que es donde se lee justo antes de decidir.
+                Y ahora mismo dice mas de lo que parece: como el cobro no
+                esta conectado, la semana de regalo es la UNICA forma de
+                tener el plan. */}
+            {plan.pie && (
+              <p style={{
+                margin: '10px 0 0',
+                fontSize: 12.5,
+                lineHeight: 1.45,
+                textAlign: 'center',
+                color: 'var(--text-muted)',
+              }}>
+                {plan.pie}
+              </p>
             )}
           </div>
         ))}

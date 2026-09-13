@@ -47,7 +47,9 @@ export function useInsignias(perfil: Profile | null | undefined) {
     if (!publico.hayBackend() || !usuario) return;
     let vivo = true;
     const pedir = id
-      ? publico.concedidasDe(id).then((concedidas) => ({ concedidas }))
+      ? publico
+          .concedidasDe(id)
+          .then((c) => ({ concedidas: c.ids, caducaPlan: c.caducaPlan }))
       : publico.insigniasDe(usuario);
     pedir
       .then((d) => {
