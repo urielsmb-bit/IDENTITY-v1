@@ -40,8 +40,6 @@ interface ProfileViewProps {
    * un perfil que no era suyo.
    */
   editando?: boolean;
-  onVote?: (score: number) => void;
-  myVote?: number | null;
 }
 
 /* ---- Limites del escalado del perfil ----------------------
@@ -178,8 +176,6 @@ export function ProfileView({
   insignias: insigniasDadas,
   preview = false,
   editando = false,
-  onVote,
-  myVote,
 }: ProfileViewProps) {
   /* Que cara toca: la tuya, la de Discord o tu inicial sobre un color.
      Lo decide `avatarDe` y no este componente, porque la misma cara tiene
@@ -541,13 +537,6 @@ export function ProfileView({
     arrancarFondo(rootRef.current);
   };
 
-  /* La nota la calcula el servidor a partir de `valoraciones`.
-     Antes esto promediaba `p.ratings.design/originality/aesthetic`, tres
-     campos que no escribia nadie: el panel ensenaba 0.0 y «0 VOTOS» aunque
-     el perfil tuviera votos de verdad. */
-  const notaMedia = p.nota ?? 0;
-  const votos = p.numNotas ?? 0;
-
 
   /* Las insignias se calculan, no se leen del perfil.
      Antes salian de `p.badges`, que es parte de lo que escribe su dueno: por
@@ -559,10 +548,8 @@ export function ProfileView({
       insigniasGanadas({
         creado: p.joined,
         vistas: p.views,
-        nota: p.nota,
-        numNotas: p.numNotas,
       }),
-    [insigniasDadas, p.joined, p.views, p.nota, p.numNotas],
+    [insigniasDadas, p.joined, p.views],
   );
 
   /* Y de esas, las que su dueño quiere enseñar. Ganarlas las decide el
@@ -1708,37 +1695,6 @@ export function ProfileView({
         </section>
       )}
 
-      {p.showRate && (
-        <section className="pf-sec" id="secRate">
-          <div className="pf-sec__in">
-            <h2 className="pf-sec__h">Califica este perfil</h2>
-
-            <div className="pf-rate__score">
-              {votos > 0 ? notaMedia.toFixed(1) : '—'}
-              <small>
-                {votos} {votos === 1 ? 'VOTO' : 'VOTOS'}
-              </small>
-            </div>
-
-            <div className="pf-vote">
-              {/* Cinco, no diez: la tabla `valoraciones` tiene
-                  `check (nota between 1 and 5)`, asi que del 6 en
-                  adelante el voto se rechazaba en el servidor. */}
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  className={myVote === n ? 'is-mine' : undefined}
-                  onClick={() => onVote?.(n)}
-                  aria-label={`Calificar con ${n}`}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
     </div>
   );
 }

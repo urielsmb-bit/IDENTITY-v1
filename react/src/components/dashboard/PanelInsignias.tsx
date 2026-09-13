@@ -69,9 +69,8 @@ export function PanelInsignias({ datos }: { datos: DatosInsignias }) {
       </div>
 
       <p className="ins__pie">
-        Nadie puede ponerse una insignia a sí mismo. Las de antigüedad,
-        visitas y valoraciones salen solas de tus cifras; el resto las da el
-        equipo.
+        Nadie puede ponerse una insignia a sí mismo. Las de antigüedad y
+        visitas salen solas de tus cifras; el resto las da el equipo.
       </p>
     </div>
   );

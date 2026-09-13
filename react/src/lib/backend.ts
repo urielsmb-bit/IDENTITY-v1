@@ -288,7 +288,7 @@ export async function borrarPerfil(id: string) {
 // ---- Discover & Ranking ----
 
 export interface OpcionesDescubrir {
-  /** Columna de orden del servidor: puntuacion | vistas | nota | nuevos */
+  /** Columna de orden del servidor: puntuacion | vistas | nuevos */
   orden?: string;
   limite?: number;
 }
@@ -298,7 +298,6 @@ export async function descubrir(opciones: OpcionesDescubrir = {}) {
   const ORDENES: Record<string, string> = {
     puntuacion: 'puntuacion',
     vistas: 'vistas',
-    nota: 'nota',
     nuevos: 'actualizado'
   };
   const orden = ORDENES[opciones.orden ?? ''] || 'puntuacion';
@@ -312,8 +311,6 @@ export async function descubrir(opciones: OpcionesDescubrir = {}) {
   return (data || []).map((f: any) => {
     const p = aPerfil(f);
     p.views = f.vistas;
-    p.nota = f.nota;
-    p.numNotas = f.num_notas;
     return p;
   });
 }
@@ -343,8 +340,6 @@ export async function analiticasDe(perfilId: string, dias = 30) {
   const vacio = {
     unicas: 0,
     totales: 0,
-    nota: null as number | null,
-    numNotas: 0,
     porDia: {} as Record<string, number>,
     porHora: new Array(24).fill(0) as number[],
     porPais: [] as { pais: string; n: number }[],
@@ -358,7 +353,7 @@ export async function analiticasDe(perfilId: string, dias = 30) {
   const desde = new Date(Date.now() - dias * 86400000).toISOString();
   const [metricas, visitas] = await Promise.all([
     client.from('perfil_metricas')
-      .select('vistas_unicas,vistas_totales,suma_notas,num_notas')
+      .select('vistas_unicas,vistas_totales')
       .eq('perfil_id', perfilId)
       .maybeSingle(),
     client.from('vistas')
@@ -413,7 +408,6 @@ export async function analiticasDe(perfilId: string, dias = 30) {
     if (u > ultima) ultima = u;
   }
 
-  const num = Number(m.num_notas) || 0;
   return {
     porHora,
     porPais: [...paises.entries()]
@@ -423,8 +417,6 @@ export async function analiticasDe(perfilId: string, dias = 30) {
     vuelven,
     unicas: Number(m.vistas_unicas) || 0,
     totales: Number(m.vistas_totales) || 0,
-    nota: num > 0 ? Number(m.suma_notas) / num : null,
-    numNotas: num,
     porDia,
     ultima,
   };
@@ -706,17 +698,7 @@ export async function subirMedio(
 }
 
 
-// ---- Rating & Reports ----
-
-export async function valorar(perfilId: string, nota: number) {
-  if (!supabase) throw new Error('sin backend');
-  const u = await usuario();
-  if (!u) throw new Error('Hay que entrar para valorar');
-  const { error } = await supabase.from('valoraciones')
-    .upsert({ perfil_id: perfilId, autor_id: u.id, nota });
-  if (error) throw traducir(error);
-  return true;
-}
+// ---- Denuncias ----
 
 /**
  * Denunciar un perfil.

@@ -780,12 +780,6 @@ export function AjustesCuenta({
           onChange={(v) => update({ showStats: v })}
         />
         <Interruptor
-          label="Permitir calificaciones"
-          desc="Deja que quien te visite puntúe tu diseño. Apagado, no se ve la nota."
-          on={!!profile.showRate}
-          onChange={(v) => update({ showRate: v })}
-        />
-        <Interruptor
           label="Contar los clics en tus enlaces"
           desc="Cuántas veces han pulsado cada enlace, en Analíticas. No se guarda quién pulsó: sólo un número por enlace y por día."
           on={profile.trackClick !== false}
@@ -840,8 +834,8 @@ export function AjustesCuenta({
           <div>
             <div className="acc__filaT">Eliminar la cuenta</div>
             <p className="acc__filaD">
-              Se borra la cuenta, el perfil, las imágenes que hayas subido y las
-              valoraciones que hayas recibido. No se puede deshacer.
+              Se borra la cuenta, el perfil y las imágenes que hayas subido.
+              No se puede deshacer.
             </p>
           </div>
           <button
@@ -932,7 +926,7 @@ export function AjustesCuenta({
                 Tu perfil y su dirección <b>/{profile.username}</b>
               </li>
               <li>El avatar y las imágenes que hayas subido</li>
-              <li>Las visitas y las valoraciones recibidas</li>
+              <li>Las visitas que ha recibido tu perfil</li>
               <li>Tu forma de entrar: correo y cuentas conectadas</li>
             </ul>
             <label className="acc__eti" htmlFor="acc-borrar">

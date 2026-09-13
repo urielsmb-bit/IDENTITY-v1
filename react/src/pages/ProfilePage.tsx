@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useProfile } from '@/hooks/useProfile';
-import { useProfileStore, getMyVote, setMyVote } from '@/stores/profileStore';
+import { useProfileStore } from '@/stores/profileStore';
 import { useAuthStore } from '@/stores/authStore';
 import { ProfileView } from '@/components/profile/ProfileView';
 import { Denunciar } from '@/components/profile/Denunciar';
@@ -24,7 +24,6 @@ export default function ProfilePage() {
   const mineName = useProfileStore((s) => s.mineName);
   const haySesion = useAuthStore((s) => !!s.user);
   const esMio = haySesion && !!cleanUsername && mineName === cleanUsername;
-  const [vote, setVote] = useState<number | null>(null);
   /* Las insignias no vienen con el perfil: viven en otra vista y en otra
      tabla. Se piden aparte para que un fallo suyo no impida que el perfil se
      pinte — y por el MISMO gancho que usa el editor, que es lo que evita que
@@ -55,30 +54,7 @@ export default function ProfilePage() {
     if (publico.hayBackend()) {
       publico.contarVista(cleanUsername).catch(() => {});
     }
-    setVote(getMyVote(cleanUsername));
   }, [cleanUsername]);
-
-  const handleVote = async (score: number) => {
-    if (!cleanUsername || !profile) return;
-    setVote(score);
-    setMyVote(cleanUsername, score);
-
-    if (publico.hayBackend() && profile._id) {
-      try {
-        /* Cargado al VOTAR, no al abrir. Votar escribe, y escribir necesita
-           la sesion, o sea el SDK entero. Pedirlo aqui es pedirlo despues
-           de que la pagina este delante y solo a quien vota. */
-        const backend = await import('@/lib/backend');
-        await backend.valorar(profile._id, score);
-      } catch (err) {
-        /* Se deshace el voto local. Antes solo se anotaba en la consola: la
-           persona veia su nota marcada y creia que habia contado. */
-        setVote(null);
-        setMyVote(cleanUsername, 0);
-        console.error('Error al enviar valoración:', err);
-      }
-    }
-  };
 
   /* Se espera solo mientras se esta preguntando de verdad. Si la consulta
      quedo EN PAUSA por falta de red, esperar seria esperar a nada: eso va
@@ -141,8 +117,6 @@ export default function ProfilePage() {
       <ProfileView
         profile={profile}
         insignias={insignias}
-        onVote={handleVote}
-        myVote={vote}
       />
       {/* No en el tuyo: denunciarte a ti mismo no lleva a ninguna parte y
           el botón sólo estorbaría en la página que más vas a mirar. */}

@@ -8,10 +8,12 @@ import { avatarDe } from '@/lib/avatar';
 import type { Profile } from '@/types';
 import { useTitulo } from '@/hooks/useTitulo';
 
-/* Visitas y nota, y nada mas. «Nivel» y «likes» eran campos que nadie
-   incrementaba —todo el mundo salia con Nv 1 y 0 likes—, asi que ordenar
-   por ellos daba una clasificacion sin sentido. */
-type Metric = 'views' | 'rating';
+/* Visitas, y nada mas.
+   «Nivel» y «likes» se fueron primero: eran campos que nadie
+   incrementaba —todo el mundo salia con Nv 1 y 0 likes— asi que ordenar
+   por ellos daba una clasificacion sin sentido. La «Nota» se fue despues,
+   con las calificaciones. Quedaba un selector de una sola opcion, y un
+   selector que no elige nada solo ocupa sitio. */
 
 /**
  * Ranking.
@@ -27,7 +29,6 @@ type Metric = 'views' | 'rating';
  */
 export default function LeaderboardPage() {
   useTitulo('Top · sharee');
-  const [metric, setMetric] = useState<Metric>('views');
   const [busca, setBusca] = useState('');
 
   const { data: remoteProfiles = [] } = useDiscoverProfiles({ limit: 100 });
@@ -59,11 +60,8 @@ export default function LeaderboardPage() {
           `${p.name ?? ''} ${p.username} ${p.title ?? ''}`.toLowerCase().includes(q),
         )
       : allProfiles;
-    return [...v].sort((a, b) => {
-      if (metric === 'rating') return (b.nota ?? 0) - (a.nota ?? 0);
-      return (b.views || 0) - (a.views || 0);
-    });
-  }, [allProfiles, metric, busca]);
+    return [...v].sort((a, b) => (b.views || 0) - (a.views || 0));
+  }, [allProfiles, busca]);
 
   /* El puesto sale del orden SIN buscar: si filtras por un nombre, el
      numero que ves sigue siendo el suyo de verdad y no un 1 recien
@@ -71,19 +69,12 @@ export default function LeaderboardPage() {
   const puestos = useMemo(() => {
     const m = new Map<string, number>();
     [...allProfiles]
-      .sort((a, b) =>
-        metric === 'rating' ? (b.nota ?? 0) - (a.nota ?? 0) : (b.views || 0) - (a.views || 0),
-      )
+      .sort((a, b) => (b.views || 0) - (a.views || 0))
       .forEach((p, i) => m.set(p.username, i + 1));
     return m;
-  }, [allProfiles, metric]);
+  }, [allProfiles]);
 
-  const valor = (p: Profile) =>
-    metric === 'rating'
-      ? p.numNotas
-        ? (p.nota ?? 0).toFixed(1)
-        : '—'
-      : num(p.views || 0);
+  const valor = (p: Profile) => num(p.views || 0);
 
   return (
     <div className="wrap rank">
@@ -96,27 +87,6 @@ export default function LeaderboardPage() {
         </p>
 
         <div className="rank__mandos">
-          <div className="rank__tabs" role="tablist" aria-label="Ordenar por">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={metric === 'views'}
-              className={`rank__tab${metric === 'views' ? ' on' : ''}`}
-              onClick={() => setMetric('views')}
-            >
-              Visitas
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={metric === 'rating'}
-              className={`rank__tab${metric === 'rating' ? ' on' : ''}`}
-              onClick={() => setMetric('rating')}
-            >
-              Nota
-            </button>
-          </div>
-
           <label className="search rank__buscar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
               <circle cx="11" cy="11" r="7" />
@@ -147,7 +117,7 @@ export default function LeaderboardPage() {
           <div className="rank__th" aria-hidden="true">
             <span>#</span>
             <span>Perfil</span>
-            <span className="rank__thv">{metric === 'rating' ? 'Nota' : 'Visitas'}</span>
+            <span className="rank__thv">Visitas</span>
           </div>
 
           <ol className="rank__l">

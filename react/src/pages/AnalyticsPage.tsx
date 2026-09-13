@@ -12,8 +12,6 @@ type Rango = 7 | 30 | 90;
 interface Datos {
   unicas: number;
   totales: number;
-  nota: number | null;
-  numNotas: number;
   porDia: Record<string, number>;
   porHora: number[];
   porPais: { pais: string; n: number }[];
@@ -25,8 +23,6 @@ interface Datos {
 const VACIO: Datos = {
   unicas: 0,
   totales: 0,
-  nota: null,
-  numNotas: 0,
   porDia: {},
   porHora: new Array(24).fill(0),
   porPais: [],
@@ -342,16 +338,6 @@ export default function AnalyticsPage() {
             nuevosEnRango === 0
               ? 'Sin visitas todavía en este período'
               : `de ${num(nuevosEnRango)} que te descubrieron · ${Math.round((datos.vuelven / nuevosEnRango) * 100)}%`
-          }
-          cargando={cargando}
-        />
-        <Kpi
-          t="Nota"
-          v={datos.numNotas ? datos.nota!.toFixed(1) : '—'}
-          d={
-            datos.numNotas
-              ? `${datos.numNotas} ${datos.numNotas === 1 ? 'voto' : 'votos'}`
-              : 'Nadie ha votado todavía'
           }
           cargando={cargando}
         />

@@ -145,13 +145,11 @@ export function conCifras(fila: unknown) {
   if (p && fila) {
     const f = fila as Record<string, unknown>;
     if (f.vistas != null) p.views = Number(f.vistas) || 0;
-    if (f.nota != null) p.nota = Number(f.nota);
-    if (f.num_notas != null) p.numNotas = Number(f.num_notas) || 0;
   }
   return p;
 }
 
-const CAMPOS = 'id,username,apariencia,creado,actualizado,vistas,nota,num_notas';
+const CAMPOS = 'id,username,apariencia,creado,actualizado,vistas';
 const CAMPOS_TABLA = 'id,username,apariencia,creado,actualizado';
 
 let avisadoDeLaVista = false;
@@ -189,13 +187,13 @@ export async function cargarPerfil(username: string, señal?: AbortSignal) {
 
 /** Las cifras y las insignias concedidas de alguien, por su nombre. */
 export async function insigniasDe(username: string) {
-  const vacio = { vistas: 0, nota: null as number | null, numNotas: 0, concedidas: [] as string[] };
+  const vacio = { vistas: 0, concedidas: [] as string[], caducaPlan: null as string | null };
   if (!hayBackend()) return vacio;
 
   const q = `username=eq.${encodeURIComponent(username)}&limit=1`;
   let fila: any = null;
   try {
-    const filas = await leer('perfiles_publicos', `select=id,vistas,nota,num_notas&${q}`);
+    const filas = await leer('perfiles_publicos', `select=id,vistas&${q}`);
     fila = filas[0] ?? null;
   } catch {
     /* De `perfiles_publicos` y no de `descubrir`: `descubrir` deja fuera a
@@ -203,7 +201,7 @@ export async function insigniasDe(username: string) {
        insignias de visitas y de notas. Salir del buscador y perder lo que has
        ganado son dos cosas distintas. */
     try {
-      const filas = await leer('descubrir', `select=id,vistas,nota,num_notas&${q}`);
+      const filas = await leer('descubrir', `select=id,vistas&${q}`);
       fila = filas[0] ?? null;
     } catch {
       return vacio;
@@ -214,8 +212,6 @@ export async function insigniasDe(username: string) {
   const dadas = await concedidasDe(String(fila.id ?? ''));
   return {
     vistas: Number(fila.vistas) || 0,
-    nota: fila.nota == null ? null : Number(fila.nota),
-    numNotas: Number(fila.num_notas) || 0,
     concedidas: dadas.ids,
     caducaPlan: dadas.caducaPlan,
   };

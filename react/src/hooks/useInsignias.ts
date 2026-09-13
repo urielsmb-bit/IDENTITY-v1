@@ -30,8 +30,6 @@ export function useInsignias(perfil: Profile | null | undefined) {
   const id = perfil?._id;
   const creado = perfil?.joined;
   const vistas = perfil?.views;
-  const nota = perfil?.nota;
-  const numNotas = perfil?.numNotas;
 
   /** Lo que haya contestado el servidor. Vacío mientras no conteste. */
   const [servidor, setServidor] = useState<Partial<DatosInsignias>>({});
@@ -68,8 +66,8 @@ export function useInsignias(perfil: Profile | null | undefined) {
      salen desde el primer pintado y no aparecen de golpe cuando contesta el
      servidor. Lo suyo pisa a lo nuestro: si contesta, manda el. */
   const datos = useMemo<DatosInsignias>(
-    () => ({ creado, vistas, nota, numNotas, ...servidor }),
-    [creado, vistas, nota, numNotas, servidor],
+    () => ({ creado, vistas, ...servidor }),
+    [creado, vistas, servidor],
   );
 
   const ganadas = useMemo(() => insigniasGanadas(datos), [datos]);

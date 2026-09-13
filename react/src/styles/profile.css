@@ -1130,41 +1130,6 @@
 }
 
 /* --- califica mi perfil --- */
-.pf-rate__score{
-  display:flex; align-items:baseline; gap:9px;
-  font-family:var(--u-fontd, var(--u-font, var(--p-fd))); font-weight:700;
-  font-size:var(--t6); letter-spacing:-.04em;
-  color:var(--p-primary); line-height:1;
-}
-.pf-rate__score small{
-  font-family:var(--p-fm); font-size:var(--t1); font-weight:600;
-  color:var(--p-dim); letter-spacing:.1em;
-}
-.pf-rate__rows{ margin-top:14px; display:grid; gap:9px; }
-.pf-rate__row{ display:grid; grid-template-columns:86px 1fr 34px; align-items:center; gap:10px; }
-.pf-rate__lab{
-  font-family:var(--p-fm); font-size:var(--t1);
-  letter-spacing:.1em; text-transform:uppercase; color:var(--p-dim);
-}
-.pf-rate__bar{ height:5px; border-radius:100px; background:var(--p-surface-2); overflow:hidden; }
-.pf-rate__bar i{
-  display:block; height:100%; border-radius:100px;
-  background:linear-gradient(90deg,var(--p-primary),var(--p-accent));
-  animation:fill 1.1s var(--ease-out) both;
-}
-.pf-rate__v{ font-family:var(--p-fm); font-size:var(--t1); text-align:right; }
-.pf-vote{ display:flex; gap:5px; margin-top:16px; flex-wrap:wrap; }
-.pf-vote button{
-  flex:1; min-width:34px; padding:8px 0;
-  border:1px solid var(--p-line);
-  border-radius:calc(var(--p-chip-r) * .6);
-  background:var(--p-surface-2);
-  font-family:var(--p-fm); font-size:var(--t1); font-weight:600;
-  cursor:pointer;
-  transition:transform var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
-}
-.pf-vote button:hover{ background:var(--p-primary); color:var(--p-bg); transform:translateY(-2px); }
-.pf-vote button.is-mine{ background:var(--p-primary); color:var(--p-bg); }
 
 /* ============================================================
    PIE + ACCIONES FLOTANTES
@@ -1393,7 +1358,6 @@
   .pf-veil{ backdrop-filter:blur(calc(var(--p-blur,0px) * .5)); }
   /* El panel de valoracion NO es la tarjeta: es una seccion aparte, en el
      flujo normal de la pagina, y ahi si tiene sentido reajustar. */
-  .pf-rate__row{ grid-template-columns:74px 1fr 30px; }
 }
 
 @media (prefers-reduced-motion:reduce){
@@ -1769,7 +1733,6 @@
    normal de la pagina y ahi estrechar si tiene sentido. */
 @container pfbox (max-width: 640px){
   .pf-card__sheen{ display:none; }
-  .pf-rate__row{ grid-template-columns:74px 1fr 30px; }
   .pf-gallery{ grid-template-columns:repeat(2,1fr); }
   .pf-sec{ padding-inline:16px; }
 }
@@ -2043,7 +2006,6 @@
    `flex-wrap`, asi que caen a dos lineas en vez de encogerse. Dos
    filas comodas valen mas que una fila imposible de acertar. */
 @media (pointer: coarse) {
-  .pf-vote button{ min-width:44px; min-height:44px; flex:0 0 auto; }
 }
 
 

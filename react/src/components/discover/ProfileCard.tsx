@@ -28,14 +28,12 @@ function hexA(hex: string | undefined, a: number) {
 export function ProfileCard({ profile: p }: ProfileCardProps) {
   const tint = hexA(p.accent, 0.18);
   const cara = avatarDe(p);
-  /* Las filas de `descubrir` traen visitas y notas, asi que aqui se
-     calculan igual que en el perfil. Lo que no traen es lo que concede el
-     equipo: en la tarjeta pequena se puede vivir sin ello. */
+  /* Las filas de `descubrir` traen las visitas, asi que las de antiguedad
+     y visitas se calculan igual que en el perfil. Lo que no traen es lo
+     que concede el equipo: en la tarjeta pequena se puede vivir sin ello. */
   const badges = insigniasGanadas({
     creado: p.joined,
     vistas: p.views,
-    nota: p.nota,
-    numNotas: p.numNotas,
   }).slice(0, 3);
 
   return (
@@ -100,9 +98,6 @@ export function ProfileCard({ profile: p }: ProfileCardProps) {
 
       <span className="pcard__foot">
         <span className="pcard__views">{num(p.views || 0)} visitas</span>
-        {/* La nota, si la hay. Antes aqui salia «Nv 1» en todas las
-            tarjetas: nadie subia nunca de nivel. */}
-        {p.numNotas ? <span>{(p.nota ?? 0).toFixed(1)} ★</span> : null}
       </span>
     </Link>
   );

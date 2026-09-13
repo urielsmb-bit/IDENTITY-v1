@@ -1459,24 +1459,6 @@ body.probando .view{ padding-top:0; }
 }
 /* Mismo rail de pestañas que la biblioteca de plantillas: lo que las
    hace leerse como UN mando es la caja que las contiene. */
-.rank__tabs{
-  display:flex; gap:2px; flex:none;
-  padding:3px;
-  border:1px solid var(--border);
-  border-radius:var(--radius-md);
-  background:var(--bg-secondary);
-}
-.rank__tab{
-  padding:7px var(--s4);
-  border:0; border-radius:var(--radius-sm);
-  background:transparent;
-  color:var(--text-muted);
-  font-size:var(--t2); font-weight:500;
-  cursor:pointer; white-space:nowrap;
-  transition:color var(--transition-fast), background var(--transition-fast);
-}
-.rank__tab:hover{ color:var(--text-primary); }
-.rank__tab.on{ background:var(--surface-2); color:var(--text-primary); }
 .rank__buscar{ flex:1; min-width:200px; max-width:340px; }
 
 .rank__tabla{

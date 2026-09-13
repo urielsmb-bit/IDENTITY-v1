@@ -35,7 +35,7 @@ describe('quien tiene el plan', () => {
      con visitas. */
   it('ni la antiguedad ni las visitas lo conceden', () => {
     expect(
-      tienePlan({ creado: '2020-01-01', vistas: 1_000_000, nota: 5, numNotas: 999 }),
+      tienePlan({ creado: '2020-01-01', vistas: 1_000_000 }),
     ).toBe(false);
   });
 });

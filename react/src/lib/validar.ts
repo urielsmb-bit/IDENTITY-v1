@@ -317,14 +317,7 @@ function esquema(ID: any) {
     sBorder: (v: any) => numOnulo(v, 0, 100),
     blockRadius: (v: any) => numOnulo(v, 0, 60),
     views: (v: any) => numero(v, 0, 1e9, 0),
-    /* Las calcula el servidor y llegan pegadas al perfil. Se dejan pasar
-       porque de ellas salen las insignias de visitas y valoraciones; si el
-       normalizador las tira, esas insignias se quedan a cero para siempre. */
-    numNotas: (v: any) => numero(v, 0, 1e9, 0),
-    /* Nula mientras no la haya votado nadie: 0 y «sin votos» no son lo
-       mismo, y la insignia Aclamado pide una media minima. */
-    nota: (v: any) => numOnulo(v, 0, 5),
-    
+
     sBorderOn: bool,
     avBorder: bool, avGlow: bool, monoIcons: bool, bgFixed: bool,
     fxMagnet: bool, fxGlow: bool, fxParallax: bool,
@@ -368,7 +361,7 @@ function esquema(ID: any) {
       const s = String(v ?? '').trim().slice(0, 300);
       return /^https:\/\/cdn\.discordapp\.com\/[\w./-]+(\?[\w=&.-]*)?$/.test(s) ? s : '';
     },
-    showStats: bool, showRate: bool, discordWidget: bool, trackClick: bool,
+    showStats: bool, discordWidget: bool, trackClick: bool,
     
     // 100 es "sin tocar". Menos de 100 dejaria hueco alrededor del fondo,
     // asi que el minimo es 100 y solo se puede acercar.
@@ -512,15 +505,6 @@ export function perfil(p: any, defectos: any, catalogs: Record<string, unknown>)
             };
           }).filter(Boolean)
         : []
-    };
-  }
-
-  if (p.ratings && typeof p.ratings === 'object') {
-    out.ratings = {
-      design: numero(p.ratings.design, 0, 5, 0),
-      originality: numero(p.ratings.originality, 0, 5, 0),
-      aesthetic: numero(p.ratings.aesthetic, 0, 5, 0),
-      votes: numero(p.ratings.votes, 0, 1e9, 0)
     };
   }
 

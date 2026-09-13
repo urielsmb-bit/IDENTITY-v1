@@ -23,7 +23,7 @@ const PERSONAL = {
   projects: [{ title: 'proyecto' }],
   gallery: [{ url: 'https://x/foto.jpg' }],
   tags: ['dev'],
-  views: 11, nota: 4.5, numNotas: 2, verified: true,
+  views: 11, verified: true,
 } as unknown as Partial<Profile>;
 
 const DISENO = {
@@ -40,7 +40,7 @@ describe('extraerPlantilla · lo que NO puede salir', () => {
     'bio', 'about', 'avatarUrl', 'joined', 'discordId', 'gateText',
     'discordUser', 'discordName', 'discordAvatar',
     'socials', 'links', 'projects', 'gallery', 'tags',
-    'views', 'nota', 'numNotas', 'verified',
+    'views', 'verified',
   ]) {
     it(`no publica «${campo}»`, () => {
       expect(salida).not.toHaveProperty(campo);

@@ -13,9 +13,6 @@ export interface DatosInsignias {
   creado?: string;
   /** Visitas únicas, de `perfil_metricas`. */
   vistas?: number;
-  /** Nota media, o null si todavía no la ha votado nadie. */
-  nota?: number | null;
-  numNotas?: number;
   /** Ids concedidos por el equipo. Vienen de `insignias_concedidas`. */
   concedidas?: string[];
   /**
@@ -78,19 +75,11 @@ export function estadoInsignias(d: DatosInsignias): EstadoInsignia[] {
     }
 
     const meta = badge.meta;
-    const llevas =
-      meta.campo === 'dias'
-        ? diasDesde(d.creado)
-        : meta.campo === 'vistas'
-          ? d.vistas ?? 0
-          : d.numNotas ?? 0;
-
-    const media = d.nota ?? 0;
-    const mediaOk = meta.minMedia == null || media >= meta.minMedia;
+    const llevas = meta.campo === 'dias' ? diasDesde(d.creado) : d.vistas ?? 0;
 
     /* El equipo también puede concederlas a mano. Sirve para arreglar un
        caso raro sin tocar el cálculo. */
-    const ganada = concedidas.has(id) || (llevas >= meta.valor && mediaOk);
+    const ganada = concedidas.has(id) || (llevas >= meta.valor);
     const progreso = ganada ? 1 : Math.min(1, llevas / meta.valor);
 
     let falta = '';
@@ -102,9 +91,6 @@ export function estadoInsignias(d: DatosInsignias): EstadoInsignia[] {
           meta.unidad,
           meta.unidadPlural,
         )}`;
-      } else if (!mediaOk) {
-        // Ya hay bastantes votos, lo que falta es que suban la media.
-        falta = `Tu media es ${media.toFixed(1)}; hace falta ${meta.minMedia}`;
       }
     }
 

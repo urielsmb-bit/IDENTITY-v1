@@ -209,9 +209,6 @@ export interface Profile {
   sBorder: number | null;
   blockRadius: number | null;
   views: number;
-  /** Nota media. La calcula el servidor; no se guarda en el perfil. */
-  nota?: number | null;
-  numNotas?: number;
 
   /** Color de relleno de la superficie. Vacío = el del tema */
   sColor: string;
@@ -250,7 +247,6 @@ export interface Profile {
   verified: boolean;
   discoverable: boolean;
   showStats: boolean;
-  showRate: boolean;
   /**
    * Contar cuántas veces pulsan tus enlaces.
    *

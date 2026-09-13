@@ -99,7 +99,6 @@ function escribirPerfiles(mapa: Record<string, Profile>, mio: string | null) {
    palabra que no se ve. */
 const PROFILES_KEY = 'identity.profiles.v2';
 const MINE_KEY = 'identity.mine.v1';
-const VOTES_KEY = 'identity.votes.v1';
 
 /** Lee el mapa de perfiles de localStorage saneando cada entrada: es
  *  contenido que el usuario puede editar a mano desde las herramientas del
@@ -249,18 +248,6 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   },
 
 }));
-
-// ── Vote helpers ──────────────────────────────────────────
-export function getMyVote(username: string): number | null {
-  const votes = read<Record<string, number>>(VOTES_KEY, {});
-  return votes[username] ?? null;
-}
-
-export function setMyVote(username: string, score: number): void {
-  const votes = read<Record<string, number>>(VOTES_KEY, {});
-  votes[username] = score;
-  write(VOTES_KEY, votes);
-}
 
 /* Aqui vivia un contador de visitas de andar por casa: `countView` apuntaba
    en localStorage cada perfil que mirabas y `getStats` lo leia. Las

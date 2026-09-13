@@ -36,13 +36,11 @@ export type FuenteInsignia = 'perfil' | 'servidor' | 'plan' | 'externo';
 /** Lo que hay que alcanzar, para las que se calculan solas. */
 export interface MetaInsignia {
   /** Qué se mide. `lib/insignias.ts` sabe sacar cada uno. */
-  campo: 'dias' | 'vistas' | 'notas';
+  campo: 'dias' | 'vistas';
   valor: number;
   /** Singular, para escribir «te faltan 84 visitas». */
   unidad: string;
   unidadPlural: string;
-  /** Nota media minima. La cantidad sola no basta para algunas. */
-  minMedia?: number;
 }
 
 export interface Badge {
@@ -188,14 +186,6 @@ export const BADGES: Record<string, Badge> = {
     fuente: 'perfil',
     meta: { campo: 'vistas', valor: 500, unidad: 'visita', unidadPlural: 'visitas' },
     icon: "<svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path fill=\"currentColor\" d=\"M12 2c1.1 4.2-2 5.2-2 8.2a2 2 0 0 0 4 0c0-1-.1-2-.6-3 2.1 1.6 3.6 4.1 3.6 6.6a7 7 0 1 1-14 0C3 9.2 8.1 7 12 2z\"></path></svg>",
-  },
-  aclamado: {
-    label: "Aclamado",
-    rare: 'legendary',
-    how: "Diez valoraciones con una media de 4 o más.",
-    fuente: 'perfil',
-    meta: { campo: 'notas', valor: 10, unidad: 'valoración', unidadPlural: 'valoraciones', minMedia: 4 },
-    icon: "<svg aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path fill=\"currentColor\" d=\"m12 2 2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z\"></path></svg>",
   },
 };
 /**

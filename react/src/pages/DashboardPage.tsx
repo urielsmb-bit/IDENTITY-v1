@@ -298,7 +298,6 @@ function createBlankProfile(username = 'usuario'): Profile {
     verified: false,
     discoverable: true,
     showStats: true,
-    showRate: true,
     bgType: 'gradient',
     bgValue: 'linear-gradient(135deg, #0d0c22 0%, #1e1b4b 50%, #0f172a 100%)',
     socials: [

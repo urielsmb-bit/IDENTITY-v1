@@ -65,8 +65,6 @@ const FILA = {
   creado: '2026-01-01',
   actualizado: '2026-02-02',
   vistas: 42,
-  nota: 4.5,
-  num_notas: 8,
 };
 
 describe('cargarPerfil', () => {
@@ -91,8 +89,6 @@ describe('cargarPerfil', () => {
     // Las cifras viven fuera de `apariencia` y se copian a mano: sin eso el
     // contador del perfil sale a cero aunque la base tenga el número bueno.
     expect(p.views).toBe(42);
-    expect(p.nota).toBe(4.5);
-    expect(p.numNotas).toBe(8);
   });
 
   it('un nombre que no existe es una respuesta, no un error', async () => {

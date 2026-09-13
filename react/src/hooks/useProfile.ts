@@ -109,7 +109,6 @@ export function useMyProfile() {
 const ORDEN_SERVIDOR: Record<string, string> = {
   trending: 'puntuacion',
   popular: 'vistas',
-  rating: 'nota',
   new: 'nuevos',
 };
 
