@@ -51,7 +51,7 @@ import { DIBUJOS } from '@/components/dashboard/dibujos';
 import { BLOQUE_POR_ID, type DefBloque, BLOQUES_APAGADOS_POR_DEFECTO } from '@/data/bloques';
 import { APARIENCIA_APAGADA, BASE_PERSONALIZADA } from '@/data/plantillasBase';
 import { ElegirPlantilla } from '@/components/dashboard/ElegirPlantilla';
-import { Piezas } from '@/components/dashboard/Piezas';
+import { FilaFotos, FilaTarjeta, Piezas } from '@/components/dashboard/Piezas';
 import { Modal } from '@/components/ui/Modal';
 import { Overlay } from '@/components/ui/Overlay';
 import { safeMedia, slug } from '@/lib/utils';
@@ -1175,41 +1175,16 @@ export default function DashboardPage() {
                 donde se arregla. */}
             <Progreso profile={profile} irA={irA} />
 
-            <Campo label="Plantilla" guia="formato">
-              <ElegirPlantilla
-                profile={profile}
-                update={update}
-                premium={premium}
-                /* Sembrar el lienzo mide el DOM de la vista previa, asi que
-                   vive aqui y no dentro del selector: es lo unico de esa
-                   rejilla que necesita saber que hay pintado. */
-                alLienzoLibre={() => {
-                  const { pos, canvasH } = sembrarLienzo(profile);
-                  update({ layoutMode: 'free', pos, canvasH });
-                }}
-              />
-            </Campo>
-
-            {profile.layoutMode === 'free' && (
-              <p className="dash__pista" data-guia="libre">
-                Arrastra los bloques en la vista previa para moverlos, tira del
-                borde derecho para cambiar su ancho, y púlsalos para abrir sus
-                ajustes.
-              </p>
-            )}
-
-            <h3 className="grupo__t">Tus piezas</h3>
-            <p className="dash__sub">
-              El ojo la enciende o la apaga. El engranaje abre todos sus
-              ajustes: su letra, su color, su caja y dónde se coloca.
-            </p>
-
-            <Piezas
-              profile={profile}
-              update={update}
+            {/* EL ORDEN DE ESTA PANTALLA CUENTA UNA HISTORIA.
+                Primero lo que ERES —tu cara y tu fondo—, despues DONDE se
+                coloca —la plantilla— y pegados a ella sus mandos, y solo
+                entonces el detalle de cada pieza.
+                Antes las fotos estaban enterradas en la lista de piezas y
+                lo primero que veias al abrir «Diseño» era un selector de
+                plantillas: se te pedia elegir la forma de algo que aun no
+                tenia contenido. */}
+            <FilaFotos
               onAbrir={setPieza}
-              insignias={insigniasGanadasDelPerfil}
-              premium={premium}
               cajaAvatar={
                 <SubirMedio
                   guia="avatar"
@@ -1270,6 +1245,51 @@ export default function DashboardPage() {
                   }}
                 />
               }
+            />
+
+            <Campo label="Plantilla" guia="formato">
+              <ElegirPlantilla
+                profile={profile}
+                update={update}
+                premium={premium}
+                /* Sembrar el lienzo mide el DOM de la vista previa, asi que
+                   vive aqui y no dentro del selector: es lo unico de esa
+                   rejilla que necesita saber que hay pintado. */
+                alLienzoLibre={() => {
+                  const { pos, canvasH } = sembrarLienzo(profile);
+                  update({ layoutMode: 'free', pos, canvasH });
+                }}
+              />
+
+              {/* Los mandos de la plantilla, pegados a ella y dentro de su
+                  mismo campo. Estaban al final de la lista de piezas, a
+                  pantalla y media de distancia: si eliges una plantilla es
+                  porque te gusta donde pone los bloques, y lo siguiente
+                  que quieres es ajustarla. Separadas, nadie ataba las dos
+                  cosas. */}
+              <FilaTarjeta profile={profile} onAbrir={setPieza} />
+            </Campo>
+
+            {profile.layoutMode === 'free' && (
+              <p className="dash__pista" data-guia="libre">
+                Arrastra los bloques en la vista previa para moverlos, tira del
+                borde derecho para cambiar su ancho, y púlsalos para abrir sus
+                ajustes.
+              </p>
+            )}
+
+            <h3 className="grupo__t">Tus piezas</h3>
+            <p className="dash__sub">
+              El ojo la enciende o la apaga. El engranaje abre todos sus
+              ajustes: su letra, su color, su caja y dónde se coloca.
+            </p>
+
+            <Piezas
+              profile={profile}
+              update={update}
+              onAbrir={setPieza}
+              insignias={insigniasGanadasDelPerfil}
+              premium={premium}
             />
 
             {/* Justo debajo de las piezas de las que sale. Cambias algo

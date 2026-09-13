@@ -2883,6 +2883,14 @@
    lista que dice «Biografia · El parrafo que cuenta quien eres» obliga a
    abrir la pieza para saber que pone hoy. */
 .pzas{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+
+/* La misma lista, pero con un solo elemento y fuera de su sitio: la
+   tarjeta, pegada al selector de plantillas. Solo necesita separarse un
+   poco de lo de arriba — el resto del aspecto lo hereda de `.pza`, que es
+   justo lo que interesa: que se lea como una pieza mas y no como un mando
+   suelto de otra familia. */
+.pzas--suelta{ margin-top:var(--s3); }
+
 .pza{
   /* En fila los tres mandos, y el contenido desplegado debajo ocupando el
      ancho entero: por eso `wrap` y no un `flex` a secas. */

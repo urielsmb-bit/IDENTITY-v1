@@ -30,8 +30,6 @@ interface Props {
   premium?: boolean;
   /** Las dos cajas de subir, ya cableadas. Vienen de fuera porque llevan
    *  detrás el cubo de archivos, y eso no es asunto de una lista. */
-  cajaAvatar: ReactNode;
-  cajaFondo: ReactNode;
 }
 
 const ENGRANAJE = (
@@ -175,8 +173,6 @@ export function Piezas({
   onAbrir,
   insignias = [],
   premium = false,
-  cajaAvatar,
-  cajaFondo,
 }: Props) {
   const apagados = useMemo(() => new Set(profile.blocksOff ?? []), [profile.blocksOff]);
   /** La pieza cuyo contenido está desplegado. Una sola: dos formularios
@@ -276,35 +272,6 @@ export function Piezas({
     /* `display:contents`: envuelve sin meter una caja que cambie la
        colocación de nada. */
     <div className="pzas-todo">
-      {/* Las dos imágenes, en fila y con su engranaje en la esquina. */}
-      <div className="f-row pza-fila">
-        <div className="pza-caja">
-          {cajaAvatar}
-          <button
-            type="button"
-            className="pza__cfg pza__cfg--flota"
-            onClick={() => onAbrir('avatar')}
-            title="Ajustes del avatar"
-            aria-label="Ajustes del avatar"
-          >
-            {ENGRANAJE}
-          </button>
-        </div>
-
-        <div className="pza-caja">
-          {cajaFondo}
-          <button
-            type="button"
-            className="pza__cfg pza__cfg--flota"
-            onClick={() => onAbrir('fondo')}
-            title="Ajustes del fondo"
-            aria-label="Ajustes del fondo"
-          >
-            {ENGRANAJE}
-          </button>
-        </div>
-      </div>
-
       <ul className="pzas" data-guia="bloques">
         {BLOQUES.filter((b) => b.id !== 'avatar').map(fila)}
 
@@ -339,35 +306,110 @@ export function Piezas({
           </button>
         </li>
 
-        {/* La tarjeta es la caja que envuelve a todas, asi que va la
-            ultima y sin ojo: apagarla no es quitarla, es elegir «sin
-            caja», y eso se decide dentro. */}
-        <li className="pza pza--caja">
-          <button type="button" className="pza__cuerpo" onClick={() => onAbrir('tarjeta')}>
-            <span className="pza__ico pza__ico--dib" aria-hidden="true">
-              {DIBUJOS.SURFACES?.[profile.surface || 'none']}
-            </span>
-            <span className="pza__txt">
-              <span className="pza__n">La tarjeta</span>
-              <span className="pza__v">
-                {SURFACES.find((x) => x.id === (profile.surface || 'none'))?.name ?? 'Sin caja'}
-                {' · '}
-                {profile.sWidthPct ?? 50}% de ancho
-              </span>
-            </span>
-          </button>
-
-          <button
-            type="button"
-            className="pza__cfg"
-            onClick={() => onAbrir('tarjeta')}
-            title="Ajustes de la tarjeta"
-            aria-label="Ajustes de la tarjeta"
-          >
-            {ENGRANAJE}
-          </button>
-        </li>
       </ul>
     </div>
+  );
+}
+
+/**
+ * Las dos imagenes: tu avatar y tu fondo.
+ *
+ * Vive fuera de la lista de piezas porque va ANTES de elegir plantilla.
+ * El orden de la pantalla cuenta una historia, y esta es: primero lo que
+ * eres —tu cara y tu fondo—, despues donde se coloca, y solo entonces los
+ * detalles. Metida en la lista, lo primero que veias al abrir «Diseño»
+ * eran unos deslizadores.
+ */
+export function FilaFotos({
+  cajaAvatar,
+  cajaFondo,
+  onAbrir,
+}: {
+  cajaAvatar: ReactNode;
+  cajaFondo: ReactNode;
+  onAbrir: (id: string) => void;
+}) {
+  /* En fila, y el engranaje de cada una flotando en su esquina. */
+  return (
+    <div className="f-row pza-fila">
+      <div className="pza-caja">
+        {cajaAvatar}
+        <button
+          type="button"
+          className="pza__cfg pza__cfg--flota"
+          onClick={() => onAbrir('avatar')}
+          title="Ajustes del avatar"
+          aria-label="Ajustes del avatar"
+        >
+          {ENGRANAJE}
+        </button>
+      </div>
+
+      <div className="pza-caja">
+        {cajaFondo}
+        <button
+          type="button"
+          className="pza__cfg pza__cfg--flota"
+          onClick={() => onAbrir('fondo')}
+          title="Ajustes del fondo"
+          aria-label="Ajustes del fondo"
+        >
+          {ENGRANAJE}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * La tarjeta: de que esta hecha y cuanto mide.
+ *
+ * Va pegada al selector de plantillas, y eso es lo que dice para que
+ * sirve. Si eliges una plantilla es porque te gusta DONDE pone los
+ * bloques; lo siguiente que quieres es ajustarla, y estos son sus mandos.
+ * Estaba la ultima de la lista de piezas, a pantalla y media de distancia
+ * de la plantilla que configura, asi que nadie ataba las dos cosas.
+ *
+ * Sin ojo de encender y apagar: apagar la tarjeta no es quitarla, es
+ * elegir «sin caja», y eso se decide dentro.
+ */
+export function FilaTarjeta({
+  profile,
+  onAbrir,
+}: {
+  profile: Profile;
+  onAbrir: (id: string) => void;
+}) {
+  return (
+    <ul className="pzas pzas--suelta">
+        {/* La tarjeta es la caja que envuelve a todas, asi que va la
+          ultima y sin ojo: apagarla no es quitarla, es elegir «sin
+          caja», y eso se decide dentro. */}
+      <li className="pza pza--caja">
+        <button type="button" className="pza__cuerpo" onClick={() => onAbrir('tarjeta')}>
+          <span className="pza__ico pza__ico--dib" aria-hidden="true">
+            {DIBUJOS.SURFACES?.[profile.surface || 'none']}
+          </span>
+          <span className="pza__txt">
+            <span className="pza__n">La tarjeta</span>
+            <span className="pza__v">
+              {SURFACES.find((x) => x.id === (profile.surface || 'none'))?.name ?? 'Sin caja'}
+              {' · '}
+              {profile.sWidthPct ?? 50}% de ancho
+            </span>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className="pza__cfg"
+          onClick={() => onAbrir('tarjeta')}
+          title="Ajustes de la tarjeta"
+          aria-label="Ajustes de la tarjeta"
+        >
+          {ENGRANAJE}
+        </button>
+      </li>
+    </ul>
   );
 }
