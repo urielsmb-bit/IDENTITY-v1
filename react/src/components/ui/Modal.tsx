@@ -11,6 +11,16 @@ interface ModalProps {
   children?: ReactNode;
   /** Botones del pie. El de cerrar se pone solo. */
   acciones?: ReactNode;
+  /**
+   * Que dice el boton de cerrar. «Cancelar» por defecto, que es lo que
+   * toca cuando esto pregunta algo.
+   *
+   * Se puede cambiar porque no todos los dialogos preguntan. En uno que
+   * ANUNCIA —«tienes una semana de Premium»— un «Cancelar» al lado de
+   * «Reclamar» se lee como que cerrando renuncias al regalo, y no es
+   * verdad: la semana ya esta dada, cierres como cierres.
+   */
+  cerrarTexto?: string;
 }
 
 /**
@@ -31,6 +41,7 @@ export function Modal({
   peligro,
   children,
   acciones,
+  cerrarTexto = 'Cancelar',
 }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
 
@@ -61,7 +72,7 @@ export function Modal({
         {children && <div className="mdl__cuerpo">{children}</div>}
         <div className="mdl__pie">
           <button type="button" className="btn btn--quiet" onClick={alCerrar}>
-            Cancelar
+            {cerrarTexto}
           </button>
           {acciones}
         </div>

@@ -51,6 +51,7 @@ import { BLOQUE_POR_ID, type DefBloque, BLOQUES_APAGADOS_POR_DEFECTO } from '@/d
 import { BASE_PERSONALIZADA } from '@/data/plantillasBase';
 import { ElegirPlantilla } from '@/components/dashboard/ElegirPlantilla';
 import { Piezas } from '@/components/dashboard/Piezas';
+import { Modal } from '@/components/ui/Modal';
 import { Overlay } from '@/components/ui/Overlay';
 import { safeMedia } from '@/lib/utils';
 import * as backend from '@/lib/backend';
@@ -428,6 +429,60 @@ export default function DashboardPage() {
    */
   const diasPrueba = diasDePrueba(datosInsignias);
 
+  /**
+   * El anuncio de la semana, una vez por cuenta.
+   *
+   * ────────────────────────────────────────────────────────────────────
+   * QUE HACE «RECLAMAR», Y QUE NO
+   * ────────────────────────────────────────────────────────────────────
+   *
+   * No concede nada. La semana ya esta dada cuando esto aparece: la
+   * concede la BASE DE DATOS al crear el perfil, con un disparador, y por
+   * eso no se puede falsificar desde el navegador. Si el boton fuera lo
+   * que la otorga, bastaria con llamar a esa funcion desde la consola.
+   *
+   * Asi que esto es el AVISO, no la entrega. El texto no dice «consigue»
+   * ni «activa»: dice que ya la tienes. Un boton que promete dar algo que
+   * ya tienes es una mentira pequena, y las pequenas son las que ensenan
+   * a no creerse las grandes.
+   *
+   * ────────────────────────────────────────────────────────────────────
+   * POR QUE EN `localStorage` Y NO EN LA BASE
+   * ────────────────────────────────────────────────────────────────────
+   *
+   * Guardar «ya lo vio» en el servidor seria una columna, una migracion y
+   * una escritura por cada persona que entra, para un cartel que se
+   * ensena una vez. Aqui el precio de equivocarse es que alguien que entre
+   * desde otro telefono lo vea dos veces — y lo que ve es una buena
+   * noticia sobre algo que de verdad tiene.
+   *
+   * Va con el id de la CUENTA dentro de la clave: dos personas que
+   * compartan navegador no se tapan el aviso la una a la otra.
+   */
+  const claveAviso = idCuenta ? `sharee.prueba.vista.${idCuenta}` : '';
+  const [avisoVisto, setAvisoVisto] = useState(true);
+  useEffect(() => {
+    if (!claveAviso) return;
+    try {
+      setAvisoVisto(localStorage.getItem(claveAviso) === '1');
+    } catch {
+      /* Navegador con el almacenamiento capado, o modo privado. Se da por
+         visto: repetir el cartel en cada carga es peor que no ensenarlo. */
+      setAvisoVisto(true);
+    }
+  }, [claveAviso]);
+
+  const cerrarAviso = () => {
+    setAvisoVisto(true);
+    try {
+      if (claveAviso) localStorage.setItem(claveAviso, '1');
+    } catch { /* si no se puede guardar, se volvera a ver. No es grave. */ }
+  };
+
+  /* Solo con una prueba VIVA. Quien no tiene plan no ve nada, y quien lo
+     tiene para siempre tampoco: los dos dan null. */
+  const mostrarAviso = !avisoVisto && diasPrueba !== null;
+
   /** Handle bajo el que el borrador vive hoy en el store. Cambia al renombrar. */
   const storeKeyRef = useRef('');
   /** Perfil para el que ya se inicializó el editor (undefined = ninguno todavía). */
@@ -748,6 +803,41 @@ export default function DashboardPage() {
 
   return (
     <div className={`dashboard-layout ve-${vistaMovil}`}>
+      {/* EL ANUNCIO DE LA SEMANA.
+          Va aqui arriba y no dentro de una seccion porque es lo primero
+          que tiene que verse al entrar, y porque `<dialog>` con
+          `showModal()` se pinta en la capa de encima: da igual donde este
+          en el arbol. */}
+      <Modal
+        abierto={mostrarAviso}
+        alCerrar={cerrarAviso}
+        titulo="Tienes una semana de Premium"
+        cerrarTexto="Cerrar"
+        desc={
+          diasPrueba === 0
+            ? 'Termina hoy.'
+            : diasPrueba === 1
+            ? 'Te queda un día. Va incluida al crear tu perfil: no hay que pagar nada ni poner una tarjeta.'
+            : `Te quedan ${diasPrueba} días. Va incluida al crear tu perfil: no hay que pagar nada ni poner una tarjeta.`
+        }
+        acciones={
+          <button type="button" className="btn btn--primary" onClick={cerrarAviso}>
+            Reclamar
+          </button>
+        }
+      >
+        <ul className="prueba__lista">
+          <li>Rejilla libre: coloca cada pieza donde quieras</li>
+          <li>Fondo de vídeo y partículas</li>
+          <li>Resplandor, barrido de luz y degradado en el nombre</li>
+          <li>Tipografías decorativas y cursor propio</li>
+        </ul>
+        <p className="prueba__pie">
+          Cuando se acabe, tu perfil se queda tal como lo dejes. Lo que
+          pierdes es poder cambiar estas opciones, no la página.
+        </p>
+      </Modal>
+
       {/* Sidebar Navigation */}
       <aside className="dashboard__sidebar">
         <div>

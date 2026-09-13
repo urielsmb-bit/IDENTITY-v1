@@ -3277,6 +3277,34 @@
   display:grid; gap:12px;
 }
 
+/* ---- el anuncio de la semana, dentro del dialogo ---------------------
+   Vive en el `<dialog>` del panel. Lista corta a proposito: cuatro cosas
+   que se entienden de un vistazo, no el catalogo entero — para eso esta
+   la pagina de precios. */
+.prueba__lista{
+  margin:0; padding:0; list-style:none;
+  display:grid; gap:7px;
+  font-size:13.5px; line-height:1.45;
+}
+.prueba__lista li{
+  display:flex; gap:8px; align-items:flex-start;
+}
+.prueba__lista li::before{
+  /* El rombo del plan, escrito tal cual y no como escape CSS. El
+     escape hexadecimal que habia aqui llegaba al fichero con una
+     barra de menos y se leia como OCTAL, asi que en pantalla salia
+     un cuadro vacio seguido de dos letras sueltas. El fichero es
+     UTF-8: el caracter va directo y no hay nada que interpretar. */
+  content:"◆";
+  color:var(--accent);
+  font-size:11px; line-height:1.55; flex:none;
+}
+.prueba__pie{
+  margin:14px 0 0;
+  font-size:12.5px; line-height:1.45;
+  color:var(--text-muted);
+}
+
 /* ---- el aviso de la prueba ------------------------------------------
    Solo existe mientras el plan SE ACABA. Ni quien no lo tiene ni quien lo
    tiene para siempre ven nada, asi que esto no es un cartel permanente:

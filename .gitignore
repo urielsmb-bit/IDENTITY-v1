@@ -76,3 +76,11 @@ salida-hostinger/
 # conflictos en cada rama por un fichero que nadie edita a mano.
 react/dist/
 dist/
+
+# Tus copias de seguridad. NO van al repositorio, y esto no es por el peso
+# aunque tambien: dentro hay un `Backup-codes-*.txt` con codigos de
+# recuperacion, y ejecutables de 70 y 158 MB. Un `git add -A` desde la raiz
+# se lo lleva todo sin preguntar — paso una vez, y lo unico que lo freno
+# fue que GitHub rechaza ficheros de mas de 100 MB. Con una carpeta de
+# fuentes normal habria entrado.
+backups/
