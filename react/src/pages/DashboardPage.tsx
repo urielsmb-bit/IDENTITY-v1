@@ -10,7 +10,7 @@ import '@/styles/guia.css';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useProfileStore } from '@/stores/profileStore';
-import { useAvatarDeLaCuenta } from '@/hooks/useAuth';
+import { useAvatarDeLaCuenta, useIdentidadDeLaSesion } from '@/hooks/useAuth';
 import { useAuthStore } from '@/stores/authStore';
 import { useMyProfile } from '@/hooks/useProfile';
 import { useCuentaDiscordDeLaSesion } from '@/hooks/useDiscord';
@@ -54,7 +54,7 @@ import { ElegirPlantilla } from '@/components/dashboard/ElegirPlantilla';
 import { Piezas } from '@/components/dashboard/Piezas';
 import { Modal } from '@/components/ui/Modal';
 import { Overlay } from '@/components/ui/Overlay';
-import { safeMedia } from '@/lib/utils';
+import { safeMedia, slug } from '@/lib/utils';
 import * as backend from '@/lib/backend';
 import { hasBackend } from '@/lib/supabase';
 import { useTitulo } from '@/hooks/useTitulo';
@@ -209,10 +209,17 @@ const SECTIONS = [
   { id: 'settings', name: 'Ajustes', icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"/></svg>` },
 ];
 
-function createBlankProfile(username = 'usuario'): Profile {
+/**
+ * El perfil con el que se empieza.
+ *
+ * `nombre` y `username` llegan de la cuenta con la que se entro —ver
+ * `useIdentidadDeLaSesion`—. Los respaldos son lo que se ve cuando no hay
+ * NADA de donde sacarlos, que con Discord o Google no pasa nunca.
+ */
+function createBlankProfile(username = 'usuario', nombre = ''): Profile {
   return {
     username,
-    name: 'Tu Nombre',
+    name: nombre || 'Tu Nombre',
     title: 'Creador Digital',
     location: '',
     pronouns: '',
@@ -491,6 +498,10 @@ export default function DashboardPage() {
   // Initialize editor with current profile or a blank profile.
   // Sólo se reinicia cuando cambia el perfil dueño: reiniciar en cada guardado
   // borraba el historial de deshacer y devolvía la sección a "Identidad".
+  /* Quien acaba de entrar, segun su cuenta. Se lee aqui arriba porque lo
+     usa la creacion del perfil de abajo, y esa corre una sola vez. */
+  const identidad = useIdentidadDeLaSesion();
+
   useEffect(() => {
     // Con servidor hay que esperar la respuesta antes de montar nada: montar
     // primero creaba un perfil en blanco, lo guardaba, y cuando llegaba el de
@@ -509,7 +520,13 @@ export default function DashboardPage() {
       (mineName ? store.profiles[mineName] : undefined);
 
     if (!p) {
-      p = createBlankProfile(claimParam || 'mi_perfil');
+      /* El @usuario: lo que se reclamo en la portada manda, y si no, el de
+         Discord o la parte de delante del correo. `mi_perfil` solo queda
+         para el caso de que no haya ni una cosa ni la otra. */
+      p = createBlankProfile(
+        claimParam || identidad.usuario || 'mi_perfil',
+        identidad.nombre,
+      );
       store.save(p);
       store.setMine(p.username);
     } else if (p.base === undefined) {
@@ -758,6 +775,46 @@ export default function DashboardPage() {
       updateField('discordAvatar', cuentaDiscord.avatar);
     }
   }, [profile, cuentaDiscord, updateField]);
+
+  /**
+   * Si el @usuario que propone la cuenta ya esta cogido, se numera.
+   *
+   * Solo mientras el perfil NO se ha guardado todavia (`_id` vacio). En ese
+   * rato cambiarlo es gratis: no hay direccion publicada que romper, ni
+   * nadie que la haya compartido. Despues de guardar, el @usuario es suyo y
+   * aqui no se toca jamas.
+   *
+   * Sin esto, dos personas que se llamen igual en Discord chocarian al
+   * guardar y verian un error en una pantalla donde no han escrito nada —el
+   * peor momento para el primer error de alguien que acaba de entrar.
+   *
+   * Se prueban cinco. A la sexta se deja el que haya: que alguien elija su
+   * nombre es mejor final que una pantalla dando vueltas, y el aviso de
+   * «ya esta cogido» del propio campo hace el resto.
+   */
+  useEffect(() => {
+    if (!profile || profile._id || !identidad.usuario) return;
+    /* El que se reclamo en la portada no se toca: lo escribio la persona. */
+    if (claimParam) return;
+    if (profile.username !== identidad.usuario) return;
+
+    let vivo = true;
+    (async () => {
+      const backend = await import('@/lib/backend');
+      for (let n = 0; n < 6; n++) {
+        const probar = n === 0 ? identidad.usuario : `${identidad.usuario}${n + 1}`;
+        try {
+          if (await backend.nombreDisponible(probar)) {
+            if (vivo && probar !== profile.username) updateField('username', probar);
+            return;
+          }
+        } catch {
+          return;   /* Sin servidor no se numera: se deja el propuesto. */
+        }
+      }
+    })();
+    return () => { vivo = false; };
+  }, [profile, identidad.usuario, claimParam, updateField]);
 
   /* La foto de la cuenta con la que se entro —hoy, Google—.
      Va aparte del bloque de Discord porque no depende de el: quien entra
@@ -1041,6 +1098,45 @@ export default function DashboardPage() {
                 bloques que quieras y la plantilla los coloca.
               </p>
             </header>
+
+            {/* TU NOMBRE Y TU DIRECCION, ANTES QUE NADA.
+                Vienen puestos con lo que dice tu cuenta de Discord o de
+                Google, asi que lo normal es no tocar nada. Estan aqui y no
+                en una ventana aparte por eso mismo: si casi siempre estan
+                bien, una ventana que hay que cerrar es un paso de mas.
+                Y estan ARRIBA del todo porque es lo que sale en el ranking
+                y en tu enlace — lo que ve la gente antes de entrar. */}
+            <div className="bienv__yo">
+              <label className="bienv__campo">
+                <span>Tu nombre</span>
+                <input
+                  type="text"
+                  value={profile.name}
+                  maxLength={32}
+                  autoComplete="name"
+                  placeholder="Como quieres que te llamen"
+                  onChange={(e) => update({ name: e.target.value })}
+                />
+              </label>
+
+              <label className="bienv__campo">
+                <span>Tu dirección</span>
+                <div className="bienv__url">
+                  <i>sharee.fun/</i>
+                  <input
+                    type="text"
+                    value={profile.username}
+                    maxLength={24}
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    /* `slug` al vuelo: lo que no vale no llega a escribirse,
+                       asi no hay que avisar despues de nada. */
+                    onChange={(e) => update({ username: slug(e.target.value) })}
+                  />
+                </div>
+              </label>
+            </div>
 
             <ElegirPlantilla
               profile={profile}

@@ -3277,6 +3277,54 @@
   display:grid; gap:12px;
 }
 
+/* ---- tu nombre y tu direccion, en la bienvenida ----------------------
+   Dos campos y nada mas. Vienen rellenos de la cuenta con la que entraste,
+   asi que esto no es un formulario que haya que completar: es lo que ya
+   hay, puesto donde se puede corregir de un vistazo. */
+.bienv__yo{
+  display:grid; gap:var(--s4);
+  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+  margin-bottom:var(--s6);
+  padding:var(--s4);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  background:var(--surface);
+}
+.bienv__campo{ display:grid; gap:6px; min-width:0; }
+.bienv__campo > span{
+  font-size:var(--t2); font-weight:500; color:var(--text-secondary);
+}
+.bienv__campo input{
+  width:100%; min-width:0;
+  padding:10px 12px;
+  border:1px solid var(--border-strong); border-radius:var(--radius-md);
+  background:var(--bg-secondary); color:var(--text-primary);
+  font-size:var(--t3); font-family:inherit;
+}
+.bienv__campo input:focus{
+  outline:2px solid var(--brand); outline-offset:2px;
+  border-color:transparent;
+}
+
+/* El `sharee.fun/` y el campo, como una sola pieza: se lee la direccion
+   entera de corrido en vez de un prefijo suelto al lado de una caja. */
+.bienv__url{
+  display:flex; align-items:center;
+  border:1px solid var(--border-strong); border-radius:var(--radius-md);
+  background:var(--bg-secondary);
+  overflow:hidden;
+}
+.bienv__url:focus-within{ outline:2px solid var(--brand); outline-offset:2px; border-color:transparent; }
+.bienv__url i{
+  padding-left:12px;
+  color:var(--text-muted); font-style:normal; font-size:var(--t3);
+  white-space:nowrap;
+}
+.bienv__url input{
+  border:0; border-radius:0; background:transparent; padding-left:2px;
+}
+.bienv__url input:focus{ outline:0; }
+
 /* ---- el anuncio de la semana, dentro del dialogo ---------------------
    Vive en el `<dialog>` del panel. Lista corta a proposito: cuatro cosas
    que se entienden de un vistazo, no el catalogo entero — para eso esta

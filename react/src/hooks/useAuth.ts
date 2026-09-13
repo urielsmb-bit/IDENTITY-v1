@@ -1,6 +1,6 @@
 import { useMemo, useEffect } from 'react';
 import { hayBackend } from '@/lib/publico';
-import { rutaSegura } from '@/lib/utils';
+import { rutaSegura, slug } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
 
 /** Los proveedores que sharee ofrece enlazar a una cuenta ya abierta. */
@@ -282,4 +282,79 @@ export function useAvatarDeLaCuenta(): string {
     const url = String(d.avatar_url ?? d.picture ?? '').trim();
     return /^https:\/\/lh\d+\.googleusercontent\.com\/[\w./=-]+$/.test(url) ? url : '';
   }, [ident]);
+}
+
+/** Lo que se sabe de quien acaba de entrar, venga de donde venga. */
+export interface IdentidadEntrada {
+  /** Su nombre para mostrar. Vacio si la cuenta no da ninguno. */
+  nombre: string;
+  /** Un @usuario propuesto, ya limpio. Vacio si no se puede sacar. */
+  usuario: string;
+}
+
+/**
+ * Quien acaba de entrar, mirado en su identidad de Supabase.
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ * PARA QUE
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * Un perfil nuevo nacia llamandose «Tu Nombre» en `sharee.fun/mi_perfil`,
+ * y el que no cambiaba eso se quedaba asi para siempre: en el ranking
+ * salian filas de gente real con un nombre de relleno. El dato para
+ * evitarlo estaba ahi desde el primer segundo —Discord y Google lo mandan
+ * dentro de la propia identidad— y no se miraba.
+ *
+ * Asi que el valor malo deja de existir, en vez de pedirle a cada persona
+ * que lo arregle.
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ * DE DONDE SALE CADA COSA
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ *   Discord   nombre   `global_name`, que es el nombre que se ve; si no,
+ *                      el de usuario.
+ *             usuario  `user_name`, que es el @ de Discord. El que mas se
+ *                      parece a lo que esa persona diria que es «su
+ *                      nombre» en internet.
+ *
+ *   Google    nombre   `full_name` o `name`.
+ *             usuario  no da ninguno, asi que sale del correo.
+ *
+ *   Correo    nombre   la parte de delante de la arroba, con la primera
+ *                      en mayuscula. No es gran cosa, pero es SUYO — y
+ *                      «Tu Nombre» no lo es.
+ *
+ * Se prefiere Discord a Google cuando hay las dos porque Discord si trae
+ * un @usuario, y con Google habria que inventarlo del correo igual.
+ */
+export function useIdentidadDeLaSesion(): IdentidadEntrada {
+  const user = useAuthStore((s) => s.user);
+  return useMemo(() => {
+    const ident = user?.identities ?? [];
+    const dato = (prov: string) =>
+      (ident.find((i) => i.provider === prov)?.identity_data ?? {}) as Record<string, unknown>;
+    const cad = (v: unknown) => String(v ?? '').trim();
+
+    const dc = dato('discord');
+    const gg = dato('google');
+    const claims = (dc.custom_claims ?? {}) as Record<string, unknown>;
+
+    /* La parte de delante de la arroba. Del correo de la cuenta, no del
+       que venga en la identidad: ese puede faltar. */
+    const correo = cad(user?.email);
+    const antes = correo.split('@')[0] ?? '';
+
+    const nombre =
+      cad(claims.global_name) ||
+      cad(dc.full_name) || cad(dc.name) || cad(dc.user_name) ||
+      cad(gg.full_name) || cad(gg.name) ||
+      (antes ? antes.charAt(0).toUpperCase() + antes.slice(1) : '');
+
+    const usuario = slug(
+      cad(dc.user_name) || cad(dc.preferred_username) || antes,
+    );
+
+    return { nombre: nombre.slice(0, 32), usuario };
+  }, [user]);
 }
