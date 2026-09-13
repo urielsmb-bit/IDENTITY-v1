@@ -355,7 +355,20 @@ export const DIBUJOS: Record<string, Record<string, ReactNode>> = {
 
   /* ---- el cursor ---- */
   CURSORS: {
-    default: L(<path d="M22 7l11 20-4.6-1.4-2.6 5.4L22 24z" fill="currentColor" stroke="none" />),
+    /* El puntero, de trazo y no macizo, como el resto de los dibujos de
+       esta hoja. Viene de un icono de 24x24 y aqui el lienzo es 54x34, asi
+       que se centra y se escala con un `transform` en vez de reescribir
+       las coordenadas: el dia que haya que moverlo se toca un numero y no
+       una curva de Bezier.
+       Sin `stroke` propio: lo hereda de `L()`, que lo pone en
+       `currentColor`. El original traia `#000000` fijo y sobre este fondo
+       no se habria visto. Y el grosor va a 1.7 y no a 2 porque el escalado
+       de 1.2 lo engorda: 1.7 x 1.2 = 2.04, que es el de sus vecinos. */
+    default: L(
+      <g transform="translate(13 2.6) scale(1.2)" strokeWidth="1.7">
+        <path d="M17.2607 12.4008C19.3774 11.2626 20.4357 10.6935 20.7035 10.0084C20.9359 9.41393 20.8705 8.74423 20.5276 8.20587C20.1324 7.58551 18.984 7.23176 16.6872 6.52425L8.00612 3.85014C6.06819 3.25318 5.09923 2.95471 4.45846 3.19669C3.90068 3.40733 3.46597 3.85584 3.27285 4.41993C3.051 5.06794 3.3796 6.02711 4.03681 7.94545L6.94793 16.4429C7.75632 18.8025 8.16052 19.9824 8.80519 20.3574C9.36428 20.6826 10.0461 20.7174 10.6354 20.4507C11.3149 20.1432 11.837 19.0106 12.8813 16.7454L13.6528 15.0719C13.819 14.7113 13.9021 14.531 14.0159 14.3736C14.1168 14.2338 14.2354 14.1078 14.3686 13.9984C14.5188 13.8752 14.6936 13.7812 15.0433 13.5932L17.2607 12.4008Z" />
+      </g>,
+    ),
     dot: L(<circle cx="27" cy="17" r="4" fill="currentColor" stroke="none" />),
     ring: L(<circle cx="27" cy="17" r="7" strokeWidth="2.4" />),
     glow: L(
