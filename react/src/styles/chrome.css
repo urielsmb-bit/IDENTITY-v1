@@ -104,13 +104,34 @@
      33 de 56 que mide la pastilla: pasar de ahi la deja sin aire arriba y
      abajo y la barra empieza a verse apretada. */
   width:33px; height:33px; flex:none;
-  color:var(--brand);
-  transition:transform var(--transition-large);
+  /* BLANCA, no del color de la marca.
+     Estuvo un rato en morado y era demasiado: el logotipo es lo primero
+     que se ve, y tiñendolo entero el color deja de ser un detalle y pasa
+     a ser el tema de la barra. En blanco sigue siendo la marca, y el
+     morado la acompaña por detras en vez de sustituirla. */
+  color:var(--text-primary);
+  /* El resplandor. Dos sombras y no una: la de dentro (6px) dibuja el
+     borde de la figura y la de fuera (14px) es el halo que se ve sin
+     mirar. Con una sola, o se pega al trazo y no se nota, o se separa
+     tanto que parece una mancha suelta detras.
+
+     `drop-shadow` y no `box-shadow` porque esto es un SVG: la sombra
+     tiene que seguir el CONTORNO del dibujo. `box-shadow` haria un
+     rectangulo de 33x33 alrededor. */
+  filter: drop-shadow(0 0 6px rgba(181,123,255,.55))
+          drop-shadow(0 0 14px rgba(181,123,255,.30));
+  transition:transform var(--transition-large), filter var(--transition-normal);
 }
 /* Se inclina un poco al pasar por encima. Un cuadrado podia girar 45
    grados porque acababa siendo un rombo; esta marca no tiene esa gracia,
    asi que el gesto es otro: lo justo para que se note que responde. */
-.nav__mark:hover .nav__glyph{ transform:rotate(-12deg) scale(1.06); }
+.nav__mark:hover .nav__glyph{
+  transform:rotate(-12deg) scale(1.06);
+  /* Al pasar por encima el resplandor sube un punto. Es la misma idea
+     que el giro: que se note que responde, sin cambiar de forma. */
+  filter: drop-shadow(0 0 7px rgba(181,123,255,.75))
+          drop-shadow(0 0 18px rgba(181,123,255,.42));
+}
 
 /* A la DERECHA, no pegados al logotipo. En una pastilla estrecha, los
    enlaces junto a la marca dejan un hueco muerto en el centro; repartidos
