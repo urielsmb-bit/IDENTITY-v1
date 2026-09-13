@@ -243,7 +243,6 @@ function esquema(ID: any) {
     title: (v: any) => texto(v, TOPE.corto),
     location: (v: any) => texto(v, TOPE.corto),
     pronouns: (v: any) => texto(v, 24),
-    emoji: (v: any) => texto(v, 8),
     age: (v: any) => numOnulo(v, 0, 120),
     avatarUrl: medio,
     bio: (v: any) => texto(v, TOPE.largo),
@@ -348,6 +347,14 @@ function esquema(ID: any) {
     discordAvatar: (v: any) => {
       const s = String(v ?? '').trim().slice(0, 300);
       return /^https:\/\/cdn\.discordapp\.com\/[\w./-]+(\?[\w=&.-]*)?$/.test(s) ? s : '';
+    },
+    /* La foto de la cuenta con la que se entra. Hoy solo Google, y solo
+       desde SU servidor de imagenes: igual que con Discord, dejar pasar
+       cualquier `https://` convertiria este campo en una via para que el
+       perfil de otro cargue lo que tu quieras. */
+    cuentaAvatar: (v: any) => {
+      const s = String(v ?? '').trim().slice(0, 300);
+      return /^https:\/\/lh\d+\.googleusercontent\.com\/[\w./=-]+$/.test(s) ? s : '';
     },
     /* La etiqueta de servidor: cuatro letras como mucho, y su escudo del
        CDN de Discord como todo lo demas. */

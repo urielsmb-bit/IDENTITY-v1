@@ -118,7 +118,6 @@ export interface Profile {
   title: string;
   location: string;
   pronouns: string;
-  emoji: string;
   age: number | null;
   avatarUrl: string;
   bio: string;
@@ -274,6 +273,17 @@ export interface Profile {
   discordUser?: string;
   discordName?: string;
   discordAvatar?: string;
+  /**
+   * La foto de la cuenta con la que entras. Hoy solo Google la trae.
+   *
+   * Existe porque sin ella, quien entra con el correo y no tiene Discord
+   * no tiene NINGUNA cara posible, y cae directo a la inicial aunque su
+   * cuenta si tenga foto. Va aparte de `avatarUrl` por el mismo motivo que
+   * `discordAvatar`: copiarla dentro haria imposible distinguir «no tengo
+   * foto» de «elegi esta», y entonces ya no se podria respetar lo que
+   * elegiste.
+   */
+  cuentaAvatar?: string;
   /** Poner el marco de Nitro alrededor del avatar del perfil.
    *  Sin valor = si, cuando la cuenta tiene uno. */
   discordDeco?: boolean;

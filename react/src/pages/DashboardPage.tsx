@@ -10,6 +10,7 @@ import '@/styles/guia.css';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useProfileStore } from '@/stores/profileStore';
+import { useAvatarDeLaCuenta } from '@/hooks/useAuth';
 import { useAuthStore } from '@/stores/authStore';
 import { useMyProfile } from '@/hooks/useProfile';
 import { useCuentaDiscordDeLaSesion } from '@/hooks/useDiscord';
@@ -215,7 +216,6 @@ function createBlankProfile(username = 'usuario'): Profile {
     title: 'Creador Digital',
     location: '',
     pronouns: '',
-    emoji: '✨',
     age: null,
     avatarUrl: '',
     bio: '¡Hola! Este es mi perfil en sharee.',
@@ -758,6 +758,21 @@ export default function DashboardPage() {
       updateField('discordAvatar', cuentaDiscord.avatar);
     }
   }, [profile, cuentaDiscord, updateField]);
+
+  /* La foto de la cuenta con la que se entro —hoy, Google—.
+     Va aparte del bloque de Discord porque no depende de el: quien entra
+     con Google y nunca conecta Discord tiene que llegar aqui igual, y ese
+     era justo el hueco — sin esto caia a la inicial teniendo foto.
+     Se refresca si cambia, como el nombre de Discord, y solo cuando
+     cambia: escribir en cada pintada dejaria el perfil sucio y guardando
+     sin que nadie haya tocado nada. */
+  const avatarDeLaCuenta = useAvatarDeLaCuenta();
+  useEffect(() => {
+    if (!profile || !avatarDeLaCuenta) return;
+    if (profile.cuentaAvatar !== avatarDeLaCuenta) {
+      updateField('cuentaAvatar', avatarDeLaCuenta);
+    }
+  }, [profile, avatarDeLaCuenta, updateField]);
 
   /** Escribe una fila de enlaces sin pisar las demás. */
   const escribirEnlace = useCallback(

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useMemo, useEffect } from 'react';
 import { hayBackend } from '@/lib/publico';
 import { rutaSegura } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
@@ -254,4 +254,32 @@ export function useAuth() {
     resetPassword,
     updatePassword,
   };
+}
+
+/**
+ * La foto de la cuenta con la que se entro, si la trae.
+ *
+ * Hoy eso es Google: al entrar con el, la identidad de Supabase incluye
+ * `avatar_url` (o `picture`). Ni el correo con contraseña ni Discord
+ * llegan por aqui — el de Discord tiene su propio hook, que ademas saca
+ * el nombre y la etiqueta.
+ *
+ * Existe por un hueco concreto: quien entra con el correo y NO tiene
+ * Discord conectado no tenia ninguna cara posible y caia directo a la
+ * inicial, aunque su cuenta de Google si tuviera foto.
+ *
+ * Solo del servidor de imagenes de Google, igual que el de Discord solo
+ * acepta su CDN. Sin esa comprobacion, este campo seria una via para que
+ * el perfil de otro cargue lo que sea desde donde sea. La misma regla
+ * esta ademas en el validador, que es el que manda al guardar: esto es la
+ * primera puerta, no la unica.
+ */
+export function useAvatarDeLaCuenta(): string {
+  const ident = useAuthStore((s) => s.user?.identities);
+  return useMemo(() => {
+    const g = ident?.find((i) => i.provider === 'google');
+    const d = (g?.identity_data ?? {}) as Record<string, unknown>;
+    const url = String(d.avatar_url ?? d.picture ?? '').trim();
+    return /^https:\/\/lh\d+\.googleusercontent\.com\/[\w./=-]+$/.test(url) ? url : '';
+  }, [ident]);
 }

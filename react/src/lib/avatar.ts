@@ -9,11 +9,19 @@ import { safeMedia } from './utils';
  * mundo. La primera impresion de alguien que acaba de entrar era que la
  * pagina no habia terminado de cargar.
  *
- * Hay tres caras posibles, y se prueban EN ESTE ORDEN:
+ * Hay cuatro caras posibles, y se prueban EN ESTE ORDEN:
  *
  *   1. La que subiste tu. Manda siempre.
  *   2. La de Discord, si tienes la cuenta conectada.
- *   3. Tu inicial sobre un color solido.
+ *   3. La de la cuenta con la que entras —hoy, la de Google—.
+ *   4. Tu inicial sobre un color solido.
+ *
+ * LA INICIAL, Y NO UN EMOJI. Aqui antes ganaba `p.emoji`, y eso hacia justo
+ * lo contrario de lo que se busca: ese campo NO tiene ningun control en el
+ * editor y nace valiendo «✨» para todo el mundo. O sea que no era la
+ * eleccion de nadie — era un adorno por defecto, y en una lista de perfiles
+ * salian tres personas distintas con el mismo simbolo. La inicial al menos
+ * dice de quien es la fila.
  *
  * Ese orden resuelve solo las cuatro reglas que hacen falta, sin guardar
  * nada y sin preguntar nada:
@@ -33,7 +41,7 @@ import { safeMedia } from './utils';
 export interface Avatar {
   /** La imagen. Vacio = no hay ninguna y se pinta `signo`. */
   url: string;
-  /** Lo que se pinta sin imagen: tu emoji si pusiste uno, y si no tu inicial. */
+  /** Lo que se pinta sin imagen: la inicial del nombre, en mayuscula. */
   signo: string;
   /** El fondo solido de `signo`. */
   color: string;
@@ -94,13 +102,15 @@ const LUZ = 44;
 export function avatarDe(p: Partial<Profile>): Avatar {
   const propia = safeMedia(p.avatarUrl);
   const deDiscord = safeMedia(p.discordAvatar);
+  const deLaCuenta = safeMedia(p.cuentaAvatar);
   const nombre = String(p.name || p.username || '').trim();
 
   return {
-    url: propia || deDiscord,
-    /* El emoji va antes que la inicial porque lo pusiste tu a mano: es una
-       eleccion, y la letra es lo que ponemos nosotros cuando no hay ninguna. */
-    signo: p.emoji || nombre.charAt(0).toUpperCase() || '?',
+    url: propia || deDiscord || deLaCuenta,
+    /* La PRIMERA LETRA, en mayuscula. `charAt(0)` y no `[0]` porque con un
+       nombre vacio devuelve cadena vacia en vez de `undefined`, y de ahi
+       cae al interrogante sin tener que comprobarlo aparte. */
+    signo: nombre.charAt(0).toUpperCase() || '?',
     color: `hsl(${tono(String(p.username || nombre))} ${SATURACION}% ${LUZ}%)`,
     deDiscord: !propia && !!deDiscord,
   };

@@ -43,12 +43,44 @@ describe('que cara le toca a un perfil', () => {
     expect(perfil({ username: 'nuevo_2026' }).signo).toBe('N');
   });
 
-  it('el emoji que pusiste gana a la inicial: lo elegiste tu', () => {
-    expect(perfil({ username: 'pepe', name: 'Pepe', emoji: '🦈' }).signo).toBe('🦈');
+  /* El emoji ya NO pinta la cara. Era un campo sin control en el editor que
+     nacia valiendo «✨» para todo el mundo, asi que en una lista salian
+     tres personas distintas con el mismo simbolo: parecia elegido y no lo
+     habia elegido nadie. */
+  it('la inicial, aunque el perfil arrastre un emoji viejo', () => {
+    const p = { username: 'pepe', name: 'Pepe', emoji: '🦈' } as Record<string, unknown>;
+    expect(avatarDe(p).signo).toBe('P');
   });
 
   it('un perfil sin nada no se queda sin signo', () => {
     expect(perfil({}).signo).toBe('?');
+  });
+
+  /* El orden entero, que es lo que se pidio: lo que subiste, luego Discord,
+     luego la cuenta con la que entras, y solo entonces la letra. */
+  it('la foto de la cuenta entra cuando no hay ni propia ni de Discord', () => {
+    const g = 'https://lh3.googleusercontent.com/a/ACg8ocAbC=s96-c';
+    expect(perfil({ username: 'ana', cuentaAvatar: g }).url).toBe(g);
+  });
+
+  it('la de Discord gana a la de la cuenta', () => {
+    const d = 'https://cdn.discordapp.com/avatars/1/2.png';
+    const g = 'https://lh3.googleusercontent.com/a/ACg8ocAbC=s96-c';
+    expect(perfil({ username: 'ana', discordAvatar: d, cuentaAvatar: g }).url).toBe(d);
+  });
+
+  it('la que subiste gana a las dos', () => {
+    const mia = 'https://ypvipmhfnraalcqbttiq.supabase.co/storage/v1/object/public/media/a/b.webp';
+    const a = perfil({
+      username: 'ana',
+      avatarUrl: mia,
+      discordAvatar: 'https://cdn.discordapp.com/avatars/1/2.png',
+      cuentaAvatar: 'https://lh3.googleusercontent.com/a/ACg8ocAbC=s96-c',
+    });
+    expect(a.url).toBe(mia);
+    /* Y no se marca como «de Discord», que es lo que decide si se le pone
+       el marco de Nitro alrededor. */
+    expect(a.deDiscord).toBe(false);
   });
 });
 
