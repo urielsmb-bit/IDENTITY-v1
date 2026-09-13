@@ -13,18 +13,36 @@
 -- CAMBIA EL @USUARIO de abajo y pegalo en el editor SQL.
 -- ============================================================
 
-insert into public.insignias_concedidas (perfil_id, insignia, nota)
-select p.id, 'premium', 'concedida a mano mientras no hay cobro'
+-- OJO CON EL `do update`, QUE NO ES UN DETALLE.
+--
+-- Antes esto decia `do nothing`, y desde que existe la prueba de siete
+-- dias (migracion 0025) eso era una trampa: quien ya tuvo la prueba
+-- TIENE una fila `premium`, aunque este vencida. Con `do nothing`, esta
+-- orden se ejecutaba sin quejarse, no cambiaba nada, y te quedabas
+-- creyendo que le habias dado el plan a alguien que seguia sin el.
+--
+-- `expira = null` es lo que convierte una prueba vencida en plan de
+-- verdad: null quiere decir «para siempre».
+insert into public.insignias_concedidas (perfil_id, insignia, nota, expira)
+select p.id, 'premium', 'concedida a mano mientras no hay cobro', null
   from public.perfiles p
  where p.username = 'shark'          -- <<< el @usuario, sin la arroba
-on conflict (perfil_id, insignia) do nothing;
+on conflict (perfil_id, insignia) do update
+  set expira = null,
+      nota   = excluded.nota;
 
 
 -- ---- comprobar que ha entrado -------------------------------
-select p.username, i.insignia, i.concedida
+select p.username,
+       i.concedida,
+       case when i.expira is null then 'para siempre'
+            when i.expira > now() then 'prueba, vence ' || i.expira::date
+            else                      'prueba VENCIDA el ' || i.expira::date
+       end as estado
   from public.insignias_concedidas i
   join public.perfiles p on p.id = i.perfil_id
- where i.insignia = 'premium';
+ where i.insignia = 'premium'
+ order by i.concedida desc;
 
 
 -- ---- y para quitarlo ----------------------------------------
