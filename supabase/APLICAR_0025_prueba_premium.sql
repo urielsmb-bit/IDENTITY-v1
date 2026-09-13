@@ -217,23 +217,71 @@ select
 
 
 -- ---- 6 · y si quieres darsela tambien a los de antes --------
+--
 -- Esto NO se ejecuta solo. Descomenta y lanza solo si decides que la
 -- gente que ya tiene perfil tambien se lleva su semana.
 --
--- Respeta a quien ya tiene el plan para siempre (`where not exists`),
--- que es lo unico que no se puede estropear aqui.
+-- OJO: a dia de hoy esto no le daria nada a nadie. Los cuatro perfiles
+-- que hay tienen ya el diamante permanente, asi que el primer `not
+-- exists` los descarta a los cuatro. Se deja escrito igualmente porque el
+-- dia que se lance habra gente nueva, y entonces si importa a quien se lo
+-- da y a quien no.
 --
--- insert into public.insignias_concedidas (perfil_id, insignia, nota, expira)
--- select p.id, 'premium', 'semana de regalo a los de antes', now() + interval '7 days'
---   from public.perfiles p
---  where p.dueno is not null
---    and not exists (
---      select 1 from public.insignias_concedidas i
---       where i.perfil_id = p.id and i.insignia = 'premium')
--- on conflict (perfil_id, insignia) do nothing;
+-- QUIEN QUEDA FUERA, y por que cada uno:
 --
+--   · quien YA tiene el diamante, del tipo que sea. Es lo unico que no se
+--     puede estropear aqui: convertir un plan para siempre en uno que
+--     caduca en siete dias seria quitarle algo a alguien.
+--   · el EQUIPO. Y se mira por los dos caminos, porque son cosas
+--     distintas: `privado.roles` es el permiso de verdad —`owner`,
+--     `admin`, lo que lee `es_admin()`— y la insignia `staff` es el
+--     reconocimiento. Alguien puede llevar una y no la otra.
+--
+-- `helper` NO esta en la lista: son de la comunidad, no del equipo. Si
+-- quieres dejarlos fuera tambien, anade 'helper' a esa linea y ya.
+--
+-- Los dos INSERT van encadenados a proposito, con el segundo leyendo del
+-- primero. Asi solo se apunta como «prueba gastada» a quien de verdad la
+-- recibio, y las dos listas no pueden separarse el dia que alguien toque
+-- el filtro de arriba y se olvide del de abajo.
+--
+-- with dados as (
+--   insert into public.insignias_concedidas (perfil_id, insignia, nota, expira)
+--   select p.id, 'premium', 'semana de regalo a los de antes',
+--          now() + interval '7 days'
+--     from public.perfiles p
+--    where p.dueno is not null
+--      and not exists (select 1 from public.insignias_concedidas i
+--                       where i.perfil_id = p.id and i.insignia = 'premium')
+--      and not exists (select 1 from privado.roles r
+--                       where r.usuario_id = p.dueno)
+--      and not exists (select 1 from public.insignias_concedidas i
+--                       where i.perfil_id = p.id and i.insignia in ('staff'))
+--   on conflict (perfil_id, insignia) do nothing
+--   returning perfil_id
+-- )
 -- insert into privado.pruebas_premium (usuario, hasta)
 -- select p.dueno, now() + interval '7 days'
---   from public.perfiles p
---  where p.dueno is not null
+--   from dados d
+--   join public.perfiles p on p.id = d.perfil_id
 -- on conflict (usuario) do nothing;
+--
+--
+-- ---- y para ver a quien le tocaria ANTES de lanzarlo ---------
+-- Esto no escribe nada. Lanzalo primero y mira la lista.
+--
+-- select p.username,
+--        case
+--          when exists (select 1 from public.insignias_concedidas i
+--                        where i.perfil_id = p.id and i.insignia = 'premium')
+--            then 'no: ya tiene el diamante'
+--          when exists (select 1 from privado.roles r where r.usuario_id = p.dueno)
+--            then 'no: es del equipo (rol)'
+--          when exists (select 1 from public.insignias_concedidas i
+--                        where i.perfil_id = p.id and i.insignia = 'staff')
+--            then 'no: es del equipo (insignia)'
+--          when p.dueno is null then 'no: sin dueño'
+--          else 'SI, se lleva la semana'
+--        end as que_pasaria
+--   from public.perfiles p
+--  order by 2, 1;
