@@ -924,7 +924,20 @@ export function ProfileView({
     // Etiqueta para que el editor pueda localizar la pieza en la vista
     // previa y dibujarle encima sus tiradores.
     const attrs: Record<string, unknown> = { 'data-bloque': id };
-    if (b?.s && b.s !== 'inherit') attrs['data-bs'] = b.s;
+    /* La caja AÑADIDA. `inherit` significa «la del perfil», y vacio, que
+       no hay: ninguna de las dos pone atributo.
+
+       Y hay bloques que ya traen la suya —musica y Discord tienen fondo,
+       borde y radio de fabrica—. A esos, añadirles otra dibujaba una caja
+       dentro de otra, con el borde de la de dentro cruzando el relleno de
+       la de fuera. El editor ya no lo ofrece, pero dos perfiles lo tenian
+       guardado de antes, asi que se ignora tambien al PINTAR: sin esto
+       seguirian viendose mal para siempre, porque el mando por el que
+       llegaron ahi ya no existe.
+       `none` si se respeta: eso no añade nada, quita la que ya hay. */
+    const traeCajaPropia = id === 'music' || id === 'discord';
+    const añade = b?.s && b.s !== 'inherit' && !(traeCajaPropia && b.s !== 'none');
+    if (añade) attrs['data-bs'] = b!.s as string;
     if (b?.halo) attrs['data-halo'] = 'on';
     if (b?.anim) attrs['data-anim'] = b.anim;
     if (Object.keys(vars).length) attrs.style = vars as React.CSSProperties;

@@ -807,6 +807,82 @@ export function EditorBloque({
           </Campo>
         );
 
+      /* ── LA CAJA QUE EL BLOQUE YA TRAE ────────────────────────────
+         Musica y Discord se pintan dentro de su propia caja: tienen
+         fondo, borde y radio de fabrica. El selector «Caja del bloque»
+         les añadia OTRA encima, y el resultado era una caja dentro de
+         otra, con el borde de la de dentro cruzando el relleno de la de
+         fuera. Se veia mal y no habia forma de arreglarlo desde el
+         editor, porque lo unico que se podia tocar era la de fuera.
+         Estos mandos ajustan la que ya tiene. */
+      case 'cajaPropia': {
+        const sinCaja = estilo.s === 'none';
+        return (
+          <Interruptor
+            key={id}
+            label="Mostrar la caja"
+            desc="Apagada, el bloque se apoya directamente en tu fondo."
+            on={!sinCaja}
+            /* `'none'` la apaga y vacio la devuelve. No se guarda `'inherit'`
+               —que es «ponme la caja del perfil»— porque eso volveria a
+               dibujar una segunda encima, que es justo lo que se venia a
+               quitar. */
+            onChange={(v) => setEstilo('s', v ? '' : 'none')}
+          />
+        );
+      }
+
+      case 'colorCaja':
+        return (
+          <ColorRGB
+            key={id}
+            label="Color de la caja"
+            value={estilo.scolor || ''}
+            porDefecto={profile.colBg || '#ffffff'}
+            onChange={(hex) => setEstilo('scolor', hex)}
+          />
+        );
+
+      case 'opacidadCaja':
+        return (
+          <Deslizador
+            key={id}
+            label="Opacidad de la caja"
+            desc="A cero se vuelve transparente y solo queda el borde"
+            sufijo="%"
+            min={0}
+            max={100}
+            step={1}
+            value={estilo.op ?? 100}
+            onChange={(v) => setEstilo('op', v)}
+          />
+        );
+
+      case 'colorBorde':
+        return (
+          <ColorRGB
+            key={id}
+            label="Color del borde"
+            value={estilo.bdcolor || ''}
+            porDefecto={profile.accent || '#A855F7'}
+            onChange={(hex) => setEstilo('bdcolor', hex)}
+          />
+        );
+
+      case 'grosorBorde':
+        return (
+          <Deslizador
+            key={id}
+            label="Grosor del borde"
+            sufijo="px"
+            min={0}
+            max={6}
+            step={1}
+            value={estilo.bdw ?? 1}
+            onChange={(v) => setEstilo('bdw', v)}
+          />
+        );
+
       case 'marcoDiscord':
         return <MarcoDiscord key={id} profile={profile} update={update} />;
 

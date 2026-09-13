@@ -57,6 +57,14 @@ const CONTROL: Record<ControlId, Ficha> = {
 
   superficie: { nombre: 'Superficie de la caja', alias: ['caja', 'fondo del bloque', 'cristal', 'sin caja'] },
   heredarCaja: { nombre: 'Heredar la caja del perfil', alias: ['caja', 'igual que el perfil'] },
+  /* Los de la caja que el bloque ya trae —musica y Discord—. Los alias
+     son lo que alguien escribiria buscandolos: «quitar la caja», «color
+     del bloque», «transparente». */
+  cajaPropia: { nombre: 'Mostrar la caja', alias: ['quitar la caja', 'sin caja', 'ocultar caja', 'caja del bloque'] },
+  colorCaja: { nombre: 'Color de la caja', alias: ['fondo del bloque', 'color del bloque', 'relleno de la caja'] },
+  opacidadCaja: { nombre: 'Opacidad de la caja', alias: ['transparente', 'transparencia', 'translucido'] },
+  colorBorde: { nombre: 'Color del borde', alias: ['borde de color', 'contorno'] },
+  grosorBorde: { nombre: 'Grosor del borde', alias: ['borde grueso', 'borde fino', 'ancho del borde'] },
   relleno: { nombre: 'Relleno', alias: ['padding', 'espacio dentro', 'margen interior'] },
   radio: { nombre: 'Radio de las esquinas', alias: ['esquinas', 'redondeo', 'bordes redondos'] },
   ancho: { nombre: 'Ancho', alias: ['anchura', 'más ancho', 'estrecho'] },

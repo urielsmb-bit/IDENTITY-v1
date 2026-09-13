@@ -516,10 +516,22 @@
 /* --- widget de Discord --- */
 .pf-dc{
   display:flex; align-items:center; gap:12px;
-  padding:10px 12px 10px 10px;
-  border:1px solid var(--p-line);
-  border-radius:var(--p-chip-r);
-  background:var(--p-surface-2);
+  /* LA CAJA QUE ESTE BLOQUE YA TRAE, y que ahora se puede ajustar.
+     Antes estos cuatro valores salian fijos del tema, asi que la unica
+     forma de tocarlos era ponerle OTRA caja encima con «Caja del bloque»
+     — y entonces se veian las dos, una dentro de otra. Leyendo las
+     mismas variables `--b-*` que las cajas añadidas, los mandos del
+     editor caen sobre la que ya hay y aquella sobra.
+     Los respaldos son exactamente lo que habia antes: un bloque que
+     nadie ha tocado se ve igual que siempre. */
+  padding:var(--b-pad, 10px 12px 10px 10px);
+  border:var(--b-bdw, 1px) solid
+         color-mix(in srgb, var(--b-bdcolor, var(--p-line)) calc(var(--b-bd, 100) * 1%), transparent);
+  /* El radio NO se pone aqui: lo fija la regla de «curvatura propia de
+     los bloques internos», que tiene mas peso que esta. Ponerlo en los dos
+     sitios daria un valor que no se aplica y a alguien la impresion de que
+     el codigo hace algo que no hace. */
+  background:color-mix(in srgb, var(--b-scolor, var(--p-surface-2)) calc(var(--b-op, 100) * 1%), transparent);
   text-align:left;
   max-width:100%;
 }
@@ -927,10 +939,22 @@
 .pf-music{
   display:flex; align-items:center; gap:12px;
   width:100%;
-  padding:10px 12px 10px 10px;
-  border:1px solid var(--p-line);
-  border-radius:var(--p-chip-r);
-  background:var(--p-surface-2);
+  /* LA CAJA QUE ESTE BLOQUE YA TRAE, y que ahora se puede ajustar.
+     Antes estos cuatro valores salian fijos del tema, asi que la unica
+     forma de tocarlos era ponerle OTRA caja encima con «Caja del bloque»
+     — y entonces se veian las dos, una dentro de otra. Leyendo las
+     mismas variables `--b-*` que las cajas añadidas, los mandos del
+     editor caen sobre la que ya hay y aquella sobra.
+     Los respaldos son exactamente lo que habia antes: un bloque que
+     nadie ha tocado se ve igual que siempre. */
+  padding:var(--b-pad, 10px 12px 10px 10px);
+  border:var(--b-bdw, 1px) solid
+         color-mix(in srgb, var(--b-bdcolor, var(--p-line)) calc(var(--b-bd, 100) * 1%), transparent);
+  /* El radio NO se pone aqui: lo fija la regla de «curvatura propia de
+     los bloques internos», que tiene mas peso que esta. Ponerlo en los dos
+     sitios daria un valor que no se aplica y a alguien la impresion de que
+     el codigo hace algo que no hace. */
+  background:color-mix(in srgb, var(--b-scolor, var(--p-surface-2)) calc(var(--b-op, 100) * 1%), transparent);
   text-align:left;
 }
 /* Un punto mas grande que la foto de Discord: esa es una cara de 38 y esto
@@ -1441,10 +1465,16 @@
 }
 .pf[data-blockstyle="outline"] .pf-stat:not([data-bs]){ background:transparent; }
 
-/* curvatura propia de los bloques internos */
+/* Curvatura propia de los bloques internos.
+   `--b-rad` PRIMERO: es la de esta pieza en concreto, y tiene que poder
+   mas que `--u-brad`, que es la de todos los bloques a la vez. Estaban al
+   reves —o mejor dicho, la de la pieza no estaba— y el resultado era que
+   el radio del editor no hacia nada en musica ni en Discord: esta regla
+   tiene especificidad (0,2,0) y la del bloque (0,1,0), asi que ganaba
+   siempre. Se cambiaba el numero y no pasaba nada. */
 .pf :is(.pf-status, .pf-link, .pf-music, .pf-level, .pf-dc,
         .pf-live__row, .pf-field, .pf-badge, .pf-stats){
-  border-radius:var(--u-brad, var(--p-chip-r));
+  border-radius:var(--b-rad, var(--u-brad, var(--p-chip-r)));
 }
 
 /* ---- animación al pasar el puntero --------------------------- */
@@ -1773,6 +1803,21 @@
   border:1px solid transparent;
   box-shadow:none;
   backdrop-filter:none; -webkit-backdrop-filter:none;
+  padding:var(--b-pad, 0px);
+}
+
+/* «Sin caja» en los bloques que traen la suya.
+   Musica y Discord pintan su propio recuadro en su regla de clase, y la
+   regla generica `[data-bs="none"]` de arriba no llegaba a apagarlo. Esto
+   lo dice con nombre y apellidos —y con mas peso— en vez de confiar en
+   que dos reglas de la misma especificidad caigan en el orden correcto:
+   cuando algo depende del orden y no de la intencion, se rompe el dia que
+   alguien mueve un bloque de sitio. */
+.pf :is(.pf-music, .pf-dc)[data-bs="none"]{
+  background:transparent;
+  border-color:transparent;
+  backdrop-filter:none; -webkit-backdrop-filter:none;
+  box-shadow:none;
   padding:var(--b-pad, 0px);
 }
 
