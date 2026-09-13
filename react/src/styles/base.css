@@ -71,26 +71,44 @@
      pisa nunca, y se usa poco a proposito: el anillo de foco, lo
      que esta activo y lo que acaba de guardarse. Nada mas.
 
-     Probamos ambar (#E8B14C) y a su dueño no le convencio, asi que
-     vuelve al blanco. Lo que NO vuelve atras es la estructura: la
-     marca sigue siendo un token propio y separado de `--accent`, y
-     los 35 sitios que la usan salen todos de aqui. Cambiar el color
-     de sharee es cambiar estas cuatro lineas y nada mas.
+     Probamos ambar (#E8B14C) y no convencio; estuvo un tiempo en
+     blanco. Ahora es morado, por peticion de su dueño. Lo que no ha
+     cambiado nunca es la estructura: la marca es un token propio y
+     separado de `--accent`, y los 37 sitios que la usan salen todos
+     de aqui. Cambiar el color de sharee sigue siendo cambiar estas
+     cuatro lineas y nada mas.
 
-     Con el blanco se pierde una cosa que si valia: el foco y la
-     seleccion vuelven a verse igual, porque los dos son blancos.
-     Si algun dia se quiere recuperar esa distincion, basta con
-     poner aqui un color —cualquiera— y el resto se ajusta solo.
+     POR QUE ESTE MORADO Y NO OTRO
 
-     Referencia de contrastes sobre la superficie, por si sirve:
-     ambar #E8B14C 9.95 · cobre #D98E5A 7.32 · cian #4CC9E8 9.95 ·
-     violeta #8B7CF6 5.80 · lima #C6F24E 14.90. Violeta y azul son
-     el uniforme de Linear y Vercel, que era justo de lo que
-     queriamos separarnos. */
-  --brand:      #FFFFFF;
+     6.66:1 sobre la superficie y 7.03 sobre el fondo — AA pide 4.5,
+     asi que vale hasta para texto pequeño y no solo para adornos. Y
+     encima solo se puede escribir en NEGRO: en blanco da 2.90 y no
+     llega ni para iconos. De ahi que `--brand-ink` sea el negro del
+     fondo y no el blanco, que es el error facil.
+
+     No es el #A855F7 de los perfiles a proposito, aunque se parezcan.
+     Ese es el que la gente elige para SU pagina; si la marca usara el
+     mismo, lo de sharee y lo de cada uno se leerian como lo mismo, y
+     la separacion entre `--brand` y `--accent` dejaria de verse
+     aunque siguiera existiendo en el codigo.
+
+     Queda dicho, porque estaba escrito aqui y sigue siendo verdad:
+     violeta y azul son el uniforme de Linear y Vercel. Este tira a
+     morado y no a violeta-azulado, que es lo que lo separa de ese
+     uniforme — pero es una decision tomada sabiendolo, no por
+     descuido.
+
+     Referencia de contrastes sobre la superficie, por si algun dia
+     se vuelve a mover: ambar #E8B14C 9.95 · cobre #D98E5A 7.32 ·
+     cian #4CC9E8 9.95 · lima #C6F24E 14.90 · violeta #8B7CF6 5.80.
+
+     Los dos tenues llevan mas alfa que cuando esto era blanco (.10 y
+     .34 entonces): un morado sobre negro se apaga antes que un blanco
+     sobre negro, y con los valores de antes no se veia nada. */
+  --brand:      #B57BFF;
   --brand-ink:  #050505;
-  --brand-soft: rgba(255,255,255,.10);
-  --brand-line: rgba(255,255,255,.34);
+  --brand-soft: rgba(181,123,255,.15);
+  --brand-line: rgba(181,123,255,.45);
 
   /* ---- tipografía ---------------------------------------- */
   --font: "Inter", "Geist", "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;

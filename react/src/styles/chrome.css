@@ -284,7 +284,11 @@
   position:absolute;
   right:-10%; top:2%;
   width:64%; height:84%;
-  background:radial-gradient(closest-side, rgba(255,255,255,.085), transparent 74%);
+  /* Del blanco al morado de la marca. Es la mancha mas grande de la
+     portada y la unica que se ve sin buscarla, asi que es donde el
+     color dice «esto es sharee» sin escribirlo. Mas alfa que el .085
+     de cuando era blanco: un morado sobre negro rinde menos. */
+  background:radial-gradient(closest-side, rgba(181,123,255,.13), transparent 74%);
   filter:blur(48px);
   pointer-events:none;
 }
