@@ -3,6 +3,13 @@
 --
 -- Quien crea su perfil se lleva siete dias del diamante. Se acaba solo.
 --
+-- Y DE PASO ARREGLA ALGO QUE ESTA ROTO AHORA MISMO. Al montar esto se
+-- descubrio que `insignias_de_perfil` devuelve 401 en produccion, asi que
+-- HOY no se pinta ni una insignia y `tienePlan()` dice que no a todo el
+-- mundo: no hay ni un premium, ni el concedido a mano. El detalle esta en
+-- la seccion 2. Sin ese arreglo, esta migracion repartiria pruebas que no
+-- servirian para nada.
+--
 -- ------------------------------------------------------------
 -- DONDE SE ENGANCHA, Y POR QUE AHI
 -- ------------------------------------------------------------
@@ -45,17 +52,50 @@ comment on column public.insignias_concedidas.expira is
   'Cuando deja de valer. Null = para siempre. La vista ya no la devuelve pasada esa hora.';
 
 
--- ---- 2 · la vista deja de devolver las vencidas -------------
--- Aqui esta el corte de verdad. La aplicacion lee SOLO esta vista para
--- saber que insignias tiene un perfil, asi que filtrando aqui se apaga
--- el plan en todas partes a la vez, sin tocar una linea de la
--- aplicacion y sin ningun proceso que tenga que pasar a limpiar.
+-- ---- 2 · la vista: deja de devolver las vencidas, Y SE ARREGLA ----
 --
--- Se añade `expira` a lo que devuelve para que un dia se pueda enseñar
--- «te quedan tres dias» sin volver a pedirte que apliques SQL. Hoy el
--- cliente pide solo `insignia`, asi que la columna de mas no le molesta.
-create or replace view public.insignias_de_perfil
-with (security_invoker = true) as
+-- Dos cosas a la vez, y la segunda no estaba prevista.
+--
+-- LO PREVISTO. La aplicacion lee SOLO esta vista para saber que insignias
+-- tiene un perfil, asi que filtrando aqui se apaga el plan vencido en
+-- todas partes a la vez, sin tocar una linea de la aplicacion y sin
+-- ningun proceso que pase limpiando. Se añade `expira` a lo que devuelve
+-- para poder enseñar un dia «te quedan tres dias» sin pedirte otra vez
+-- que apliques SQL; hoy el cliente pide solo `insignia`, asi que la
+-- columna de mas no le molesta.
+--
+-- LO OTRO. Esta vista esta ROTA en produccion ahora mismo. Comprobado
+-- contra el servidor en vivo:
+--
+--     insignias_de_perfil?select=insignia   ->  401  42501
+--     «permission denied for table insignias_concedidas»
+--
+-- y en el perfil publico se pintan CERO insignias. Como `tienePlan()`
+-- lee de aqui, hoy no hay ni un solo premium: el diamante concedido a
+-- mano tampoco cuenta. La aplicacion no lo grita porque `insigniasDe()`
+-- se traga el fallo y devuelve una lista vacia, que es exactamente lo
+-- mismo que «no tiene ninguna».
+--
+-- El motivo es `security_invoker = true`: la vista se resuelve con los
+-- permisos de QUIEN pregunta, y su mitad de «verificado» lee `perfiles`,
+-- cuya regla de filas deja muda a cualquiera que no sea el dueño.
+-- Exactamente el fallo que APLICAR.sql ya describe y arregla mas abajo
+-- —quitandole `security_invoker`— y que se ve que no llego a aplicarse.
+--
+-- Asi que aqui se deja como debe estar: con los permisos de su dueño,
+-- igual que `descubrir`. Eso NO afloja nada. La vista solo deja salir
+-- (perfil_id, insignia, expira); `por` y `nota` siguen sin asomarse, y
+-- los permisos por columna que puso la 0023 sobre la tabla siguen
+-- intactos para quien la pida directamente — comprobado: `select=por` y
+-- `select=*` siguen devolviendo 401.
+--
+-- Es DROP y CREATE, no REPLACE: cambiar `security_invoker` es cambiar
+-- como se resuelve la vista, no su forma. Y por eso hay que volver a dar
+-- el permiso de lectura, que se va con ella.
+
+drop view if exists public.insignias_de_perfil;
+
+create view public.insignias_de_perfil as
   select perfil_id, insignia, expira
   from public.insignias_concedidas
   where expira is null or expira > now()
@@ -65,8 +105,10 @@ union
   where p.estado = 'activo'
     and public.perfil_verificado(p.id);
 
+grant select on public.insignias_de_perfil to anon, authenticated;
+
 comment on view public.insignias_de_perfil is
-  'Lo unico que el cliente lee para saber que insignias tiene un perfil. Las vencidas no salen.';
+  'Lo unico que el cliente lee para saber que insignias tiene un perfil. Con los permisos de su dueño, y sin devolver las vencidas.';
 
 
 -- ---- 3 · una prueba por persona, no por perfil --------------
@@ -158,12 +200,20 @@ create trigger perfiles_prueba_premium
 
 
 -- ---- 5 · comprobar que ha entrado ---------------------------
+
+-- a) La vista responde y devuelve insignias. Si esto sale 0 habiendo
+--    insignias concedidas, el arreglo de la seccion 2 no entro.
+select count(*) as insignias_que_ve_la_vista from public.insignias_de_perfil;
+
+-- b) El reparto del plan, de un vistazo.
 select
   (select count(*) from public.insignias_concedidas
-    where insignia = 'premium' and expira is not null)        as pruebas_vivas,
+    where insignia = 'premium' and expira is not null and expira > now()) as pruebas_vivas,
   (select count(*) from public.insignias_concedidas
-    where insignia = 'premium' and expira is null)            as planes_para_siempre,
-  (select count(*) from privado.pruebas_premium)              as personas_que_ya_la_gastaron;
+    where insignia = 'premium' and expira is not null and expira <= now()) as pruebas_vencidas,
+  (select count(*) from public.insignias_concedidas
+    where insignia = 'premium' and expira is null)                        as planes_para_siempre,
+  (select count(*) from privado.pruebas_premium)                          as personas_que_ya_la_gastaron;
 
 
 -- ---- 6 · y si quieres darsela tambien a los de antes --------
