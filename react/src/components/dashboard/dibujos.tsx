@@ -576,15 +576,5 @@ export const DIBUJOS: Record<string, Record<string, ReactNode>> = {
         {puntos(50, 55)}
       </>,
     ),
-    vitrina: W(
-      <>
-        <rect x="6" y="3" width="88" height="58" rx="6" fill="currentColor" fillOpacity=".1" strokeWidth="1.2" opacity=".85" />
-        <circle cx="50" cy="14" r="6" fill="currentColor" stroke="none" />
-        {raya(38, 24, 24)}
-        {/* Y aqui esta lo suyo: cada bloque en su propia cajita. */}
-        <rect x="13" y="32" width="74" height="10" rx="3" fill="currentColor" fillOpacity=".3" strokeWidth="1" opacity=".8" />
-        <rect x="13" y="45" width="74" height="10" rx="3" fill="currentColor" fillOpacity=".3" strokeWidth="1" opacity=".8" />
-      </>,
-    ),
   },
 };

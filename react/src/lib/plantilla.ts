@@ -63,7 +63,7 @@ export const CAMPOS_PLANTILLA = [
   /* De que plantilla de arranque salio. Viaja porque quien la aplica se
      lleva EXACTAMENTE ese diseño, y el editor tiene que poder decirle cual
      es: sin esto, aplicar una plantilla publicada dejaba el perfil con el
-     aspecto de «Vitrina» y el rotulo de la plantilla que hubiera antes. */
+     aspecto de una plantilla y el rotulo de otra. */
   'base',
 ] as const satisfies readonly (keyof Profile)[];
 

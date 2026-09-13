@@ -44,7 +44,9 @@ describe('aplicarBase · lo que no toca', () => {
   });
 
   it('el primer día sí los siembra, y guarda lo oculto', () => {
-    const pl = PLANTILLAS_BASE[4]!;                 // Vitrina
+    /* Por ID y no por indice: con `[4]` esto se salia de rango el dia que
+       se quitara una plantilla, y el fallo no diria por que. */
+    const pl = PLANTILLAS_BASE.find((x) => x.id === 'retrato')!;
     const patch = aplicarBase(pl, true);
     const todos = BLOQUES.map((b) => b.id);
     expect(patch.blocksOff).toEqual(todos.filter((id) => !pl.bloques.includes(id)));
@@ -53,7 +55,7 @@ describe('aplicarBase · lo que no toca', () => {
   });
 });
 
-describe('las cinco composiciones aguantan en un teléfono', () => {
+describe('las composiciones aguantan en un teléfono', () => {
   for (const pl of PLANTILLAS_BASE) {
     it(`«${pl.nombre}» fluye en columna y declara su ancho de diseño`, () => {
       const a = pl.ajustes;

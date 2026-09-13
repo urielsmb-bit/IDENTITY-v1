@@ -13,8 +13,8 @@ import { BASE_PERSONALIZADA, type PlantillaBase } from '@/data/plantillasBase';
  *
  * La unica excepcion es el primer dia. Cuando aun no habias elegido
  * ninguna, la plantilla siembra tambien sus bloques: es lo que hace que
- * elegir «Vitrina» enseñe una vitrina y no una tarjeta vacia con el aspecto
- * de una vitrina.
+ * elegir «Ficha» enseñe una ficha —con su musica y su Discord puestos— y no
+ * una tarjeta vacia con la forma de una ficha.
  */
 export function aplicarBase(
   plantilla: PlantillaBase,

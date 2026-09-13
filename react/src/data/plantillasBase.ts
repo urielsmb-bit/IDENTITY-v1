@@ -281,38 +281,6 @@ export const PLANTILLAS_BASE: PlantillaBase[] = [
       socials: { mt: 4 },
     },
   },
-  {
-    id: 'vitrina',
-    nombre: 'Ancha',
-    descripcion: 'La más ancha, con sitio de sobra para música, Discord, insignias y muchas redes.',
-    bloques: ['avatar', 'name', 'handle', 'bio', 'socials', 'badges', 'views'],
-    ajustes: {
-      ...SEGURO,
-      ...APARIENCIA_APAGADA,
-      sWidthPct: 70,  // ≈645px, dentro del tope seguro de movil
-      radius: 20,
-      gap: 10,
-      pad: null,
-      align: 'center',
-      avPos: 'center',
-      avShape: 'circle',
-      avSize: 96,
-      iconSize: 20,
-    },
-    /* Cada bloque con su caja, todas del mismo ancho y el mismo radio: es
-       lo que hace que se lean como una rejilla y no como cinco cosas
-       sueltas. El ancho es 100 —el de la tarjeta— para que ninguna
-       sobresalga en una pantalla estrecha. */
-    cajas: {
-      name: { size: 96 },
-      bio: { s: 'glass', w: 100, pad: 12, rad: 12, size: 92 },
-      socials: { s: 'glass', w: 100, pad: 13, rad: 12 },
-      badges: { s: 'glass', w: 100, pad: 11, rad: 12 },
-      music: { s: 'glass', w: 100, pad: 13, rad: 12 },
-      discord: { s: 'glass', w: 100, pad: 13, rad: 12 },
-      views: { s: 'glass', w: 100, pad: 9, rad: 12, size: 90 },
-    },
-  },
 ];
 
 /** Acceso por id, para no recorrer la lista en cada render. */
