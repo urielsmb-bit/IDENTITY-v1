@@ -49,7 +49,7 @@ import { useInsignias } from '@/hooks/useInsignias';
 import { diasDePrueba, tienePlan } from '@/lib/insignias';
 import { DIBUJOS } from '@/components/dashboard/dibujos';
 import { BLOQUE_POR_ID, type DefBloque, BLOQUES_APAGADOS_POR_DEFECTO } from '@/data/bloques';
-import { BASE_PERSONALIZADA } from '@/data/plantillasBase';
+import { APARIENCIA_APAGADA, BASE_PERSONALIZADA } from '@/data/plantillasBase';
 import { ElegirPlantilla } from '@/components/dashboard/ElegirPlantilla';
 import { Piezas } from '@/components/dashboard/Piezas';
 import { Modal } from '@/components/ui/Modal';
@@ -218,6 +218,15 @@ const SECTIONS = [
  */
 function createBlankProfile(username = 'usuario', nombre = ''): Profile {
   return {
+    /* TODO APAGADO, Y DESPUES lo poco que un perfil nuevo necesita.
+       Esto nacia con cristal esmerilado, halo en el nombre, borde
+       brillante en el avatar, particulas de estrellas y el tema
+       `cyberpunk` —que tiñe de cian las superficies—. Nada de eso lo
+       habia elegido nadie, y alguien pregunto de verdad como se quitaba
+       el color del bloque de musica sin encontrar el mando: ese tinte
+       sale del tema, y lo unico que el editor deja cambiar es el acento.
+       Se empieza en cero y se añade; no al reves. */
+    ...APARIENCIA_APAGADA,
     username,
     name: nombre || 'Tu Nombre',
     title: 'Creador Digital',
@@ -228,20 +237,13 @@ function createBlankProfile(username = 'usuario', nombre = ''): Profile {
     bio: '¡Hola! Este es mi perfil en sharee.',
     about: '',
     joined: new Date().toISOString(),
-    theme: 'cyberpunk',
     accent: '#A855F7',
     colText: '',
     colBg: '',
     colIcon: '',
     align: 'center',
-    surface: 'glass',
     avShape: 'circle',
     avPos: 'center',
-    avatarFx: 'pulse',
-    socialStyle: 'icons',
-    musicStyle: 'compact',
-    badgeStyle: 'plain',
-    blockStyle: 'glass',
     layoutMode: 'stack',
     stackPos: 'center',
     widthMode: 'fixed',
@@ -250,9 +252,6 @@ function createBlankProfile(username = 'usuario', nombre = ''): Profile {
     nameWeight: '700',
     nameCase: 'none',
     cursor: 'default',
-    particles: 'stars',
-    font: 'space',
-    fontDisplay: 'display',
     avSize: 112,
     stackWidth: 460,
     gap: 16,
@@ -260,15 +259,10 @@ function createBlankProfile(username = 'usuario', nombre = ''): Profile {
     iconSize: 20,
     nameSize: 0,
     bioSize: 0,
-    sBlur: 22,
     sGlow: 40,
-    sBorderW: 1,
     sWidthPct: null,
     sHeightPx: null,
     bgScale: 100,
-    sColor: '',
-    sBorderColor: '',
-    sBorderOn: true,
     bgOpacity: 100,
     bgBlur: 0,
     bgDim: 30,
@@ -276,13 +270,9 @@ function createBlankProfile(username = 'usuario', nombre = ''): Profile {
     nameSpacing: 0,
     lineHeight: 0,
     pad: null,
-    sOpacity: null,
     sBorder: null,
     blockRadius: null,
     views: 0,
-    avBorder: true,
-    avGlow: true,
-    monoIcons: false,
     bgFixed: true,
     /* El nombre nace BLANCO. Estaba en `true`, o sea que se rellenaba con
        un degradado de los colores del tema: cualquiera que se creaba un
@@ -290,18 +280,11 @@ function createBlankProfile(username = 'usuario', nombre = ''): Profile {
        forma de quitarlo porque el interruptor no existia en ninguna
        parte. El color de las letras se elige en el editor; el que no
        elige nada, blanco. */
-    gradient: false,
     /* Y sin barrido. Es la SEGUNDA cosa que teñia el nombre sin haberla
        pedido: rellena las letras con un degradado animado de los colores
        del tema, asi que apagar el degradado fijo no bastaba —el nombre
        seguia morado— y tampoco tenia interruptor. */
     animatedName: false,
-    nameFx: 'none',
-    glowName: true,
-    glowSocials: true,
-    glowBadges: true,
-    noise: true,
-    tilt: true,
     gate: false,
     verified: false,
     discoverable: true,

@@ -62,20 +62,108 @@ const SEGURO = {
   pos: {},
 } as const satisfies Partial<Profile>;
 
+/**
+ * Todo lo que NO es una posicion, apagado.
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ * POR QUE EXISTE
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * Las plantillas traian apariencia ademas de composicion: cristal
+ * esmerilado, halo en el nombre, borde brillante en el avatar, iconos
+ * encendidos, tipografias decorativas. Y el perfil en blanco traia lo
+ * mismo, mas particulas de estrellas y el tema `cyberpunk`, que tiñe las
+ * superficies de cian.
+ *
+ * El resultado se vio en una persona de verdad: pregunto como se quitaba
+ * el color azul verdoso del bloque de musica, y no encontraba el mando
+ * porque nunca lo habia puesto. Y no lo habria encontrado: ese tinte sale
+ * de `--p-surface` del tema, y el unico color que se puede cambiar desde
+ * el editor es el acento, que pisa otra variable.
+ *
+ * Una plantilla de arranque tiene que decir DONDE van las cosas. Como se
+ * ven lo decide su dueño, y para decidirlo hace falta partir de nada — no
+ * de un diseño ajeno que hay que ir desarmando a ciegas.
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ * Y POR QUE VA AQUI Y NO SOLO EN EL PERFIL EN BLANCO
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * Una plantilla se aplica ENCIMA de lo que ya hay. Si solo se quitan los
+ * brillos de las plantillas pero no se apagan, quien venga de un diseño
+ * anterior se los queda puestos y la plantilla nueva sale contaminada con
+ * restos de la vieja. Por eso esto se reparte a todas: cada una deja el
+ * aspecto en cero y encima pone SU composicion.
+ *
+ * `createBlankProfile` usa esta misma constante. Son el mismo «estado de
+ * fabrica» y tienen que seguir siendolo: dos listas separadas se
+ * separarian mas cada mes.
+ */
+export const APARIENCIA_APAGADA = {
+  /* El tema: el base. Sus superficies son blanco con alfa, sin tinte de
+     color, asi que ningun bloque nace con un color que nadie eligio. */
+  theme: 'dark',
+
+  /* La tarjeta: solida y lisa. Ni cristal, ni desenfoque, ni borde. */
+  surface: 'solid',
+  sOpacity: null,
+  /* Cero y no nulo: estos dos no admiten vacio, y el cero ES su apagado
+     —sin desenfoque y sin grosor de borde—. */
+  sBlur: 0,
+  sBorderOn: false,
+  sBorderW: 0,
+  sColor: '',
+  sBorderColor: '',
+
+  /* Los bloques heredan la tarjeta en vez de traer su propio material. */
+  blockStyle: 'inherit',
+
+  /* El avatar: sin borde y sin halo. */
+  avBorder: false,
+  avGlow: false,
+
+  /* Iconos y bloques, en su version lisa. */
+  socialStyle: 'icons',
+  badgeStyle: 'plain',
+  musicStyle: 'compact',
+  monoIcons: false,
+
+  /* Nada encendido: ni halos, ni degradado, ni efecto en el nombre. */
+  glowName: false,
+  glowSocials: false,
+  gradient: false,
+  nameFx: 'none',
+
+  /* Ni particulas ni inclinacion: dos cosas que se mueven solas y que
+     nadie pidio. Las particulas ademas son de pago, asi que arrancaban
+     encendidas para quien no puede apagarlas al vencer su prueba. */
+  particles: 'none',
+  tilt: false,
+
+  /* Tipografia neutra. `space` y `display` —Space Grotesk y Anton— son
+     decisiones de diseño, no un punto de partida. */
+  font: 'inter',
+  fontDisplay: 'inter',
+
+  /* Y los que se cuelan por ser «pequeños»: el halo de las insignias, el
+     ruido de la tarjeta, el latido del avatar. Cada uno por separado no
+     parece nada; juntos son un perfil que llega decorado de fabrica y en
+     el que hay que ir apagando cosas de una en una para llegar a cero. */
+  glowBadges: false,
+  noise: false,
+  avatarFx: 'none',
+} as const satisfies Partial<Profile>;
+
 export const PLANTILLAS_BASE: PlantillaBase[] = [
   {
     id: 'clasica',
-    nombre: 'Cristal',
-    descripcion: 'Cristal esmerilado, nombre con halo y los iconos encendidos. La que más brilla.',
+    nombre: 'Columna',
+    descripcion: 'Una columna estrecha y centrada: la foto arriba y todo lo demás debajo, en fila.',
     bloques: ['avatar', 'name', 'handle', 'bio', 'socials'],
     ajustes: {
       ...SEGURO,
-      surface: 'glass',
-      sWidthPct: 46,          // ≈420px: estrecha, como las de guns
-      sOpacity: 7,            // casi transparente: manda el fondo
-      sBlur: 30,              // y por eso el desenfoque tiene que ser fuerte
-      sBorderOn: true,
-      sBorderW: 1,
+      ...APARIENCIA_APAGADA,
+      sWidthPct: 46,  // y por eso el desenfoque tiene que ser fuerte
       radius: 22,
       gap: 13,
       pad: null,
@@ -83,19 +171,7 @@ export const PLANTILLAS_BASE: PlantillaBase[] = [
       avPos: 'center',
       avShape: 'circle',
       avSize: 104,
-      avBorder: true,
-      avGlow: true,
-      blockStyle: 'inherit',
-      /* Los iconos encendidos, no planos: es lo que hace que una tarjeta
-         oscura no se vea apagada. */
-      socialStyle: 'glow',
-      glowName: true,
-      glowSocials: true,
-      badgeStyle: 'icons',
-      musicStyle: 'compact',
       iconSize: 22,
-      font: 'inter',
-      fontDisplay: 'space',
     },
     cajas: {
       name: { size: 108 },
@@ -105,17 +181,13 @@ export const PLANTILLAS_BASE: PlantillaBase[] = [
   },
   {
     id: 'compacta',
-    nombre: 'Sobria',
-    descripcion: 'Sólida, estrecha y sin un solo brillo. Todo en gris, del tamaño de una tarjeta de visita.',
+    nombre: 'Estrecha',
+    descripcion: 'La más angosta, con los bloques muy juntos. Del tamaño de una tarjeta de visita.',
     bloques: ['avatar', 'name', 'handle', 'socials'],
     ajustes: {
       ...SEGURO,
-      surface: 'solid',
-      sWidthPct: 34,          // ≈313px: cabe entera en cualquier telefono
-      sOpacity: 90,
-      sBlur: 0,
-      sBorderOn: true,
-      sBorderW: 1,
+      ...APARIENCIA_APAGADA,
+      sWidthPct: 34,  // ≈313px: cabe entera en cualquier telefono
       radius: 24,
       gap: 9,
       pad: 18,
@@ -123,20 +195,7 @@ export const PLANTILLAS_BASE: PlantillaBase[] = [
       avPos: 'center',
       avShape: 'circle',
       avSize: 76,
-      avBorder: false,
-      avGlow: false,
-      blockStyle: 'inherit',
-      /* Ni halos ni color de marca: esta plantilla es la contraria de
-         «Cristal» a proposito, para que elegir signifique algo. */
-      socialStyle: 'icons',
-      monoIcons: true,
-      glowName: false,
-      glowSocials: false,
-      badgeStyle: 'icons',
-      musicStyle: 'minimal',
       iconSize: 17,
-      font: 'inter',
-      fontDisplay: 'inter',
     },
     cajas: {
       name: { size: 84 },
@@ -150,16 +209,12 @@ export const PLANTILLAS_BASE: PlantillaBase[] = [
   {
     id: 'retrato',
     nombre: 'Ficha',
-    descripcion: 'La foto a un lado y el nombre al lado, ancha. La musica y Discord van en su propia cajita.',
+    descripcion: 'La foto a un lado y el nombre junto a ella, alineado a la izquierda. Ancha.',
     bloques: ['avatar', 'name', 'handle', 'discord', 'socials', 'music', 'views'],
     ajustes: {
       ...SEGURO,
-      surface: 'glass',
-      sWidthPct: 64,          // ≈589px: la cabecera necesita sitio para dos columnas
-      sOpacity: 10,
-      sBlur: 26,
-      sBorderOn: true,
-      sBorderW: 1,
+      ...APARIENCIA_APAGADA,
+      sWidthPct: 64,  // ≈589px: la cabecera necesita sitio para dos columnas
       radius: 26,
       gap: 16,
       pad: 22,
@@ -170,20 +225,7 @@ export const PLANTILLAS_BASE: PlantillaBase[] = [
       avPos: 'side',
       avShape: 'circle',
       avSize: 84,
-      avBorder: true,
-      avGlow: false,
-      /* Las cajas de dentro —Discord, la musica— en cristal, pero el
-         nombre y las redes sueltos: si TODO lleva caja, la cabecera deja
-         de leerse como cabecera y la tarjeta se vuelve una lista. */
-      blockStyle: 'glass',
-      socialStyle: 'glow',
-      glowName: false,
-      glowSocials: true,
-      badgeStyle: 'icons',
-      musicStyle: 'compact',
       iconSize: 26,
-      font: 'inter',
-      fontDisplay: 'space',
     },
     cajas: {
       /* Los bloques de la cabecera se ciñen al hueco que deja la foto, asi
@@ -206,14 +248,19 @@ export const PLANTILLAS_BASE: PlantillaBase[] = [
   },
   {
     id: 'minima',
-    nombre: 'Mínima',
-    descripcion: 'Sin caja: la foto, el nombre y poco mas, sueltos sobre tu fondo. Cuanto mejor sea la imagen, mejor queda.',
+    nombre: 'Sin caja',
+    descripcion: 'Sin tarjeta: la foto, el nombre y poco más, sueltos sobre tu fondo.',
     bloques: ['avatar', 'name', 'discord', 'socials'],
     ajustes: {
       ...SEGURO,
+      ...APARIENCIA_APAGADA,
+      /* La unica de las cinco que toca `surface`, y no es una excepcion a
+         la regla: que HAYA o no tarjeta es una decision de composicion, y
+         sin ella esta plantilla deja de ser lo que es. Lo que no se toca
+         es de que esta hecha —cristal, brillo, contorno—, que si es
+         apariencia. */
       surface: 'none',
       sWidthPct: 50,
-      sBorderOn: false,
       radius: 0,
       gap: 18,
       pad: 0,
@@ -221,24 +268,7 @@ export const PLANTILLAS_BASE: PlantillaBase[] = [
       avPos: 'center',
       avShape: 'circle',
       avSize: 108,
-      avBorder: false,
-      avGlow: true,
-      /* Las piezas que SI llevan caja —Discord, la musica— se quedan con
-         la suya, en cristal. Con `transparent` se disolvian en el fondo:
-         sin tarjeta detras que las contenga, un widget sin caja no se lee
-         como una pieza, se lee como texto suelto encima de la foto. */
-      blockStyle: 'glass',
-      socialStyle: 'glow',
-      glowName: true,
-      glowSocials: true,
-      badgeStyle: 'icons',
-      musicStyle: 'compact',
       iconSize: 26,
-      font: 'inter',
-      /* Bold ancha, no una display condensada: el nombre manda por tamaño
-         y por peso, y una condensada a este cuerpo se lee como un cartel
-         y le quita el sitio a todo lo demas. */
-      fontDisplay: 'space',
     },
     cajas: {
       name: { size: 124 },
@@ -253,17 +283,13 @@ export const PLANTILLAS_BASE: PlantillaBase[] = [
   },
   {
     id: 'vitrina',
-    nombre: 'Vitrina',
-    descripcion: 'Ancha, y cada bloque en su propia cajita. Para quien tiene música, Discord, insignias y muchas redes.',
+    nombre: 'Ancha',
+    descripcion: 'La más ancha, con sitio de sobra para música, Discord, insignias y muchas redes.',
     bloques: ['avatar', 'name', 'handle', 'bio', 'socials', 'badges', 'views'],
     ajustes: {
       ...SEGURO,
-      surface: 'glass',
-      sWidthPct: 70,          // ≈645px, dentro del tope seguro de movil
-      sOpacity: 8,
-      sBlur: 24,
-      sBorderOn: true,
-      sBorderW: 1,
+      ...APARIENCIA_APAGADA,
+      sWidthPct: 70,  // ≈645px, dentro del tope seguro de movil
       radius: 20,
       gap: 10,
       pad: null,
@@ -271,17 +297,7 @@ export const PLANTILLAS_BASE: PlantillaBase[] = [
       avPos: 'center',
       avShape: 'circle',
       avSize: 96,
-      avBorder: true,
-      avGlow: false,
-      blockStyle: 'glass',
-      socialStyle: 'boxed',
-      glowName: false,
-      glowSocials: false,
-      badgeStyle: 'boxed',
-      musicStyle: 'card',
       iconSize: 20,
-      font: 'inter',
-      fontDisplay: 'space',
     },
     /* Cada bloque con su caja, todas del mismo ancho y el mismo radio: es
        lo que hace que se lean como una rejilla y no como cinco cosas
