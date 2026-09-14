@@ -170,3 +170,59 @@
 :root[data-calidad="media"] .pf-card__sheen {
   display: none;
 }
+
+/* ============================================================
+   MENOS CAPAS, QUE ES LO QUE DE VERDAD CUESTA SIN GPU
+
+   Medido en un perfil con video de fondo: SIETE capas a pantalla
+   completa, 8,6 pantallas de superficie apilada.
+
+       pf-bgvideo     2,80 pantallas   iframe con transform
+       pf-bg          0,97
+       pf-veil        0,97
+       pf-noise       0,97             mix-blend-mode: overlay
+       pf-vig         0,97
+       pf-particles   0,97             canvas
+
+   Con tarjeta grafica eso es barato: cada capa se rasteriza una vez y
+   luego solo se recomponen, que es justo para lo que sirve una GPU.
+
+   Sin ella, el problema no es rasterizar -eso tambien se hace una vez-
+   sino que el video de abajo CAMBIA sesenta veces por segundo, y cada
+   cambio obliga a volver a mezclar por CPU todo lo que tiene encima. Cinco
+   capas translucidas sobre un video en marcha son cinco pantallas de
+   mezcla por fotograma del video.
+
+   Por eso aqui no se persigue el numero de fotogramas: se persigue el
+   numero de CAPAS.
+   ============================================================ */
+
+/* El ruido tambien en media, no solo en baja.
+   `mix-blend-mode: overlay` es lo mas caro de la pila: obliga al navegador
+   a LEER lo que hay debajo y calcular la mezcla pixel a pixel, que es la
+   misma operacion que un `backdrop-filter` pero sin que se note tanto lo
+   que aporta. Un grano al 15 % de opacidad es de los efectos con peor
+   relacion entre lo que cuesta y lo que se ve. */
+:root[data-calidad="media"] .pf-noise {
+  display: none;
+}
+
+/* Y en baja, el velo y la viñeta se funden en UNA capa.
+   Se puede porque en baja el ruido -que va justo entre las dos- esta
+   apagado, asi que dejan de tener nada en medio y el orden de mezcla no
+   cambia. El resultado en pantalla es identico: el mismo color de velo y
+   el mismo degradado, pintados en la misma capa en vez de en dos.
+
+   Una capa a pantalla completa menos que recomponer en cada fotograma del
+   video. No se ve, y se nota. */
+:root[data-calidad="baja"] .pf-vig {
+  display: none;
+}
+:root[data-calidad="baja"] .pf-veil {
+  background:
+    radial-gradient(ellipse at center,
+      transparent 38%,
+      rgba(0, 0, 0, calc(.55 * var(--u-vig, 0))) 78%,
+      rgba(0, 0, 0, calc(.85 * var(--u-vig, 0))) 100%),
+    rgba(0, 0, 0, var(--p-dim-amt, .45));
+}
