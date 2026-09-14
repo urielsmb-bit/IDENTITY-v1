@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
-import { vigilarFluidez } from './lib/fluidez';
+import { arrancarCalidad } from './lib/calidad';
 
 // Styles — imported in layer order matching the original project
 import './styles/base.css';
@@ -14,8 +14,8 @@ import './styles/fuentes.css';
 import './styles/profile.css';
 import './styles/efectos.css';
 /* La ultima, para que sus `!important` de emergencia ganen a todo lo de
-   arriba. Solo hace algo si `vigilarFluidez` enciende el modo. */
-import './styles/llano.css';
+   arriba. Solo hace algo si el presupuesto baja de alta. */
+import './styles/calidad.css';
 
 /* Aqui se quedan SOLO las hojas que hacen falta para pintar un perfil
    publico, que es la pagina que recibe las visitas. Las demas ya no
@@ -86,11 +86,12 @@ const queryClient = new QueryClient({
   },
 });
 
-/* Antes de montar nada. No bloquea: se apunta a mirar los fotogramas un
-   rato DESPUES de que la pagina cargue, y si la maquina va bien no hace
-   absolutamente nada. Quien ya vino lleva su veredicto guardado y entra
-   directamente en el modo que le toca, sin el segundo de medida. */
-vigilarFluidez();
+/* Antes de montar nada. No bloquea ni mide todavia: deja puesto el nivel
+   de partida -lo que se recuerda de la ultima visita, o una conjetura por
+   nucleos y memoria- para que el CSS sepa a que atenerse desde el primer
+   pintado. La medida de verdad viaja en el latido de los efectos, que solo
+   existe si hay algo animandose. */
+arrancarCalidad();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

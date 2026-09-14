@@ -1,3 +1,5 @@
+import { cadaCuanto, esBaja } from './calidad';
+
 /**
  * La luz.
  *
@@ -137,26 +139,86 @@ function alMover(e: PointerEvent) {
   objX = Math.min(1, Math.max(0, e.clientX / w));
   objY = Math.min(1, Math.max(0, e.clientY / h));
   ultimoPuntero = performance.now();
+  /* Y si se habia dormido, se la despierta. Sin esto, mover el raton
+     actualizaria el objetivo y no lo pintaria nadie: la luz se quedaria
+     clavada para siempre en cuanto parara una vez. */
+  if (!latido && apuntados > 0 && !QUIETO) latido = requestAnimationFrame(cuadro);
+}
+
+/**
+ * Cuánto se puede quedar quieta antes de dormirse, en milisegundos.
+ *
+ * La luz persigue su objetivo con inercia -un 7,5 % de lo que le falta en
+ * cada paso- así que nunca llega del todo: matemáticamente sigue
+ * acercándose para siempre. Ese «para siempre» era literal, y por eso este
+ * bucle no se dormía nunca.
+ *
+ * Por debajo de una diezmilésima de pantalla el movimiento ya no existe:
+ * en un monitor de 2000 px son 0,2 px. Ahí se para, y el puntero la
+ * despierta.
+ */
+const QUIETA = 0.0001;
+
+/**
+ * Cada cuánto se recalcula, en milisegundos.
+ *
+ * Nunca más de treinta veces por segundo: lo que el ojo lee aquí es la
+ * INERCIA -la luz parece pesar- y eso no mejora con más fotogramas. En
+ * calidad baja se espacia todavía más, porque el presupuesto manda.
+ */
+function paso(): number {
+  return Math.max(33, cadaCuanto());
+}
+
+/**
+ * Si la luz sigue dando vueltas sola cuando nadie toca el ratón.
+ *
+ * Es ambiente, y es bonito, pero también es la definición de tarea de
+ * fondo permanente: sin esto el bucle no se para NUNCA. En una máquina que
+ * va justa, ese gasto continuo se lo está quitando a lo que la persona sí
+ * está mirando. En alta y media se queda; en baja la luz se para donde
+ * esté y el puntero la vuelve a despertar.
+ */
+function puedeOrbitar(): boolean {
+  return !esBaja();
 }
 
 function cuadro(t: number) {
-  latido = requestAnimationFrame(cuadro);
-  if (t - ultimoCuadro < 33) return;
+  /* Pedir el siguiente fotograma LO PRIMERO -como estaba- convertía esto en
+     un bucle permanente a 60 Hz que trabajaba a 30: despertaba al navegador
+     sesenta veces por segundo para no hacer nada en la mitad, y no paraba
+     jamás aunque nadie tocara el ratón y la luz llevara minutos quieta.
+     Ahora el siguiente fotograma se pide al final, y solo si queda algo que
+     mover. */
+  if (t - ultimoCuadro < paso()) {
+    latido = requestAnimationFrame(cuadro);
+    return;
+  }
   ultimoCuadro = t;
 
   /* Sin puntero reciente, la luz sigue su órbita. Las dos vueltas no duran
      lo mismo —diecinueve segundos y catorce— para que el recorrido no sea
      una elipse que se repite, sino una figura que tarda minutos en cerrar. */
-  if (t - ultimoPuntero > PACIENCIA) {
+  if (t - ultimoPuntero > PACIENCIA && puedeOrbitar()) {
     objX = 0.5 + Math.cos(t / 19000) * 0.42;
     objY = 0.3 + Math.sin(t / 14000) * 0.22;
   }
 
   /* Persigue, no salta. Es lo que hace que el cambio entre «te sigue» y
      «va sola» no se vea, y además le da peso: la luz parece tener inercia. */
-  actX += (objX - actX) * 0.075;
-  actY += (objY - actY) * 0.075;
+  const dx = objX - actX;
+  const dy = objY - actY;
+  actX += dx * 0.075;
+  actY += dy * 0.075;
   aplicar(actX, actY);
+
+  /* ¿Queda algo que hacer? Solo si la luz aún se está moviendo hacia algún
+     sitio, o si el puntero está reciente y puede volver a moverla. Si no,
+     se para: la despierta `alMover`. */
+  const enMovimiento = Math.abs(dx) > QUIETA || Math.abs(dy) > QUIETA;
+  const orbitando = t - ultimoPuntero > PACIENCIA && puedeOrbitar();
+  if (enMovimiento || orbitando) latido = requestAnimationFrame(cuadro);
+  else latido = 0;
 }
 
 function arrancar() {

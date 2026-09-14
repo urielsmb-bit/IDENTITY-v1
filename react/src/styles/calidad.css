@@ -1,14 +1,22 @@
 /* ============================================================
-   MODO LLANO
-   Lo que se apaga cuando la maquina no da para pintarlo.
+   LO QUE SE APAGA CUANDO NO CABE
 
-   Se enciende solo, desde `lib/fluidez.ts`, midiendo si los fotogramas
-   llegan a tiempo. Quien tiene tarjeta grafica no ve NADA de esto.
+   El presupuesto lo decide `lib/calidad.ts` midiendo fotogramas de
+   verdad, y lo deja escrito en el HTML:
+
+       <html data-calidad="alta">    todo encendido, esta hoja no hace nada
+       <html data-calidad="media">   se aligera lo que no se nota
+       <html data-calidad="baja">    manda el numero de fotogramas
 
    La regla de oro: se quita el COSTE, no el diseño. Cada superficie que
    pierde su cristal esmerilado gana opacidad a cambio, porque un panel
    translucido sin desenfoque detras deja ver el texto de abajo y se vuelve
    ilegible. Apagar por apagar romperia la pagina en vez de arreglarla.
+
+   Y lo que NO esta aqui a proposito: las partículas, la estela y la luz.
+   Esas no se apagan con CSS sino que se ADELGAZAN desde JavaScript -menos
+   densidad, menos fotogramas por segundo- porque un efecto que adelgaza
+   se sigue leyendo como el mismo efecto y uno que desaparece no.
    ============================================================ */
 
 /* ---- el cristal esmerilado --------------------------------
@@ -22,9 +30,9 @@
    declaraciones repartidas por seis hojas sin tener que repetirlas aqui una
    a una y sin que la proxima que alguien escriba se quede fuera. Un modo de
    emergencia que hay que acordarse de actualizar no sirve de nada. */
-:root[data-llano] *,
-:root[data-llano] *::before,
-:root[data-llano] *::after {
+:root[data-calidad="baja"] *,
+:root[data-calidad="baja"] *::before,
+:root[data-calidad="baja"] *::after {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -33,14 +41,14 @@
    Estas superficies contaban con el desenfoque para separarse del fondo.
    Sin el se quedan en un velo transparente con el contenido de detras
    asomando. Se compensa con opacidad: se pierde el efecto, no la lectura. */
-:root[data-llano] .nav,
-:root[data-llano] .toast,
-:root[data-llano] .modal,
-:root[data-llano] .nav__menu {
+:root[data-calidad="baja"] .nav,
+:root[data-calidad="baja"] .toast,
+:root[data-calidad="baja"] .modal,
+:root[data-calidad="baja"] .nav__menu {
   background: var(--surface);
 }
 
-:root[data-llano] .pf-gate {
+:root[data-calidad="baja"] .pf-gate {
   background: rgba(0, 0, 0, .82);
 }
 
@@ -48,7 +56,7 @@
    Una capa a pantalla completa en `mix-blend-mode: overlay`. La mezcla se
    resuelve en cada pintado y cuesta como un desenfoque pequeño, para un
    grano que casi no se ve. */
-:root[data-llano] .pf-noise {
+:root[data-calidad="baja"] .pf-noise {
   display: none;
 }
 
@@ -61,10 +69,10 @@
    Se apagan las de adorno y se dejan las que dicen algo: el cursor que
    parpadea al escribir un nombre, o la entrada de la tarjeta, que es como
    el perfil se presenta. */
-:root[data-llano] .pf-card__sheen,
-:root[data-llano] .entrada__halo,
-:root[data-llano] .pf-avatar[data-fx],
-:root[data-llano] .pf.is-animname .pf-name {
+:root[data-calidad="baja"] .pf-card__sheen,
+:root[data-calidad="baja"] .entrada__halo,
+:root[data-calidad="baja"] .pf-avatar[data-fx],
+:root[data-calidad="baja"] .pf.is-animname .pf-name {
   animation: none !important;
 }
 
@@ -79,7 +87,7 @@
    Se queda la composicion —los tres telefonos siguen colocados como
    estaban, que es lo que cuenta la portada— y se va el seguimiento. Sin
    movimiento, la escena se pinta UNA vez y se acabo. */
-:root[data-llano] .trio__escena {
+:root[data-calidad="baja"] .trio__escena {
   transform: none !important;
   transition: none !important;
 }
@@ -91,9 +99,9 @@
 
    Solo las grandes y decorativas. Las de los iconos y las insignias se
    quedan: son pequeñas y ahi la sombra es lo que las separa del fondo. */
-:root[data-llano] .trio__centro img,
-:root[data-llano] .trio__izq,
-:root[data-llano] .trio__der {
+:root[data-calidad="baja"] .trio__centro img,
+:root[data-calidad="baja"] .trio__izq,
+:root[data-calidad="baja"] .trio__der {
   filter: none !important;
 }
 
@@ -102,9 +110,9 @@
    ocupada: montando la pagina, pidiendo imagenes y resolviendo fuentes.
    En una maquina que va justa, esa animacion es lo que convierte una
    carga lenta en una carga a tirones. Aparece de golpe, y ya. */
-:root[data-llano] .demo,
-:root[data-llano] .rise,
-:root[data-llano] .pf-stack {
+:root[data-calidad="baja"] .demo,
+:root[data-calidad="baja"] .rise,
+:root[data-calidad="baja"] .pf-stack {
   animation: none !important;
 }
 
@@ -112,7 +120,53 @@
    Una sombra difuminada se repinta entera cada vez que algo se mueve
    encima. Las de la interfaz se quedan planas; las del perfil no se tocan,
    porque ahi si son parte de lo que la persona eligio. */
-:root[data-llano] .card,
-:root[data-llano] .nav {
+:root[data-calidad="baja"] .card,
+:root[data-calidad="baja"] .nav {
   box-shadow: none;
+}
+
+/* ============================================================
+   EL ESCALON DE EN MEDIO
+
+   Aqui no se apaga nada: se abarata. Son maquinas que SI pueden con los
+   efectos, solo que no a pleno gas, y quitarles el diseño seria cobrarles
+   de mas.
+
+   Lo unico que se toca es el radio de los desenfoques. El coste de un
+   `blur` no crece con el area sino con el RADIO -cada pixel de salida
+   tiene que mirar a sus vecinos, y el vecindario crece al cuadrado-, asi
+   que bajar de 20 a 10 no cuesta la mitad: cuesta la cuarta parte.
+
+   Y a la vista casi no se distingue, porque lo que hace legible un panel
+   translucido no es cuanto desenfoca sino QUE desenfoque: con 10 px el
+   texto de detras ya es una mancha.
+   ============================================================ */
+:root[data-calidad="media"] .nav,
+:root[data-calidad="media"] .toast,
+:root[data-calidad="media"] .modal,
+:root[data-calidad="media"] .nav__menu {
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+}
+
+/* El velo del perfil es el unico que cubre la pantalla entera, asi que es
+   el que mas gana con un techo. Pero OJO con lo que costo aprender: la
+   primera version ponia `blur(6px)` a secas, y eso le ponia desenfoque al
+   velo de TODO perfil que no lo hubiera pedido -una capa a pantalla
+   completa donde antes no habia nada-. Se midio: 2.164 px borrosos en alta
+   contra 206.644 en media, o sea que el nivel "mas barato" salia cien
+   veces mas caro.
+   La variable con tope la calcula quien sabe si hay desenfoque, que es
+   `ProfileView`. Si el perfil no pidio ninguno, aqui no llega nada y cae
+   a `none`, igual que en alta. */
+:root[data-calidad="media"] .pf-veil {
+  backdrop-filter: var(--p-veil-fx-medio, var(--p-veil-fx, none));
+  -webkit-backdrop-filter: var(--p-veil-fx-medio, var(--p-veil-fx, none));
+}
+
+/* El brillo que recorre la tarjeta al pasar el raton repinta toda su
+   superficie en cada fotograma. Es de los efectos con peor relacion entre
+   lo que cuesta y lo que aporta, y ya se quitaba en movil por lo mismo. */
+:root[data-calidad="media"] .pf-card__sheen {
+  display: none;
 }

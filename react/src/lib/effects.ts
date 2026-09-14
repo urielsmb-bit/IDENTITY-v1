@@ -1,3 +1,5 @@
+import { nivel as nivelCalidad, cuantas, cadaCuanto, alCambiar, unFotograma } from './calidad';
+
 const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let _cleanups: Array<() => void> = [];
@@ -14,45 +16,35 @@ export function clear() {
   _cleanups = [];
 }
 
-export const equipo = (() => {
-  const nav = typeof navigator !== 'undefined' ? navigator : {} as any;
-  const nucleos = nav.hardwareConcurrency || 4;
-  const memoria = nav.deviceMemory || 4;
-  const lento = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(update: slow)').matches) ||
-              nucleos <= 2 || memoria <= 2;
-  return {
-    nucleos, memoria,
-    nivel: reduce ? 0 : (lento ? 1 : 2),
-    medido: false,
-    fps: 60
-  };
-})();
-
+/**
+ * El presupuesto vive en `calidad.ts`, no aquí.
+ *
+ * Aquí había una clasificación propia por núcleos y memoria que medía UNA
+ * vez, en el primer segundo, y no volvía a mirar: una máquina que empezaba
+ * mal se quedaba mal para siempre aunque el problema fuera la carga inicial
+ * y no el aparato. Y nunca subía.
+ *
+ * `puede()` se deja como estaba de puertas afuera porque lo llaman otros
+ * sitios, pero ahora contesta lo que dice el presupuesto de verdad.
+ */
 export function puede(coste: number = 1) {
-  return equipo.nivel >= coste;
+  return nivelCalidad() >= coste;
 }
 
 const oyentes: Array<(ahora: number) => void> = [];
 let latido = 0;
 let pendientes: Array<(time: number) => void> = [];
 let oculto = typeof document !== 'undefined' && typeof document.hidden === 'boolean' ? document.hidden : false;
-let t0 = 0, cuadros = 0;
 
 function tic(ahora: number) {
   latido = 0;
   if (oculto) return;
 
-  if (!equipo.medido) {
-    if (!t0) t0 = ahora;
-    cuadros++;
-    if (ahora - t0 > 1000) {
-      const fps = cuadros * 1000 / (ahora - t0);
-      if (fps < 45 && equipo.nivel > 1) equipo.nivel = 1;
-      if (fps < 25) equipo.nivel = 0;
-      equipo.fps = Math.round(fps);
-      equipo.medido = true;
-    }
-  }
+  /* La medida del presupuesto viaja en ESTE latido y no en uno propio.
+     Un medidor con su propio `requestAnimationFrame` mantendría vivo el
+     reloj del navegador aunque no hubiera nada que animar: una tarea de
+     fondo permanente montada para vigilar las tareas de fondo permanentes. */
+  unFotograma(ahora);
 
   for (let i = oyentes.length - 1; i >= 0; i--) {
     try { oyentes[i]?.(ahora); } catch { oyentes.splice(i, 1); }
@@ -122,7 +114,17 @@ export function particles(canvas: HTMLCanvasElement | null, type: string, color:
     const denso = type === 'matrix' ? 14000 : 7000;
     const n = Math.round(area / (opts.light ? denso * 1.9 : denso));
     const cap = opts.light ? 60 : (type === 'matrix' ? 90 : 220);
-    return Math.max(8, Math.min(cap, n));
+    const lleno = Math.max(8, Math.min(cap, n));
+    /* Y lo que de verdad cabe en ESTA máquina.
+       Esto faltaba, y era el hueco más grande de todo el proyecto: las
+       partículas son lo más caro que hay -hasta 220 arcos con relleno y
+       trazo, repintados en cada fotograma- y eran justamente lo único que
+       no miraba el presupuesto. En un equipo sin aceleración se dibujaban
+       las 220 igual que en uno con tarjeta dedicada.
+       El suelo es 6 y no 0 a propósito: un cielo con menos estrellas sigue
+       siendo un cielo; un cielo sin ninguna es un fondo negro, y eso ya no
+       es el perfil que alguien eligió. */
+    return Math.max(6, cuantas(lleno));
   }
 
   function build() {
@@ -202,8 +204,29 @@ export function particles(canvas: HTMLCanvasElement | null, type: string, color:
   const rgb = hex2rgb(color);
   const C = rgb[0] + ',' + rgb[1] + ',' + rgb[2];
 
-  function draw() {
+  /**
+   * Lo que se salta cuando no hace falta ir a la velocidad de la pantalla.
+   *
+   * Unas partículas de fondo a 25 por segundo se ven prácticamente igual
+   * que a 60: lo que el ojo lee es la deriva, no los fotogramas. Pero
+   * cuesta menos de la mitad, y en una máquina sin aceleración esa mitad
+   * es la diferencia entre que la página responda al desplazarse o no.
+   *
+   * Se salta el PINTADO, no el `requestAnimationFrame`: hay que seguir
+   * despierto para saber cuándo toca el siguiente. Lo caro aquí es dibujar
+   * doscientos arcos, no preguntar la hora.
+   */
+  let ultimoPintado = 0;
+
+  function draw(ahora?: number) {
     if (!alive) return;
+    const hueco = cadaCuanto();
+    const t2 = typeof ahora === 'number' ? ahora : performance.now();
+    if (hueco > 0 && t2 - ultimoPintado < hueco) {
+      rAF = raf(draw);
+      return;
+    }
+    ultimoPintado = t2;
     t++;
     ctx!.clearRect(0, 0, W, H);
     let i, p;
@@ -346,9 +369,17 @@ export function particles(canvas: HTMLCanvasElement | null, type: string, color:
     draw();
   }
 
+  /* Si el presupuesto cambia a media partida, se rehace el campo con la
+     densidad nueva. Sin esto, bajar de nivel no serviría de nada en la
+     página que ya está abierta: solo en la siguiente. */
+  const soltarAviso = alCambiar(() => {
+    if (alive) build();
+  });
+
   return register(() => {
     alive = false;
     cancelAnimationFrame(rAF);
+    soltarAviso();
     if (ro) ro.disconnect();
     else if (typeof window !== 'undefined') window.removeEventListener('resize', resize);
   });

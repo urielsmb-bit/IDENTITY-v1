@@ -418,6 +418,12 @@ export function ProfileView({
     if (desenfoque > 0) {
       vars['--p-veil-fx'] = `blur(${desenfoque}px)`;
       vars['--p-veil-fx-movil'] = `blur(${desenfoque / 2}px)`;
+      /* El tope para maquinas de gama media. Va aqui y no en el CSS por un
+         motivo que costo una regresion: una regla que ponga `blur(6px)` sin
+         mas le PONE desenfoque al velo de todo perfil que no lo pidiera, y
+         eso es exactamente la capa a pantalla completa que se quito en su
+         dia. Un tope recorta; nunca crea. */
+      vars['--p-veil-fx-medio'] = `blur(${Math.min(6, desenfoque)}px)`;
     }
     vars['--p-dim-amt'] = String((p.bgDim || 0) / 100);
     vars['--p-noise'] = String((p.noise ? 15 : 0) / 100);
@@ -495,13 +501,13 @@ export function ProfileView({
   // ── Fondo ────────────────────────────────────────────────
   const esMedia = p.bgType === 'image' || p.bgType === 'video';
   // Vimeo no sirve un archivo de vídeo: hay que incrustar su reproductor.
-  /* En modo llano el video sigue reproduciendose —pararlo se probo y no
+  /* Con el presupuesto en baja el video sigue reproduciendose —pararlo se probo y no
      valia: un fondo quieto no es el fondo que la persona eligio— pero se
      pide en menor calidad, que es lo unico que se puede abaratar sin
      quitarle el movimiento.
 
      Se lee el atributo en vez de un estado de React a proposito: esto lo
-     decide `lib/fluidez.ts` midiendo fotogramas, fuera del arbol. Quien ya
+     decide `lib/calidad.ts` midiendo fotogramas, fuera del arbol. Quien ya
      visito la pagina lo trae puesto antes de que esto se pinte; quien llega
      por primera vez se lleva el video a calidad normal, porque para cuando
      se decide ya esta cargando y volver a montarlo lo cortaria a la vista. */

@@ -1,3 +1,5 @@
+import { cuantas } from './calidad';
+
 import { estela as buscarEstela, type DefEstela, type FormaMota } from '@/data/estelas';
 
 /**
@@ -987,7 +989,18 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
 
   function actualizar(o: OpcionesEstela) {
     def = buscarEstela(o.fx);
-    cantidad = Math.max(0, Math.min(12, o.cantidad || 0));
+    /* La densidad que pidio el dueño del perfil, recortada a lo que cabe en
+       ESTA maquina. La estela suelta motas por DISTANCIA recorrida, asi que
+       la cantidad no multiplica el trabajo por fotograma: acorta el paso, y
+       un paso mas corto son mas motas vivas a la vez, cada una con su
+       dibujo. En un equipo sin aceleracion eso se nota al mover el raton,
+       que es justo cuando la persona esta esperando una respuesta.
+
+       No baja a cero nunca: una estela con menos motas sigue siendo una
+       estela; sin ninguna, el cursor deja de tener personalidad y eso es
+       una funcion menos, no un efecto mas barato. */
+    const pedida = Math.max(0, Math.min(12, o.cantidad || 0));
+    cantidad = pedida > 0 ? Math.max(2, cuantas(pedida)) : 0;
     intensidad = Math.max(0.25, Math.min(2, (o.intensidad ?? 100) / 100));
     direccion = o.direccion || 'seguimiento';
     ambito = o.ambito ?? null;
