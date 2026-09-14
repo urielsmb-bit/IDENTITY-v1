@@ -142,40 +142,12 @@
   color:var(--text-secondary); font-weight:500; font-size:var(--t1);
 }
 
-.inp,.sel,.ta{
-  width:100%;
-  padding:10px 12px;
-  border:1px solid var(--border-strong);
-  border-radius:var(--radius-sm);
-  background:var(--bg-primary);
-  font-size:var(--t3);
-  color:var(--text-primary);
-  outline:none;
-  transition:border-color var(--transition-fast), box-shadow var(--transition-fast);
-}
-.ta{ line-height:1.55; resize:vertical; min-height:84px; }
-/* El anillo de foco es de sharee, como el global: `--brand`, no
-   `--accent`. Con el blanco, un campo enfocado y un campo con el raton
-   encima se parecian demasiado. */
-.inp:focus,.sel:focus,.ta:focus{
-  border-color:var(--brand-line);
-  box-shadow:0 0 0 3px var(--brand-soft);
-}
-/* Faltaba el paso intermedio: el borde no reaccionaba hasta pulsar. */
-.inp:hover,.sel:hover,.ta:hover{ border-color:var(--border-loud); }
-.inp::placeholder,.ta::placeholder{ color:var(--text-faint); }
-
-.sel{
-  cursor:pointer; appearance:none;
-  padding-right:32px;
-  background-image:
-    linear-gradient(45deg,transparent 50%,var(--text-muted) 50%),
-    linear-gradient(135deg,var(--text-muted) 50%,transparent 50%);
-  background-position:calc(100% - 16px) 52%, calc(100% - 11px) 52%;
-  background-size:5px 5px;
-  background-repeat:no-repeat;
-}
-.sel option{ background:var(--surface-2); color:var(--text-primary); }
+/* Los campos de formulario -.inp, .sel, .ta- VIVIAN AQUI, y por eso la
+   pagina de entrar ensenaba campos del navegador en crudo: `dashboard.css`
+   solo se carga con el panel, asi que quien llegaba directo a /entrar,
+   /ayuda, /salud o /plantillas se quedaba sin la regla.
+   Ahora estan en `base.css`, que se carga siempre. Aqui queda solo lo que
+   de verdad es del panel. */
 
 .f-row{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s3); }
 @media (max-width:520px){ .f-row{ grid-template-columns:1fr; } }

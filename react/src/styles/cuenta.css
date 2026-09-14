@@ -302,24 +302,12 @@
    dedo y un portatil de 1024 con un raton, y necesitan cosas distintas.
    ============================================================ */
 @media (pointer:coarse){
-  /* Dieciseis pixeles, ni uno menos.
-
-     Safari en iPhone hace zoom a la pagina cuando enfocas un campo de
-     menos de 16px, y aqui estaban a 15. O sea que escribir el nombre, la
-     biografia o un enlace daba un salto de escala en CADA campo, y al
-     salir se quedaba desencuadrado. No es una preferencia de diseño: es
-     la unica forma de que el navegador no se meta. */
-  .inp, .sel, .ta,
-  /* No solo `.inp`: el buscador de plantillas es un `input[type=search]`
-     suelto y se quedaba en 15. Se apunta a CUALQUIER campo en el que se
-     escriba, que es la condicion que dispara el zoom, y se dejan fuera
-     los que no llevan teclado -casillas, interruptores, colores y
-     deslizadores- donde 16px no significa nada y ademas les cambiaria el
-     tamaño del control. */
-  textarea, select,
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]){
-    font-size:16px;
-  }
+  /* Los 16px al escribir -lo que evita que Safari haga zoom- ESTABAN AQUI,
+     y se han ido a `base.css`. Esta hoja solo la carga el panel, asi que la
+     regla nunca llegaba a /entrar: el campo del correo se quedaba en el
+     tamano de fabrica y el iPhone daba el salto de escala al tocarlo, en el
+     primer formulario que ve alguien que todavia no tiene cuenta.
+     Lo de abajo si es del panel y se queda. */
 
   /* 44 px es lo que mide la yema de un dedo. Por debajo de eso no es que
      se falle a veces: es que se falla y se pulsa lo de al lado.

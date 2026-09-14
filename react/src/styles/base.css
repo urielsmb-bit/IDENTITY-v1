@@ -370,6 +370,105 @@ h1,h2,h3,h4{ margin:0; font-weight:600; letter-spacing:-.03em; line-height:1.1; 
 .btn--lg{ padding:13px 24px; font-size:var(--t3); border-radius:var(--radius-md); }
 .btn--block{ width:100%; }
 
+/* ---- campos de formulario ---------------------------------
+   ESTO ESTABA EN `dashboard.css`, Y AHI SOLO FUNCIONABA A MEDIAS.
+
+   `dashboard.css` se carga con el panel. Entrar, Ayuda, Salud y Plantillas
+   usan `.inp` pero no lo importan, asi que quien llegaba directo a una de
+   esas paginas veia el campo DEL NAVEGADOR, sin nada nuestro. Medido en
+   produccion, en /entrar:
+
+     relleno   1px 2px   (el de fabrica; el nuestro es 10px 12px)
+     radio     0px       (el nuestro es --radius-sm)
+     fondo     el del sistema, claro, sobre una tarjeta casi negra
+
+   No se veia al desarrollar porque al panel se entra desde el panel: si
+   vienes de /dashboard la hoja ya esta puesta y los campos se ven bien.
+   Solo fallaba llegando de fuera, que es justo como llega todo el mundo a
+   la pagina de entrar.
+
+   Son primitivas: van donde estan el boton y la tarjeta, en la hoja que se
+   carga siempre. */
+.inp,.sel,.ta{
+  width:100%;
+  padding:10px 12px;
+  border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);
+  background:var(--bg-primary);
+  font-size:var(--t3);
+  color:var(--text-primary);
+  outline:none;
+  transition:border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.ta{ line-height:1.55; resize:vertical; min-height:84px; }
+/* El anillo de foco es de sharee, como el global: `--brand`, no
+   `--accent`. Con el blanco, un campo enfocado y un campo con el raton
+   encima se parecian demasiado. */
+.inp:focus,.sel:focus,.ta:focus{
+  border-color:var(--brand-line);
+  box-shadow:0 0 0 3px var(--brand-soft);
+}
+/* Faltaba el paso intermedio: el borde no reaccionaba hasta pulsar. */
+.inp:hover,.sel:hover,.ta:hover{ border-color:var(--border-loud); }
+.inp::placeholder,.ta::placeholder{ color:var(--text-faint); }
+
+.sel{
+  cursor:pointer; appearance:none;
+  padding-right:32px;
+  background-image:
+    linear-gradient(45deg,transparent 50%,var(--text-muted) 50%),
+    linear-gradient(135deg,var(--text-muted) 50%,transparent 50%);
+  background-position:calc(100% - 16px) 52%, calc(100% - 11px) 52%;
+  background-size:5px 5px;
+  background-repeat:no-repeat;
+}
+.sel option{ background:var(--surface-2); color:var(--text-primary); }
+
+/* ---- cuando lo rellena el navegador ------------------------
+   Chrome pinta el campo autorellenado de azul palido y la letra de negro,
+   y lo hace con `!important` desde su propia hoja: cambiar `background` no
+   sirve de nada. En una tarjeta casi negra eso son dos recuadros claros en
+   mitad del formulario, y pasa siempre en la pagina de entrar, que es
+   donde el navegador guarda la contrasena.
+
+   El `box-shadow` de dentro si se dibuja por encima de ese fondo, asi que
+   se tapa con nuestro color; y `-webkit-text-fill-color` es lo unico que
+   manda sobre el color de la letra en ese estado. Enfocado hay que repetir
+   el anillo: esta regla va despues y pisaria el de arriba. */
+.inp:-webkit-autofill,
+.sel:-webkit-autofill,
+.ta:-webkit-autofill{
+  -webkit-text-fill-color:var(--text-primary);
+  caret-color:var(--text-primary);
+  box-shadow:inset 0 0 0 100px var(--bg-primary);
+}
+.inp:-webkit-autofill:focus,
+.sel:-webkit-autofill:focus,
+.ta:-webkit-autofill:focus{
+  box-shadow:inset 0 0 0 100px var(--bg-primary),
+             0 0 0 3px var(--brand-soft);
+}
+
+/* ---- dieciseis pixeles al escribir, ni uno menos ------------
+   Safari en iPhone hace zoom a la pagina cuando enfocas un campo de menos
+   de 16px. Esta regla estaba en `cuenta.css`, que solo carga el panel: en
+   /entrar el campo del correo se quedaba en el tamano de fabrica y el
+   telefono daba el salto de escala al tocarlo, en el primer formulario que
+   ve alguien que todavia no tiene cuenta.
+
+   `pointer:coarse` y no un ancho: lo que decide no es el tamano de la
+   pantalla sino con QUE se apunta. Y se apunta a cualquier campo en el que
+   se escriba —que es la condicion que dispara el zoom— dejando fuera los
+   que no llevan teclado, donde 16px no significa nada y ademas les
+   cambiaria el tamano al control. */
+@media (pointer:coarse){
+  .inp, .sel, .ta,
+  textarea, select,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]){
+    font-size:16px;
+  }
+}
+
 /* ---- superficies ------------------------------------------ */
 .card{
   background:var(--surface);
