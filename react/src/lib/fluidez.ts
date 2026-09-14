@@ -127,23 +127,46 @@ function pararVideos() {
 }
 
 /**
- * Le pide al reproductor de Vimeo que pare.
+ * Cuando se insiste, en milisegundos desde que se ve el marco.
  *
- * Dos veces a proposito. Hay una carrera que no se puede ganar de otra
- * forma: cuando esto se decide, el reproductor de dentro del marco casi
- * nunca ha terminado de cargar, y un mensaje que llega antes de tiempo se
- * pierde sin avisar. Asi que se pide ahora —por si ya estaba listo— y otra
- * vez cuando el marco termina de cargar.
+ * La primera version pedia la pausa dos veces —al verlo y en su `load`— y
+ * NO FUNCIONO en produccion. Se vio con dos capturas separadas seis
+ * segundos: el fondo seguia cambiando. El fallo estaba en la prueba local,
+ * donde la pausa se pidio a mano con el reproductor ya cargado; en el flujo
+ * real llega mucho antes.
+ *
+ * El `load` del marco NO significa que el reproductor este listo: significa
+ * que su documento acabo de cargar. El reproductor de Vimeo se monta despues
+ * y empieza a reproducir por su cuenta, pisando cualquier pausa anterior. Y
+ * no hay forma de saber cuando termina: es otro dominio.
+ *
+ * Asi que se insiste durante ocho segundos. Son cinco mensajes en total,
+ * que no cuesta nada, y cubren desde un reproductor que arranca al vuelo
+ * hasta uno que tarda con mala conexion.
+ */
+const INSISTIR = [0, 800, 2000, 4000, 8000];
+
+/**
+ * Le pide al reproductor de Vimeo que pare, varias veces.
+ *
+ * Se para y no se esconde: un video parado deja su ultimo fotograma
+ * pintado, asi que el fondo se sigue viendo igual y deja de costar.
  */
 function pedirPausaAlMarco(m: HTMLIFrameElement) {
   const pedir = () => {
+    /* Si el modo se apago mientras tanto -la maquina mejoro, o se forzo a
+       mano- no hay que pararle el video a nadie. */
+    if (!document.documentElement.hasAttribute('data-llano')) return;
     try {
       m.contentWindow?.postMessage('{"method":"pause"}', '*');
     } catch {
       /* Otro dominio puede negarse. Entonces sigue sonando y ya esta. */
     }
   };
-  pedir();
+  for (const cuando of INSISTIR) {
+    if (cuando === 0) pedir();
+    else setTimeout(pedir, cuando);
+  }
   m.addEventListener('load', pedir, { once: true });
 }
 
@@ -181,6 +204,21 @@ function vigilarVideosNuevos() {
      una sola vez no sirve.
      Se vigila el documento, pero solo mientras el modo esta encendido: en
      una maquina que va bien esto no llega a mirar ni un nodo. */
+  /* Y por si tarda mas de los ocho segundos que se insiste: en cuanto el
+     reproductor de Vimeo diga ALGO —lo que sea— es que ya esta vivo y
+     escuchando, que es justo lo que no se puede saber de otra forma.
+     Se comprueba el origen: cualquier pagina puede mandar un mensaje a esta
+     ventana, y no se le va a contestar a cualquiera. */
+  window.addEventListener('message', (e) => {
+    if (e.origin !== 'https://player.vimeo.com') return;
+    if (!document.documentElement.hasAttribute('data-llano')) return;
+    try {
+      (e.source as Window | null)?.postMessage('{"method":"pause"}', e.origin);
+    } catch {
+      /* Si la ventana ya no existe, no hay nada que parar. */
+    }
+  });
+
   if (!('MutationObserver' in window) || !document.body) return;
   new MutationObserver((cambios) => {
     if (!document.documentElement.hasAttribute('data-llano')) return;
