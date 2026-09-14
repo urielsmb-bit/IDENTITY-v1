@@ -1,0 +1,78 @@
+/* ============================================================
+   MODO LLANO
+   Lo que se apaga cuando la maquina no da para pintarlo.
+
+   Se enciende solo, desde `lib/fluidez.ts`, midiendo si los fotogramas
+   llegan a tiempo. Quien tiene tarjeta grafica no ve NADA de esto.
+
+   La regla de oro: se quita el COSTE, no el diseño. Cada superficie que
+   pierde su cristal esmerilado gana opacidad a cambio, porque un panel
+   translucido sin desenfoque detras deja ver el texto de abajo y se vuelve
+   ilegible. Apagar por apagar romperia la pagina en vez de arreglarla.
+   ============================================================ */
+
+/* ---- el cristal esmerilado --------------------------------
+   `backdrop-filter` es lo primero que cae, y con diferencia lo mas caro: en
+   cada fotograma obliga a leer de vuelta todo lo que hay detras, filtrarlo
+   y recomponerlo. Con GPU es gratis; sin ella lo hace la CPU pixel a pixel,
+   y en un perfil eso son cientos de miles de pixeles sesenta veces por
+   segundo.
+
+   Va con `!important` a proposito. Es la unica forma de alcanzar las 48
+   declaraciones repartidas por seis hojas sin tener que repetirlas aqui una
+   a una y sin que la proxima que alguien escriba se quede fuera. Un modo de
+   emergencia que hay que acordarse de actualizar no sirve de nada. */
+:root[data-llano] *,
+:root[data-llano] *::before,
+:root[data-llano] *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ---- y lo que hay que devolver a cambio -------------------
+   Estas superficies contaban con el desenfoque para separarse del fondo.
+   Sin el se quedan en un velo transparente con el contenido de detras
+   asomando. Se compensa con opacidad: se pierde el efecto, no la lectura. */
+:root[data-llano] .nav,
+:root[data-llano] .toast,
+:root[data-llano] .modal,
+:root[data-llano] .nav__menu {
+  background: var(--surface);
+}
+
+:root[data-llano] .pf-gate {
+  background: rgba(0, 0, 0, .82);
+}
+
+/* ---- el ruido ---------------------------------------------
+   Una capa a pantalla completa en `mix-blend-mode: overlay`. La mezcla se
+   resuelve en cada pintado y cuesta como un desenfoque pequeño, para un
+   grano que casi no se ve. */
+:root[data-llano] .pf-noise {
+  display: none;
+}
+
+/* ---- lo que se mueve solo ---------------------------------
+   No toda animacion es cara: mover o desvanecer algo lo resuelve el
+   compositor. Lo que duele es lo que obliga a REPINTAR en cada fotograma
+   -sombras que laten, brillos que recorren, fondos que se desplazan- y mas
+   aun si hay una capa translucida encima.
+
+   Se apagan las de adorno y se dejan las que dicen algo: el cursor que
+   parpadea al escribir un nombre, o la entrada de la tarjeta, que es como
+   el perfil se presenta. */
+:root[data-llano] .pf-card__sheen,
+:root[data-llano] .entrada__halo,
+:root[data-llano] .pf-avatar[data-fx],
+:root[data-llano] .pf.is-animname .pf-name {
+  animation: none !important;
+}
+
+/* ---- las sombras grandes ----------------------------------
+   Una sombra difuminada se repinta entera cada vez que algo se mueve
+   encima. Las de la interfaz se quedan planas; las del perfil no se tocan,
+   porque ahi si son parte de lo que la persona eligio. */
+:root[data-llano] .card,
+:root[data-llano] .nav {
+  box-shadow: none;
+}

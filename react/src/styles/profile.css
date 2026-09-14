@@ -53,8 +53,11 @@
   z-index:-4;
   pointer-events:none;
   background:rgba(0,0,0,var(--p-dim-amt,.45));
-  backdrop-filter:blur(var(--p-blur,0px));
-  -webkit-backdrop-filter:blur(var(--p-blur,0px));
+  /* `none` cuando el perfil no pide desenfoque, y no `blur(0px)`: no es lo
+     mismo. Un `backdrop-filter` de cero sigue creando su capa y obligando a
+     leer y recomponer todo lo que hay detras en cada fotograma. */
+  backdrop-filter:var(--p-veil-fx, none);
+  -webkit-backdrop-filter:var(--p-veil-fx, none);
 }
 
 .pf-noise{
@@ -1379,7 +1382,7 @@
    de pintado. */
 @media (max-width:640px){
   .pf-card__sheen{ display:none; }
-  .pf-veil{ backdrop-filter:blur(calc(var(--p-blur,0px) * .5)); }
+  .pf-veil{ backdrop-filter:var(--p-veil-fx-movil, var(--p-veil-fx, none)); }
   /* El panel de valoracion NO es la tarjeta: es una seccion aparte, en el
      flujo normal de la pagina, y ahi si tiene sentido reajustar. */
 }

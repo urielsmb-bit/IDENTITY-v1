@@ -400,7 +400,25 @@ export function ProfileView({
     if (p.nameWeight) vars['--u-nameW'] = String(p.nameWeight);
     if (p.nameCase) vars['--u-nameCase'] = p.nameCase;
 
-    vars['--p-blur'] = `${p.bgBlur || 0}px`;
+    /* El desenfoque del fondo SOLO se declara si de verdad hay desenfoque.
+       Antes se ponia siempre: `backdrop-filter: blur(0px)`, que parece
+       inofensivo y no lo es. Un `backdrop-filter`, aunque sea de cero,
+       obliga al navegador a recortar lo que hay detras, leerlo de vuelta y
+       recomponerlo en CADA fotograma. Con tarjeta grafica no se nota; sin
+       ella lo hace la CPU pixel a pixel.
+
+       Medido en un perfil real: era una capa a PANTALLA COMPLETA -441.812
+       px2- desenfocando cero. El 99% del coste de desenfoque de la pagina,
+       sin un solo pixel de diferencia en lo que se ve. Y le pasaba a todo
+       perfil que no hubiera tocado el ajuste, o sea a casi todos.
+
+       Ahora la variable no existe cuando no hace falta, y el CSS cae a
+       `none`. La de movil va aparte porque alli se aplica a la mitad. */
+    const desenfoque = Math.max(0, p.bgBlur || 0);
+    if (desenfoque > 0) {
+      vars['--p-veil-fx'] = `blur(${desenfoque}px)`;
+      vars['--p-veil-fx-movil'] = `blur(${desenfoque / 2}px)`;
+    }
     vars['--p-dim-amt'] = String((p.bgDim || 0) / 100);
     vars['--p-noise'] = String((p.noise ? 15 : 0) / 100);
     vars['--u-bg-op'] = String((p.bgOpacity ?? 100) / 100);
