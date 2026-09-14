@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/useToast';
 import { CONFIG } from '@/config';
 import { useTitulo } from '@/hooks/useTitulo';
 import { rutaSegura } from '@/lib/utils';
+import { traducirError } from '@/lib/erroresAuth';
 
 type Modo = 'login' | 'registro' | 'olvide';
 
@@ -42,27 +43,6 @@ const MODOS: Record<string, Modo> = {
   olvide: 'olvide',
   login: 'login',
 };
-
-/**
- * Supabase responde en inglés y con frases de API. Enseñárselas tal cual a
- * alguien que no puede entrar es dejarle sin saber qué hacer.
- */
-function traducirError(e: unknown): string {
-  const bruto = e instanceof Error ? e.message : String(e ?? '');
-  const m = bruto.toLowerCase();
-  if (m.includes('invalid login credentials')) return 'El correo o la contraseña no son correctos.';
-  if (m.includes('email not confirmed')) return 'Confirma tu correo antes de entrar. Te enviamos un enlace al registrarte.';
-  if (m.includes('user already registered') || m.includes('already been registered'))
-    return 'Ya existe una cuenta con ese correo. Prueba a entrar.';
-  if (m.includes('password should be at least')) return 'La contraseña es demasiado corta.';
-  if (m.includes('unable to validate email') || m.includes('invalid email'))
-    return 'Ese correo no parece válido.';
-  if (m.includes('rate limit') || m.includes('too many'))
-    return 'Demasiados intentos seguidos. Espera un minuto y vuelve a probar.';
-  if (m.includes('supabase no está configurado'))
-    return 'Esta copia no tiene servidor configurado: puedes editar tu perfil, pero no crear cuenta.';
-  return bruto || 'No se pudo completar la operación.';
-}
 
 const ICO_DISCORD = (
   <svg viewBox="1.96 4.26 20.03 15.53" width="18" height="18" fill="currentColor" aria-hidden="true">

@@ -7,6 +7,7 @@ import { SubirMedio } from './SubirMedio';
 import { Modal } from '@/components/ui/Modal';
 import { useAuth, type ProveedorEnlazable } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import { traducirErrorDeEnlace } from '@/lib/erroresAuth';
 import * as backend from '@/lib/backend';
 import { hasBackend } from '@/lib/supabase';
 import { useProfileStore } from '@/stores/profileStore';
@@ -384,7 +385,7 @@ export function AjustesCuenta({
       await enlazarProveedor(id, '/dashboard');
     } catch (e) {
       setOcupadoProv('');
-      toast(e instanceof Error ? e.message : 'No se pudo conectar', true);
+      toast(traducirErrorDeEnlace(e, id), true);
     }
   };
 
@@ -395,7 +396,7 @@ export function AjustesCuenta({
       await desenlazarProveedor(id);
       toast('Cuenta desconectada');
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'No se pudo desconectar', true);
+      toast(traducirErrorDeEnlace(e, id), true);
     } finally {
       setOcupadoProv('');
     }

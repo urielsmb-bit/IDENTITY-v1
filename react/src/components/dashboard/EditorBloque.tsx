@@ -27,6 +27,7 @@ import {
 } from '@/hooks/useDiscord';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
+import { traducirErrorDeEnlace } from '@/lib/erroresAuth';
 import { SubirMedio } from './SubirMedio';
 
 interface EditorBloqueProps {
@@ -481,10 +482,7 @@ function CampoDiscord({
               await enlazarDiscord('/dashboard');
             } catch (e) {
               setEnlazando(false);
-              toast(
-                e instanceof Error ? e.message : 'No se pudo conectar con Discord',
-                true,
-              );
+              toast(traducirErrorDeEnlace(e, 'discord'), true);
             }
           }}
         >
