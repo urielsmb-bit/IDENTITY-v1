@@ -495,7 +495,21 @@ export function ProfileView({
   // ── Fondo ────────────────────────────────────────────────
   const esMedia = p.bgType === 'image' || p.bgType === 'video';
   // Vimeo no sirve un archivo de vídeo: hay que incrustar su reproductor.
-  const fondoVimeo = p.bgType === 'video' && esVimeo(p.bgValue) ? urlFondoVimeo(p.bgValue) : '';
+  /* En modo llano el video sigue reproduciendose —pararlo se probo y no
+     valia: un fondo quieto no es el fondo que la persona eligio— pero se
+     pide en menor calidad, que es lo unico que se puede abaratar sin
+     quitarle el movimiento.
+
+     Se lee el atributo en vez de un estado de React a proposito: esto lo
+     decide `lib/fluidez.ts` midiendo fotogramas, fuera del arbol. Quien ya
+     visito la pagina lo trae puesto antes de que esto se pinte; quien llega
+     por primera vez se lleva el video a calidad normal, porque para cuando
+     se decide ya esta cargando y volver a montarlo lo cortaria a la vista. */
+  const modesto =
+    typeof document !== 'undefined' &&
+    document.documentElement.hasAttribute('data-llano');
+  const fondoVimeo =
+    p.bgType === 'video' && esVimeo(p.bgValue) ? urlFondoVimeo(p.bgValue, modesto) : '';
   const fondoInline: React.CSSProperties = {};
   if (p.bgType === 'gradient' && p.bgValue) fondoInline.backgroundImage = p.bgValue;
   if (p.bgType === 'color' && p.bgValue) fondoInline.backgroundColor = p.bgValue;

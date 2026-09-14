@@ -48,7 +48,7 @@ export function esVimeo(url: string | null | undefined): boolean {
  * URL del reproductor en modo fondo: sin controles, sin sonido, en bucle.
  * `dnt=1` le pide a Vimeo que no rastree a quien visita el perfil.
  */
-export function urlFondoVimeo(url: string): string {
+export function urlFondoVimeo(url: string, modesto = false): string {
   const id = idVimeo(url);
   if (!id) return '';
   const h = hashVimeo(url);
@@ -60,6 +60,21 @@ export function urlFondoVimeo(url: string): string {
     autopause: '0',
     dnt: '1',
   });
+  /* `modesto` es para las maquinas que van justas —las que no tienen
+     aceleracion por hardware— y ahi lo que cuesta es descodificar.
+
+     Se probo pararlo del todo y se descarto: un fondo quieto no es el fondo
+     que la persona eligio. Asi que se deja correr, pero en 540p en vez de
+     en lo que Vimeo decida.
+
+     540p y no menos porque este video vive DETRAS de una tarjeta y con un
+     velo oscuro encima: a esa escala la diferencia no se ve, pero son
+     cuatro veces menos pixeles que descodificar en cada fotograma.
+
+     Ojo con lo que esto NO arregla: el coste de recomponer la capa en
+     pantalla no cambia, porque el tamaño en el que se dibuja es el mismo.
+     Baja la mitad cara, no las dos. */
+  if (modesto) params.set('quality', '540p');
   if (h) params.set('h', h);
   return `https://player.vimeo.com/video/${id}?${params.toString()}`;
 }

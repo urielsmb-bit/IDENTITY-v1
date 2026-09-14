@@ -95,144 +95,10 @@ function guardar(llano: boolean) {
   }
 }
 
-/**
- * Para el video de fondo.
- *
- * Es, con diferencia, lo mas caro que puede tener un perfil. Medido en uno
- * real: 1.402.814 px2 —tres veces la pantalla— con un `transform` encima.
- * Sin GPU eso es descodificar video Y recomponer millon y medio de pixeles
- * en cada fotograma del video, por CPU. No hay forma de que eso vaya fino:
- * no es un efecto que se pueda abaratar, es incompatible con ir fluido.
- *
- * Se PARA, no se esconde. Un video parado deja su ultimo fotograma pintado,
- * asi que el fondo se sigue viendo igual —como una foto— y deja de costar.
- * Esconderlo dejaria el perfil sin el fondo que su dueño eligio.
- *
- * Los de Vimeo van dentro de un `iframe` de otro dominio, donde no se puede
- * tocar nada... salvo pedirselo por `postMessage`, que es justo para lo que
- * su reproductor lo tiene. Si no contesta, se queda como estaba: peor no lo
- * pone.
- */
-function pararVideos() {
-  for (const v of document.querySelectorAll('video')) {
-    try {
-      v.pause();
-    } catch {
-      /* Un video que aun no puede pararse no es motivo para nada. */
-    }
-  }
-  for (const m of document.querySelectorAll<HTMLIFrameElement>('iframe.pf-bgvideo')) {
-    pedirPausaAlMarco(m);
-  }
-}
-
-/**
- * Cuando se insiste, en milisegundos desde que se ve el marco.
- *
- * La primera version pedia la pausa dos veces —al verlo y en su `load`— y
- * NO FUNCIONO en produccion. Se vio con dos capturas separadas seis
- * segundos: el fondo seguia cambiando. El fallo estaba en la prueba local,
- * donde la pausa se pidio a mano con el reproductor ya cargado; en el flujo
- * real llega mucho antes.
- *
- * El `load` del marco NO significa que el reproductor este listo: significa
- * que su documento acabo de cargar. El reproductor de Vimeo se monta despues
- * y empieza a reproducir por su cuenta, pisando cualquier pausa anterior. Y
- * no hay forma de saber cuando termina: es otro dominio.
- *
- * Asi que se insiste durante ocho segundos. Son cinco mensajes en total,
- * que no cuesta nada, y cubren desde un reproductor que arranca al vuelo
- * hasta uno que tarda con mala conexion.
- */
-const INSISTIR = [0, 800, 2000, 4000, 8000];
-
-/**
- * Le pide al reproductor de Vimeo que pare, varias veces.
- *
- * Se para y no se esconde: un video parado deja su ultimo fotograma
- * pintado, asi que el fondo se sigue viendo igual y deja de costar.
- */
-function pedirPausaAlMarco(m: HTMLIFrameElement) {
-  const pedir = () => {
-    /* Si el modo se apago mientras tanto -la maquina mejoro, o se forzo a
-       mano- no hay que pararle el video a nadie. */
-    if (!document.documentElement.hasAttribute('data-llano')) return;
-    try {
-      m.contentWindow?.postMessage('{"method":"pause"}', '*');
-    } catch {
-      /* Otro dominio puede negarse. Entonces sigue sonando y ya esta. */
-    }
-  };
-  for (const cuando of INSISTIR) {
-    if (cuando === 0) pedir();
-    else setTimeout(pedir, cuando);
-  }
-  m.addEventListener('load', pedir, { once: true });
-}
-
 function aplicar(llano: boolean) {
   const raiz = document.documentElement;
   if (llano) raiz.setAttribute('data-llano', '');
   else raiz.removeAttribute('data-llano');
-  if (llano) pararVideos();
-}
-
-/**
- * Y los que lleguen despues.
- *
- * El fondo lo pinta React cuando el perfil termina de cargar, o sea despues
- * de que esto se decida. En vez de vigilar el documento —que cuesta en cada
- * cambio— se escucha el momento exacto en que un video EMPIEZA, que es la
- * unica vez que importa.
- *
- * En captura porque `play` no burbujea; asi llega igual desde el documento.
- */
-function vigilarVideosNuevos() {
-  document.addEventListener(
-    'play',
-    (e) => {
-      if (!document.documentElement.hasAttribute('data-llano')) return;
-      const v = e.target;
-      if (v instanceof HTMLVideoElement) v.pause();
-    },
-    true,
-  );
-
-  /* El de Vimeo va en un marco de otro dominio y no lanza `play` aqui: no
-     hay ningun evento que escuchar. Y llega TARDE —lo pinta React cuando el
-     perfil termina de cargar, despues de que esto se decida— asi que mirar
-     una sola vez no sirve.
-     Se vigila el documento, pero solo mientras el modo esta encendido: en
-     una maquina que va bien esto no llega a mirar ni un nodo. */
-  /* Y por si tarda mas de los ocho segundos que se insiste: en cuanto el
-     reproductor de Vimeo diga ALGO —lo que sea— es que ya esta vivo y
-     escuchando, que es justo lo que no se puede saber de otra forma.
-     Se comprueba el origen: cualquier pagina puede mandar un mensaje a esta
-     ventana, y no se le va a contestar a cualquiera. */
-  window.addEventListener('message', (e) => {
-    if (e.origin !== 'https://player.vimeo.com') return;
-    if (!document.documentElement.hasAttribute('data-llano')) return;
-    try {
-      (e.source as Window | null)?.postMessage('{"method":"pause"}', e.origin);
-    } catch {
-      /* Si la ventana ya no existe, no hay nada que parar. */
-    }
-  });
-
-  if (!('MutationObserver' in window) || !document.body) return;
-  new MutationObserver((cambios) => {
-    if (!document.documentElement.hasAttribute('data-llano')) return;
-    for (const c of cambios) {
-      for (const nodo of c.addedNodes) {
-        if (!(nodo instanceof Element)) continue;
-        if (nodo.matches?.('iframe.pf-bgvideo')) {
-          pedirPausaAlMarco(nodo as HTMLIFrameElement);
-        }
-        nodo.querySelectorAll?.<HTMLIFrameElement>('iframe.pf-bgvideo')
-          .forEach(pedirPausaAlMarco);
-      }
-    }
-  }).observe(document.body, { childList: true, subtree: true });
 }
 
 /**
@@ -313,8 +179,6 @@ function forzado(): boolean | null {
  */
 export function vigilarFluidez() {
   if (typeof window === 'undefined' || !('requestAnimationFrame' in window)) return;
-
-  vigilarVideosNuevos();
 
   const aMano = forzado();
   if (aMano !== null) {
