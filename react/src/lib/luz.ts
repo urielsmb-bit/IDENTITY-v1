@@ -64,6 +64,8 @@ let actY = 0.26;
 let apuntados = 0;
 let latido = 0;
 let ultimoCuadro = 0;
+/** El temporizador de la espera entre pasos, si lo hay. */
+let dormido = 0;
 let ultimoPuntero = -1e9;
 /** Lo último que se escribió, para no escribir dos veces lo mismo. */
 let escritoX = NaN;
@@ -142,7 +144,7 @@ function alMover(e: PointerEvent) {
   /* Y si se habia dormido, se la despierta. Sin esto, mover el raton
      actualizaria el objetivo y no lo pintaria nadie: la luz se quedaria
      clavada para siempre en cuanto parara una vez. */
-  if (!latido && apuntados > 0 && !QUIETO) latido = requestAnimationFrame(cuadro);
+  if (!latido && !dormido && apuntados > 0 && !QUIETO) latido = requestAnimationFrame(cuadro);
 }
 
 /**
@@ -190,8 +192,16 @@ function cuadro(t: number) {
      jamás aunque nadie tocara el ratón y la luz llevara minutos quieta.
      Ahora el siguiente fotograma se pide al final, y solo si queda algo que
      mover. */
-  if (t - ultimoCuadro < paso()) {
-    latido = requestAnimationFrame(cuadro);
+  const falta = paso() - (t - ultimoCuadro);
+  if (falta > 0) {
+    /* Igual que en las particulas: se espera lo que falta en vez de pedir
+       otro fotograma para descartarlo. A treinta por segundo en una
+       pantalla de sesenta, eso es la mitad de los despertares. */
+    latido = 0;
+    dormido = window.setTimeout(() => {
+      dormido = 0;
+      latido = requestAnimationFrame(cuadro);
+    }, Math.max(1, falta));
     return;
   }
   ultimoCuadro = t;
@@ -229,6 +239,7 @@ function arrancar() {
 }
 
 function parar() {
+  if (dormido) { clearTimeout(dormido); dormido = 0; }
   if (!latido) return;
   cancelAnimationFrame(latido);
   latido = 0;

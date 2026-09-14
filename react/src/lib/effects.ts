@@ -218,12 +218,24 @@ export function particles(canvas: HTMLCanvasElement | null, type: string, color:
    */
   let ultimoPintado = 0;
 
+  let espera = 0;
+
   function draw(ahora?: number) {
     if (!alive) return;
     const hueco = cadaCuanto();
     const t2 = typeof ahora === 'number' ? ahora : performance.now();
     if (hueco > 0 && t2 - ultimoPintado < hueco) {
-      rAF = raf(draw);
+      /* Se DUERME lo que falta en vez de pedir otro fotograma.
+         La primera version hacía `raf(draw)` aquí, y se midió: el trabajo
+         bajaba pero las llamadas no. Seguían siendo sesenta despertares por
+         segundo para descartar dos de cada tres, o sea el navegador
+         levantándose a comprobar la hora. Con un temporizador, entre
+         pintado y pintado la máquina no hace nada en absoluto, que es de lo
+         que se trataba. */
+      espera = window.setTimeout(() => {
+        espera = 0;
+        rAF = raf(draw);
+      }, Math.max(1, hueco - (t2 - ultimoPintado)));
       return;
     }
     ultimoPintado = t2;
@@ -379,6 +391,10 @@ export function particles(canvas: HTMLCanvasElement | null, type: string, color:
   return register(() => {
     alive = false;
     cancelAnimationFrame(rAF);
+    /* El temporizador tambien: si no, una espera pendiente vuelve a pedir
+       un fotograma DESPUES de haber soltado el efecto, y eso son particulas
+       dibujandose sobre un lienzo que ya no deberia existir. */
+    if (espera) clearTimeout(espera);
     soltarAviso();
     if (ro) ro.disconnect();
     else if (typeof window !== 'undefined') window.removeEventListener('resize', resize);
