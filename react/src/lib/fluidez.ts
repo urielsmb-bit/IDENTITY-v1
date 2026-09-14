@@ -55,13 +55,16 @@
 const MUESTRAS = 50;
 
 /**
- * Se marca cuando la mediana tarda mas del DOBLE de lo que deberia, o sea
- * la mitad del ritmo de la pantalla. A 60 Hz eso es bajar de 30.
+ * Se marca cuando la mediana tarda vez y media lo que deberia. A 60 Hz eso
+ * es bajar de 40.
  *
- * Es un liston deliberadamente bajo. Entre 30 y 60 se nota pero se usa; por
- * debajo de 30 ya no es «va un poco lento», es que arrastra.
+ * Empezo en el doble —bajar de 30— por miedo a quitarle los efectos a quien
+ * podia verlos. Fue un error de calculo: a 40 fps ya se ve a tirones, y con
+ * ese liston quien iba entre 30 y 40 se quedaba con la pagina entera
+ * encima y sin que nada le ayudara. A un tercio de fotogramas perdidos ya
+ * no se disimula.
  */
-const FACTOR = 2;
+const FACTOR = 1.5;
 
 /** Cuanto vale el veredicto guardado. Una semana. */
 const CADUCA = 7 * 24 * 60 * 60 * 1000;
@@ -92,10 +95,106 @@ function guardar(llano: boolean) {
   }
 }
 
+/**
+ * Para el video de fondo.
+ *
+ * Es, con diferencia, lo mas caro que puede tener un perfil. Medido en uno
+ * real: 1.402.814 px2 —tres veces la pantalla— con un `transform` encima.
+ * Sin GPU eso es descodificar video Y recomponer millon y medio de pixeles
+ * en cada fotograma del video, por CPU. No hay forma de que eso vaya fino:
+ * no es un efecto que se pueda abaratar, es incompatible con ir fluido.
+ *
+ * Se PARA, no se esconde. Un video parado deja su ultimo fotograma pintado,
+ * asi que el fondo se sigue viendo igual —como una foto— y deja de costar.
+ * Esconderlo dejaria el perfil sin el fondo que su dueño eligio.
+ *
+ * Los de Vimeo van dentro de un `iframe` de otro dominio, donde no se puede
+ * tocar nada... salvo pedirselo por `postMessage`, que es justo para lo que
+ * su reproductor lo tiene. Si no contesta, se queda como estaba: peor no lo
+ * pone.
+ */
+function pararVideos() {
+  for (const v of document.querySelectorAll('video')) {
+    try {
+      v.pause();
+    } catch {
+      /* Un video que aun no puede pararse no es motivo para nada. */
+    }
+  }
+  for (const m of document.querySelectorAll<HTMLIFrameElement>('iframe.pf-bgvideo')) {
+    pedirPausaAlMarco(m);
+  }
+}
+
+/**
+ * Le pide al reproductor de Vimeo que pare.
+ *
+ * Dos veces a proposito. Hay una carrera que no se puede ganar de otra
+ * forma: cuando esto se decide, el reproductor de dentro del marco casi
+ * nunca ha terminado de cargar, y un mensaje que llega antes de tiempo se
+ * pierde sin avisar. Asi que se pide ahora —por si ya estaba listo— y otra
+ * vez cuando el marco termina de cargar.
+ */
+function pedirPausaAlMarco(m: HTMLIFrameElement) {
+  const pedir = () => {
+    try {
+      m.contentWindow?.postMessage('{"method":"pause"}', '*');
+    } catch {
+      /* Otro dominio puede negarse. Entonces sigue sonando y ya esta. */
+    }
+  };
+  pedir();
+  m.addEventListener('load', pedir, { once: true });
+}
+
 function aplicar(llano: boolean) {
   const raiz = document.documentElement;
   if (llano) raiz.setAttribute('data-llano', '');
   else raiz.removeAttribute('data-llano');
+  if (llano) pararVideos();
+}
+
+/**
+ * Y los que lleguen despues.
+ *
+ * El fondo lo pinta React cuando el perfil termina de cargar, o sea despues
+ * de que esto se decida. En vez de vigilar el documento —que cuesta en cada
+ * cambio— se escucha el momento exacto en que un video EMPIEZA, que es la
+ * unica vez que importa.
+ *
+ * En captura porque `play` no burbujea; asi llega igual desde el documento.
+ */
+function vigilarVideosNuevos() {
+  document.addEventListener(
+    'play',
+    (e) => {
+      if (!document.documentElement.hasAttribute('data-llano')) return;
+      const v = e.target;
+      if (v instanceof HTMLVideoElement) v.pause();
+    },
+    true,
+  );
+
+  /* El de Vimeo va en un marco de otro dominio y no lanza `play` aqui: no
+     hay ningun evento que escuchar. Y llega TARDE —lo pinta React cuando el
+     perfil termina de cargar, despues de que esto se decida— asi que mirar
+     una sola vez no sirve.
+     Se vigila el documento, pero solo mientras el modo esta encendido: en
+     una maquina que va bien esto no llega a mirar ni un nodo. */
+  if (!('MutationObserver' in window) || !document.body) return;
+  new MutationObserver((cambios) => {
+    if (!document.documentElement.hasAttribute('data-llano')) return;
+    for (const c of cambios) {
+      for (const nodo of c.addedNodes) {
+        if (!(nodo instanceof Element)) continue;
+        if (nodo.matches?.('iframe.pf-bgvideo')) {
+          pedirPausaAlMarco(nodo as HTMLIFrameElement);
+        }
+        nodo.querySelectorAll?.<HTMLIFrameElement>('iframe.pf-bgvideo')
+          .forEach(pedirPausaAlMarco);
+      }
+    }
+  }).observe(document.body, { childList: true, subtree: true });
 }
 
 /**
@@ -176,6 +275,8 @@ function forzado(): boolean | null {
  */
 export function vigilarFluidez() {
   if (typeof window === 'undefined' || !('requestAnimationFrame' in window)) return;
+
+  vigilarVideosNuevos();
 
   const aMano = forzado();
   if (aMano !== null) {

@@ -68,6 +68,46 @@
   animation: none !important;
 }
 
+/* ---- la escena 3D de la portada ---------------------------
+   El trio de telefonos vive en una escena con `perspective` y
+   `preserve-3d`, y sigue al raton. Con GPU es una transformacion del
+   compositor y sale gratis. Sin ella, cada movimiento del raton repinta
+   208.560 px por CPU —resolviendo perspectiva— y ademas el telefono del
+   centro lleva un `drop-shadow`, que obliga a leer el canal alfa de la
+   imagen entera para dibujar su contorno.
+
+   Se queda la composicion —los tres telefonos siguen colocados como
+   estaban, que es lo que cuenta la portada— y se va el seguimiento. Sin
+   movimiento, la escena se pinta UNA vez y se acabo. */
+:root[data-llano] .trio__escena {
+  transform: none !important;
+  transition: none !important;
+}
+
+/* ---- las sombras de contorno ------------------------------
+   `drop-shadow` no es `box-shadow`: no dibuja un rectangulo, recorre la
+   FORMA del elemento leyendo su transparencia pixel a pixel. En un icono
+   de 20 px da igual; en una imagen que ocupa un cuarto de pantalla, no.
+
+   Solo las grandes y decorativas. Las de los iconos y las insignias se
+   quedan: son pequeñas y ahi la sombra es lo que las separa del fondo. */
+:root[data-llano] .trio__centro img,
+:root[data-llano] .trio__izq,
+:root[data-llano] .trio__der {
+  filter: none !important;
+}
+
+/* ---- la entrada -------------------------------------------
+   Son de una sola vez, pero caen justo cuando la maquina esta mas
+   ocupada: montando la pagina, pidiendo imagenes y resolviendo fuentes.
+   En una maquina que va justa, esa animacion es lo que convierte una
+   carga lenta en una carga a tirones. Aparece de golpe, y ya. */
+:root[data-llano] .demo,
+:root[data-llano] .rise,
+:root[data-llano] .pf-stack {
+  animation: none !important;
+}
+
 /* ---- las sombras grandes ----------------------------------
    Una sombra difuminada se repinta entera cada vez que algo se mueve
    encima. Las de la interfaz se quedan planas; las del perfil no se tocan,

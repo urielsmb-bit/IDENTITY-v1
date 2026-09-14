@@ -124,6 +124,14 @@ function useSigueAlPuntero(caja: React.RefObject<HTMLDivElement | null>) {
     const pedir = () => { if (!pedido) pedido = requestAnimationFrame(pintar); };
 
     const alMover = (e: PointerEvent) => {
+      /* En modo llano no se sigue al raton. El CSS ya deja la escena quieta,
+         pero eso no evita el trabajo de aqui: medir la caja en cada
+         movimiento y escribir variables que nadie lee.
+
+         Se mira aqui y no al montar porque el modo se decide DESPUES, al
+         medir los fotogramas. Leer un atributo es de las cosas mas baratas
+         que hay; `getBoundingClientRect` no, asi que va antes. */
+      if (document.documentElement.hasAttribute('data-llano')) return;
       const r = el.getBoundingClientRect();
       /* De -1 a 1 desde el centro de la caja. */
       const dx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2);
