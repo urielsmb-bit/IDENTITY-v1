@@ -302,21 +302,20 @@
    dedo y un portatil de 1024 con un raton, y necesitan cosas distintas.
    ============================================================ */
 @media (pointer:coarse){
-  /* Los 16px al escribir -lo que evita que Safari haga zoom- ESTABAN AQUI,
-     y se han ido a `base.css`. Esta hoja solo la carga el panel, asi que la
-     regla nunca llegaba a /entrar: el campo del correo se quedaba en el
-     tamano de fabrica y el iPhone daba el salto de escala al tocarlo, en el
-     primer formulario que ve alguien que todavia no tiene cuenta.
-     Lo de abajo si es del panel y se queda. */
+  /* La regla que ponia los campos a 16px -para que Safari no haga zoom- se
+     ha ido a `base.css`, junto al resto del bloque de dedos. Aqui solo
+     llegaba al panel, y quien mas la necesita es /entrar.
+
+     Ojo si alguien la vuelve a tocar: tiene que nombrar las CLASES, no solo
+     `input`. `.inp` es (0,1,0) y le gana a `input` (0,0,1), asi que con la
+     regla puesta solo sobre el elemento el campo se queda en 15px. */
 
   /* 44 px es lo que mide la yema de un dedo. Por debajo de eso no es que
      se falle a veces: es que se falla y se pulsa lo de al lado.
 
      Solo controles con nombre propio -no un `a` cualquiera-: un enlace
      dentro de un parrafo con 44 px de alto parte el texto. */
-  .btn, .tpl__tab, .tpl__ver, .tpl__fav,
-  .pza__cfg, .pza__ojo, .nav__menu a, .nav__menu button,
-  .prog__it{
+  .pza__cfg, .pza__ojo, .prog__it{
     min-height:44px;
   }
 
@@ -331,9 +330,8 @@
     padding:14px 12px;
     margin:-14px -12px;
   }
-  .btn{ display:inline-flex; align-items:center; justify-content:center; }
 
   /* Los cuadrados se quedan cuadrados: si solo crecen de alto, un boton
      de icono sale alargado. */
-  .tpl__ver, .tpl__fav, .pza__cfg{ min-width:44px; }
+  .pza__cfg{ min-width:44px; }
 }

@@ -449,26 +449,6 @@ h1,h2,h3,h4{ margin:0; font-weight:600; letter-spacing:-.03em; line-height:1.1; 
              0 0 0 3px var(--brand-soft);
 }
 
-/* ---- dieciseis pixeles al escribir, ni uno menos ------------
-   Safari en iPhone hace zoom a la pagina cuando enfocas un campo de menos
-   de 16px. Esta regla estaba en `cuenta.css`, que solo carga el panel: en
-   /entrar el campo del correo se quedaba en el tamano de fabrica y el
-   telefono daba el salto de escala al tocarlo, en el primer formulario que
-   ve alguien que todavia no tiene cuenta.
-
-   `pointer:coarse` y no un ancho: lo que decide no es el tamano de la
-   pantalla sino con QUE se apunta. Y se apunta a cualquier campo en el que
-   se escriba —que es la condicion que dispara el zoom— dejando fuera los
-   que no llevan teclado, donde 16px no significa nada y ademas les
-   cambiaria el tamano al control. */
-@media (pointer:coarse){
-  .inp, .sel, .ta,
-  textarea, select,
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]){
-    font-size:16px;
-  }
-}
-
 /* ---- superficies ------------------------------------------ */
 .card{
   background:var(--surface);
@@ -628,6 +608,23 @@ img, video, canvas, svg, iframe{ max-width:100%; }
      letra. Se le da alto sin moverlo de sitio. */
   .nav__mark{ display:inline-flex; align-items:center; min-height:44px; }
 
+  /* Los otros controles con nombre propio. `.btn` ya esta arriba; estos no
+     son botones sino pestanas y botones de icono, y ninguno llegaba a 44.
+     Vivian en `cuenta.css`, que solo carga el panel, asi que en /plantillas
+     -que es publica- no se aplicaban: las pestanas median 34 y la estrella
+     de favorita 30x30, que con el dedo se falla.
+
+     Solo controles con nombre propio -no un `a` cualquiera-: un enlace
+     dentro de un parrafo con 44 px de alto parte el texto. Los del panel
+     -.pza__cfg, .pza__ojo, .prog__it, .drop__quitar- se quedan en
+     `cuenta.css`, que es donde existen. */
+  .tpl__tab, .tpl__ver, .tpl__fav,
+  .nav__menu a, .nav__menu button{ min-height:44px; }
+
+  /* Los cuadrados se quedan cuadrados: si solo crecen de alto, un boton
+     de icono sale alargado. */
+  .tpl__ver, .tpl__fav{ min-width:44px; }
+
   /* Los botones de 1 a 10 se tratan en profile.css, no aqui: esa
      hoja se carga DESPUES y su `min-width:34px` ganaba a esta por
      ser la ultima, no por ser mas especifica. */
@@ -638,5 +635,11 @@ img, video, canvas, svg, iframe{ max-width:100%; }
   /* Los 16px NO son un descuido de la escala: Safari en iOS hace zoom
      sobre cualquier campo con texto menor de 16px al enfocarlo, y de ese
      zoom no se vuelve solo. Es una defensa, no un tamaño. */
-  input, select, textarea{ min-height:44px; font-size:max(16px, 1em); }
+  /* Y las CLASES ademas de los elementos, que no es lo mismo: `.inp` es
+     (0,1,0) y `input` es (0,0,1), asi que `.inp{font-size:var(--t3)}` -15px-
+     le gana a la regla de aqui abajo por especificidad; el `@media` no
+     puntua. Sin esta linea el campo del correo se queda en 15 y el iPhone
+     hace zoom al tocarlo. Medido: 15px antes de anadirla, 16 despues. */
+  input, select, textarea,
+  .inp, .sel, .ta{ min-height:44px; font-size:max(16px, 1em); }
 }
