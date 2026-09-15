@@ -105,6 +105,71 @@ const CALMA = 2;
 const CLAVE = 'sharee:calidad';
 const CADUCA = 7 * 24 * 60 * 60 * 1000;
 
+/**
+ * SI EL NAVEGADOR ESTA PINTANDO POR SOFTWARE.
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ * POR QUE NO BASTA CON MEDIR FOTOGRAMAS
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * Medir dice si AHORA MISMO va lento. No dice por que. Y una maquina sin
+ * aceleracion por hardware puede ir a cuarenta y cinco en una pagina
+ * ligera y quedarse clasificada como gama media —lo cual es cierto— hasta
+ * que abre un perfil con video y se hunde.
+ *
+ * Esto es otra pregunta, y tiene respuesta directa: cuando Chrome no puede
+ * usar la tarjeta grafica, dibuja con un rasterizador por software y lo
+ * DICE. SwiftShader es el de Chrome; llvmpipe el de Linux; «Microsoft
+ * Basic Render Driver» el de Windows sin controlador.
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ * LO QUE CUESTA PREGUNTARLO
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * Crear un contexto WebGL de un pixel y soltarlo: un par de milisegundos,
+ * UNA vez en toda la vida de la pagina. Se pregunta tarde -cuando ya hay
+ * algo que decidir- y no en el arranque, que es el momento que no se puede
+ * gastar.
+ *
+ * Y se pide la extension de depuracion, que algunos navegadores esconden
+ * por huella digital. Si no esta, se contesta «no lo se» y manda la
+ * medida: es mejor no saberlo que inventarselo.
+ */
+let sinGPUCache: boolean | null = null;
+
+export function sinAceleracion(): boolean {
+  if (sinGPUCache !== null) return sinGPUCache;
+  sinGPUCache = false;
+  try {
+    const lienzo = document.createElement('canvas');
+    lienzo.width = 1;
+    lienzo.height = 1;
+    const gl = (lienzo.getContext('webgl') ||
+      lienzo.getContext('experimental-webgl')) as WebGLRenderingContext | null;
+    if (!gl) {
+      /* Ni WebGL hay. Eso ya es no tener aceleracion de ninguna clase. */
+      sinGPUCache = true;
+      return true;
+    }
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    if (ext) {
+      const quien = String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '').toLowerCase();
+      sinGPUCache =
+        quien.includes('swiftshader') ||
+        quien.includes('llvmpipe') ||
+        quien.includes('software') ||
+        quien.includes('basic render') ||
+        quien.includes('microsoft basic');
+    }
+    /* El contexto se suelta a mano: sin esto se queda vivo hasta que pase el
+       recolector, y un contexto WebGL retiene memoria de video. */
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+  } catch {
+    /* Cualquier problema: no se sabe, y manda la medida. */
+  }
+  return sinGPUCache;
+}
+
 function menosMovimiento(): boolean {
   return (
     typeof window !== 'undefined' &&
@@ -311,6 +376,21 @@ export function unFotograma(ahora: number) {
   }
 }
 
+/**
+ * Se pinta por software: se baja al suelo y no se sube nunca mas.
+ *
+ * No se sube porque el problema no es que la maquina este ocupada ahora
+ * -eso pasa y se le pasa- sino que no tiene con que componer capas, y eso
+ * no va a cambiar mientras la pagina este abierta. Si se dejara medir, una
+ * pagina ligera daria sesenta fotogramas, subiria a alto, y se hundiria al
+ * abrir un perfil con video: justo el vaiven que todo esto evita.
+ */
+function aSoftware() {
+  fijado = true;
+  poner(BAJA, false);
+  document.documentElement.setAttribute('data-calidad', NOMBRES[BAJA]);
+}
+
 /** Arranca. Se llama una vez, lo antes posible. */
 export function arrancarCalidad() {
   if (typeof document === 'undefined') return;
@@ -337,6 +417,33 @@ export function arrancarCalidad() {
   /* Lo de la última visita evita que quien ya estuvo aquí pague otra vez
      los primeros segundos con la calidad equivocada. Si se equivoca, la
      medida lo corrige en dos ventanas. */
+  if (sinAceleracion()) {
+    aSoftware();
+    return;
+  }
+
+  /* SEGUNDA SEÑAL, POR SI LA PRIMERA VIENE FALSEADA.
+     El nombre del rasterizador vive detras de una extension que algunos
+     navegadores esconden a proposito -Brave la falsea con su proteccion
+     contra la huella digital-, asi que preguntar solo por ahi deja fuera
+     justo a parte de quien mas lo necesita.
+     `navigator.gpu.requestAdapter()` es otra puerta a lo mismo: sin
+     aceleracion no hay adaptador que dar y devuelve nulo. Pasa que es
+     asincrono, asi que no puede decidir el arranque —por eso va aparte y
+     llega cuando llega—. En la consola de un equipo sin aceleracion esto
+     se ve como «No available adapters». */
+  const gpu = (navigator as Navigator & { gpu?: { requestAdapter(): Promise<unknown> } }).gpu;
+  if (gpu?.requestAdapter) {
+    void gpu
+      .requestAdapter()
+      .then((a) => {
+        if (!a && !fijado) aSoftware();
+      })
+      .catch(() => {
+        /* Que falle preguntando no prueba nada: manda la medida. */
+      });
+  }
+
   const inicial = recordado() ?? conjetura();
   nivelActual = inicial === ALTA ? MEDIA : inicial; /* ver abajo */
   /* Se entra UN escalón por debajo de lo que se cree, nunca en alta de
