@@ -1,4 +1,4 @@
-import { cadaCuanto, esBaja } from './calidad';
+import { esAlta, esBaja } from './calidad';
 
 /**
  * La luz.
@@ -169,7 +169,12 @@ const QUIETA = 0.0001;
  * calidad baja se espacia todavía más, porque el presupuesto manda.
  */
 function paso(): number {
-  return Math.max(33, cadaCuanto());
+  /* Treinta por segundo en alta; dieciocho en media.
+     El numero no sale de lo que se ve sino de lo que cuesta: cada paso
+     rehace la cadena de filtro SVG entera por CPU. Y se puede bajar tanto
+     porque la luz persigue con inercia -un 7,5 % de lo que le falta- asi
+     que el ojo lee el peso del movimiento, no los fotogramas. */
+  return esAlta() ? 33 : 55;
 }
 
 /**
@@ -186,6 +191,11 @@ function puedeOrbitar(): boolean {
 }
 
 function cuadro(t: number) {
+  /* Si el presupuesto se ha caido al suelo con la pagina ya abierta, la luz
+     se para donde este. Se mira aqui y no solo al apuntarse porque el nivel
+     se decide midiendo, o sea despues. */
+  if (esBaja()) { latido = 0; return; }
+
   /* Pedir el siguiente fotograma LO PRIMERO -como estaba- convertía esto en
      un bucle permanente a 60 Hz que trabajaba a 30: despertaba al navegador
      sesenta veces por segundo para no hacer nada en la mitad, y no paraba
@@ -265,7 +275,26 @@ function alCambiarVisibilidad() {
  * la luz se mueve; cuando se va el último, se apaga el bucle.
  */
 export function usarLuz(): () => void {
-  if (QUIETO) {
+  /**
+   * Con «menos movimiento» o con el presupuesto en el suelo, la luz se
+   * COLOCA y no se mueve nunca más.
+   *
+   * Y esto no es un ahorro pequeño escondido en uno grande: es el ahorro
+   * grande. Los efectos de nombre son cadenas de filtro SVG —turbulencia,
+   * desplazamiento, iluminación difusa y especular, desenfoque: 57
+   * primitivas entre todos— y Chrome NO las acelera por tarjeta gráfica,
+   * las calcula la CPU píxel a píxel.
+   *
+   * Mientras la luz se mueve, esa cadena entera se vuelve a calcular en
+   * cada paso: treinta veces por segundo. Quieta, se calcula UNA vez y el
+   * navegador se la guarda.
+   *
+   * Lo que se pierde: que el brillo te siga. Lo que se queda: el relieve,
+   * que es lo que hace que unas letras parezcan hielo o metal en vez de
+   * texto pintado. La diferencia entre las dos cosas es enorme, y no es la
+   * que se pierde.
+   */
+  if (QUIETO || esBaja()) {
     /* Quieta, pero PUESTA. Sin esto la luz se queda en el cero por defecto
        de la `<fePointLight>` —la esquina— y el material sale plano y feo
        justo para quien ha pedido que nada se mueva. */
