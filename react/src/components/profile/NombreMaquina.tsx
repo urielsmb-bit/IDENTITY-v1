@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 /**
  * El nombre escribiendose LETRA A LETRA.
@@ -63,9 +63,54 @@ const QUIETO =
   typeof window.matchMedia === 'function' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/**
+ * Si la maquina de escribir tiene que estar trabajando ahora mismo.
+ *
+ * Escribe una letra, borra otra, y vuelve a empezar SIN PARAR. Y cada letra
+ * no es una animacion de CSS: es un cambio de estado de React, o sea
+ * reconciliacion, cambio en el DOM y repintado del nombre. Para «Arlette»
+ * son dieciocho por vuelta, y las vueltas no se acaban nunca.
+ *
+ * Eso estaba pasando aunque la pestaña estuviera de fondo y aunque el
+ * nombre no se viera en pantalla. Aqui se para en los dos casos.
+ *
+ * Y no cambia nada de lo que se ve: mientras el nombre esta delante de ti,
+ * la maquina escribe igual que antes. Lo unico que desaparece es el trabajo
+ * que nadie estaba mirando.
+ */
+function useCuandoSeVe(ref: React.RefObject<HTMLElement | null>): boolean {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const el = ref.current;
+    const alCambiar = () => setVisible(!document.hidden);
+    document.addEventListener('visibilitychange', alCambiar);
+
+    let obs: IntersectionObserver | null = null;
+    if (el && typeof IntersectionObserver !== 'undefined') {
+      obs = new IntersectionObserver(
+        ([e]) => setVisible(!document.hidden && !!e?.isIntersecting),
+        /* Un pelin de margen para que no se apague justo al borde y se note
+           el arranque al volver a entrar. */
+        { rootMargin: '80px' },
+      );
+      obs.observe(el);
+    }
+    return () => {
+      document.removeEventListener('visibilitychange', alCambiar);
+      obs?.disconnect();
+    };
+  }, [ref]);
+
+  return visible;
+}
+
 export function NombreMaquina({ texto }: { texto: string }) {
   const letras = useMemo(() => enLetras(texto), [texto]);
   const total = letras.length;
+
+  const caja = useRef<HTMLSpanElement>(null);
+  const seVe = useCuandoSeVe(caja);
 
   const [puestas, setPuestas] = useState(0);
   const [borrando, setBorrando] = useState(false);
@@ -79,7 +124,7 @@ export function NombreMaquina({ texto }: { texto: string }) {
   }, [texto]);
 
   useEffect(() => {
-    if (QUIETO) return;
+    if (QUIETO || !seVe) return;
     let t: number;
     if (!borrando) {
       t = window.setTimeout(
@@ -93,12 +138,12 @@ export function NombreMaquina({ texto }: { texto: string }) {
       );
     }
     return () => window.clearTimeout(t);
-  }, [puestas, borrando, total]);
+  }, [puestas, borrando, total, seVe]);
 
   const visibles = QUIETO ? total : puestas;
 
   return (
-    <span className="pf-tw">
+    <span className="pf-tw" ref={caja}>
       {/* EL HUECO. Es el nombre entero, invisible pero ocupando su sitio, y
           encima va el texto escrito hasta ahora en posicion absoluta.
 
