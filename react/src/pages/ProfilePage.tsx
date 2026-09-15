@@ -45,7 +45,7 @@ import { tituloTarjeta } from '@/lib/tarjeta';
  * adelantar. De nueve perfiles mirados, seis tenían fondo en vídeo: la
  * apuesta sale a cuenta.
  */
-function usarConexionConVimeo() {
+function useConexionConVimeo() {
   useEffect(() => {
     const ya = document.querySelector('link[data-vimeo-pre]');
     if (ya) return;
@@ -64,7 +64,7 @@ function usarConexionConVimeo() {
 export default function ProfilePage() {
   const { username } = useParams<{ username: string }>();
   const cleanUsername = username?.toLowerCase().trim();
-  usarConexionConVimeo();
+  useConexionConVimeo();
   const { profile, esperando, sinRed, error, refetch } = useProfile(cleanUsername);
   /* «Este perfil es mío» pide las dos cosas.
      `mineName` vive en el navegador y sólo lo escribe quien ha entrado de
