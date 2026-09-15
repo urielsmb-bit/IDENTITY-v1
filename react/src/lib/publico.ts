@@ -185,6 +185,75 @@ export async function cargarPerfil(username: string, señal?: AbortSignal) {
   }
 }
 
+/**
+ * La forma que tiene un nombre de usuario aqui. La misma que comprueba
+ * `nombre_disponible` dentro de la base, escrita otra vez a este lado para
+ * poder distinguir «no existe» de «no puede existir» sin salir a la red.
+ */
+const FORMA_DEL_NOMBRE = /^[a-zA-Z0-9_]{3,20}$/;
+
+/**
+ * Lo que se sabe de un nombre cuando el perfil no ha llegado.
+ *
+ *   libre        nadie lo tiene. Se puede reclamar.
+ *   ocupado      alguien lo tiene, o esta reservado. NO se puede reclamar.
+ *   imposible    no tiene forma de nombre de usuario (corto, largo, con
+ *                caracteres raros). No existe y no podria existir.
+ *   no-se-sabe   no se pudo preguntar.
+ */
+export type EstadoDelNombre = 'libre' | 'ocupado' | 'imposible' | 'no-se-sabe';
+
+/**
+ * ¿Hay alguien detras de este nombre?
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ * PARA QUE SIRVE ESTO
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * `cargarPerfil` devuelve `null` en dos situaciones que NO son la misma y
+ * que hasta ahora se pintaban igual:
+ *
+ *   a) el servidor contesto y no hay nadie con ese nombre
+ *   b) el servidor contesto una lista vacia por otro motivo
+ *
+ * (b) parece rebuscado y ha pasado tres veces: basta con que la vista
+ * `perfiles_publicos` se quede muda —le ocurre cada vez que alguien la
+ * vuelve a crear con `security_invoker`— para que TODOS los perfiles
+ * entren por aqui. Y la pagina de 404 no se limitaba a equivocarse: le
+ * ofrecia a quien abriera el enlace RECLAMAR el nombre de su dueño.
+ *
+ * Asi que antes de decir «este perfil no existe» se pregunta. La respuesta
+ * viene de `nombre_disponible`, que mira la tabla `perfiles` entera —no la
+ * vista— y por eso sabe la verdad aunque la vista este rota. Incluye a los
+ * perfiles ocultos y baneados, que tampoco estan libres.
+ *
+ * Solo se llama cuando no ha llegado perfil, que en un dia normal es un
+ * enlace mal escrito. No esta en el camino de nadie que abra un perfil que
+ * funciona.
+ */
+export async function estadoDelNombre(username: string): Promise<EstadoDelNombre> {
+  if (!FORMA_DEL_NOMBRE.test(username)) return 'imposible';
+  if (!hayBackend()) return 'no-se-sabe';
+
+  const base = CONFIG.SUPABASE_URL.replace(/\/+$/, '');
+  try {
+    const r = await fetch(`${base}/rest/v1/rpc/nombre_disponible`, {
+      method: 'POST',
+      headers: { ...cabeceras(), 'content-type': 'application/json' },
+      body: JSON.stringify({ p_nombre: username }),
+    });
+    if (!r.ok) return 'no-se-sabe';
+    const libre: unknown = await r.json();
+    /* Solo un booleano cuenta. Cualquier otra cosa —un error de PostgREST
+       con 200, una respuesta vacia— es no saberlo, y no saberlo nunca debe
+       leerse como «esta libre»: eso es justo lo que hay que dejar de hacer. */
+    if (typeof libre !== 'boolean') return 'no-se-sabe';
+    return libre ? 'libre' : 'ocupado';
+  } catch {
+    return 'no-se-sabe';
+  }
+}
+
 /** Las cifras y las insignias concedidas de alguien, por su nombre. */
 export async function insigniasDe(username: string) {
   const vacio = { vistas: 0, concedidas: [] as string[], caducaPlan: null as string | null };

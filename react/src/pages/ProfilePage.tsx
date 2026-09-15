@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useProfile } from '@/hooks/useProfile';
+import { useProfile, useEstadoDelNombre } from '@/hooks/useProfile';
 import { useProfileStore } from '@/stores/profileStore';
 import { useAuthStore } from '@/stores/authStore';
 import { ProfileView } from '@/components/profile/ProfileView';
@@ -83,6 +83,13 @@ export default function ProfilePage() {
      por eso volvia a preguntarle al servidor unas cifras que ya tenia. */
   const { ganadas: insignias } = useInsignias(profile);
 
+  /* No ha llegado perfil, y NO es un fallo de red ni una espera: el
+     servidor contesto y vino vacio. Es el unico caso en el que hay que
+     salir a preguntar quien es el dueño del nombre, y por eso se calcula
+     aqui y no dentro del gancho. */
+  const faltaPerfil = !profile && !esperando && !error && !sinRed;
+  const nombre = useEstadoDelNombre(cleanUsername, faltaPerfil);
+
   /* El mismo titulo que escribe `api/perfil.ts` en el servidor para la
      tarjeta de Discord, de la misma funcion. Llegando directo ya venia
      puesto; llegando desde el top o desde Descubrir, la pestana se
@@ -114,6 +121,14 @@ export default function ProfilePage() {
     return <div className="cargando" aria-busy="true" />;
   }
 
+  /* Y se espera tambien a la segunda opinion. Es una peticion pequeña y
+     solo ocurre cuando ya no hay nada que enseñar, asi que no retrasa
+     ningun perfil; lo que evita es el parpadeo de «404 — Reclamar» antes
+     de saber si el nombre tiene dueño. */
+  if (faltaPerfil && cleanUsername && nombre === undefined) {
+    return <div className="cargando" aria-busy="true" />;
+  }
+
   /* Un fallo de red NO es un perfil que no existe.
      Antes los dos caminos acababan en el mismo 404: si Supabase se caia,
      o si a alguien se le iba la conexion, su propia pagina le decia «este
@@ -123,14 +138,20 @@ export default function ProfilePage() {
 
      El 404 de abajo se reserva para el unico caso en que se puede afirmar:
      el servidor contesto y no hay nadie con ese nombre. */
-  if (!profile && (error || sinRed)) {
+  /* Tercer motivo para esta pantalla, ademas del error y la falta de red:
+     la lectura vino vacia PERO el nombre tiene dueño. Entonces el perfil
+     existe y lo que ha fallado es leerlo — que es un problema nuestro, no
+     una pagina que no esta. */
+  if (!profile && (error || sinRed || nombre === 'ocupado')) {
     return (
       <section className="pf-404" style={{ textAlign: 'center', padding: '120px 20px' }}>
         <h1 style={{ fontSize: 'var(--t6)', marginBottom: '16px' }}>No se pudo cargar</h1>
         <p style={{ fontSize: 'var(--t4)', color: 'var(--text-muted, #888)', marginBottom: '32px' }}>
           {sinRed
             ? 'Este aparato no tiene conexión ahora mismo. En cuanto vuelva, se carga solo.'
-            : 'No hemos podido preguntar por este perfil. Suele ser la conexión.'}
+            : nombre === 'ocupado'
+              ? `Esta página existe: @${cleanUsername} tiene dueño. Lo que no hemos podido es leerla. Vuelve a probar en un momento.`
+              : 'No hemos podido preguntar por este perfil. Suele ser la conexión.'}
         </p>
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button type="button" className="btn btn--primary" onClick={() => void refetch()}>
@@ -144,20 +165,54 @@ export default function ProfilePage() {
     );
   }
 
+  /**
+   * Aqui SI se puede decir que no hay nadie.
+   *
+   * «Reclamar» sale unicamente con un `libre` en la mano — o sea, cuando
+   * `nombre_disponible` ha dicho que si, mirando la tabla de perfiles y no
+   * la vista publica. Si no se pudo preguntar, no se ofrece: equivocarse
+   * hacia el lado de ofrecer el nombre de alguien es mucho peor que
+   * quedarse corto, porque quien abre ese enlace suele ser justo la
+   * persona a la que se lo han pasado.
+   */
   if (!profile) {
+    const esImposible = nombre === 'imposible';
+    const sePuedeReclamar = nombre === 'libre';
     return (
       <section className="pf-404" style={{ textAlign: 'center', padding: '120px 20px' }}>
         <h1 style={{ fontSize: 'var(--tf-page)', marginBottom: '16px' }}>404</h1>
         <p style={{ fontSize: 'var(--t4)', color: 'var(--text-muted, #888)', marginBottom: '32px' }}>
-          El perfil <strong>@{cleanUsername}</strong> no existe o no es público todavía.
+          {esImposible ? (
+            <>
+              «{cleanUsername}» no es un nombre de sharee. Son de 3 a 20 letras,
+              números o guiones bajos.
+            </>
+          ) : sePuedeReclamar ? (
+            <>
+              El perfil <strong>@{cleanUsername}</strong> no existe todavía. Está libre.
+            </>
+          ) : (
+            <>
+              No hemos encontrado el perfil <strong>@{cleanUsername}</strong>.
+            </>
+          )}
         </p>
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link to="/" className="btn btn--quiet">
             Ir al inicio
           </Link>
-          <Link to="/dashboard" className="btn btn--primary">
-            Reclamar @{cleanUsername}
-          </Link>
+          {sePuedeReclamar ? (
+            <Link to="/dashboard" className="btn btn--primary">
+              Reclamar @{cleanUsername}
+            </Link>
+          ) : esImposible ? null : (
+            /* Ni reclamar ni afirmar que no existe: no se ha podido
+               preguntar. Lo unico honesto que se puede ofrecer es
+               intentarlo otra vez. */
+            <button type="button" className="btn btn--primary" onClick={() => void refetch()}>
+              Volver a probar
+            </button>
+          )}
         </div>
       </section>
     );

@@ -424,6 +424,34 @@ with comprobaciones as (
       and not has_function_privilege(
            'authenticated', 'public.registrar_vista(citext, text, text)', 'EXECUTE')
       then 'OK' else 'MAL: se pueden inventar visitas desde el navegador' end
+
+  -- ============================================================
+  -- 0027 · la vista de la que cuelgan TODOS los enlaces
+  --
+  -- Las dos de arriba (39 y 40) miran `descubrir` e `insignias_de_perfil`
+  -- porque a esas dos ya les habia pasado. A la que faltaba mirar era a
+  -- esta, y es la que mas duele: si se queda muda, cada perfil de sharee
+  -- contesta «404, reclama este nombre» a quien abra su enlace.
+  -- ============================================================
+
+  union all
+  select 49, 'El perfil publico no depende de los permisos de quien lo pide',
+    case when coalesce(
+      (select 'si' from pg_class c
+       join pg_namespace n on n.oid=c.relnamespace
+       where n.nspname='public' and c.relname='perfiles_publicos'
+         and array_to_string(coalesce(c.reloptions,'{}'), ',') like '%security_invoker=true%'),
+      'no') = 'no' then 'OK'
+    else 'MAL: TODOS los enlaces contestaran 404 a quien no tenga sesion' end
+
+  union all
+  -- La comprobacion que de verdad importa: que devuelva filas. Lo otro
+  -- mira como esta montada; esto mira si funciona.
+  select 50, 'Y de hecho devuelve los perfiles activos',
+    case when (select count(*) from public.perfiles_publicos)
+            = (select count(*) from public.perfiles where estado = 'activo')
+      then 'OK'
+    else 'MAL: faltan perfiles en la vista publica; sus enlaces dan 404' end
 )
 
 select

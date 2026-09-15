@@ -127,6 +127,72 @@ describe('cargarPerfil', () => {
   });
 });
 
+/**
+ * La segunda opinion.
+ *
+ * Toda esta tanda existe por una noche concreta: `perfiles_publicos` se
+ * quedo muda en produccion —`security_invoker`— y los DIEZ perfiles del
+ * sitio empezaron a contestar «404, este perfil no existe» con un boton
+ * para RECLAMAR el nombre. La cabecera de este fichero ya advertia de
+ * esto: una lista vacia es indistinguible de «no existe». Faltaba la
+ * parte que lo distingue.
+ */
+describe('estadoDelNombre', () => {
+  it('pregunta a `nombre_disponible`, que mira la tabla y no la vista', async () => {
+    fingirRed(() => responder(true));
+    const { estadoDelNombre } = await import('./publico');
+    const e = await estadoDelNombre('zqx7k');
+
+    expect(e).toBe('libre');
+    const { url, opciones } = llamadas[0]!;
+    /* La tabla, no la vista: si esto se cambiara a leer de
+       `perfiles_publicos`, la segunda opinion vendria de la misma fuente
+       rota que la primera y no serviria de nada. */
+    expect(url).toBe(`${URL_BASE}/rest/v1/rpc/nombre_disponible`);
+    expect(opciones?.method).toBe('POST');
+    expect(JSON.parse(String(opciones?.body))).toEqual({ p_nombre: 'zqx7k' });
+  });
+
+  it('un nombre con dueño sale ocupado', async () => {
+    fingirRed(() => responder(false));
+    const { estadoDelNombre } = await import('./publico');
+    await expect(estadoDelNombre('m4lito')).resolves.toBe('ocupado');
+  });
+
+  /* LA PRUEBA QUE IMPORTA. Si no se pudo preguntar, la respuesta NO puede
+     ser «libre»: eso es lo que pone el boton de reclamar debajo del nombre
+     de otra persona. */
+  it('si no se puede preguntar, no dice que este libre', async () => {
+    fingirRed(() => responder({}, 500));
+    const { estadoDelNombre } = await import('./publico');
+    await expect(estadoDelNombre('m4lito')).resolves.toBe('no-se-sabe');
+  });
+
+  it('tampoco si la red se cae del todo', async () => {
+    vi.stubGlobal('fetch', () => Promise.reject(new Error('sin red')));
+    const { estadoDelNombre } = await import('./publico');
+    await expect(estadoDelNombre('m4lito')).resolves.toBe('no-se-sabe');
+  });
+
+  /* PostgREST con 200 y algo que no es un booleano —un objeto de error, una
+     respuesta vacia— es exactamente la forma que tuvo el fallo original:
+     codigo 200 y contenido que no dice lo que parece. */
+  it('una respuesta que no es un si o un no tampoco cuenta', async () => {
+    fingirRed(() => responder({ code: 'PGRST202' }));
+    const { estadoDelNombre } = await import('./publico');
+    await expect(estadoDelNombre('m4lito')).resolves.toBe('no-se-sabe');
+  });
+
+  it('lo que no tiene forma de nombre no sale a la red siquiera', async () => {
+    fingirRed(() => responder(true));
+    const { estadoDelNombre } = await import('./publico');
+    await expect(estadoDelNombre('ab')).resolves.toBe('imposible');
+    await expect(estadoDelNombre('a'.repeat(21))).resolves.toBe('imposible');
+    await expect(estadoDelNombre('con-guion')).resolves.toBe('imposible');
+    expect(llamadas).toHaveLength(0);
+  });
+});
+
 describe('concedidasDe', () => {
   const VACIO = { ids: [], caducaPlan: null };
 

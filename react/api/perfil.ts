@@ -112,15 +112,21 @@ export default async function handler(req: Request): Promise<Response> {
     return Response.redirect(salida.toString(), 302);
   }
 
-  const respuesta = (cuerpo: string, segundos: number, estado = 200) =>
+  const respuesta = (cuerpo: string, segundos: number, estado = 200, revalida = 86400) =>
     new Response(cuerpo, {
       status: estado,
       headers: {
         'content-type': 'text/html; charset=utf-8',
         /* Se guarda en el borde, no en el navegador: un perfil muy
            compartido deja de consultar la base en cada visita, y un cambio
-           en el perfil se ve en minutos y no cuando caduque un navegador. */
-        'cache-control': `public, max-age=0, s-maxage=${segundos}, stale-while-revalidate=86400`,
+           en el perfil se ve en minutos y no cuando caduque un navegador.
+
+           `revalida` se separa porque guardar un SI y guardar un NO no
+           valen lo mismo. Servir un dia entero la tarjeta de un perfil que
+           existe no rompe nada; servir un dia entero «este perfil no
+           existe» deja el enlace de alguien muerto para todos los robots
+           mucho despues de que el problema se haya arreglado. */
+        'cache-control': `public, max-age=0, s-maxage=${segundos}, stale-while-revalidate=${revalida}`,
       },
     });
 
@@ -166,7 +172,12 @@ export default async function handler(req: Request): Promise<Response> {
        buscador desconfie tambien de los perfiles que SI existen.
        Este camino es solo «la consulta fue bien y no hay fila»: si la
        consulta falla, se sale antes y con 200. */
-    if (!filas?.[0]) return respuesta(html, 300, 404);
+    /* Un minuto, y sin dia de gracia. Este 404 sale de una sola lectura
+       que puede estar mintiendo: si `perfiles_publicos` se queda muda
+       —le ha pasado tres veces— TODOS los perfiles entran por aqui, y con
+       el reparto de antes el borde seguiria contestando 404 durante 24 h
+       despues de arreglarlo. */
+    if (!filas?.[0]) return respuesta(html, 60, 404, 60);
     fila = filas[0];
   } catch {
     return respuesta(html, 60);

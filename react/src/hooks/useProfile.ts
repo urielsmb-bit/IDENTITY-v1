@@ -60,6 +60,55 @@ export function useProfile(username: string | undefined) {
 }
 
 /**
+ * Que se sabe del NOMBRE cuando no ha llegado el perfil.
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ * POR QUE HACE FALTA PREGUNTAR DOS VECES
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * `cargarPerfil` devuelve `null` tanto cuando no hay nadie con ese nombre
+ * como cuando la lectura vino vacia por cualquier otro motivo, y las dos
+ * cosas acababan en la misma pantalla: «404 — este perfil no existe», con
+ * un boton para RECLAMAR el nombre.
+ *
+ * Eso convierte un fallo del servidor en una invitacion a quedarse con el
+ * nombre de otra persona. Y no es hipotetico: ha pasado en produccion con
+ * los diez perfiles a la vez, porque la vista `perfiles_publicos` se quedo
+ * muda y todas las lecturas devolvieron una lista vacia.
+ *
+ * `nombre_disponible` mira la tabla de perfiles entera, no la vista, asi
+ * que contesta bien incluso cuando la vista esta rota. Esa es justamente
+ * la gracia: es una segunda opinion, y de otra fuente.
+ *
+ * `preguntar` la enciende solo cuando de verdad no ha llegado nada. Quien
+ * abre un perfil que funciona no paga ni una peticion mas.
+ */
+export function useEstadoDelNombre(username: string | undefined, preguntar: boolean) {
+  const { data } = useQuery({
+    queryKey: ['nombre', username],
+    queryFn: async () => {
+      const estado = await publico.estadoDelNombre(username as string);
+      if (estado === 'ocupado') {
+        /* Que quede dicho en la consola. La vez anterior esto estuvo roto
+           sin que nadie lo notara porque la app se lo tragaba en silencio:
+           una lista vacia es identica a «no existe». */
+        console.warn(
+          `[perfil] @${username} SI existe, pero la lectura publica vino vacia. ` +
+            'Revisa la vista `perfiles_publicos` (supabase/APLICAR_0027_*.sql).',
+        );
+      }
+      return estado;
+    },
+    enabled: preguntar && !!username,
+    staleTime: 1000 * 30,
+    /* No hace falta: `estadoDelNombre` nunca lanza, ya devuelve
+       'no-se-sabe' cuando no ha podido preguntar. */
+    retry: false,
+  });
+  return data;
+}
+
+/**
  * Hook to load the current user's own profile.
  */
 export function useMyProfile() {
