@@ -1051,6 +1051,24 @@ export function ProfileView({
       data-borde={p.sBorderOn === false ? 'off' : 'on'}
       style={styleVars as React.CSSProperties}
     >
+      {/* EL REPRODUCTOR VIVE AQUI, NO DENTRO DEL BLOQUE DE MUSICA.
+
+          Estaba dentro, y eso ataba el SONIDO a que el bloque se viera:
+          quien apagaba el bloque para no enseñar el mando se quedaba sin
+          musica, porque este nodo no llegaba a montarse y el reproductor
+          nunca arrancaba.
+
+          Son dos cosas distintas y ahora lo son tambien en el codigo: el
+          bloque decide si se VE el reproductor; esto decide si SUENA. Un
+          perfil puede tener musica de fondo sin enseñar el mando.
+
+          Mide un pixel, es invisible y no recibe pulsaciones —lo dice su
+          CSS—, asi que ponerlo junto a las capas de fondo no cambia nada de
+          lo que se ve. */}
+      {pistas.length > 0 && (
+        <div ref={ytHostRef} className="pf-music__yt" aria-hidden="true" />
+      )}
+
       {/* Capas de fondo. El CSS las espera como HERMANAS dentro de .pf, cada
           una con su z-index negativo, no anidadas dentro de .pf-bg. */}
       <div
@@ -1518,7 +1536,6 @@ export function ProfileView({
           {/* Música */}
           {ver('music') && pistas.length > 0 && (
             <div className="pf-music-wrap" {...bloque('music')}>
-              <div ref={ytHostRef} className="pf-music__yt" aria-hidden="true" />
               {pistas[0]?.embed ? (
                 <div
                   className={`pf-insta${instaOpen ? ' is-open' : ''}`}
