@@ -2892,7 +2892,20 @@
 
 /* La puerta, negra de verdad. El 86% con desenfoque dejaba ver el perfil
    por detrás, y entonces no hay nada que revelar. */
-.pf-gate{ background:#000; }
+/* Y con ella negra, el desenfoque de la regla base SOBRA: estaba
+   desenfocando a pantalla completa algo que tapa un negro opaco, o sea
+   trabajo cuyo resultado no puede verse. Es el mismo fallo que el velo con
+   `blur(0px)`, en otro sitio.
+
+   Importa mas de lo que parece porque esta puerta es lo PRIMERO que ve
+   cualquiera, y medido con la interaccion real -incluso con tarjeta
+   grafica- el pintado tras tocarla se llevaba 162 de 168 ms. El JavaScript
+   eran 0. */
+.pf-gate{
+  background:#000;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
 .pf-gate.is-out{ animation:gateOut .75s var(--ease-out) forwards; }
 
 @media (prefers-reduced-motion: reduce){

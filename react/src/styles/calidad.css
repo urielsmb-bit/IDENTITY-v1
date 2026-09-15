@@ -226,3 +226,19 @@
       rgba(0, 0, 0, calc(.85 * var(--u-vig, 0))) 100%),
     rgba(0, 0, 0, var(--p-dim-amt, .45));
 }
+
+/* La puerta de entrada, mas barata segun el presupuesto.
+   Es lo PRIMERO que ve cualquiera y lleva un `backdrop-filter` a pantalla
+   completa sobre un fondo ya opaco al 86 %: el desenfoque aporta un 14 %
+   de imagen borrosa que apenas se distingue, y cuesta una pantalla entera
+   de filtro justo cuando la pagina se esta montando.
+
+   Medido con la interaccion real: pintar tras tocar la puerta se llevaba
+   162 de 168 ms, con el JavaScript en 0. El coste de esta pagina esta en
+   PINTAR, no en calcular.
+
+   En baja se lo lleva la regla general de arriba; aqui solo se recorta. */
+:root[data-calidad="media"] .pf-gate {
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
