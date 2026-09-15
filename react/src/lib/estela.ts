@@ -1,4 +1,4 @@
-import { cuantas } from './calidad';
+import { cuantas, esBaja } from './calidad';
 
 import { estela as buscarEstela, type DefEstela, type FormaMota } from '@/data/estelas';
 
@@ -715,7 +715,9 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
     }
 
     /* ── soltar ──────────────────────────────────────────── */
-    if (cantidad > 0 && dentro) {
+    /* Se mira el nivel aqui tambien, no solo al configurar: la calidad se
+       decide midiendo, o sea que puede caer con la pagina ya abierta. */
+    if (cantidad > 0 && dentro && !esBaja()) {
       const dx = mx - ultimoX;
       const dy = my - ultimoY;
       const dist = Math.hypot(dx, dy);
@@ -996,11 +998,18 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
        dibujo. En un equipo sin aceleracion eso se nota al mover el raton,
        que es justo cuando la persona esta esperando una respuesta.
 
-       No baja a cero nunca: una estela con menos motas sigue siendo una
-       estela; sin ninguna, el cursor deja de tener personalidad y eso es
-       una funcion menos, no un efecto mas barato. */
+       En gama media adelgaza. En BAJA se apaga del todo, y eso es una
+       decision del dueño de la pagina: el nivel bajo es el que se alcanza
+       cuando los fotogramas no llegan -tipicamente sin aceleracion por
+       hardware- y ahi prefiere no tener estela a tenerla a tirones.
+
+       Conviene dejar dicho que las medidas NO señalaban a la estela: de
+       diez perfiles cronometrados, el mas rapido -152 ms- era justamente
+       el que la llevaba al maximo, y el mas lento -512 ms- uno con la
+       estela casi apagada y video de fondo. Lo que pesaba era el video.
+       Esto se apaga por preferencia, no porque fuera el culpable. */
     const pedida = Math.max(0, Math.min(12, o.cantidad || 0));
-    cantidad = pedida > 0 ? Math.max(2, cuantas(pedida)) : 0;
+    cantidad = pedida > 0 && !esBaja() ? Math.max(2, cuantas(pedida)) : 0;
     intensidad = Math.max(0.25, Math.min(2, (o.intensidad ?? 100) / 100));
     direccion = o.direccion || 'seguimiento';
     ambito = o.ambito ?? null;
