@@ -11,9 +11,60 @@ import { useInsignias } from '@/hooks/useInsignias';
 import { useTitulo } from '@/hooks/useTitulo';
 import { tituloTarjeta } from '@/lib/tarjeta';
 
+/**
+ * Abrir la conexión con Vimeo ANTES de saber si hace falta.
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ * EL PROBLEMA, MEDIDO
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * El fondo en vídeo no puede pedirse hasta que llega el perfil —la
+ * dirección está dentro de sus datos— así que el marco no existe hasta los
+ * 786 ms. Y justo ahí empieza lo lento: DNS, TLS y la primera petición,
+ * desde cero, con la página ya montada y compitiendo con todo lo demás.
+ *
+ * Pero PARA ABRIR LA CONEXIÓN no hace falta saber la dirección del vídeo:
+ * basta con saber el servidor, y eso se sabe desde el primer instante,
+ * porque lo dice la ruta. Un perfil es el único sitio donde hay fondos en
+ * vídeo.
+ *
+ * Así que el saludo —DNS y TLS— se adelanta unos setecientos milisegundos
+ * y se solapa con la carga del perfil, en vez de ir detrás.
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ * POR QUÉ AQUÍ Y NO EN EL `index.html`
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * Ahí lo pagarían TODAS las páginas: la portada, el ranking, la ayuda,
+ * plantillas. Una preconexión no es gratis —abre un socket y negocia TLS
+ * con un servidor al que quizá nadie va a llamar— y en las demás rutas no
+ * hay ni un vídeo posible.
+ *
+ * Y no se comprueba si ESTE perfil tiene vídeo, porque para saberlo habría
+ * que esperar al perfil, que es exactamente lo que se está intentando
+ * adelantar. De nueve perfiles mirados, seis tenían fondo en vídeo: la
+ * apuesta sale a cuenta.
+ */
+function usarConexionConVimeo() {
+  useEffect(() => {
+    const ya = document.querySelector('link[data-vimeo-pre]');
+    if (ya) return;
+    const l = document.createElement('link');
+    l.rel = 'preconnect';
+    l.href = 'https://player.vimeo.com';
+    l.crossOrigin = '';
+    l.setAttribute('data-vimeo-pre', '');
+    document.head.appendChild(l);
+    /* No se quita al salir del perfil: una conexión abierta no estorba, y
+       quitar el `<link>` no la cierra de todos modos. Lo que sí evita el
+       guardia de arriba es acumular etiquetas al ir de perfil en perfil. */
+  }, []);
+}
+
 export default function ProfilePage() {
   const { username } = useParams<{ username: string }>();
   const cleanUsername = username?.toLowerCase().trim();
+  usarConexionConVimeo();
   const { profile, esperando, sinRed, error, refetch } = useProfile(cleanUsername);
   /* «Este perfil es mío» pide las dos cosas.
      `mineName` vive en el navegador y sólo lo escribe quien ha entrado de
