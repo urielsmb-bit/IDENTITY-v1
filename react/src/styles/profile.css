@@ -35,6 +35,18 @@
   background:var(--p-bg);
   background-size:cover;
   background-position:center;
+  /* El fondo en video se dimensiona para CUBRIR, asi que en una ventana
+     alta se sale por los lados: medido, 2,17 veces la pantalla. Todo eso
+     que sobra se estaba rasterizando igual, y en un video son sesenta
+     rasterizaciones por segundo de pixeles que nadie ve.
+
+     `overflow:hidden` recorta lo que ya recortaba la ventana -o sea que no
+     cambia un solo pixel de lo que se ve- y `contain:paint` es la promesa
+     que el navegador necesita para creerselo: «aqui dentro no se pinta
+     nada fuera de la caja». Con esa promesa puede saltarse lo de fuera en
+     vez de pintarlo y tirarlo. */
+  overflow:hidden;
+  contain:paint;
 }
 .pf-bg--media{ background:var(--p-bg); }
 .pf-bg video,
