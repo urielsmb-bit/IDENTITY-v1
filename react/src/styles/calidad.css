@@ -305,3 +305,55 @@
   backdrop-filter: blur(min(10px, var(--u-sblur, 22px))) saturate(150%);
   -webkit-backdrop-filter: blur(min(10px, var(--u-sblur, 22px))) saturate(150%);
 }
+
+/* ============================================================
+   EN BAJA, LA TARJETA ES OPACA
+
+   El dueño de la pagina lo aislo con dos capturas: misma maquina, mismo
+   perfil, y lo unico distinto era el ancho de la tarjeta. Ancha iba a
+   tirones; estrecha, fina.
+
+   Medido en nivel bajo, la tarjeta tenia el desenfoque ya apagado -la
+   regla general funciona- pero seguia con esto:
+
+       fondo       blanco al 10 %   TRANSLUCIDO
+       transform   matrix3d(...)    capa propia
+       sombra      80 px de radio
+
+   Y ahi esta el mecanismo. Una capa TRANSLUCIDA sobre un video obliga al
+   navegador a leer lo que hay debajo y MEZCLARLO, pixel a pixel, en cada
+   fotograma del video. El coste es proporcional al area, que es justo lo
+   que cambiaba entre las dos capturas.
+
+   Con la tarjeta OPACA no hay nada que leer: se dibuja encima y se acabo.
+   Deja de importar cuanto mida.
+
+   ¿Y no se pierde el vidrio? En este nivel ya estaba perdido: sin
+   desenfoque detras, una tarjeta al 10 % de blanco no es vidrio esmerilado
+   sino un velo que deja ver el video a traves del texto. Lo que se hace
+   aqui es cambiar un efecto roto y caro por uno entero y barato: el mismo
+   tinte que eligio su dueño, pero mezclado contra el fondo del perfil en
+   vez de contra lo que pase por debajo.
+
+   La sombra grande se va por lo mismo: 80 px de radio es un degradado
+   enorme que tambien se mezcla con lo de detras. Se deja una corta, que
+   sigue despegando la tarjeta del fondo.
+   ============================================================ */
+:root[data-calidad="baja"] .pf[data-surface="glass"] .pf-stack,
+:root[data-calidad="baja"] .pf[data-surface="solid"] .pf-stack {
+  /* Contra `--p-bg` y NO contra `--p-surface`: el primer intento uso
+     `--p-surface` y no sirvio de nada, porque ese token es TRANSLUCIDO por
+     diseño -en este tema, `rgba(0,229,255,.05)`, un tinte del tema, no un
+     color solido-. Mezclar contra algo transparente da algo transparente:
+     la tarjeta seguia al 14 % de alfa y el navegador seguia teniendo que
+     leer el video de debajo.
+     `--p-bg` si es un color de verdad -aqui `#05070E`- y es ademas el
+     fondo que ese perfil eligio, asi que el tinte queda donde tenia que
+     quedar. */
+  background: color-mix(
+    in srgb,
+    var(--u-scolor, #ffffff) calc(var(--u-op, 9) * 1%),
+    var(--p-bg, #0E0E0E)
+  );
+  box-shadow: 0 8px 24px -12px rgba(0, 0, 0, .8);
+}
