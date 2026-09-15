@@ -242,3 +242,32 @@
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
 }
+
+/* ============================================================
+   LA ENTRADA AL PERFIL, QUE ES DONDE SE MIDE EL INP
+
+   Al tocar la puerta se lanza `revelarMedio`: opacidad Y escala sobre el
+   fondo, que en un perfil con video son 2,8 pantallas. Durante 1,15 s.
+
+   Con tarjeta grafica eso lo lleva el compositor y sale gratis. Sin ella
+   es repintar la pantalla entera en cada fotograma de la animacion, y cae
+   EXACTAMENTE en el instante que mide el INP: el navegador cronometra
+   desde que tocas hasta el siguiente pintado, y ese pintado es el primer
+   fotograma de esta animacion sobre todo lo demas montandose a la vez.
+
+   Medido en la interaccion real, antes de tocar esto: 424 ms, con el
+   JavaScript en 0 y el resto pintando.
+
+   La tarjeta SIGUE entrando -es la que cuenta la historia, y es pequeña-.
+   Lo que se queda quieto es el fondo, que ya estaba ahi detras y cuyo
+   unico trabajo era subir desde negro. Se pierde un gesto de un segundo;
+   se gana que la pagina responda al tocarla.
+   ============================================================ */
+:root[data-calidad="media"] .pf[data-revelar="on"] .pf-bg,
+:root[data-calidad="media"] .pf[data-revelar="on"] .pf-bgvideo,
+:root[data-calidad="media"] .pf[data-revelar="on"] .pf-bg img.pf-bgimg,
+:root[data-calidad="baja"] .pf[data-revelar="on"] .pf-bg,
+:root[data-calidad="baja"] .pf[data-revelar="on"] .pf-bgvideo,
+:root[data-calidad="baja"] .pf[data-revelar="on"] .pf-bg img.pf-bgimg {
+  animation: none !important;
+}
