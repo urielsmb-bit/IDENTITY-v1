@@ -339,8 +339,22 @@
    enorme que tambien se mezcla con lo de detras. Se deja una corta, que
    sigue despegando la tarjeta del fondo.
    ============================================================ */
-:root[data-calidad="baja"] .pf[data-surface="glass"] .pf-stack,
-:root[data-calidad="baja"] .pf[data-surface="solid"] .pf-stack {
+/* SOLO CON VIDEO DETRAS.
+   El dueño de la pagina lo dijo y tiene razon: «se le quita la gracia al
+   vidrio, se supone que debe ser translucido». Una tarjeta de vidrio opaca
+   no es vidrio.
+
+   Y hay un dato que lo permite afinar. El coste de mezclar NO depende de
+   cuan translucida sea -alfa 0,9 cuesta lo mismo que 0,1; lo unico gratis
+   es alfa 1-, pero SI depende de si lo de debajo cambia. Sobre una imagen
+   o un degradado, la mezcla se calcula una vez y el navegador se la
+   guarda. Sobre un video, se rehace en cada fotograma.
+
+   Asi que el vidrio se queda translucido en todos los perfiles menos en
+   los que tienen video de fondo, que son los unicos donde no se puede
+   pagar. De nueve perfiles mirados, tres se libran de esto. */
+:root[data-calidad="baja"] .pf[data-fondo="video"][data-surface="glass"] .pf-stack,
+:root[data-calidad="baja"] .pf[data-fondo="video"][data-surface="solid"] .pf-stack {
   /* Contra `--p-bg` y NO contra `--p-surface`: el primer intento uso
      `--p-surface` y no sirvio de nada, porque ese token es TRANSLUCIDO por
      diseño -en este tema, `rgba(0,229,255,.05)`, un tinte del tema, no un

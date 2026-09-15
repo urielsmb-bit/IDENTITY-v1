@@ -1013,6 +1013,14 @@ export function ProfileView({
       data-avglow={sw(p.avGlow)}
       data-tilt={sw(p.tilt && !preview)}
       data-bgfixed={fondoFijo}
+      /* Que clase de fondo hay, para que el CSS pueda distinguir el unico
+         caso que de verdad es caro: una tarjeta TRANSLUCIDA sobre algo que
+         CAMBIA. Sobre una imagen o un degradado, la mezcla se calcula una
+         vez y el navegador se la guarda; sobre un video, se rehace en cada
+         fotograma suyo. Sin este dato habria que tratar a los dos igual, y
+         eso significaba quitarle el vidrio a perfiles que si podian
+         permitirselo. */
+      data-fondo={p.bgType || 'none'}
       data-hover={p.hoverFx || 'lift'}
       data-enter={p.enterFx || 'rise'}
       data-revelar={revelando ? 'on' : undefined}
