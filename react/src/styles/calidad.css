@@ -271,3 +271,37 @@
 :root[data-calidad="baja"] .pf[data-revelar="on"] .pf-bg img.pf-bgimg {
   animation: none !important;
 }
+
+/* ============================================================
+   LA TARJETA DE VIDRIO
+
+   Lo noto el dueño de la pagina antes que yo: «el tamaño de la tarjeta
+   afecta». Y es exacto, con un mecanismo que lo explica entero.
+
+   Una tarjeta de vidrio es un `backdrop-filter: blur(N)` sobre lo que
+   tenga detras. Su coste crece por DOS lados a la vez:
+
+     · con el AREA, que es lo que cambia al agrandarla;
+     · y con el CUADRADO del radio, porque cada pixel de salida tiene que
+       mirar a sus vecinos y el vecindario crece al cuadrado.
+
+   Con un video detras, ademas, no se calcula una vez: se recalcula en cada
+   fotograma del video, porque el fondo ha cambiado.
+
+   Un perfil real tenia 26 px de desenfoque en una tarjeta al 60 % del
+   ancho. Eso es de lo mas caro que se puede pedir en una pagina web, y en
+   gama media no se estaba limitando: la regla general solo lo apaga en
+   BAJA.
+
+   Aqui se le pone techo. `min()` y no un numero fijo para que solo pueda
+   RECORTAR: quien haya elegido 6 px se queda con sus 6, no se le suben a
+   10. Un tope que sube no es un tope.
+
+   Diez pixeles siguen siendo vidrio -lo que hace legible un panel
+   translucido no es cuanto desenfoca sino QUE desenfoque- y cuestan menos
+   de la sexta parte que veintiseis.
+   ============================================================ */
+:root[data-calidad="media"] .pf[data-surface="glass"] .pf-stack {
+  backdrop-filter: blur(min(10px, var(--u-sblur, 22px))) saturate(150%);
+  -webkit-backdrop-filter: blur(min(10px, var(--u-sblur, 22px))) saturate(150%);
+}
