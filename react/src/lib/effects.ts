@@ -86,10 +86,35 @@ export function particles(canvas: HTMLCanvasElement | null, type: string, color:
   const ctx = canvas.getContext('2d');
   if (!ctx) return null;
 
-  const dpr = Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, 2);
+  /**
+   * A cuantos pixeles de verdad se dibuja el lienzo.
+   *
+   * Esto es un multiplicador al CUADRADO: en una pantalla de 2x, un lienzo
+   * a pantalla completa son CUATRO veces los pixeles de un 1x. Y no es una
+   * vez: es en cada repintado.
+   *
+   * Sin aceleracion eso lo hace la CPU, y es de lo poco que queda por
+   * recortar de verdad. Se baja a 1 en gama baja y se deja en 1,5 en media
+   * -mitad de camino- porque lo que se pinta aqui son motas de luz
+   * difuminadas, no texto: a esa escala la nitidez del pixel no se lee.
+   *
+   * Lo dijo el dueño de la pagina sin saberlo, al notar que con las
+   * herramientas de desarrollo abiertas iba mas fino: el panel le quitaba
+   * media ventana a la pagina, o sea la mitad de los pixeles. El coste va
+   * con el area, siempre.
+   */
+  function densidad() {
+    const tope = nivelCalidad() === 2 ? 2 : nivelCalidad() === 1 ? 1.5 : 1;
+    return Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, tope);
+  }
+  /* Se recalcula en cada `resize`, no solo al crear el lienzo: el nivel se
+     decide midiendo, o sea despues, y un lienzo que se queda con la
+     densidad de cuando nacio no obedece a nada. */
+  let dpr = densidad();
   let W = 0, H = 0, parts: any[] = [], rAF = 0, t = 0, alive = true;
 
   function resize() {
+    dpr = densidad();
     const r = canvas!.getBoundingClientRect();
     W = Math.max(1, r.width); H = Math.max(1, r.height);
     canvas!.width = Math.round(W * dpr);
@@ -384,8 +409,10 @@ export function particles(canvas: HTMLCanvasElement | null, type: string, color:
   /* Si el presupuesto cambia a media partida, se rehace el campo con la
      densidad nueva. Sin esto, bajar de nivel no serviría de nada en la
      página que ya está abierta: solo en la siguiente. */
+  /* Al cambiar el nivel se rehace el lienzo ENTERO -no solo las
+     particulas- porque tambien cambia a cuantos pixeles se dibuja. */
   const soltarAviso = alCambiar(() => {
-    if (alive) build();
+    if (alive) resize();
   });
 
   return register(() => {
