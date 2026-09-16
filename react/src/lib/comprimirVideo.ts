@@ -53,9 +53,17 @@
  * Y SI ALGO FALLA
  * ────────────────────────────────────────────────────────────────────────
  *
- * Se devuelve `null` y se sube el original. Encoger es una mejora; que
- * alguien no pueda poner su fondo porque su navegador no sabe recodificar
- * sería cambiar lo importante por lo accesorio.
+ * Se sube el original. Encoger es una mejora; que alguien no pueda poner su
+ * fondo porque su navegador no sabe recodificar sería cambiar lo importante
+ * por lo accesorio.
+ *
+ * Pero se dice POR QUE. La primera version devolvia `null` a secas, y la
+ * primera subida real despues de escribirla salio con el archivo intacto
+ * —41.545.350 bytes, los mismos— sin una sola pista de si es que no se
+ * intento, si fallo, o si el navegador tenia la version vieja en cache.
+ * Media hora mirando. Un fallo que no se puede distinguir de «no hacia
+ * falta» es el mismo error que este proyecto ya ha pagado con la vista
+ * publica muda y con las insignias que no cargaban.
  */
 
 /* ────────────────────────────────────────────────────────────────────────
@@ -117,6 +125,7 @@ const BITRATE = 3_500_000;
 const DESDE_MB = 10;
 
 export interface VideoEncogido {
+  encogido: true;
   blob: Blob;
   extension: 'mp4' | 'webm';
   ancho: number;
@@ -125,6 +134,16 @@ export interface VideoEncogido {
   antesMB: number;
   despuesMB: number;
 }
+
+/** No se encogio, y el motivo. Quien llama sube el original igual, pero
+ *  ahora puede DECIRLO en vez de dejar un silencio indistinguible de que
+ *  todo fuera bien. */
+export interface SinEncoger {
+  encogido: false;
+  motivo: string;
+}
+
+export type ResultadoEncoger = VideoEncogido | SinEncoger;
 
 export interface OpcionesEncoger {
   /** 0-100. Va por el tiempo del vídeo, que es lo que tarda de verdad. */
@@ -175,12 +194,21 @@ function medidaDestino(ancho: number, alto: number): { w: number; h: number } {
   return { w: par(ancho), h: par(alto) };
 }
 
+/** Se devuelve Y se deja dicho en la consola. Quien mire un caso raro va a
+ *  mirar ahí antes que en ningún otro sitio. */
+function noSePudo(motivo: string): SinEncoger {
+  console.warn('[fondo] No se aligeró el vídeo: ' + motivo);
+  return { encogido: false, motivo };
+}
+
 export async function encogerVideo(
   archivo: File,
   opciones: OpcionesEncoger = {},
-): Promise<VideoEncogido | null> {
+): Promise<ResultadoEncoger> {
   const tipo = tipoDeSalida();
-  if (!sePuedeEncoger() || !tipo) return null;
+  if (!sePuedeEncoger() || !tipo) {
+    return noSePudo('este navegador no sabe recodificar vídeo');
+  }
 
   const url = URL.createObjectURL(archivo);
   const v = document.createElement('video');
@@ -209,7 +237,7 @@ export async function encogerVideo(
     lienzo.width = w;
     lienzo.height = h;
     const pincel = lienzo.getContext('2d', { alpha: false });
-    if (!pincel) return null;
+    if (!pincel) return noSePudo('el navegador no dio un lienzo donde pintar');
 
     const flujo = lienzo.captureStream(30);
     const grabadora = new MediaRecorder(flujo, {
@@ -217,12 +245,32 @@ export async function encogerVideo(
       videoBitsPerSecond: BITRATE,
     });
     const trozos: Blob[] = [];
+    let fallo = '';
     grabadora.ondataavailable = (e) => {
       if (e.data.size) trozos.push(e.data);
+    };
+    /* Sin esto, una grabadora que revienta no avisa a nadie: `onstop` no
+       llega, la promesa de abajo no se resuelve, y la subida se queda
+       colgada para siempre con la barra a medias. */
+    grabadora.onerror = (e: Event) => {
+      fallo = String((e as ErrorEvent).error ?? 'la grabadora falló');
     };
 
     const acabado = new Promise<void>((listo) => {
       grabadora.onstop = () => listo();
+      grabadora.addEventListener('error', () => listo());
+      /* Y el reloj de seguridad. Va en tiempo real, asi que el doble de lo
+         que dura el video mas diez segundos es de sobra incluso en un
+         movil lento. Colgarse aqui seria dejar a alguien mirando una barra
+         que no se mueve, sin manera de salir. */
+      const tope = Math.max(20_000, (v.duration || 30) * 2000 + 10_000);
+      setTimeout(() => {
+        if (grabadora.state !== 'inactive') {
+          fallo = fallo || 'tardó más de la cuenta y se dejó a medias';
+          try { grabadora.stop(); } catch { /* ya estaba */ }
+        }
+        listo();
+      }, tope);
     });
 
     /* Un dibujo por cada fotograma DE VERDAD del vídeo. Con un
@@ -259,19 +307,34 @@ export async function encogerVideo(
 
     v.onended = parar;
     grabadora.start(1000);
-    await v.play();
+    try {
+      await v.play();
+    } catch {
+      /* El navegador puede negarse a reproducir sin que nadie haya tocado
+         nada. Va `muted`, que es justo lo que suele bastar para que lo
+         permita, pero en modo ahorro de batería a veces no. */
+      return noSePudo('el navegador no dejó reproducir el vídeo para copiarlo');
+    }
     pintar();
     await acabado;
 
-    if (opciones.signal?.aborted) return null;
+    if (opciones.signal?.aborted) return noSePudo('se canceló');
+    if (fallo) return noSePudo(fallo);
 
     const blob = new Blob(trozos, { type: tipo.split(';')[0] });
+    if (!blob.size) return noSePudo('la grabadora no devolvió ni un byte');
     /* Si sale MAS grande no ha servido de nada, y el original es mejor.
        Pasa con vídeos ya bien comprimidos y muy cortos. */
-    if (!blob.size || blob.size >= archivo.size) return null;
+    if (blob.size >= archivo.size) {
+      return noSePudo(
+        `el resultado no mejoraba (${(blob.size / 1048576).toFixed(1)} MB frente a ` +
+          `${(archivo.size / 1048576).toFixed(1)} MB)`,
+      );
+    }
 
     opciones.alAvanzar?.(100);
     return {
+      encogido: true,
       blob,
       extension: tipo.startsWith('video/mp4') ? 'mp4' : 'webm',
       ancho: w,
@@ -279,10 +342,10 @@ export async function encogerVideo(
       antesMB: archivo.size / 1048576,
       despuesMB: blob.size / 1048576,
     };
-  } catch {
+  } catch (e) {
     /* Cualquier cosa: formato que no lee, permiso denegado, grabadora que
-       no arranca. Se sube el original. */
-    return null;
+       no arranca. Se sube el original, pero con el motivo en la mano. */
+    return noSePudo(e instanceof Error ? e.message : String(e));
   } finally {
     limpiar();
   }

@@ -73,7 +73,12 @@ describe('encogerVideo', () => {
   /* LA PRUEBA QUE IMPORTA. Quien llama hace `if (chico) …` y sube el
      original si no. Lanzar en vez de devolver `null` le costaría el fondo
      a alguien cuyo navegador simplemente no sabe recodificar. */
-  it('si el navegador no sabe, contesta null y no lanza', async () => {
-    await expect(encogerVideo(archivoDe(40))).resolves.toBeNull();
+  it('si el navegador no sabe, lo dice y no lanza', async () => {
+    const r = await encogerVideo(archivoDe(40));
+    expect(r.encogido).toBe(false);
+    /* Y con MOTIVO. Devolver un `null` pelado fue el fallo de la primera
+       version: la subida salia con el archivo intacto y no habia forma de
+       distinguir «fallo» de «no hacia falta». */
+    expect(r.encogido === false && r.motivo).toMatch(/no sabe recodificar/i);
   });
 });

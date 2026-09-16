@@ -281,13 +281,19 @@ export function SubirFondo({
                 setAvance({ enviados: pct, total: 100, pct }),
               signal: ctrlR2.signal,
             });
-            if (chico) {
+            if (chico.encogido) {
               subir = new File([chico.blob], `fondo.${chico.extension}`, {
                 type: chico.blob.type,
               });
               dicho =
                 ` · de ${chico.antesMB.toFixed(1)} a ${chico.despuesMB.toFixed(1)} MB` +
                 ` (${chico.ancho}×${chico.alto})`;
+            } else {
+              /* Se sube el original igual, pero SE DICE. La primera version
+                 se lo callaba, y una subida que sale con el archivo intacto
+                 era indistinguible de una que no hacia falta aligerar: media
+                 hora mirando el peso en produccion para averiguarlo. */
+              dicho = ` · sin aligerar (${chico.motivo})`;
             }
           }
 
