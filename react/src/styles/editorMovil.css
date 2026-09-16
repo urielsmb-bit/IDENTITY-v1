@@ -251,3 +251,59 @@ body.editor-tactil{ overflow:hidden; }
    desaparecer. Un botón que va y viene mueve los de al lado, y el dedo ya
    había apuntado al sitio anterior. */
 .em__icono:disabled{ opacity:.32; pointer-events:none; }
+
+/* ---- barra contextual ------------------------------------- */
+/* Entre el lienzo y el riel: lo que has seleccionado queda justo encima de
+   las herramientas, que es donde el pulgar ya está. */
+.em__ctx{
+  display:flex; align-items:center; gap:8px;
+  padding:7px 8px;
+  border-top:1px solid var(--border, #1C1D21);
+  background:var(--surface-2, #17181C);
+  animation:ctxEntra .18s cubic-bezier(.32,.72,0,1);
+}
+@keyframes ctxEntra{ from{ opacity:0; transform:translateY(6px); } }
+
+.em__ctx-q{
+  flex:none;
+  display:flex; align-items:center; gap:6px;
+  padding-right:8px;
+  border-right:1px solid var(--border, #1C1D21);
+  font-size:12px; font-weight:500; color:var(--text, #EDEDED);
+  white-space:nowrap;
+}
+.em__ctx-i{ display:grid; place-items:center; color:var(--text-muted, #9A9BA0); }
+.em__ctx-i svg{ width:15px; height:15px; }
+
+/* Los grupos se desplazan igual que el riel: un bloque con seis grupos no
+   cabe en 360px, y encogerlos hasta que quepan los haría ilegibles. */
+.em__ctx-ops{
+  flex:1; min-width:0;
+  display:flex; gap:5px;
+  overflow-x:auto;
+  scrollbar-width:none;
+  touch-action:pan-x;
+}
+.em__ctx-ops::-webkit-scrollbar{ display:none; }
+
+.em__ctx-b{
+  flex:none;
+  min-height:32px;
+  padding:0 11px;
+  border:1px solid var(--border-strong, #2E3036); border-radius:16px;
+  background:transparent;
+  color:var(--text, #EDEDED);
+  font-size:12px; white-space:nowrap;
+  cursor:pointer;
+}
+.em__ctx-b:active{ background:var(--surface-3, #1F2126); }
+
+.em__ctx-x{
+  flex:none;
+  width:32px; height:32px;
+  display:grid; place-items:center;
+  border:0; border-radius:8px;
+  background:transparent; color:var(--text-muted, #7A7B80);
+  cursor:pointer;
+}
+.em__ctx-x svg{ width:16px; height:16px; }

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { EditorBloque } from '@/components/dashboard/EditorBloque';
 import { Piezas } from '@/components/dashboard/Piezas';
 import { PanelInsignias } from '@/components/dashboard/PanelInsignias';
@@ -57,6 +58,10 @@ export interface ContenidoProps {
   premium: boolean;
   insignias: string[];
   datosInsignias: DatosInsignias;
+  /** El grupo al que bajar nada más abrir, si se llegó por la barra
+   *  contextual. Es el título tal cual lo declara el bloque. */
+  grupoDestino?: string | null;
+  onGrupoVisto?: () => void;
   onAbrirBloque: (id: string) => void;
   onVolver: () => void;
 }
@@ -103,13 +108,39 @@ function Pendiente({ que, donde }: { que: string; donde: string }) {
 
 export function ContenidoHerramienta({
   herramienta, bloque, profile, update, premium, insignias, datosInsignias,
-  onAbrirBloque, onVolver,
+  grupoDestino, onGrupoVisto, onAbrirBloque, onVolver,
 }: ContenidoProps) {
+  const caja = useRef<HTMLDivElement>(null);
+
+  /**
+   * Bajar al grupo por el que se entró.
+   *
+   * Se busca por el TEXTO del encabezado y no por un identificador porque
+   * `EditorBloque` no pone ninguno — y añadírselo sería tocar el editor
+   * que comparte con el escritorio por una comodidad de este lado. Los
+   * títulos ya son únicos dentro de un bloque, que es todo lo que hace
+   * falta aquí.
+   *
+   * Y NO se esconden los demás grupos. Filtrar dejaría el resto
+   * inalcanzable desde este camino, y el objetivo era llegar antes a una
+   * cosa, no perder las otras.
+   */
+  useEffect(() => {
+    if (!grupoDestino || !bloque) return;
+    const t = window.setTimeout(() => {
+      const enc = Array.from(caja.current?.querySelectorAll('.grupo__t') ?? [])
+        .find((h) => h.textContent?.trim() === grupoDestino);
+      enc?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      onGrupoVisto?.();
+    }, 60);
+    return () => window.clearTimeout(t);
+  }, [grupoDestino, bloque, onGrupoVisto]);
   /* Un bloque abierto manda sobre la herramienta desde la que se llegó: el
      editor es el MISMO del escritorio, en modo compacto —sin la miga de
      pan ni el título, que aquí los pone la cabecera de la hoja—. */
   if (bloque && BLOQUE_POR_ID[bloque]) {
     return (
+      <div ref={caja}>
       <EditorBloque
         def={BLOQUE_POR_ID[bloque]}
         profile={profile}
@@ -119,6 +150,7 @@ export function ContenidoHerramienta({
         premium={premium}
         insignias={insignias}
       />
+      </div>
     );
   }
 

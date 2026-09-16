@@ -5,6 +5,7 @@ import { LienzoBloques } from '@/components/dashboard/LienzoBloques';
 import { Frontera } from '@/components/layout/Frontera';
 import { HojaInferior } from './HojaInferior';
 import { ContenidoHerramienta } from './ContenidoHerramienta';
+import { BarraContextual } from './BarraContextual';
 import { HERRAMIENTAS, HERRAMIENTA_POR_ID, type IdHerramienta } from '@/data/herramientasMovil';
 import { BLOQUE_POR_ID } from '@/data/bloques';
 import type { DatosInsignias } from '@/lib/insignias';
@@ -90,6 +91,10 @@ export function EditorMovil({
   const [bloque, setBloque] = useState<string | null>(null);
   /** Y el seleccionado en el lienzo, que es lo que `LienzoBloques` marca. */
   const [pieza, setPieza] = useState<string | null>(null);
+  /** El grupo al que hay que bajar al abrir la hoja, si se llegó por la
+   *  barra contextual. Es un título, no un índice: los títulos ya son
+   *  únicos dentro de un bloque y sobreviven a que se reordenen. */
+  const [grupoDestino, setGrupoDestino] = useState<string | null>(null);
 
   /* Mientras este editor esta en pantalla, el documento entero cambia de
      modo: se aparta la barra del sitio y se corta el desplazamiento de la
@@ -121,15 +126,7 @@ export function EditorMovil({
         premium={premium}
         vista="mobile"
         seleccionado={pieza}
-        onAbrirBloque={(id) => {
-          if (!BLOQUE_POR_ID[id]) return;
-          /* Tocar en el lienzo abre su editor. Es media fase 3 y sale
-             gratis: `LienzoBloques` ya avisa de que se ha tocado un
-             bloque, y la hoja ya sabe enseñar uno. */
-          setPieza(id);
-          setHerramienta('bloques');
-          setBloque(id);
-        }}
+        onAbrirBloque={(id) => { if (BLOQUE_POR_ID[id]) setPieza(id); }}
       >
         <ProfileView profile={profile} insignias={insignias} preview editando />
       </LienzoBloques>
@@ -189,11 +186,47 @@ export function EditorMovil({
         </button>
       </header>
 
-      <main className="em__lienzo">
+      {/**
+        * Tocar el lienzo selecciona la pieza tocada.
+        *
+        * El oyente va AQUI, en el contenedor, y no dentro del perfil, por
+        * dos razones. Una: en el modo apilado no hay `LienzoBloques`, que
+        * es quien avisa en el modo libre — pero las piezas llevan su
+        * `data-bloque` en el DOM en los dos modos, así que subiendo por los
+        * padres se encuentra igual. Y dos: no hay que tocar `ProfileView`,
+        * que es el componente que comparten el editor y el perfil público.
+        *
+        * Con `click` y no con `pointerdown`: en el modo libre el mismo dedo
+        * puede estar arrastrando una pieza, y `click` solo llega si el dedo
+        * no se movió — que es exactamente la diferencia entre seleccionar y
+        * mover.
+        */}
+      <main
+        className="em__lienzo"
+        onClick={(e) => {
+          const el = (e.target as HTMLElement).closest?.('[data-bloque]');
+          const id = el?.getAttribute('data-bloque') ?? '';
+          /* Tocar el fondo deselecciona: si no, la barra contextual se
+             queda puesta y no hay forma evidente de quitarla. */
+          setPieza(BLOQUE_POR_ID[id] ? id : null);
+        }}
+      >
         <Frontera donde="la vista previa" reintentarCon={profile.username}>
           {lienzo}
         </Frontera>
       </main>
+
+      {pieza && (
+        <BarraContextual
+          bloque={pieza}
+          onGrupo={(id, grupo) => {
+            setHerramienta('bloques');
+            setBloque(id);
+            setGrupoDestino(grupo);
+          }}
+          onCerrar={() => setPieza(null)}
+        />
+      )}
 
       {/* Doce, y se desplaza. Encogerlas para que quepan las doce a la vez
           daría iconos de veinte píxeles con una palabra debajo que no se
@@ -229,7 +262,7 @@ export function EditorMovil({
            hoja de 52 % de alto se pierden enseguida. */
         titulo={bloque ? (BLOQUE_POR_ID[bloque]?.nombre ?? activa?.titulo ?? '') : (activa?.titulo ?? '')}
         onVolver={bloque ? () => setBloque(null) : undefined}
-        onCerrar={() => { setBloque(null); setHerramienta(null); }}
+        onCerrar={() => { setBloque(null); setGrupoDestino(null); setHerramienta(null); }}
       >
         {activa && (
           <ContenidoHerramienta
@@ -240,8 +273,10 @@ export function EditorMovil({
             premium={premium}
             insignias={insignias}
             datosInsignias={datosInsignias}
-            onAbrirBloque={setBloque}
-            onVolver={() => setBloque(null)}
+            grupoDestino={grupoDestino}
+            onGrupoVisto={() => setGrupoDestino(null)}
+            onAbrirBloque={(id) => { setGrupoDestino(null); setBloque(id); }}
+            onVolver={() => { setGrupoDestino(null); setBloque(null); }}
           />
         )}
       </HojaInferior>
