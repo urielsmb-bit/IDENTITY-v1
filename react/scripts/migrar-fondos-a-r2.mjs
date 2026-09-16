@@ -3,6 +3,37 @@
  * Mudar a R2 los fondos que ya viven en Vimeo.
  *
  * ────────────────────────────────────────────────────────────────────────
+ * ESTO NO FUNCIONA CON LA CUENTA DE HOY. LEE ESTO ANTES DE PERDER UNA HORA
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * Vimeo solo entrega los archivos por la API en los planes Standard,
+ * Advanced, Pro, Business, Premium y Enterprise. Preguntado a la propia
+ * API con el token puesto:
+ *
+ *     permisos del token : private create edit interact upload stats
+ *                          video_files public          <- el permiso SI esta
+ *     cuenta             : starter                     <- el plan NO llega
+ *
+ *     y del video, con estado `complete`:
+ *       files / download   no aparecen
+ *       play.progressive   0 versiones
+ *       play.hls           no
+ *
+ * O sea que no es el token ni el video: es el plan. Y no hay forma de
+ * rodearlo por la API. Rascar el reproductor si daria los bytes, pero se
+ * romperia el dia que Vimeo mueva algo y no merece la pena para seis
+ * archivos.
+ *
+ * SE DECIDIO NO MIGRAR. Se les pide a las seis personas que vuelvan a
+ * subir su fondo, que ademas sale MEJOR: su archivo original pasa por el
+ * aligerado del editor y acaba en 1080p bien codificado y con portada, en
+ * vez de por la version que Vimeo tuviera preparada. Y cuesta cero.
+ *
+ * Este archivo se queda por si algun dia hay plan de sobra: funciona, esta
+ * probado hasta donde se puede, y lo unico que le falta es que Vimeo
+ * suelte los archivos.
+ *
+ * ────────────────────────────────────────────────────────────────────────
  * QUE HACE Y QUE NO
  * ────────────────────────────────────────────────────────────────────────
  *
