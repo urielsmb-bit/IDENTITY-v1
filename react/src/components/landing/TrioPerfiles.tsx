@@ -3,7 +3,6 @@ import cenA1 from '@/assets/portada/centro-340.avif';
 import cenA2 from '@/assets/portada/centro-680.avif';
 import cenW1 from '@/assets/portada/centro-340.webp';
 import cenW2 from '@/assets/portada/centro-680.webp';
-import { esBaja } from '@/lib/calidad';
 import '@/styles/trio.css';
 
 /**
@@ -134,7 +133,6 @@ function useSigueAlPuntero(caja: React.RefObject<HTMLDivElement | null>) {
          pagina esta abierta. Preguntarlo es una comparacion de numeros;
          `getBoundingClientRect` obliga al navegador a repasar la
          maquetacion, asi que va antes. */
-      if (esBaja()) return;
       const r = el.getBoundingClientRect();
       /* De -1 a 1 desde el centro de la caja. */
       const dx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2);

@@ -1,373 +1,55 @@
 /* ============================================================
-   LO QUE SE APAGA CUANDO NO CABE
+   AQUI VIVIAN LOS ESCALONES DE CALIDAD
 
-   El presupuesto lo decide `lib/calidad.ts` midiendo fotogramas de
-   verdad, y lo deja escrito en el HTML:
+   Este archivo tenia 373 lineas que apagaban cosas cuando la maquina no
+   tenia aceleracion por hardware: el cristal esmerilado de la tarjeta y de
+   la barra, el grano, la viñeta, el brillo, el halo, los efectos del
+   avatar, el nombre animado, las animaciones de entrada, las sombras
+   grandes, la escena 3D de la portada, y la tarjeta de vidrio, que pasaba
+   a ser opaca sobre los fondos en video.
 
-       <html data-calidad="alta">    todo encendido, esta hoja no hace nada
-       <html data-calidad="media">   se aligera lo que no se nota
-       <html data-calidad="baja">    manda el numero de fotogramas
+   Estaba bien razonado y cada regla llevaba su medicion. Pero el dueño de
+   la pagina lo zanjo con una frase que gana a todas ellas:
 
-   La regla de oro: se quita el COSTE, no el diseño. Cada superficie que
-   pierde su cristal esmerilado gana opacidad a cambio, porque un panel
-   translucido sin desenfoque detras deja ver el texto de abajo y se vuelve
-   ilegible. Apagar por apagar romperia la pagina en vez de arreglarla.
+       «no quiero que las personas que tengan los graficos quitados se vean
+        asi, quiero que se vea como todos lo vemos»
 
-   Y lo que NO esta aqui a proposito: las partículas, la estela y la luz.
-   Esas no se apagan con CSS sino que se ADELGAZAN desde JavaScript -menos
-   densidad, menos fotogramas por segundo- porque un efecto que adelgaza
-   se sigue leyendo como el mismo efecto y uno que desaparece no.
+   Y tiene razon, porque el producto ES el aspecto. Un perfil sin vidrio,
+   sin grano y sin animaciones no es el mismo perfil «un poco mas simple»:
+   es otro. Quien reparte su enlace no puede saber cual de los dos esta
+   viendo cada persona que lo abre.
+
+   ------------------------------------------------------------
+   POR QUE AHORA SI SE PUEDE
+   ------------------------------------------------------------
+
+   Estos recortes se escribieron para compensar un coste que YA NO EXISTE.
+   Medido en produccion, lo que ha cambiado desde entonces:
+
+     el fondo iba en un `iframe` de Vimeo   ->  ahora es `<video>` nativo
+     1.324 ms hasta que se movia            ->  la foto fija entra a los 256
+     3840x1632 a 17,3 Mbps y 39,6 MB        ->  1920x816 a 2,5 Mbps y 5,75
+     la puerta descodificaba y desenfocaba
+     60 veces por segundo sin que nadie
+     lo viera                               ->  el video espera en pausa
+
+   La parte cara se ha ido de raiz. Seguir apagando el aspecto seria cobrar
+   por un problema que ya se pago de otra manera.
+
+   ------------------------------------------------------------
+   LO QUE NO SE TOCA
+   ------------------------------------------------------------
+
+   · `prefers-reduced-motion` sigue apagando TODAS las animaciones, y por
+     su cuenta: esta en `base.css:275` y no depende de esto. Quien pide
+     menos movimiento por accesibilidad lo sigue teniendo.
+
+   · Las ESTELAS del cursor siguen apagadas sin aceleracion por hardware.
+     Es lo unico que se queda fuera, y lo pidio el mismo que pidio lo
+     demas: «quita los trails si no tienen aceleracion de gpu». Son lo mas
+     caro de la lista —una particula nueva por cada movimiento del raton— y
+     lo que menos se nota que falte.
+
+   Lo que quede de `data-calidad` en el documento es para poder mirarlo
+   desde la consola. Ya no cambia como se ve nada.
    ============================================================ */
-
-/* ---- el cristal esmerilado --------------------------------
-   `backdrop-filter` es lo primero que cae, y con diferencia lo mas caro: en
-   cada fotograma obliga a leer de vuelta todo lo que hay detras, filtrarlo
-   y recomponerlo. Con GPU es gratis; sin ella lo hace la CPU pixel a pixel,
-   y en un perfil eso son cientos de miles de pixeles sesenta veces por
-   segundo.
-
-   Va con `!important` a proposito. Es la unica forma de alcanzar las 48
-   declaraciones repartidas por seis hojas sin tener que repetirlas aqui una
-   a una y sin que la proxima que alguien escriba se quede fuera. Un modo de
-   emergencia que hay que acordarse de actualizar no sirve de nada. */
-:root[data-calidad="baja"] *,
-:root[data-calidad="baja"] *::before,
-:root[data-calidad="baja"] *::after {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-/* ---- y lo que hay que devolver a cambio -------------------
-   Estas superficies contaban con el desenfoque para separarse del fondo.
-   Sin el se quedan en un velo transparente con el contenido de detras
-   asomando. Se compensa con opacidad: se pierde el efecto, no la lectura. */
-:root[data-calidad="baja"] .nav,
-:root[data-calidad="baja"] .toast,
-:root[data-calidad="baja"] .modal,
-:root[data-calidad="baja"] .nav__menu {
-  background: var(--surface);
-}
-
-:root[data-calidad="baja"] .pf-gate {
-  background: rgba(0, 0, 0, .82);
-}
-
-/* ---- el ruido ---------------------------------------------
-   Una capa a pantalla completa en `mix-blend-mode: overlay`. La mezcla se
-   resuelve en cada pintado y cuesta como un desenfoque pequeño, para un
-   grano que casi no se ve. */
-:root[data-calidad="baja"] .pf-noise {
-  display: none;
-}
-
-/* ---- lo que se mueve solo ---------------------------------
-   No toda animacion es cara: mover o desvanecer algo lo resuelve el
-   compositor. Lo que duele es lo que obliga a REPINTAR en cada fotograma
-   -sombras que laten, brillos que recorren, fondos que se desplazan- y mas
-   aun si hay una capa translucida encima.
-
-   Se apagan las de adorno y se dejan las que dicen algo: el cursor que
-   parpadea al escribir un nombre, o la entrada de la tarjeta, que es como
-   el perfil se presenta. */
-:root[data-calidad="baja"] .pf-card__sheen,
-:root[data-calidad="baja"] .entrada__halo,
-:root[data-calidad="baja"] .pf-avatar[data-fx],
-:root[data-calidad="baja"] .pf.is-animname .pf-name {
-  animation: none !important;
-}
-
-/* ---- la escena 3D de la portada ---------------------------
-   El trio de telefonos vive en una escena con `perspective` y
-   `preserve-3d`, y sigue al raton. Con GPU es una transformacion del
-   compositor y sale gratis. Sin ella, cada movimiento del raton repinta
-   208.560 px por CPU —resolviendo perspectiva— y ademas el telefono del
-   centro lleva un `drop-shadow`, que obliga a leer el canal alfa de la
-   imagen entera para dibujar su contorno.
-
-   Se queda la composicion —los tres telefonos siguen colocados como
-   estaban, que es lo que cuenta la portada— y se va el seguimiento. Sin
-   movimiento, la escena se pinta UNA vez y se acabo. */
-:root[data-calidad="baja"] .trio__escena {
-  transform: none !important;
-  transition: none !important;
-}
-
-/* ---- las sombras de contorno ------------------------------
-   `drop-shadow` no es `box-shadow`: no dibuja un rectangulo, recorre la
-   FORMA del elemento leyendo su transparencia pixel a pixel. En un icono
-   de 20 px da igual; en una imagen que ocupa un cuarto de pantalla, no.
-
-   Solo las grandes y decorativas. Las de los iconos y las insignias se
-   quedan: son pequeñas y ahi la sombra es lo que las separa del fondo. */
-:root[data-calidad="baja"] .trio__centro img,
-:root[data-calidad="baja"] .trio__izq,
-:root[data-calidad="baja"] .trio__der {
-  filter: none !important;
-}
-
-/* ---- la entrada -------------------------------------------
-   Son de una sola vez, pero caen justo cuando la maquina esta mas
-   ocupada: montando la pagina, pidiendo imagenes y resolviendo fuentes.
-   En una maquina que va justa, esa animacion es lo que convierte una
-   carga lenta en una carga a tirones. Aparece de golpe, y ya. */
-:root[data-calidad="baja"] .demo,
-:root[data-calidad="baja"] .rise,
-:root[data-calidad="baja"] .pf-stack {
-  animation: none !important;
-}
-
-/* ---- las sombras grandes ----------------------------------
-   Una sombra difuminada se repinta entera cada vez que algo se mueve
-   encima. Las de la interfaz se quedan planas; las del perfil no se tocan,
-   porque ahi si son parte de lo que la persona eligio. */
-:root[data-calidad="baja"] .card,
-:root[data-calidad="baja"] .nav {
-  box-shadow: none;
-}
-
-/* ============================================================
-   EL ESCALON DE EN MEDIO
-
-   Aqui no se apaga nada: se abarata. Son maquinas que SI pueden con los
-   efectos, solo que no a pleno gas, y quitarles el diseño seria cobrarles
-   de mas.
-
-   Lo unico que se toca es el radio de los desenfoques. El coste de un
-   `blur` no crece con el area sino con el RADIO -cada pixel de salida
-   tiene que mirar a sus vecinos, y el vecindario crece al cuadrado-, asi
-   que bajar de 20 a 10 no cuesta la mitad: cuesta la cuarta parte.
-
-   Y a la vista casi no se distingue, porque lo que hace legible un panel
-   translucido no es cuanto desenfoca sino QUE desenfoque: con 10 px el
-   texto de detras ya es una mancha.
-   ============================================================ */
-:root[data-calidad="media"] .nav,
-:root[data-calidad="media"] .toast,
-:root[data-calidad="media"] .modal,
-:root[data-calidad="media"] .nav__menu {
-  backdrop-filter: blur(9px);
-  -webkit-backdrop-filter: blur(9px);
-}
-
-/* El velo del perfil es el unico que cubre la pantalla entera, asi que es
-   el que mas gana con un techo. Pero OJO con lo que costo aprender: la
-   primera version ponia `blur(6px)` a secas, y eso le ponia desenfoque al
-   velo de TODO perfil que no lo hubiera pedido -una capa a pantalla
-   completa donde antes no habia nada-. Se midio: 2.164 px borrosos en alta
-   contra 206.644 en media, o sea que el nivel "mas barato" salia cien
-   veces mas caro.
-   La variable con tope la calcula quien sabe si hay desenfoque, que es
-   `ProfileView`. Si el perfil no pidio ninguno, aqui no llega nada y cae
-   a `none`, igual que en alta. */
-:root[data-calidad="media"] .pf-veil {
-  backdrop-filter: var(--p-veil-fx-medio, var(--p-veil-fx, none));
-  -webkit-backdrop-filter: var(--p-veil-fx-medio, var(--p-veil-fx, none));
-}
-
-/* El brillo que recorre la tarjeta al pasar el raton repinta toda su
-   superficie en cada fotograma. Es de los efectos con peor relacion entre
-   lo que cuesta y lo que aporta, y ya se quitaba en movil por lo mismo. */
-:root[data-calidad="media"] .pf-card__sheen {
-  display: none;
-}
-
-/* ============================================================
-   MENOS CAPAS, QUE ES LO QUE DE VERDAD CUESTA SIN GPU
-
-   Medido en un perfil con video de fondo: SIETE capas a pantalla
-   completa, 8,6 pantallas de superficie apilada.
-
-       pf-bgvideo     2,80 pantallas   iframe con transform
-       pf-bg          0,97
-       pf-veil        0,97
-       pf-noise       0,97             mix-blend-mode: overlay
-       pf-vig         0,97
-       pf-particles   0,97             canvas
-
-   Con tarjeta grafica eso es barato: cada capa se rasteriza una vez y
-   luego solo se recomponen, que es justo para lo que sirve una GPU.
-
-   Sin ella, el problema no es rasterizar -eso tambien se hace una vez-
-   sino que el video de abajo CAMBIA sesenta veces por segundo, y cada
-   cambio obliga a volver a mezclar por CPU todo lo que tiene encima. Cinco
-   capas translucidas sobre un video en marcha son cinco pantallas de
-   mezcla por fotograma del video.
-
-   Por eso aqui no se persigue el numero de fotogramas: se persigue el
-   numero de CAPAS.
-   ============================================================ */
-
-/* El ruido tambien en media, no solo en baja.
-   `mix-blend-mode: overlay` es lo mas caro de la pila: obliga al navegador
-   a LEER lo que hay debajo y calcular la mezcla pixel a pixel, que es la
-   misma operacion que un `backdrop-filter` pero sin que se note tanto lo
-   que aporta. Un grano al 15 % de opacidad es de los efectos con peor
-   relacion entre lo que cuesta y lo que se ve. */
-:root[data-calidad="media"] .pf-noise {
-  display: none;
-}
-
-/* Y en baja, el velo y la viñeta se funden en UNA capa.
-   Se puede porque en baja el ruido -que va justo entre las dos- esta
-   apagado, asi que dejan de tener nada en medio y el orden de mezcla no
-   cambia. El resultado en pantalla es identico: el mismo color de velo y
-   el mismo degradado, pintados en la misma capa en vez de en dos.
-
-   Una capa a pantalla completa menos que recomponer en cada fotograma del
-   video. No se ve, y se nota. */
-:root[data-calidad="baja"] .pf-vig {
-  display: none;
-}
-:root[data-calidad="baja"] .pf-veil {
-  background:
-    radial-gradient(ellipse at center,
-      transparent 38%,
-      rgba(0, 0, 0, calc(.55 * var(--u-vig, 0))) 78%,
-      rgba(0, 0, 0, calc(.85 * var(--u-vig, 0))) 100%),
-    rgba(0, 0, 0, var(--p-dim-amt, .45));
-}
-
-/* La puerta de entrada, mas barata segun el presupuesto.
-   Es lo PRIMERO que ve cualquiera y lleva un `backdrop-filter` a pantalla
-   completa sobre un fondo ya opaco al 86 %: el desenfoque aporta un 14 %
-   de imagen borrosa que apenas se distingue, y cuesta una pantalla entera
-   de filtro justo cuando la pagina se esta montando.
-
-   Medido con la interaccion real: pintar tras tocar la puerta se llevaba
-   162 de 168 ms, con el JavaScript en 0. El coste de esta pagina esta en
-   PINTAR, no en calcular.
-
-   En baja se lo lleva la regla general de arriba; aqui solo se recorta. */
-:root[data-calidad="media"] .pf-gate {
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-}
-
-/* ============================================================
-   LA ENTRADA AL PERFIL, QUE ES DONDE SE MIDE EL INP
-
-   Al tocar la puerta se lanza `revelarMedio`: opacidad Y escala sobre el
-   fondo, que en un perfil con video son 2,8 pantallas. Durante 1,15 s.
-
-   Con tarjeta grafica eso lo lleva el compositor y sale gratis. Sin ella
-   es repintar la pantalla entera en cada fotograma de la animacion, y cae
-   EXACTAMENTE en el instante que mide el INP: el navegador cronometra
-   desde que tocas hasta el siguiente pintado, y ese pintado es el primer
-   fotograma de esta animacion sobre todo lo demas montandose a la vez.
-
-   Medido en la interaccion real, antes de tocar esto: 424 ms, con el
-   JavaScript en 0 y el resto pintando.
-
-   La tarjeta SIGUE entrando -es la que cuenta la historia, y es pequeña-.
-   Lo que se queda quieto es el fondo, que ya estaba ahi detras y cuyo
-   unico trabajo era subir desde negro. Se pierde un gesto de un segundo;
-   se gana que la pagina responda al tocarla.
-   ============================================================ */
-:root[data-calidad="media"] .pf[data-revelar="on"] .pf-bg,
-:root[data-calidad="media"] .pf[data-revelar="on"] .pf-bgvideo,
-:root[data-calidad="media"] .pf[data-revelar="on"] .pf-bg img.pf-bgimg,
-:root[data-calidad="baja"] .pf[data-revelar="on"] .pf-bg,
-:root[data-calidad="baja"] .pf[data-revelar="on"] .pf-bgvideo,
-:root[data-calidad="baja"] .pf[data-revelar="on"] .pf-bg img.pf-bgimg {
-  animation: none !important;
-}
-
-/* ============================================================
-   LA TARJETA DE VIDRIO
-
-   Lo noto el dueño de la pagina antes que yo: «el tamaño de la tarjeta
-   afecta». Y es exacto, con un mecanismo que lo explica entero.
-
-   Una tarjeta de vidrio es un `backdrop-filter: blur(N)` sobre lo que
-   tenga detras. Su coste crece por DOS lados a la vez:
-
-     · con el AREA, que es lo que cambia al agrandarla;
-     · y con el CUADRADO del radio, porque cada pixel de salida tiene que
-       mirar a sus vecinos y el vecindario crece al cuadrado.
-
-   Con un video detras, ademas, no se calcula una vez: se recalcula en cada
-   fotograma del video, porque el fondo ha cambiado.
-
-   Un perfil real tenia 26 px de desenfoque en una tarjeta al 60 % del
-   ancho. Eso es de lo mas caro que se puede pedir en una pagina web, y en
-   gama media no se estaba limitando: la regla general solo lo apaga en
-   BAJA.
-
-   Aqui se le pone techo. `min()` y no un numero fijo para que solo pueda
-   RECORTAR: quien haya elegido 6 px se queda con sus 6, no se le suben a
-   10. Un tope que sube no es un tope.
-
-   Diez pixeles siguen siendo vidrio -lo que hace legible un panel
-   translucido no es cuanto desenfoca sino QUE desenfoque- y cuestan menos
-   de la sexta parte que veintiseis.
-   ============================================================ */
-:root[data-calidad="media"] .pf[data-surface="glass"] .pf-stack {
-  backdrop-filter: blur(min(10px, var(--u-sblur, 22px))) saturate(150%);
-  -webkit-backdrop-filter: blur(min(10px, var(--u-sblur, 22px))) saturate(150%);
-}
-
-/* ============================================================
-   EN BAJA, LA TARJETA ES OPACA
-
-   El dueño de la pagina lo aislo con dos capturas: misma maquina, mismo
-   perfil, y lo unico distinto era el ancho de la tarjeta. Ancha iba a
-   tirones; estrecha, fina.
-
-   Medido en nivel bajo, la tarjeta tenia el desenfoque ya apagado -la
-   regla general funciona- pero seguia con esto:
-
-       fondo       blanco al 10 %   TRANSLUCIDO
-       transform   matrix3d(...)    capa propia
-       sombra      80 px de radio
-
-   Y ahi esta el mecanismo. Una capa TRANSLUCIDA sobre un video obliga al
-   navegador a leer lo que hay debajo y MEZCLARLO, pixel a pixel, en cada
-   fotograma del video. El coste es proporcional al area, que es justo lo
-   que cambiaba entre las dos capturas.
-
-   Con la tarjeta OPACA no hay nada que leer: se dibuja encima y se acabo.
-   Deja de importar cuanto mida.
-
-   ¿Y no se pierde el vidrio? En este nivel ya estaba perdido: sin
-   desenfoque detras, una tarjeta al 10 % de blanco no es vidrio esmerilado
-   sino un velo que deja ver el video a traves del texto. Lo que se hace
-   aqui es cambiar un efecto roto y caro por uno entero y barato: el mismo
-   tinte que eligio su dueño, pero mezclado contra el fondo del perfil en
-   vez de contra lo que pase por debajo.
-
-   La sombra grande se va por lo mismo: 80 px de radio es un degradado
-   enorme que tambien se mezcla con lo de detras. Se deja una corta, que
-   sigue despegando la tarjeta del fondo.
-   ============================================================ */
-/* SOLO CON VIDEO DETRAS.
-   El dueño de la pagina lo dijo y tiene razon: «se le quita la gracia al
-   vidrio, se supone que debe ser translucido». Una tarjeta de vidrio opaca
-   no es vidrio.
-
-   Y hay un dato que lo permite afinar. El coste de mezclar NO depende de
-   cuan translucida sea -alfa 0,9 cuesta lo mismo que 0,1; lo unico gratis
-   es alfa 1-, pero SI depende de si lo de debajo cambia. Sobre una imagen
-   o un degradado, la mezcla se calcula una vez y el navegador se la
-   guarda. Sobre un video, se rehace en cada fotograma.
-
-   Asi que el vidrio se queda translucido en todos los perfiles menos en
-   los que tienen video de fondo, que son los unicos donde no se puede
-   pagar. De nueve perfiles mirados, tres se libran de esto. */
-:root[data-calidad="baja"] .pf[data-fondo="video"][data-surface="glass"] .pf-stack,
-:root[data-calidad="baja"] .pf[data-fondo="video"][data-surface="solid"] .pf-stack {
-  /* Contra `--p-bg` y NO contra `--p-surface`: el primer intento uso
-     `--p-surface` y no sirvio de nada, porque ese token es TRANSLUCIDO por
-     diseño -en este tema, `rgba(0,229,255,.05)`, un tinte del tema, no un
-     color solido-. Mezclar contra algo transparente da algo transparente:
-     la tarjeta seguia al 14 % de alfa y el navegador seguia teniendo que
-     leer el video de debajo.
-     `--p-bg` si es un color de verdad -aqui `#05070E`- y es ademas el
-     fondo que ese perfil eligio, asi que el tinte queda donde tenia que
-     quedar. */
-  background: color-mix(
-    in srgb,
-    var(--u-scolor, #ffffff) calc(var(--u-op, 9) * 1%),
-    var(--p-bg, #0E0E0E)
-  );
-  box-shadow: 0 8px 24px -12px rgba(0, 0, 0, .8);
-}

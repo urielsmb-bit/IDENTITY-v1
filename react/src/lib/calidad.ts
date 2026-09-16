@@ -272,9 +272,12 @@ export function esAlta(): boolean {
  * leyéndose como el mismo efecto.
  */
 export function cuantas(alMaximo: number): number {
-  if (nivelActual === ALTA) return alMaximo;
-  if (nivelActual === MEDIA) return Math.max(1, Math.round(alMaximo * 0.55));
-  return Math.max(1, Math.round(alMaximo * 0.28));
+  /* Las que pida, siempre. Recortaba al 55 % y al 28 %, y una lluvia con
+     tres cuartas partes de las gotas no es la misma lluvia: es otra.
+     Quien reparte su enlace no puede saber cual de las dos esta viendo
+     quien lo abre. Se queda por si algun dia hace falta volver a tener un
+     tope, pero hoy no lo hay. */
+  return alMaximo;
 }
 
 /**
@@ -286,9 +289,10 @@ export function cuantas(alMaximo: number): number {
  * mitad. A las partículas de fondo les pasa lo mismo.
  */
 export function cadaCuanto(): number {
-  if (nivelActual === ALTA) return 0; /* a la velocidad de la pantalla */
-  if (nivelActual === MEDIA) return 22; /* ~45 por segundo */
-  return 40; /* ~25 por segundo */
+  /* A la velocidad de la pantalla, para todos. Frenar a 25 por segundo no
+     se ve como «lo mismo un poco peor»: se ve como que va a tirones, que
+     es justo la impresion que se queria evitar. */
+  return 0;
 }
 
 /** Avisa cuando el nivel cambia. Devuelve cómo dejar de escuchar. */

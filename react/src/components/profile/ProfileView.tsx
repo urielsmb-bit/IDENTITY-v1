@@ -15,7 +15,6 @@ import { safeUrl, safeMedia } from '@/lib/utils';
 import { avatarDe } from '@/lib/avatar';
 import { incrustable } from '@/lib/validar';
 import { esVimeo, urlFondoVimeo } from '@/lib/vimeo';
-import { esBaja } from '@/lib/calidad';
 import { portadaPista } from '@/lib/music';
 
 
@@ -523,7 +522,14 @@ export function ProfileView({
 
      `arrancarCalidad()` corre en `main.tsx` antes de montar React, asi que
      cuando esto se pinta la respuesta ya es la buena. */
-  const modesto = esBaja();
+  /* Y el video, a la calidad que sea. El `quality=540p` se pedia sin
+     aceleracion por hardware, y se ve: 540p estirado a pantalla completa
+     no es lo mismo que lo que ve todo el mundo. Se va con los demas
+     escalones — ver `styles/calidad.css`, que cuenta por que.
+
+     La constante se queda para que `urlFondoVimeo` siga admitiendo el
+     parametro: existe y funciona, y el dia que haga falta es una linea. */
+  const modesto = false;
   const fondoVimeo =
     p.bgType === 'video' && esVimeo(p.bgValue) ? urlFondoVimeo(p.bgValue, modesto) : '';
   /**

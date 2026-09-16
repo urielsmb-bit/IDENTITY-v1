@@ -29,27 +29,38 @@ beforeEach(() => {
   reloj += 10000;
 });
 
-describe('cuantas · la densidad que cabe', () => {
-  it('nunca devuelve cero, ni con un maximo pequeño', () => {
-    /* Un efecto que desaparece se nota mucho mas que uno que adelgaza. */
-    expect(cuantas(1)).toBeGreaterThan(0);
-    expect(cuantas(3)).toBeGreaterThan(0);
+/**
+ * Estas dos recortaban segun el nivel: al 55 % en media y al 28 % en baja,
+ * y frenando el repintado a 25 por segundo. Ya no.
+ *
+ * «no quiero que las personas que tengan los graficos quitados se vean
+ *  asi, quiero que se vea como todos lo vemos»
+ *
+ * Asi que lo que se comprueba ahora es lo contrario de lo que se
+ * comprobaba: que NO recorten en ningun nivel. Si alguien vuelve a meter
+ * un escalon aqui, estas dos pruebas se caen y hay que venir a leer por
+ * que se quito — que es justo lo que tienen que hacer.
+ */
+describe('cuantas · lo mismo para todos', () => {
+  it('devuelve lo que se le pide, tal cual', () => {
+    expect(cuantas(1)).toBe(1);
+    expect(cuantas(3)).toBe(3);
+    expect(cuantas(200)).toBe(200);
   });
+});
 
-  it('recorta, no borra', () => {
-    const n = cuantas(200);
-    expect(n).toBeGreaterThan(20);
-    expect(n).toBeLessThanOrEqual(200);
+describe('cadaCuanto · sin frenar a nadie', () => {
+  it('siempre a la velocidad de la pantalla', () => {
+    expect(cadaCuanto()).toBe(0);
   });
 });
 
-describe('cadaCuanto · cada cuanto conviene repintar', () => {
-  it('en el nivel que sea, es un numero de milisegundos sensato', () => {
-    const ms = cadaCuanto();
-    expect(ms).toBeGreaterThanOrEqual(0);
-    expect(ms).toBeLessThanOrEqual(60);
-  });
-});
+/* A proposito NO se mueve el nivel para probarlas en cada escalon: estas
+   dos ya no lo LEEN, asi que hacerlo no probaria nada y ademas dejaria el
+   nivel tocado para las pruebas de adaptacion de mas abajo, que comparten
+   el estado del modulo. Se aprendio caro: la primera version de esta
+   prueba tumbo «baja tras dos ventanas malas seguidas» sin tener nada que
+   ver con ella. */
 
 describe('unFotograma · la adaptacion', () => {
   it('no baja con UNA sola ventana mala', () => {

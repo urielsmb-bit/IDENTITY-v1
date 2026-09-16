@@ -1,4 +1,4 @@
-import { cuantas, esBaja } from './calidad';
+import { cuantas, sinAceleracion } from './calidad';
 
 import { estela as buscarEstela, type DefEstela, type FormaMota } from '@/data/estelas';
 
@@ -717,7 +717,7 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
     /* ── soltar ──────────────────────────────────────────── */
     /* Se mira el nivel aqui tambien, no solo al configurar: la calidad se
        decide midiendo, o sea que puede caer con la pagina ya abierta. */
-    if (cantidad > 0 && dentro && !esBaja()) {
+    if (cantidad > 0 && dentro && !sinAceleracion()) {
       const dx = mx - ultimoX;
       const dy = my - ultimoY;
       const dist = Math.hypot(dx, dy);
@@ -1009,7 +1009,17 @@ export function crearEstela(opciones: OpcionesEstela): Estela | null {
        estela casi apagada y video de fondo. Lo que pesaba era el video.
        Esto se apaga por preferencia, no porque fuera el culpable. */
     const pedida = Math.max(0, Math.min(12, o.cantidad || 0));
-    cantidad = pedida > 0 && !esBaja() ? Math.max(2, cuantas(pedida)) : 0;
+    /* Lo unico que se sigue apagando sin aceleracion por hardware, y lo
+       pidio asi el dueño de la pagina: «quita los trails si no tienen
+       aceleracion de gpu». Es una particula NUEVA por cada movimiento del
+       raton, o sea lo mas caro de todo lo que hay, y lo que menos se nota
+       que falte.
+
+       Se pregunta por la ACELERACION y no por el nivel medido, que es lo
+       que se pidio: «si no tienen aceleracion de gpu», no «si va lento».
+       La respuesta se calcula una vez y se guarda, asi que preguntarla en
+       el camino caliente es leer un booleano. */
+    cantidad = pedida > 0 && !sinAceleracion() ? Math.max(2, cuantas(pedida)) : 0;
     intensidad = Math.max(0.25, Math.min(2, (o.intensidad ?? 100) / 100));
     direccion = o.direccion || 'seguimiento';
     ambito = o.ambito ?? null;

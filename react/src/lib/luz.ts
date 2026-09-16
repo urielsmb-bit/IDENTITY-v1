@@ -1,4 +1,3 @@
-import { esAlta, esBaja } from './calidad';
 
 /**
  * La luz.
@@ -174,7 +173,9 @@ function paso(): number {
      rehace la cadena de filtro SVG entera por CPU. Y se puede bajar tanto
      porque la luz persigue con inercia -un 7,5 % de lo que le falta- asi
      que el ojo lee el peso del movimiento, no los fotogramas. */
-  return esAlta() ? 33 : 55;
+  /* Treinta por segundo para todos. El escalon de dieciocho se quito con
+     los demas: una luz que persigue al raton a saltos se nota. */
+  return 33;
 }
 
 /**
@@ -187,14 +188,14 @@ function paso(): number {
  * esté y el puntero la vuelve a despertar.
  */
 function puedeOrbitar(): boolean {
-  return !esBaja();
+  return true;
 }
 
 function cuadro(t: number) {
   /* Si el presupuesto se ha caido al suelo con la pagina ya abierta, la luz
      se para donde este. Se mira aqui y no solo al apuntarse porque el nivel
      se decide midiendo, o sea despues. */
-  if (esBaja()) { latido = 0; return; }
+  /* Ya no hay nivel en el que la luz se quede quieta. */
 
   /* Pedir el siguiente fotograma LO PRIMERO -como estaba- convertía esto en
      un bucle permanente a 60 Hz que trabajaba a 30: despertaba al navegador
@@ -294,7 +295,7 @@ export function usarLuz(): () => void {
    * texto pintado. La diferencia entre las dos cosas es enorme, y no es la
    * que se pierde.
    */
-  if (QUIETO || esBaja()) {
+  if (QUIETO) {
     /* Quieta, pero PUESTA. Sin esto la luz se queda en el cero por defecto
        de la `<fePointLight>` —la esquina— y el material sale plano y feo
        justo para quien ha pedido que nada se mueva. */
