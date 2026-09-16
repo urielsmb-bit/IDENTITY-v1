@@ -103,6 +103,25 @@ function explicar(e: unknown): string {
   if (/VIMEO_TOKEN/i.test(m)) {
     return 'Falta el token de Vimeo en el servidor. Sin el no se pueden subir videos.';
   }
+  /* Los tres fallos de R2, traducidos. El de arriba ya cubre el mas
+     probable —la peticion que el navegador no llega ni a mandar—, pero
+     estos tres llegan con respuesta del servidor y en crudo no dicen nada
+     a quien los lee. */
+  if (/R2 sin configurar: falta/i.test(m)) {
+    /* Este ya trae dentro el nombre del secreto que falta: se deja pasar
+       entero a proposito, porque es LA pista. */
+    return m + '. Mira supabase/R2_COMO_SE_MONTA.md, paso 5.';
+  }
+  if (/R2 devolvio 403/i.test(m)) {
+    return 'R2 rechazo la subida. El permiso se firma para un tamaño y un tipo '
+      + 'concretos, asi que esto suele ser un token sin «Object Read & Write» o '
+      + 'acotado a otro cubo.';
+  }
+  if (/Se corto la conexion al subir|se cortó la conexión al subir/i.test(m)) {
+    return 'Se corto la subida. Si acabas de montar R2, lo primero que hay que '
+      + 'mirar es la politica CORS del cubo: sin ella el navegador ni lo intenta, '
+      + 'y el error que da no la menciona.';
+  }
   return m || 'No se pudo subir el video.';
 }
 
