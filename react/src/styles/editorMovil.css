@@ -1,0 +1,206 @@
+/* ============================================================
+   EDITOR TÁCTIL
+
+   Tres franjas fijas y una hoja que sube. Nada de esto toca al
+   editor de escritorio: son clases propias (`em__`, `hoja__`) que
+   no existen en ninguna otra hoja de estilos.
+
+   La altura se reparte con `grid`, y las franjas de arriba y abajo
+   miden lo que midan: el lienzo se queda con lo que sobre. Un alto
+   fijo para el lienzo es lo que desborda en cuanto cambia el alto
+   de la barra del navegador, que en un móvil cambia al desplazarse.
+   ============================================================ */
+
+/* La barra del sitio se aparta mientras dura el editor tactil. Tiene
+   `z-index:900` y tapaba la barra de arriba de aqui; y aunque no tapara,
+   son 56 px repitiendo un logo y un boton de «Entrar» a alguien que ya ha
+   entrado y esta editando. El editor trae su propia barra. */
+body.editor-tactil .nav{ display:none; }
+body.editor-tactil{ overflow:hidden; }
+
+.em{
+  position:fixed;
+  inset:0;
+  /* Por encima de la barra del sitio (900) por si esa clase no llegara a
+     ponerse: mejor taparla que quedarse debajo. */
+  z-index:950;
+  display:grid;
+  /* `svh` y no `vh`: en el móvil `vh` cuenta la ventana SIN la barra del
+     navegador, así que con la barra puesta la última franja se sale por
+     debajo y el riel de herramientas queda medio tapado. `svh` es la
+     ventana pequeña, la que siempre se ve. */
+  height:100svh;
+  grid-template-rows:auto minmax(0,1fr) auto;
+  background:var(--bg, #08090B);
+  overflow:hidden;
+}
+
+/* ---- barra de arriba -------------------------------------- */
+.em__barra{
+  display:flex; align-items:center; gap:10px;
+  padding:8px 10px;
+  /* El agujero de la cámara y la barra de estado. Sin esto, en un iPhone
+     el botón de volver queda debajo del notch y no se puede pulsar. */
+  padding-top:calc(8px + env(safe-area-inset-top, 0px));
+  border-bottom:1px solid var(--border, #1C1D21);
+  background:var(--surface, #0D0E11);
+}
+.em__icono{
+  flex:none;
+  width:38px; height:38px;
+  display:grid; place-items:center;
+  border:0; border-radius:10px;
+  background:transparent; color:var(--text, #EDEDED);
+  cursor:pointer;
+}
+.em__icono svg{ width:20px; height:20px; }
+.em__icono:active{ background:var(--surface-2, #17181C); }
+
+.em__quien{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+.em__usuario{
+  font-size:14px; font-weight:500; color:var(--text, #EDEDED);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.em__estado{ font-size:11px; color:var(--text-muted, #7A7B80); }
+
+.em__publicar{
+  flex:none;
+  /* 44 de alto: es la medida por debajo de la cual un dedo empieza a
+     fallar. Lo mismo vale para los iconos de arriba, que miden 38 pero
+     con el relleno de la barra llegan a 44 de zona tocable. */
+  min-height:40px;
+  padding:0 16px;
+  border:0; border-radius:10px;
+  background:var(--text, #EDEDED); color:var(--bg, #08090B);
+  font-size:13px; font-weight:500;
+  cursor:pointer;
+}
+.em__publicar:active{ transform:scale(.97); }
+
+/* ---- el lienzo -------------------------------------------- */
+.em__lienzo{
+  min-height:0;
+  overflow:auto;
+  /* Que el desplazamiento del lienzo no arrastre la página detrás cuando
+     llega al final. Es el mismo problema que en la hoja, y la misma cura. */
+  overscroll-behavior:contain;
+  background:#000;
+}
+
+/* ---- riel de herramientas --------------------------------- */
+.em__riel{
+  border-top:1px solid var(--border, #1C1D21);
+  background:var(--surface, #0D0E11);
+  padding-bottom:env(safe-area-inset-bottom, 0px);
+}
+.em__riel-lista{
+  display:flex; gap:2px;
+  margin:0; padding:6px 8px;
+  list-style:none;
+  overflow-x:auto;
+  /* Sin barra a la vista: en un móvil no se usa, y ocupa alto que le hace
+     falta a los nombres. */
+  scrollbar-width:none;
+  /* Cada herramienta se queda centrada al soltar, así no quedan medias
+     cortadas por el borde. */
+  scroll-snap-type:x proximity;
+  -webkit-overflow-scrolling:touch;
+}
+.em__riel-lista::-webkit-scrollbar{ display:none; }
+
+.em__h{
+  scroll-snap-align:center;
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  width:66px; min-height:56px;
+  padding:7px 4px;
+  border:0; border-radius:10px;
+  background:transparent;
+  color:var(--text-muted, #7A7B80);
+  font-size:10.5px; line-height:1.1;
+  cursor:pointer;
+  /* El riel se desplaza a lo ancho; el dedo no tiene que poder moverlo a
+     lo alto desde un botón. */
+  touch-action:pan-x;
+}
+.em__h svg{ width:21px; height:21px; }
+.em__h.on{ color:var(--text, #EDEDED); background:var(--surface-2, #17181C); }
+.em__h:active{ background:var(--surface-2, #17181C); }
+
+/* ---- la hoja ---------------------------------------------- */
+.hoja__fuera{
+  position:fixed; inset:0;
+  z-index:70;
+  border:0; padding:0;
+  /* Transparente a propósito: oscurecer el lienzo sería oscurecer justo lo
+     que se está mirando mientras se edita. Solo recoge el toque. */
+  background:transparent;
+  cursor:pointer;
+}
+.hoja{
+  position:fixed;
+  left:0; right:0; bottom:0;
+  z-index:71;
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr);
+  border-radius:16px 16px 0 0;
+  border-top:1px solid var(--border, #1C1D21);
+  background:var(--surface, #0D0E11);
+  box-shadow:0 -12px 40px rgba(0,0,0,.6);
+  transition:height .22s cubic-bezier(.32,.72,0,1), transform .22s cubic-bezier(.32,.72,0,1);
+  animation:hojaSube .26s cubic-bezier(.32,.72,0,1);
+}
+@keyframes hojaSube{ from{ transform:translateY(100%); } }
+
+.hoja__cab{
+  /* El dedo que arrastra la hoja no debe desplazar nada más. */
+  touch-action:none;
+  cursor:grab;
+  padding-bottom:6px;
+  border-bottom:1px solid var(--border, #1C1D21);
+}
+.hoja__cab:active{ cursor:grabbing; }
+.hoja__tirador{
+  display:block;
+  width:36px; height:4px;
+  margin:8px auto 6px;
+  border-radius:2px;
+  background:var(--border-strong, #2E3036);
+}
+.hoja__fila{ display:flex; align-items:center; gap:6px; padding:0 8px; }
+.hoja__t{
+  flex:1; min-width:0;
+  margin:0;
+  font-size:15px; font-weight:500; text-align:center;
+  color:var(--text, #EDEDED);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.hoja__icono{
+  flex:none;
+  width:36px; height:36px;
+  display:grid; place-items:center;
+  border:0; border-radius:9px;
+  background:transparent; color:var(--text-muted, #7A7B80);
+  cursor:pointer;
+}
+.hoja__icono svg{ width:19px; height:19px; }
+.hoja__icono:active{ background:var(--surface-2, #17181C); }
+/* Ocupa el sitio del botón de volver cuando no lo hay, para que el título
+   quede centrado de verdad y no se mueva al entrar y salir de un subpanel. */
+.hoja__icono--hueco{ pointer-events:none; }
+
+.hoja__cuerpo{
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  padding:12px 14px calc(16px + env(safe-area-inset-bottom, 0px));
+}
+
+.em__pendiente{
+  margin:0; padding:14px;
+  border:1px dashed var(--border-strong, #2E3036);
+  border-radius:10px;
+  font-size:13px; line-height:1.55;
+  color:var(--text-muted, #7A7B80);
+}
+.em__pendiente strong{ color:var(--text, #EDEDED); font-weight:500; }

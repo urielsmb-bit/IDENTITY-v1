@@ -9,6 +9,8 @@ import '@/styles/cuenta.css';
 import '@/styles/guia.css';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { EditorMovil } from '@/components/dashboard/movil/EditorMovil';
+import '@/styles/editorMovil.css';
 import { useProfileStore } from '@/stores/profileStore';
 import { useAvatarDeLaCuenta, useIdentidadDeLaSesion } from '@/hooks/useAuth';
 import { useAuthStore } from '@/stores/authStore';
@@ -913,6 +915,39 @@ export default function DashboardPage() {
 
   if (!profile) {
     return <div className="cargando" aria-busy="true" />;
+  }
+
+  /**
+   * El editor táctil, mientras se construye, detrás de `?movil=nuevo`.
+   *
+   * No sustituye a nada: el editor de hoy sigue siendo el que ve todo el
+   * mundo, en el telefono tambien. Asi esto se puede subir a medio hacer
+   * —la fase 1 es solo el armazon— sin que nadie se quede sin poder
+   * editar su perfil, y se puede comparar uno al lado del otro abriendo
+   * dos pestañas.
+   *
+   * Va DESPUES de todos los ganchos y despues del `if (!profile)`, que es
+   * lo unico que hace legal un retorno temprano aqui: por encima solo
+   * quedan llamadas a `use*`, y saltarselas cambiaria su orden entre
+   * pintados.
+   *
+   * Y recibe lo que ya calcula esta pagina —el perfil, las insignias, si
+   * hay plan, `update`, publicar— en vez de calcularlo otra vez. Es una
+   * capa de presentacion: si tuviera que recalcular algo, ya serian dos
+   * editores y podrian discrepar.
+   */
+  if (searchParams.get('movil') === 'nuevo') {
+    return (
+      <EditorMovil
+        profile={profile}
+        insignias={insigniasGanadasDelPerfil}
+        premium={premium}
+        update={update}
+        guardando={dirty}
+        onPublicar={() => void publicarYVer()}
+        onSalir={() => { window.location.href = '/dashboard'; }}
+      />
+    );
   }
 
   return (
