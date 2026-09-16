@@ -394,6 +394,28 @@ export default function DashboardPage() {
   const [vistaMovil, setVistaMovil] = useState<'editar' | 'previa'>('editar');
 
   /**
+   * Si esta pantalla pide el editor tactil.
+   *
+   * 860 px es el mismo punto en el que `dashboard.css` ya reorganiza el
+   * editor de escritorio, asi que no se inventa un limite nuevo: donde la
+   * barra lateral se convertia en una tira horizontal es exactamente donde
+   * el editor de escritorio deja de estar comodo.
+   *
+   * Se mira el ANCHO y no si hay pantalla tactil: un portatil con pantalla
+   * tactil sigue teniendo raton, teclado y sitio, y ahi el editor de
+   * escritorio es mejor. Lo que decide es cuanto espacio hay.
+   */
+  const [esTelefono, setEsTelefono] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 860px)').matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 860px)');
+    const alCambiar = () => setEsTelefono(mq.matches);
+    mq.addEventListener('change', alCambiar);
+    return () => mq.removeEventListener('change', alCambiar);
+  }, []);
+
+  /**
    * La previa, dibujada a su tamaño real y ENCOGIDA para caber.
    *
    * Antes solo se le ponia el ancho: 375 para movil, 768 para tablet. Y un
@@ -1035,7 +1057,12 @@ export default function DashboardPage() {
     />
   );
 
-  if (searchParams.get('movil') === 'nuevo') {
+  /* `?movil=clasico` devuelve el editor de siempre. Es la salida de
+     emergencia: si algo del tactil falla en un telefono concreto, su dueño
+     tiene una forma de seguir editando sin esperar a un despliegue. Y
+     `?movil=nuevo` lo fuerza desde un ordenador, que es como se prueba. */
+  const quiere = searchParams.get('movil');
+  if (quiere !== 'clasico' && (quiere === 'nuevo' || esTelefono)) {
     return (
       <EditorMovil
         profile={profile}

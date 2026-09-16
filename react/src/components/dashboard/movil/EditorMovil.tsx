@@ -170,6 +170,45 @@ export function EditorMovil({
 
   const escala = reposo.alto > 0 ? Math.min(1, hay.alto / reposo.alto) : 1;
 
+  /**
+   * El teclado del teléfono.
+   *
+   * Al enfocar un campo, el teclado se come la mitad de abajo de la
+   * pantalla — y no se lo dice a nadie: la ventana sigue midiendo lo
+   * mismo. O sea que el riel de herramientas y la mitad de la hoja quedan
+   * DEBAJO del teclado, tapados, y el campo que acabas de tocar también.
+   *
+   * `visualViewport` sí lo sabe: es lo que de verdad se ve. Restando lo
+   * que ocupa, el editor entero se reacomoda por encima y el campo se
+   * queda a la vista.
+   *
+   * No hay alternativa en CSS. `100svh` es la ventana pequeña —sin la
+   * barra del navegador— pero no descuenta el teclado, que aparece y
+   * desaparece sin cambiar el tamaño de la ventana.
+   */
+  const [teclado, setTeclado] = useState(0);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const medir = () => {
+      /* Lo tapado por abajo. El `offsetTop` entra porque en iOS la ventana
+         visual se DESPLAZA además de encoger, y sin contarlo el descuento
+         se queda corto justo lo que se ha desplazado. */
+      const tapado = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      /* Menos de 120 px no es un teclado: es la barra del navegador
+         entrando y saliendo al desplazarse, y reacomodar el editor por eso
+         haría que todo diera saltos mientras se navega. */
+      setTeclado(tapado > 120 ? Math.round(tapado) : 0);
+    };
+    medir();
+    vv.addEventListener('resize', medir);
+    vv.addEventListener('scroll', medir);
+    return () => {
+      vv.removeEventListener('resize', medir);
+      vv.removeEventListener('scroll', medir);
+    };
+  }, []);
+
   const activa = herramienta ? HERRAMIENTA_POR_ID[herramienta] : null;
 
   const lienzo =
@@ -189,7 +228,10 @@ export function EditorMovil({
     );
 
   return (
-    <div className="em">
+    <div
+      className="em"
+      style={teclado ? { height: `calc(100svh - ${teclado}px)` } : undefined}
+    >
       <header className="em__barra">
         <button type="button" className="em__icono" onClick={onSalir} aria-label="Volver">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
