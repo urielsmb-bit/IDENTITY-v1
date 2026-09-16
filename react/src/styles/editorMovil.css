@@ -30,13 +30,26 @@ body.editor-tactil{ overflow:hidden; }
      debajo y el riel de herramientas queda medio tapado. `svh` es la
      ventana pequeña, la que siempre se ve. */
   height:100svh;
-  grid-template-rows:auto minmax(0,1fr) auto;
+  /* barra · lienzo · barra contextual · riel · hoja.
+     El lienzo es la unica fila elastica: todo lo que crezca debajo se lo
+     quita a el, que es justo lo que se pidio — la hoja no tapa el perfil,
+     lo empuja y lo encoge. */
+  grid-template-rows:auto minmax(0,1fr) auto auto auto;
+  /* UNA sola columna, y que pueda encogerse.
+     Sin esto, la cuadricula media 830 px dentro de una ventana de 375:
+     un elemento de cuadricula tiene `min-width:auto`, o sea que se niega a
+     ser mas estrecho que su contenido, y el perfil de dentro pedia 830. La
+     fila entera se ensanchaba y la tarjeta se salia por la derecha.
+     `minmax(0,1fr)` es lo que dice «puedes encogerte todo lo que haga
+     falta»; el recorte lo hace luego el `overflow` de cada fila. */
+  grid-template-columns:minmax(0,1fr);
   background:var(--bg, #08090B);
   overflow:hidden;
 }
 
 /* ---- barra de arriba -------------------------------------- */
 .em__barra{
+  min-width:0;
   display:flex; align-items:center; gap:10px;
   padding:8px 10px;
   /* El agujero de la cámara y la barra de estado. Sin esto, en un iPhone
@@ -80,15 +93,33 @@ body.editor-tactil{ overflow:hidden; }
 /* ---- el lienzo -------------------------------------------- */
 .em__lienzo{
   min-height:0;
-  overflow:auto;
+  /* Lo mismo que arriba, por si esta fila se usara fuera de esa
+     cuadricula: sin `min-width:0` un hijo ancho la estira. */
+  min-width:0;
+  overflow:hidden;
   /* Que el desplazamiento del lienzo no arrastre la página detrás cuando
      llega al final. Es el mismo problema que en la hoja, y la misma cura. */
   overscroll-behavior:contain;
   background:#000;
 }
 
+/* El perfil se dibuja SIEMPRE a su tamaño de reposo —el hueco entero
+   cuando no hay hoja— y se encoge con `transform` para caber en lo que
+   quede. Esa es la diferencia entre encoger y recortar: cambiando el alto
+   de verdad, el perfil se recompondria en otra cosa; escalando, sigue
+   siendo el mismo perfil visto de mas lejos.
+
+   Y el origen arriba en el centro, que es donde esta la cabecera del
+   perfil: al encoger, lo que se aleja es el pie, no la cara. */
+.em__escena{
+  transform-origin:top center;
+  transition:transform .22s cubic-bezier(.32,.72,0,1);
+  will-change:transform;
+}
+
 /* ---- riel de herramientas --------------------------------- */
 .em__riel{
+  min-width:0;
   border-top:1px solid var(--border, #1C1D21);
   background:var(--surface, #0D0E11);
   padding-bottom:env(safe-area-inset-bottom, 0px);
@@ -127,19 +158,11 @@ body.editor-tactil{ overflow:hidden; }
 .em__h:active{ background:var(--surface-2, #17181C); }
 
 /* ---- la hoja ---------------------------------------------- */
-.hoja__fuera{
-  position:fixed; inset:0;
-  z-index:70;
-  border:0; padding:0;
-  /* Transparente a propósito: oscurecer el lienzo sería oscurecer justo lo
-     que se está mirando mientras se edita. Solo recoge el toque. */
-  background:transparent;
-  cursor:pointer;
-}
+/* Una fila mas de la cuadricula, no una capa encima. Sin `position` y sin
+   `z-index`: no flota sobre nada, asi que no hay nada que apilar. */
 .hoja{
-  position:fixed;
-  left:0; right:0; bottom:0;
-  z-index:71;
+  min-height:0;
+  min-width:0;
   display:grid;
   grid-template-rows:auto minmax(0,1fr);
   border-radius:16px 16px 0 0;
@@ -256,6 +279,7 @@ body.editor-tactil{ overflow:hidden; }
 /* Entre el lienzo y el riel: lo que has seleccionado queda justo encima de
    las herramientas, que es donde el pulgar ya está. */
 .em__ctx{
+  min-width:0;
   display:flex; align-items:center; gap:8px;
   padding:7px 8px;
   border-top:1px solid var(--border, #1C1D21);

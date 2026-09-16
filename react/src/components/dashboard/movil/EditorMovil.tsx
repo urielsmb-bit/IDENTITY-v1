@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useEditorStore } from '@/stores/editorStore';
 import { ProfileView } from '@/components/profile/ProfileView';
 import { LienzoBloques } from '@/components/dashboard/LienzoBloques';
@@ -116,6 +116,46 @@ export function EditorMovil({
   const sePuedeDeshacer = historyIndex > 0;
   const sePuedeRehacer = historyIndex < history.length - 1;
 
+  /**
+   * El encogido del perfil cuando la hoja le quita sitio.
+   *
+   * «si sube el visualizador sube con él y se pone más pequeño, todo debe
+   *  ser una escala».
+   *
+   * El tamaño de REPOSO —el hueco entero, sin hoja— se mide una vez y se
+   * guarda. A partir de ahí, lo que se ve es siempre ese mismo perfil
+   * escalado a lo que quede: nunca se le cambia el alto de verdad.
+   *
+   * La diferencia importa. Cambiando el alto, el perfil se RECOMPONE: la
+   * tarjeta se reajusta, el texto parte en otras líneas, el fondo se
+   * reencuadra. O sea que al abrir una hoja verías un perfil distinto del
+   * que vas a publicar, que es lo contrario de lo que sirve una vista
+   * previa. Escalando, es el mismo perfil visto desde más lejos.
+   */
+  const hueco = useRef<HTMLDivElement>(null);
+  const [reposo, setReposo] = useState({ ancho: 0, alto: 0 });
+  const [hay, setHay] = useState({ ancho: 0, alto: 0 });
+
+  useLayoutEffect(() => {
+    const el = hueco.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const obs = new ResizeObserver(([e]) => {
+      const r = e?.contentRect;
+      if (!r) return;
+      const m = { ancho: Math.round(r.width), alto: Math.round(r.height) };
+      setHay(m);
+      /* El reposo es el hueco MAS GRANDE que se ha visto. Es lo mismo que
+         «sin hoja» sin tener que saber si la hay: la hoja solo puede
+         quitar sitio, nunca dar. Y asi girar el telefono o que aparezca la
+         barra del navegador tambien lo actualiza. */
+      setReposo((r0) => (m.alto > r0.alto ? m : r0));
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  const escala = reposo.alto > 0 ? Math.min(1, hay.alto / reposo.alto) : 1;
+
   const activa = herramienta ? HERRAMIENTA_POR_ID[herramienta] : null;
 
   const lienzo =
@@ -203,6 +243,7 @@ export function EditorMovil({
         */}
       <main
         className="em__lienzo"
+        ref={hueco}
         onClick={(e) => {
           const el = (e.target as HTMLElement).closest?.('[data-bloque]');
           const id = el?.getAttribute('data-bloque') ?? '';
@@ -211,9 +252,19 @@ export function EditorMovil({
           setPieza(BLOQUE_POR_ID[id] ? id : null);
         }}
       >
-        <Frontera donde="la vista previa" reintentarCon={profile.username}>
-          {lienzo}
-        </Frontera>
+        <div
+          className="em__escena"
+          style={{
+            /* Alto de reposo, no el de ahora: es lo que hace que el perfil
+               no se recomponga al encoger. */
+            height: reposo.alto ? `${reposo.alto}px` : '100%',
+            transform: escala < 1 ? `scale(${escala})` : undefined,
+          }}
+        >
+          <Frontera donde="la vista previa" reintentarCon={profile.username}>
+            {lienzo}
+          </Frontera>
+        </div>
       </main>
 
       {pieza && (

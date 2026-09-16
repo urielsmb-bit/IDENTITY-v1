@@ -4,6 +4,28 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
  * La hoja que sube desde abajo.
  *
  * ────────────────────────────────────────────────────────────────────────
+ * NO VA ENCIMA DEL LIENZO. VA DEBAJO.
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * La primera versión flotaba sobre el perfil, como casi todas las hojas
+ * inferiores que existen. Y estaba mal, por una razón que solo se ve
+ * usándolo:
+ *
+ *     «no debe ir adelante del visualizador, sino abajo; y si sube el
+ *      visualizador sube con él y se pone más pequeño, todo debe ser una
+ *      escala»
+ *
+ * Flotando, la mitad del perfil queda tapada — y en un editor lo que se
+ * tapa es justo lo que estás cambiando. Empujando, no se pierde nada: el
+ * perfil entero se sigue viendo, solo que más pequeño. Es la diferencia
+ * entre esconder la mitad y alejarse un paso.
+ *
+ * Por eso esta hoja no es `position: fixed`: es una fila más de la
+ * cuadrícula del editor. Crece, y la fila del lienzo —que es `1fr`— se
+ * encoge sola. El encogido del perfil lo hace `EditorMovil`, que mide su
+ * hueco y escala.
+ *
+ * ────────────────────────────────────────────────────────────────────────
  * POR QUE UNA HOJA Y NO UNA PANTALLA
  * ────────────────────────────────────────────────────────────────────────
  *
@@ -117,16 +139,7 @@ export function HojaInferior({ abierta, titulo, onCerrar, onVolver, children }: 
   const alto = `${Math.round(ALTURAS[postura] * 100)}svh`;
 
   return (
-    <>
-      {/* El velo no tapa: solo recoge el toque fuera para cerrar. Oscurecer
-          el lienzo sería oscurecer justo lo que se está mirando. */}
-      <button
-        type="button"
-        className="hoja__fuera"
-        aria-label="Cerrar"
-        onClick={onCerrar}
-      />
-      <section
+    <section
         ref={hojaRef}
         className="hoja"
         role="dialog"
@@ -169,7 +182,6 @@ export function HojaInferior({ abierta, titulo, onCerrar, onVolver, children }: 
         </header>
 
         <div className="hoja__cuerpo">{children}</div>
-      </section>
-    </>
+    </section>
   );
 }
