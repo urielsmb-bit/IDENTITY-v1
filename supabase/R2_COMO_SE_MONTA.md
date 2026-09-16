@@ -104,7 +104,7 @@ Supabase → **Edge Functions** → *Secrets*:
 
 | nombre | valor |
 |---|---|
-| `R2_CUENTA` | el Account ID de Cloudflare |
+| `R2_CUENTA` | el Account ID: los 32 caracteres del campo **S3 API** del cubo, entre `https://` y `.r2.cloudflarestorage.com`. Vale pegar ese campo entero, la función se queda con lo que necesita |
 | `R2_CUBO` | `sharee` |
 | `R2_CLAVE_ID` | el Access Key ID |
 | `R2_CLAVE_SECRETA` | el Secret Access Key |

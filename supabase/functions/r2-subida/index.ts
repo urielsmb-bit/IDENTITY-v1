@@ -98,6 +98,35 @@ async function quien(req: Request): Promise<{ id: string } | null> {
   return { id: data.user.id };
 }
 
+/**
+ * El id de cuenta, saque de donde lo saque quien configura esto.
+ *
+ * El panel de R2 enseña el dato dentro de un campo que se llama «S3 API» y
+ * que contiene la direccion ENTERA:
+ *
+ *     https://ec6f2d48....r2.cloudflarestorage.com/sharee
+ *
+ * Lo normal es copiar ese campo tal cual, porque es lo que hay para
+ * copiar. Y pegado tal cual, la direccion salia doblada:
+ *
+ *     https://https://ec6f...cloudflarestorage.com/sharee.r2.clou...
+ *
+ * El navegador la bloqueaba por CSP —bien hecho— y el mensaje hablaba de
+ * politicas de seguridad, que no tiene nada que ver con el problema. Una
+ * hora de buscar donde no era.
+ *
+ * Asi que se acepta de las dos formas y, si aun asi no tiene pinta de id
+ * de cuenta, se dice EXACTAMENTE eso en vez de construir una direccion
+ * invalida y dejar que falle tres saltos mas alla.
+ */
+function idDeCuenta(crudo: string): string {
+  const t = crudo.trim();
+  const conDominio = t.match(/([0-9a-f]{32})\.r2\.cloudflarestorage\.com/i);
+  if (conDominio) return conDominio[1].toLowerCase();
+  const suelto = t.replace(/^https?:\/\//i, '').split('/')[0].split('.')[0];
+  return /^[0-9a-f]{32}$/i.test(suelto) ? suelto.toLowerCase() : '';
+}
+
 function falta(): string[] {
   return ['R2_CUENTA', 'R2_CUBO', 'R2_CLAVE_ID', 'R2_CLAVE_SECRETA', 'R2_PUBLICO']
     .filter((n) => !Deno.env.get(n));
@@ -148,9 +177,22 @@ Deno.serve(async (req: Request) => {
     return json({ error: `El archivo debe pesar menos de ${MAX_BYTES / 1048576} MB.` }, 400);
   }
 
-  const cuenta = Deno.env.get('R2_CUENTA') as string;
-  const cubo = Deno.env.get('R2_CUBO') as string;
-  const publico = (Deno.env.get('R2_PUBLICO') as string).replace(/\/+$/, '');
+  const cuenta = idDeCuenta(Deno.env.get('R2_CUENTA') as string);
+  if (!cuenta) {
+    return json({
+      error:
+        'R2_CUENTA no parece un id de cuenta. Son 32 caracteres (0-9, a-f). ' +
+        'Sale en el campo «S3 API» del cubo, entre https:// y .r2.cloudflarestorage.com ' +
+        '— y tambien vale pegar ese campo entero.',
+    }, 503);
+  }
+  const cubo = (Deno.env.get('R2_CUBO') as string).trim().replace(/^\/+|\/+$/g, '');
+  /* Y el dominio publico igual de tolerante: con o sin barra al final, y
+     con `https://` puesto si se olvido. Una barra de mas aqui se convierte
+     en una direccion con `//` en medio guardada en el perfil de alguien,
+     que funciona hasta el dia que deja de funcionar. */
+  let publico = (Deno.env.get('R2_PUBLICO') as string).trim().replace(/\/+$/, '');
+  if (!/^https?:\/\//i.test(publico)) publico = 'https://' + publico;
 
   const clave = `${carpeta}/${crypto.randomUUID()}.${ext}`;
 
