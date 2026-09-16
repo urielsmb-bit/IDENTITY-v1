@@ -24,17 +24,22 @@ el regalo de los 10 GB no se aplica a esa clase.
 
 ## 2 · Que se pueda leer desde fuera
 
-Cubo → **Settings** → *Public access* → **Connect Custom Domain**
+Cubo → **Settings** → **Custom Domains** → *Add*
 
 - Dominio: `cdn.sharee.fun`
+- *Continue* → te enseña el registro DNS que va a crear → **Connect Domain**
 
-`sharee.fun` ya está en Cloudflare, así que el DNS se pone solo.
+`sharee.fun` tiene que estar como zona en ESTA misma cuenta de Cloudflare.
+Si lo está, el DNS se pone solo.
 
-Por qué un dominio propio y no la dirección `r2.dev` que ofrece: la de
-`r2.dev` está limitada a propósito y Cloudflare dice que no es para
-producción. Con dominio propio, además, la caché del borde se pone delante
-—es lo que hace bandi.lol: 17 días sin tocar el origen— y el archivo se
-sirve gratis desde el país de quien mira.
+> En la misma pantalla hay otra sección, **Public Development URL**, con un
+> botón *Enable*. **Esa no.** Es la dirección `r2.dev`, y con ella no hay
+> caché, ni WAF, ni control de acceso — o sea, nada de lo que hace que esto
+> salga gratis y rápido. Cloudflare dice que no es para producción.
+
+Con dominio propio la caché del borde se pone delante —es lo que hace
+bandi.lol: 17 días sin tocar el origen— y el archivo se sirve desde el país
+de quien mira, sin coste de salida.
 
 ## 3 · Permitir que el navegador escriba
 
