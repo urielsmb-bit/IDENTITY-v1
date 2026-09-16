@@ -125,7 +125,21 @@ export function LienzoBloques({
     const cont = contRef.current;
     if (!cont) return;
 
-    const ro = new ResizeObserver(medir);
+    /* Se mide AHORA y otra vez en el siguiente fotograma.
+       Al cambiar de tamaño la columna, React recalcula la escala de la
+       maqueta y la aplica en su propio ciclo — o sea DESPUES de que el
+       observador haya avisado. La medida sincrona coge la escala vieja y
+       las cajas quedan desplazadas hasta que otra cosa las remida.
+       `transform` no cambia la caja de maquetacion, asi que ningun
+       observador se entera por su cuenta: hay que volver a pasar. */
+    let pendiente = 0;
+    const medirDosVeces = () => {
+      medir();
+      cancelAnimationFrame(pendiente);
+      pendiente = requestAnimationFrame(medir);
+    };
+
+    const ro = new ResizeObserver(medirDosVeces);
     ro.observe(cont);
     /* El envoltorio de escala tambien: al escalar se le pone una altura, y
        eso si es un cambio de tamaño que el observador ve. */
@@ -163,6 +177,7 @@ export function LienzoBloques({
 
     window.addEventListener('resize', medir);
     return () => {
+      cancelAnimationFrame(pendiente);
       ro.disconnect();
       mo.disconnect();
       columna?.removeEventListener('transitionend', alAcabar);

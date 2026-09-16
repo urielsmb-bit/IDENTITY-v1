@@ -391,6 +391,37 @@ export default function DashboardPage() {
    */
   const [vistaMovil, setVistaMovil] = useState<'editar' | 'previa'>('editar');
 
+  /**
+   * La previa, dibujada a su tamaño real y ENCOGIDA para caber.
+   *
+   * Antes solo se le ponia el ancho: 375 para movil, 768 para tablet. Y un
+   * ancho no es una maqueta. Si el hueco era mas estrecho —el panel del
+   * editor en una ventana partida, o el propio movil— el telefono de
+   * mentira se salia por los lados o se cortaba, que es justo lo contrario
+   * de lo que una vista previa tiene que hacer.
+   *
+   * Ahora se dibuja a 375 de verdad y se escala con `transform`. La
+   * diferencia no es estetica: escalando, lo de dentro SIGUE CREYENDO que
+   * mide 375, asi que las medidas en unidades de contenedor, los saltos de
+   * linea y todo lo que dependa del ancho se resuelven como en un telefono
+   * de verdad. Cambiando el ancho a 300 se resolverian como en una pantalla
+   * de 300, que no existe.
+   */
+  const huecoPrevia = useRef<HTMLDivElement>(null);
+  const [caja, setCaja] = useState({ ancho: 0, alto: 0 });
+  useEffect(() => {
+    const el = huecoPrevia.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const obs = new ResizeObserver(([e]) => {
+      /* `contentRect` y no `clientWidth`: el primero ya viene sin el
+         relleno, y el relleno es sitio donde la maqueta no cabe. */
+      const r = e?.contentRect;
+      if (r) setCaja({ ancho: Math.round(r.width), alto: Math.round(r.height) });
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
   /* Con el nombre puesto. Editar el perfil y mirarlo son dos pestanas que
      se tienen abiertas a la vez, y las dos se llamaban igual. */
   useTitulo(profile?.username ? `Panel · @${profile.username}` : 'Panel · sharee');
@@ -826,6 +857,18 @@ export default function DashboardPage() {
     },
     [profile?.socials, update],
   );
+
+  /** El ancho de verdad que finge la maqueta. `0` = fluido, o sea que se
+   *  adapta sola y no hay nada que escalar. */
+  const anchoDeLaMaqueta =
+    viewport === 'mobile' ? 375 : viewport === 'tablet' ? 768 : 0;
+  /* Solo se ENCOGE, nunca se agranda. Agrandar un telefono de mentira
+     hasta llenar un monitor no enseña como se ve en un telefono: enseña un
+     telefono gigante, que no existe. */
+  const escalaPrevia =
+    anchoDeLaMaqueta && caja.ancho
+      ? Math.min(1, caja.ancho / anchoDeLaMaqueta)
+      : 1;
 
   const vimeoActivo = profile?.bgType === 'video' && esVimeo(profile.bgValue);
   /** El zoom del fondo solo tiene sentido si hay algo que encuadrar. */
@@ -2020,6 +2063,7 @@ export default function DashboardPage() {
 
         {/* Scrollable Canvas for Preview */}
         <div
+          ref={huecoPrevia}
           style={{
             flex: 1,
             overflowY: 'auto',
@@ -2030,13 +2074,19 @@ export default function DashboardPage() {
         >
           <div
             style={{
-              width: viewport === 'mobile' ? '375px' : viewport === 'tablet' ? '768px' : '100%',
+              width: anchoDeLaMaqueta ? `${anchoDeLaMaqueta}px` : '100%',
               borderRadius: viewport === 'desktop' ? '0' : '20px',
               overflow: 'hidden',
-              // La previa debe llenar la columna: sin un alto definido aquí,
-              // el 100% de dentro no tiene contra qué resolverse y el fondo
-              // se corta en una franja.
-              minHeight: '100%',
+              /* Encogido, y con el alto compensado.
+                 `transform` no cambia el sitio que el elemento OCUPA, solo
+                 como se pinta: sin dividir el alto por la escala, la maqueta
+                 se ve pequeña pero deja debajo el hueco que ocupaba a tamaño
+                 real. Dividiendolo, al escalar acaba midiendo exactamente lo
+                 que hay. */
+              minHeight: escalaPrevia < 1 ? undefined : '100%',
+              height: escalaPrevia < 1 && caja.alto ? `${caja.alto / escalaPrevia}px` : undefined,
+              transform: escalaPrevia < 1 ? `scale(${escalaPrevia})` : undefined,
+              transformOrigin: 'top center',
               boxShadow: viewport === 'desktop' ? 'none' : '0 10px 40px rgba(0,0,0,0.8)',
               transition: 'width 0.3s ease',
             }}
