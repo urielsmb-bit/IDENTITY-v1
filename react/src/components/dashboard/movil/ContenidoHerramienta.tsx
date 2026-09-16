@@ -1,8 +1,13 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { EditorBloque } from '@/components/dashboard/EditorBloque';
 import { Piezas } from '@/components/dashboard/Piezas';
 import { PanelInsignias } from '@/components/dashboard/PanelInsignias';
 import { ElegirPlantilla } from '@/components/dashboard/ElegirPlantilla';
+import { SelectorEstela } from '@/components/dashboard/SelectorEstela';
+import { AjustesCuenta } from '@/components/dashboard/AjustesCuenta';
+import { Campo, Tarjetas, Pro, Deslizador } from '@/components/dashboard/Controles';
+import { PARTICLES } from '@/data/themes';
+import { DIBUJOS } from '@/components/dashboard/dibujos';
 import { BLOQUES, BLOQUE_POR_ID } from '@/data/bloques';
 import type { IdHerramienta } from '@/data/herramientasMovil';
 import type { DatosInsignias } from '@/lib/insignias';
@@ -64,6 +69,30 @@ export interface ContenidoProps {
   onGrupoVisto?: () => void;
   onAbrirBloque: (id: string) => void;
   onVolver: () => void;
+  /**
+   * Lo que solo sabe construir `DashboardPage`.
+   *
+   * Fondo y Animaciones se arman ahi con una docena de cierres locales
+   * —qué miniatura enseñar, a dónde sube cada archivo, cómo se traduce
+   * cada ajuste de animación a su campo del perfil—. Se pasan HECHOS, ya
+   * pintados, en vez de rehacerlos aquí: rehacerlos seria tener dos
+   * versiones de esa logica, que es justo lo que este archivo existe para
+   * evitar. El escritorio pinta ESTOS MISMOS nodos.
+   */
+  nodoFondo?: ReactNode;
+  nodoAnimacion?: ReactNode;
+  /** Lo que `AjustesCuenta` necesita y no sale del perfil. */
+  ajustes?: {
+    /* La firma EXACTA que declara `AjustesCuenta`, copiada tal cual. La
+       primera version puso `() => void` «porque total, es un guardado», y
+       `tsc -b` lo cazó al construir: recibe un parche y devuelve una
+       promesa, y estrecharla aqui rompia la llamada de alli. */
+    guardarAhora: (cambios: Partial<Profile>) => Promise<void>;
+    guiaApagada: boolean;
+    aprendidas: number;
+    totalPistas: number;
+    reiniciarGuia: () => void;
+  };
 }
 
 /** Una fila que abre un bloque. Alta de verdad: 56px es lo que un pulgar
@@ -109,6 +138,7 @@ function Pendiente({ que, donde }: { que: string; donde: string }) {
 export function ContenidoHerramienta({
   herramienta, bloque, profile, update, premium, insignias, datosInsignias,
   grupoDestino, onGrupoVisto, onAbrirBloque, onVolver,
+  nodoFondo, nodoAnimacion, ajustes,
 }: ContenidoProps) {
   const caja = useRef<HTMLDivElement>(null);
 
@@ -227,16 +257,70 @@ export function ContenidoHerramienta({
       return <PanelInsignias datos={datosInsignias} />;
 
     case 'fondo':
-      return <Pendiente que="El fondo" donde="SubirFondo + los controles de fondo" />;
+      return nodoFondo ?? <Pendiente que="El fondo" donde="SubirFondo" />;
 
     case 'animaciones':
-      return <Pendiente que="Las animaciones" donde="PanelAnimacion" />;
+      return nodoAnimacion ?? <Pendiente que="Las animaciones" donde="PanelAnimacion" />;
 
     case 'efectos':
-      return <Pendiente que="Los efectos" donde="SelectorEstela + partículas" />;
+      /* Aqui SI se cablea a mano, y se puede: son dos controles que
+         escriben campos del perfil sin ninguna logica intermedia. Los
+         componentes —`Tarjetas`, `SelectorEstela`— son los mismos del
+         escritorio; lo unico que se repite es a que campo va cada uno, que
+         es una linea. Fondo y Animaciones no se pueden hacer asi porque
+         ahi si hay logica que copiar. */
+      return (
+        <>
+          <Pro bloqueado={!premium}>
+            <Campo label="Partículas">
+              <Tarjetas
+                opciones={PARTICLES}
+                dibujos={DIBUJOS.PARTICLES}
+                value={profile.particles || 'none'}
+                onChange={(v) => update({ particles: v })}
+              />
+            </Campo>
+          </Pro>
+          <Pro bloqueado={!premium}>
+            {/* `Deslizador` trae su propia etiqueta, no va dentro de un
+                `Campo`: envolverlo pintaba el rotulo dos veces. */}
+            <Deslizador
+              label="Viñeta"
+              sufijo="%"
+              min={0}
+              max={100}
+              value={profile.vignette ?? 0}
+              onChange={(v) => update({ vignette: v })}
+            />
+          </Pro>
+          <Pro bloqueado={!premium}>
+            <SelectorEstela
+              fx={profile.cursorTrailFx || 'chispas'}
+              color={profile.cursorTrailColor || ''}
+              intensidad={profile.cursorTrailInt ?? 100}
+              cantidad={
+                profile.cursorTrail ??
+                (profile.cursor === 'dot' || profile.cursor === 'blade' ? 5 : 0)
+              }
+              direccion={profile.cursorTrailDir || 'seguimiento'}
+              onCambio={(cambio) => update(cambio)}
+            />
+          </Pro>
+        </>
+      );
 
     case 'ajustes':
-      return <Pendiente que="Los ajustes de la cuenta" donde="AjustesCuenta" />;
+      return ajustes ? (
+        <AjustesCuenta
+          profile={profile}
+          update={update}
+          guardarAhora={ajustes.guardarAhora}
+          guiaApagada={ajustes.guiaApagada}
+          aprendidas={ajustes.aprendidas}
+          totalPistas={ajustes.totalPistas}
+          reiniciarGuia={ajustes.reiniciarGuia}
+        />
+      ) : <Pendiente que="Los ajustes" donde="AjustesCuenta" />;
 
     default:
       return null;

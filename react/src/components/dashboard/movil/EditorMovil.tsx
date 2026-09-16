@@ -9,6 +9,7 @@ import { BarraContextual } from './BarraContextual';
 import { HERRAMIENTAS, HERRAMIENTA_POR_ID, type IdHerramienta } from '@/data/herramientasMovil';
 import { BLOQUE_POR_ID } from '@/data/bloques';
 import type { DatosInsignias } from '@/lib/insignias';
+import type { ReactNode } from 'react';
 import type { Profile } from '@/types';
 
 /**
@@ -72,13 +73,26 @@ export interface EditorMovilProps {
   premium: boolean;
   update: (p: Partial<Profile>) => void;
   datosInsignias: DatosInsignias;
+  /* Los dos nodos que solo sabe armar `DashboardPage` y los datos de la
+     guia, que no salen del perfil. Van de paso: este componente no los
+     mira, solo los entrega a la hoja que toque. */
+  nodoFondo?: ReactNode;
+  nodoAnimacion?: ReactNode;
+  ajustes?: {
+    guardarAhora: (cambios: Partial<Profile>) => Promise<void>;
+    guiaApagada: boolean;
+    aprendidas: number;
+    totalPistas: number;
+    reiniciarGuia: () => void;
+  };
   guardando: boolean;
   onPublicar: () => void;
   onSalir: () => void;
 }
 
 export function EditorMovil({
-  profile, insignias, premium, update, datosInsignias, guardando, onPublicar, onSalir,
+  profile, insignias, premium, update, datosInsignias,
+  nodoFondo, nodoAnimacion, ajustes, guardando, onPublicar, onSalir,
 }: EditorMovilProps) {
   const [herramienta, setHerramienta] = useState<IdHerramienta | null>(null);
   /**
@@ -324,6 +338,9 @@ export function EditorMovil({
             premium={premium}
             insignias={insignias}
             datosInsignias={datosInsignias}
+            nodoFondo={nodoFondo}
+            nodoAnimacion={nodoAnimacion}
+            ajustes={ajustes}
             grupoDestino={grupoDestino}
             onGrupoVisto={() => setGrupoDestino(null)}
             onAbrirBloque={(id) => { setGrupoDestino(null); setBloque(id); }}

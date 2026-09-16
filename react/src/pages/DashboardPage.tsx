@@ -936,6 +936,105 @@ export default function DashboardPage() {
    * capa de presentacion: si tuviera que recalcular algo, ya serian dos
    * editores y podrian discrepar.
    */
+  /**
+   * La caja de subir fondo, armada UNA vez.
+   *
+   * La pintan los dos editores: el de escritorio dentro de `FilaFotos` y
+   * el tactil dentro de su hoja. Esta aqui y no en un componente porque
+   * depende de media docena de cierres de esta pagina —que miniatura
+   * enseñar, a donde sube cada archivo, que se borra del cubo al
+   * quitarlo— y sacarla a un componente seria pasarle esos seis cierres
+   * como props: el mismo acoplamiento, con mas ceremonia.
+   *
+   * Lo que NO se podia hacer es escribirla dos veces. Son treinta lineas
+   * con la logica de borrado del cubo dentro, y el dia que se arregle una
+   * la otra se queda con el fallo.
+   */
+  const cajaDeFondo = (
+    <SubirFondo
+                  guia="fondo"
+                  titulo="Fondo"
+                  previa={
+                    vimeoActivo
+                      ? fichaVimeo?.miniatura
+                      : profile.bgType === 'image'
+                        ? profile.bgValue
+                        : ''
+                  }
+                  onSubido={(r) =>
+                    update(
+                      r.tipo === 'video'
+                        ? {
+                            bgType: 'video',
+                            bgValue: r.url,
+                            bgRatio: r.ratio,
+                            /* Vacío si no se pudo sacar, y vacío TAMBIÉN hay
+                               que escribirlo: si no, la portada del vídeo
+                               anterior se quedaría puesta sobre el nuevo. */
+                            bgPoster: r.poster ?? '',
+                          }
+                        : /* Una imagen no tiene portada, y la del vídeo de
+                             antes no puede sobrevivirle. */
+                          { bgType: 'image', bgValue: r.url, bgPoster: '' },
+                    )
+                  }
+                  anterior={profile.bgValue || ''}
+                  anteriorPoster={profile.bgPoster || ''}
+                  onQuitar={() => {
+                    /* El archivo se va del cubo, no solo del perfil. Antes
+                       esto dejaba el fichero arriba para siempre, y como
+                       hay un tope de ocho por cuenta, quien probaba varios
+                       formatos acababa bloqueado con un aviso que decia
+                       «Borra alguno antes de subir otro» sin que existiera
+                       ninguna forma de borrar ninguno.
+
+                       Si el fondo es de Vimeo esto no hace nada: el video
+                       vive en la cuenta de Vimeo de su dueño y borrarlo de
+                       ahi es otra decision, no la de quitarlo del perfil. */
+                    void backend.borrarMedioPorUrl(profile.bgValue || '');
+                    /* Y su portada, que es otro archivo del cubo y contaba
+                       para el mismo tope de ocho por cuenta. */
+                    void backend.borrarMedioPorUrl(profile.bgPoster || '');
+                    update({ bgType: 'none', bgValue: '', bgPoster: '' });
+                  }}
+                />
+  );
+
+  /**
+   * El panel de la animacion de entrada, armado UNA vez.
+   *
+   * Lo pintan los dos editores. Va aqui por lo mismo que la caja de
+   * fondo: su `set` traduce cada ajuste de animacion al campo del perfil
+   * que le corresponde, y esa tabla es logica de verdad. Escrita dos
+   * veces, el dia que se añada un ajuste solo se acuerda uno de los dos.
+   */
+  const panelDeAnimacion = (
+    <PanelAnimacion
+      destino=".pf-stack"
+      catalogo={ENTER_FX}
+      queEs="la superficie"
+      estilo={{
+        anim: profile.enterFx,
+        animDir: profile.enterDir,
+        animMs: profile.enterMs,
+        animDelay: profile.enterDelay,
+        animI: profile.enterI,
+        animE: profile.enterE,
+      }}
+      set={(k, v) => {
+        const mapa: Record<string, string> = {
+          anim: 'enterFx',
+          animDir: 'enterDir',
+          animMs: 'enterMs',
+          animDelay: 'enterDelay',
+          animI: 'enterI',
+          animE: 'enterE',
+        };
+        updateField(mapa[k] as keyof Profile, v as never);
+      }}
+    />
+  );
+
   if (searchParams.get('movil') === 'nuevo') {
     return (
       <EditorMovil
@@ -944,6 +1043,15 @@ export default function DashboardPage() {
         premium={premium}
         update={update}
         datosInsignias={datosInsignias}
+        nodoFondo={cajaDeFondo}
+        nodoAnimacion={panelDeAnimacion}
+        ajustes={{
+          guardarAhora,
+          guiaApagada: guia.apagada,
+          aprendidas: guia.aprendidas,
+          totalPistas: guia.total,
+          reiniciarGuia: guia.reiniciar,
+        }}
         guardando={dirty}
         onPublicar={() => void publicarYVer()}
         onSalir={() => { window.location.href = '/dashboard'; }}
@@ -1291,55 +1399,7 @@ export default function DashboardPage() {
                   onChange={(r) => updateField('avatarUrl', r.url)}
                 />
               }
-              cajaFondo={
-                <SubirFondo
-                  guia="fondo"
-                  titulo="Fondo"
-                  previa={
-                    vimeoActivo
-                      ? fichaVimeo?.miniatura
-                      : profile.bgType === 'image'
-                        ? profile.bgValue
-                        : ''
-                  }
-                  onSubido={(r) =>
-                    update(
-                      r.tipo === 'video'
-                        ? {
-                            bgType: 'video',
-                            bgValue: r.url,
-                            bgRatio: r.ratio,
-                            /* Vacío si no se pudo sacar, y vacío TAMBIÉN hay
-                               que escribirlo: si no, la portada del vídeo
-                               anterior se quedaría puesta sobre el nuevo. */
-                            bgPoster: r.poster ?? '',
-                          }
-                        : /* Una imagen no tiene portada, y la del vídeo de
-                             antes no puede sobrevivirle. */
-                          { bgType: 'image', bgValue: r.url, bgPoster: '' },
-                    )
-                  }
-                  anterior={profile.bgValue || ''}
-                  anteriorPoster={profile.bgPoster || ''}
-                  onQuitar={() => {
-                    /* El archivo se va del cubo, no solo del perfil. Antes
-                       esto dejaba el fichero arriba para siempre, y como
-                       hay un tope de ocho por cuenta, quien probaba varios
-                       formatos acababa bloqueado con un aviso que decia
-                       «Borra alguno antes de subir otro» sin que existiera
-                       ninguna forma de borrar ninguno.
-
-                       Si el fondo es de Vimeo esto no hace nada: el video
-                       vive en la cuenta de Vimeo de su dueño y borrarlo de
-                       ahi es otra decision, no la de quitarlo del perfil. */
-                    void backend.borrarMedioPorUrl(profile.bgValue || '');
-                    /* Y su portada, que es otro archivo del cubo y contaba
-                       para el mismo tope de ocho por cuenta. */
-                    void backend.borrarMedioPorUrl(profile.bgPoster || '');
-                    update({ bgType: 'none', bgValue: '', bgPoster: '' });
-                  }}
-                />
-              }
+              cajaFondo={cajaDeFondo}
             />
 
             <Campo label="Plantilla" guia="formato">
@@ -1736,31 +1796,8 @@ export default function DashboardPage() {
                     entero, y trae el modo «Escalonado» para lo que
                     aquello intentaba hacer y hacia mal. */}
                 <Pro bloqueado={!premium}>
-                <PanelAnimacion
-                  destino=".pf-stack"
-                  catalogo={ENTER_FX}
-                  queEs="la superficie"
-                  estilo={{
-                    anim: profile.enterFx,
-                    animDir: profile.enterDir,
-                    animMs: profile.enterMs,
-                    animDelay: profile.enterDelay,
-                    animI: profile.enterI,
-                    animE: profile.enterE,
-                  }}
-                  set={(k, v) => {
-                    const mapa: Record<string, string> = {
-                      anim: 'enterFx',
-                      animDir: 'enterDir',
-                      animMs: 'enterMs',
-                      animDelay: 'enterDelay',
-                      animI: 'enterI',
-                      animE: 'enterE',
-                    };
-                    updateField(mapa[k] as keyof Profile, v as never);
-                  }}
-                />
-                  <Interruptor
+                {panelDeAnimacion}
+                <Interruptor
                   label="Inclinación 3D"
                   desc="La tarjeta sigue al ratón"
                   on={!!profile.tilt}
