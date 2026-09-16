@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
+import { useEditorStore } from '@/stores/editorStore';
 import { ProfileView } from '@/components/profile/ProfileView';
 import { LienzoBloques } from '@/components/dashboard/LienzoBloques';
 import { Frontera } from '@/components/layout/Frontera';
 import { HojaInferior } from './HojaInferior';
+import { ContenidoHerramienta } from './ContenidoHerramienta';
 import { HERRAMIENTAS, HERRAMIENTA_POR_ID, type IdHerramienta } from '@/data/herramientasMovil';
 import { BLOQUE_POR_ID } from '@/data/bloques';
+import type { DatosInsignias } from '@/lib/insignias';
 import type { Profile } from '@/types';
 
 /**
@@ -67,17 +70,25 @@ export interface EditorMovilProps {
   insignias: string[];
   premium: boolean;
   update: (p: Partial<Profile>) => void;
+  datosInsignias: DatosInsignias;
   guardando: boolean;
   onPublicar: () => void;
   onSalir: () => void;
 }
 
 export function EditorMovil({
-  profile, insignias, premium, update, guardando, onPublicar, onSalir,
+  profile, insignias, premium, update, datosInsignias, guardando, onPublicar, onSalir,
 }: EditorMovilProps) {
   const [herramienta, setHerramienta] = useState<IdHerramienta | null>(null);
-  /** El bloque tocado en el lienzo. Todavía no abre nada —eso es la fase
-   *  3— pero ya se recoge, que es lo que prueba que el lienzo responde. */
+  /**
+   * El bloque abierto DENTRO de la hoja.
+   *
+   * Es una pila de dos escalones, no una pantalla nueva: herramienta →
+   * bloque. Más profundidad en un teléfono se convierte en «¿por dónde
+   * había entrado?», y la cabecera de la hoja ya sabe volver un paso.
+   */
+  const [bloque, setBloque] = useState<string | null>(null);
+  /** Y el seleccionado en el lienzo, que es lo que `LienzoBloques` marca. */
   const [pieza, setPieza] = useState<string | null>(null);
 
   /* Mientras este editor esta en pantalla, el documento entero cambia de
@@ -89,6 +100,17 @@ export function EditorMovil({
     return () => document.body.classList.remove('editor-tactil');
   }, []);
 
+  /* Deshacer y rehacer salen del MISMO almacen que en el escritorio. No
+     hay una historia para el raton y otra para el dedo: es la misma pila,
+     asi que se puede deshacer en el telefono algo hecho en el ordenador
+     dentro de la misma sesion. */
+  const undo = useEditorStore((e) => e.undo);
+  const redo = useEditorStore((e) => e.redo);
+  const historyIndex = useEditorStore((e) => e.historyIndex);
+  const history = useEditorStore((e) => e.history);
+  const sePuedeDeshacer = historyIndex > 0;
+  const sePuedeRehacer = historyIndex < history.length - 1;
+
   const activa = herramienta ? HERRAMIENTA_POR_ID[herramienta] : null;
 
   const lienzo =
@@ -99,7 +121,15 @@ export function EditorMovil({
         premium={premium}
         vista="mobile"
         seleccionado={pieza}
-        onAbrirBloque={(id) => { if (BLOQUE_POR_ID[id]) setPieza(id); }}
+        onAbrirBloque={(id) => {
+          if (!BLOQUE_POR_ID[id]) return;
+          /* Tocar en el lienzo abre su editor. Es media fase 3 y sale
+             gratis: `LienzoBloques` ya avisa de que se ha tocado un
+             bloque, y la hoja ya sabe enseñar uno. */
+          setPieza(id);
+          setHerramienta('bloques');
+          setBloque(id);
+        }}
       >
         <ProfileView profile={profile} insignias={insignias} preview editando />
       </LienzoBloques>
@@ -127,6 +157,33 @@ export function EditorMovil({
           </span>
         </div>
 
+        <button
+          type="button"
+          className="em__icono"
+          onClick={undo}
+          disabled={!sePuedeDeshacer}
+          aria-label="Deshacer"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+               strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M9 14 4 9l5-5" />
+            <path d="M4 9h10a6 6 0 0 1 0 12h-3" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          className="em__icono"
+          onClick={redo}
+          disabled={!sePuedeRehacer}
+          aria-label="Rehacer"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+               strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="m15 14 5-5-5-5" />
+            <path d="M20 9H10a6 6 0 0 0 0 12h3" />
+          </svg>
+        </button>
+
         <button type="button" className="em__publicar" onClick={onPublicar}>
           Publicar
         </button>
@@ -150,7 +207,10 @@ export function EditorMovil({
                 className={`em__h${herramienta === h.id ? ' on' : ''}`}
                 aria-pressed={herramienta === h.id}
                 title={h.titulo}
-                onClick={() => setHerramienta(herramienta === h.id ? null : h.id)}
+                onClick={() => {
+                  setBloque(null);
+                  setHerramienta(herramienta === h.id ? null : h.id);
+                }}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
                      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
@@ -164,13 +224,26 @@ export function EditorMovil({
 
       <HojaInferior
         abierta={!!activa}
-        titulo={activa?.titulo ?? ''}
-        onCerrar={() => setHerramienta(null)}
+        /* El título dice dónde estás: la herramienta, o el bloque si has
+           entrado en uno. Sin eso, dos escalones de profundidad en una
+           hoja de 52 % de alto se pierden enseguida. */
+        titulo={bloque ? (BLOQUE_POR_ID[bloque]?.nombre ?? activa?.titulo ?? '') : (activa?.titulo ?? '')}
+        onVolver={bloque ? () => setBloque(null) : undefined}
+        onCerrar={() => { setBloque(null); setHerramienta(null); }}
       >
-        <p className="em__pendiente">
-          Los controles de <strong>{activa?.titulo}</strong> se conectan en la fase 2.
-          Serán los mismos que en el ordenador, no otros.
-        </p>
+        {activa && (
+          <ContenidoHerramienta
+            herramienta={activa.id}
+            bloque={bloque}
+            profile={profile}
+            update={update}
+            premium={premium}
+            insignias={insignias}
+            datosInsignias={datosInsignias}
+            onAbrirBloque={setBloque}
+            onVolver={() => setBloque(null)}
+          />
+        )}
       </HojaInferior>
     </div>
   );

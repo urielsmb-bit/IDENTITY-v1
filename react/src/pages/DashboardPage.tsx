@@ -943,6 +943,7 @@ export default function DashboardPage() {
         insignias={insigniasGanadasDelPerfil}
         premium={premium}
         update={update}
+        datosInsignias={datosInsignias}
         guardando={dirty}
         onPublicar={() => void publicarYVer()}
         onSalir={() => { window.location.href = '/dashboard'; }}
