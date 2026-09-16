@@ -78,6 +78,20 @@ function cargarAPIYouTube(cb: () => void) {
     apiLista = true;
     colaAPI.splice(0).forEach((f) => f());
   };
+  /* El saludo a los servidores de YouTube, antes de pedirles nada. Cargar
+     la API son dos servidores distintos (el de la pagina y el de las
+     miniaturas) y cada uno cuesta su DNS y su TLS. Aqui se solapan con lo
+     que quede de la carga del perfil en vez de ir en fila detras. */
+  for (const donde of ['https://www.youtube.com', 'https://i.ytimg.com']) {
+    if (document.querySelector(`link[data-yt-pre="${donde}"]`)) continue;
+    const l = document.createElement('link');
+    l.rel = 'preconnect';
+    l.href = donde;
+    l.crossOrigin = '';
+    l.setAttribute('data-yt-pre', donde);
+    document.head.appendChild(l);
+  }
+
   const s = document.createElement('script');
   s.id = 'yt-api';
   s.src = 'https://www.youtube.com/iframe_api';
@@ -85,8 +99,74 @@ function cargarAPIYouTube(cb: () => void) {
   document.head.appendChild(s);
 }
 
+/**
+ * El reproductor de YouTube, con la pista ya MASTICADA antes del clic.
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ * LO QUE TARDABA, MEDIDO EN PRODUCCION
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * Desde que alguien pulsa la puerta hasta que se oye algo: 2.400 ms. Y el
+ * hilo principal no estaba bloqueado —cero tareas largas, un setTimeout(0)
+ * respondia en 0 ms—, asi que la espera entera era de YouTube.
+ *
+ * Aislado en la misma pagina, con el mismo video:
+ *
+ *   A · playVideo() sobre un reproductor recien creado ........  861 ms
+ *   B · loadVideoById() con el MISMO id, ya con buffer ........  351 ms
+ *   C · playVideo() con el buffer ya lleno ....................   81 ms
+ *   D · lo que hacia la web: loadVideoById() sin buffer .......  571 ms
+ *   E · precalentado en silencio y luego playVideo() ..........   80 ms
+ *
+ * Lo que manda no es que metodo se llame: es si el MEDIO ya esta bajado.
+ * `autoplay: 0` crea el reproductor pero no baja ni un byte de audio, asi
+ * que el primer play siempre pagaba la descarga entera.
+ *
+ * Dos cosas, entonces:
+ *
+ *   1 · se arranca mudo en cuanto el reproductor esta listo, y en cuanto
+ *       suena —callado— se para y se rebobina. Nadie oye nada; lo que
+ *       queda es el buffer lleno. Al clic solo le queda quitar el mudo.
+ *
+ *   2 · `cargar` deja de recargar la pista que YA esta puesta.
+ *       `precalentar` creaba el reproductor con su `videoId`, y el clic
+ *       llamaba a `loadVideoById` con ESE MISMO id: tirar a la basura lo
+ *       que se acababa de preparar para volver a empezar.
+ *
+ * Lo que cuesta: unos segundos de audio bajados para alguien que quiza no
+ * pulse nunca. Se paga una vez, solo en perfiles que tienen musica.
+ */
 export function reproductorYouTube(contenedor: HTMLElement, videoId: string, cb: any = {}) {
   let yt: any = null, listo = false, pendiente: string | null = null, muerto = false;
+  /** El id que el reproductor tiene puesto ahora mismo. */
+  let cargado = videoId;
+  /** Arrancando en silencio para llenar el buffer. */
+  let calentando = false;
+  /** Ya tiene bocado: el siguiente play es inmediato. */
+  let calentado = false;
+
+  /* Se arranca mudo, que es lo que el navegador deja hacer sin que nadie
+     haya tocado nada. Si lo niega igualmente —modo ahorro de bateria en el
+     movil— no pasa nada: `calentando` se queda puesto, nunca llega el
+     estado 1, y el clic de verdad sigue el camino de siempre. */
+  function calentar() {
+    if (calentado || calentando || !listo || !yt || muerto) return;
+    try {
+      yt.mute();
+      yt.playVideo();
+      calentando = true;
+    } catch { /* reproductor que no esta para nadie */ }
+  }
+
+  function arrancar() {
+    if (!listo || !yt) { pendiente = 'play'; return; }
+    /* Si se pulsa MIENTRAS calienta, deja de ser un calentamiento y pasa a
+       ser lo que la persona ha pedido: se quita el mudo y el estado vuelve
+       a contarse. */
+    calentando = false;
+    try { yt.unMute(); } catch { /* da igual: sonara al volumen que tenga */ }
+    yt.playVideo();
+  }
 
   cargarAPIYouTube(() => {
     if (muerto) return;
@@ -99,10 +179,20 @@ export function reproductorYouTube(contenedor: HTMLElement, videoId: string, cb:
         onReady: () => {
           listo = true;
           if (cb.alListo) cb.alListo();
-          if (pendiente === 'play') yt.playVideo();
+          if (pendiente === 'play') arrancar();
+          else calentar();
           pendiente = null;
         },
         onStateChange: (e: any) => {
+          /* El unico estado que se esconde. Sonando y mudo no es «sonando»:
+             avisar aqui pondria el boton en pausa y arrancaria el contador
+             de tiempo por una pista que nadie ha pedido. */
+          if (calentando && e.data === 1) {
+            calentando = false;
+            calentado = true;
+            try { yt.pauseVideo(); yt.seekTo(0, true); } catch { /* ya no esta */ }
+            return;
+          }
           if (e.data === 0 && cb.alTerminar) cb.alTerminar();
           if (cb.alEstado) cb.alEstado(e.data === 1);
         }
@@ -111,11 +201,22 @@ export function reproductorYouTube(contenedor: HTMLElement, videoId: string, cb:
   });
 
   return {
-    play: () => { if (listo && yt) yt.playVideo(); else pendiente = 'play'; },
+    play: () => { if (listo && yt) arrancar(); else pendiente = 'play'; },
     pause: () => { if (listo && yt) yt.pauseVideo(); else pendiente = null; },
-    cargar: (id: string, arrancar: boolean) => {
-      if (!listo || !yt) { pendiente = arrancar ? 'play' : null; return; }
-      if (arrancar) yt.loadVideoById(id); else yt.cueVideoById(id);
+    cargar: (id: string, arrancarYa: boolean) => {
+      if (!listo || !yt) { pendiente = arrancarYa ? 'play' : null; return; }
+      /* La que ya esta puesta. Recargarla es tirar el buffer y volver a
+         bajarlo: eran 571 ms en vez de 80. */
+      if (id === cargado) { if (arrancarYa) arrancar(); return; }
+      cargado = id;
+      calentado = false;
+      calentando = false;
+      if (arrancarYa) {
+        try { yt.unMute(); } catch { /* sonara al volumen que tenga */ }
+        yt.loadVideoById(id);
+      } else {
+        yt.cueVideoById(id);
+      }
     },
     buscar: (seg: number) => { if (listo && yt) yt.seekTo(seg, true); },
     /* YouTube SABE como se llama la cancion, y lo sabe desde que el

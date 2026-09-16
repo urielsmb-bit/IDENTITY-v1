@@ -200,6 +200,34 @@ export default async function handler(req: Request): Promise<Response> {
 
   const enlace = `${origen}/${usuario}`;
 
+  /**
+   * El saludo a Vimeo, desde la CABECERA.
+   *
+   * Esto ya se hacia, pero en un efecto de React dentro de `ProfilePage`:
+   * o sea despues de bajar el HTML, bajar el JavaScript y ejecutarlo — a
+   * los setecientos y pico milisegundos. Y alli habia que ponerlo a ciegas,
+   * para TODO perfil, porque para saber si este tiene video habria que
+   * esperar al perfil, que era justo lo que se intentaba adelantar.
+   *
+   * Aqui no hay que esperar a nada: la fila ya esta en la mano, unas lineas
+   * mas arriba. Asi que el DNS y el TLS empiezan con el primer byte del
+   * HTML en vez de medio segundo despues, y solo en los perfiles que de
+   * verdad llevan un video detras. Los demas no pagan un socket abierto
+   * contra un servidor al que nadie va a llamar.
+   *
+   * `i.vimeocdn.com` es de donde sale la foto fija del video, la que se
+   * pinta mientras el reproductor arranca.
+   */
+  const hayVimeo =
+    String(ap.bgType || '') === 'video' &&
+    /vimeo\.com\//.test(String(ap.bgValue || ''));
+  const preconexiones = hayVimeo
+    ? [
+        '<link rel="preconnect" href="https://player.vimeo.com" crossorigin />',
+        '<link rel="preconnect" href="https://i.vimeocdn.com" crossorigin />',
+      ]
+    : [];
+
   const etiquetas = [
     `<title>${esc(titulo)}</title>`,
     `<meta name="description" content="${esc(descripcion)}" />`,
@@ -216,6 +244,7 @@ export default async function handler(req: Request): Promise<Response> {
     `<meta name="twitter:title" content="${esc(titulo)}" />`,
     `<meta name="twitter:description" content="${esc(descripcion)}" />`,
     imagen ? `<meta name="twitter:image" content="${esc(imagen)}" />` : '',
+    ...preconexiones,
   ]
     .filter(Boolean)
     .join('\n  ');

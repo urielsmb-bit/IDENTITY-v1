@@ -838,6 +838,22 @@ export default function DashboardPage() {
   const urlVimeo = vimeoActivo ? profile.bgValue : '';
   const { info: fichaVimeo, estado: estadoVimeo } = useVimeo(urlVimeo, (d) => {
     if (d.ratio !== profile?.bgRatio) updateField('bgRatio', d.ratio);
+    /**
+     * Y la foto fija, que ya venia en la misma respuesta y se tiraba.
+     *
+     * Es lo que se pinta mientras el reproductor de Vimeo arranca —1.324 ms
+     * medidos, con la conexion caliente— en vez de un rectangulo del color
+     * del tema. Ninguno de los perfiles con video la tenia guardada.
+     *
+     * Solo se pisa si esta vacia o si ya era de Vimeo. Un video SUBIDO
+     * guarda aqui su propio poster, que vive en nuestro cubo y se borra al
+     * cambiar de fondo: machacarlo dejaria el archivo huerfano ahi dentro.
+     */
+    const poster = String(profile?.bgPoster || '');
+    const esDeVimeo = !poster || poster.includes('vimeocdn.com');
+    if (d.miniatura && esDeVimeo && d.miniatura !== poster) {
+      updateField('bgPoster', d.miniatura);
+    }
   });
 
   const nombreSuperficie = useMemo(

@@ -2702,6 +2702,23 @@
   background:var(--p-bg, #000);
 }
 
+/* ---- cuando hay foto fija debajo ------------------------------
+   El relleno de arriba deja de hacer falta: lo que hay detras no es el
+   color del tema, es el fotograma del propio video. Asi que el marco se
+   queda transparente y escondido hasta que se mueve, y entra encima de su
+   propia foto — que es el mismo encuadre, asi que no salta nada.
+
+   Las dos clases comparten la transicion a proposito: si solo la llevara
+   `esta-listo`, el navegador recibiria el cambio de opacidad y la orden de
+   animarlo en el mismo golpe, y hay quien no lo anima. */
+.pf-bgvideo.esta-esperando,
+.pf-bgvideo.esta-listo{
+  background:transparent;
+  transition:opacity .5s ease;
+}
+.pf-bgvideo.esta-esperando{ opacity:0; }
+.pf-bgvideo.esta-listo{ opacity:var(--u-bg-op, 1); }
+
 /* ============================================================
    VISTA PREVIA DEL EDITOR
    En la columna del panel el alto lo manda el contenedor, no la

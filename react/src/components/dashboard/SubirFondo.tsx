@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { subirFondoVimeo, type AvanceSubida } from '@/lib/vimeoSubida';
+import { hayR2, subirAR2 } from '@/lib/r2';
 import { prepararImagen, posterDeVideo } from '@/lib/imagen';
 import { safeMedia } from '@/lib/utils';
 import * as backend from '@/lib/backend';
@@ -36,6 +37,28 @@ type Fase = 'quieto' | 'imagen' | 'subiendo' | 'procesando';
 
 /** Lo que aguanta el cubo por archivo. Lo fija la migracion 0006. */
 const MAX_CUBO_MB = 8;
+
+/**
+ * Lo que se admite en R2.
+ *
+ * Mucho mas que el cubo de Supabase porque en R2 la SALIDA no se cobra:
+ * lo que limita es el almacen (10 GB de regalo), no el trafico. Y mucho
+ * menos que Vimeo porque este archivo se descarga ENTERO en cada visita,
+ * sin transcodificar: lo que suba es literalmente lo que se baja quien
+ * abra el perfil desde el movil.
+ *
+ * 64 MB es el mismo numero que firma la funcion de borde. Para hacerse
+ * una idea, medido: guns.lol sirve 8 MB a 1080p y bandi.lol 16 MB a 1440p.
+ */
+const MAX_R2_MB = 64;
+
+/** Cuanto se admite AHORA, segun a donde vayan a parar los videos nuevos.
+ *  Una sola respuesta para el aviso de error y para el texto de la caja:
+ *  con dos cuentas separadas acaban diciendo numeros distintos. */
+function topeDelVideoMB(): number {
+  if (hayR2()) return MAX_R2_MB;
+  return CONFIG.VIMEO ? MAX_VIDEO_MB : MAX_CUBO_MB;
+}
 
 /**
  * El ancho partido por el alto, leidos del propio archivo.
@@ -150,17 +173,95 @@ export function SubirFondo({
       }
 
       // ── vídeo ───────────────────────────────────────────────
-      if (archivo.size > MAX_VIDEO_MB * 1024 * 1024) {
+      /* El tope de mas arriba del todo, el que depende de a donde vaya a
+         parar. Se mira aqui y con el mensaje que toca: decirle a alguien
+         que «Vimeo lo optimiza» cuando el video va a R2 —donde se guarda
+         tal cual— es mandarle a subir cuarenta megas que luego se baja
+         entero cada visitante. */
+      const topeMB = topeDelVideoMB();
+      if (archivo.size > topeMB * 1024 * 1024) {
         const mb = Math.round(archivo.size / 1048576);
         setError(
-          `El vídeo pesa ${mb} MB y el tope son ${MAX_VIDEO_MB}. ` +
-            'No hace falta que lo comprimas tú: Vimeo lo optimiza al recibirlo. ' +
-            'Recorta el bucle y sube el original.',
+          `El vídeo pesa ${mb} MB y el tope son ${topeMB}. ` +
+            (hayR2()
+              ? 'Recorta el bucle a unos segundos: un fondo se repite, y cuanto ' +
+                'menos pese antes lo ve quien abra tu perfil.'
+              : CONFIG.VIMEO
+                ? 'No hace falta que lo comprimas tú: Vimeo lo optimiza al recibirlo. ' +
+                  'Recorta el bucle y sube el original.'
+                : 'Recorta el bucle: ahora mismo el vídeo se guarda sin optimizar.'),
         );
+        if (entradaRef.current) entradaRef.current.value = '';
         return;
       }
       if (!hasBackend() || !backend.haySesion()) {
         setError('Hay que entrar en la cuenta para subir un vídeo.');
+        return;
+      }
+
+      /**
+       * ── R2 ──────────────────────────────────────────────────
+       *
+       * El camino nuevo, y el que gana cuando esta configurado. Deja un
+       * archivo de verdad en un dominio propio, asi que el perfil lo pinta
+       * con un `<video src>` en vez de con el reproductor de Vimeo metido
+       * en un `iframe`. Medido: el iframe tarda 1.324 ms en moverse con la
+       * conexion caliente; un archivo propio empieza con los primeros
+       * bytes.
+       *
+       * Lo de antes NO se toca. Vimeo sigue ahi debajo para quien no tenga
+       * R2 configurado, y sobre todo los fondos que YA estan subidos
+       * siguen donde estan y se siguen viendo igual: esto solo decide a
+       * donde van los nuevos.
+       */
+      if (hayR2()) {
+        const mb = archivo.size / (1024 * 1024);
+        if (mb > MAX_R2_MB) {
+          setError(
+            `Ese vídeo pesa ${mb.toFixed(1)} MB y el tope es ${MAX_R2_MB} MB. ` +
+              'Recorta el bucle a unos segundos: un fondo se repite, y cuanto ' +
+              'menos pese antes lo ve quien abra tu perfil.',
+          );
+          if (entradaRef.current) entradaRef.current.value = '';
+          return;
+        }
+
+        const ctrlR2 = new AbortController();
+        abortRef.current = ctrlR2;
+        setFase('subiendo');
+        setAvance({ enviados: 0, total: archivo.size, pct: 0 });
+        try {
+          const ratio = await medirVideo(archivo);
+          const url = await subirAR2(archivo, 'fondo', {
+            alAvanzar: setAvance,
+            signal: ctrlR2.signal,
+          });
+
+          /* Y su primer fotograma, DESPUÉS del vídeo y sin poder tumbarlo.
+             Aquí importa más que en ningún otro sitio: el archivo se baja
+             entero antes de verse, y treinta kilobytes de portada tapan
+             ese hueco desde el primer pintado. Si falla, se queda sin
+             portada y ya: perder el fondo por su miniatura sería cambiar
+             lo importante por lo accesorio. */
+          let poster = '';
+          try {
+            const img = await posterDeVideo(archivo);
+            if (img) poster = await subirAR2(img.blob, 'poster');
+          } catch {
+            /* ídem */
+          }
+
+          onSubido({ tipo: 'video', url, ratio, poster });
+          setNota(`Subido · ${mb.toFixed(1)} MB` + (poster ? ' · con portada' : ''));
+        } catch (e) {
+          if (e instanceof DOMException && e.name === 'AbortError') setError('Subida cancelada.');
+          else setError(explicar(e));
+        } finally {
+          setFase('quieto');
+          setAvance(null);
+          abortRef.current = null;
+          if (entradaRef.current) entradaRef.current.value = '';
+        }
         return;
       }
 
@@ -338,7 +439,7 @@ export function SubirFondo({
             {/* El tope que se anuncia tiene que ser el que se va a aplicar:
                 cambia segun a donde vaya el video. */}
             {nota ||
-              `Foto o vídeo · vídeo hasta ${CONFIG.VIMEO ? MAX_VIDEO_MB : MAX_CUBO_MB} MB`}
+              `Foto o vídeo · vídeo hasta ${topeDelVideoMB()} MB`}
           </span>
         )}
         {fase === 'subiendo' && (

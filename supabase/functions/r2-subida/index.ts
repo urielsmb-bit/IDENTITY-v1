@@ -1,0 +1,185 @@
+// ============================================================
+// sharee · r2-subida
+//
+// Un permiso de un solo uso para dejar UN archivo en R2.
+//
+// ------------------------------------------------------------
+// POR QUE ESTA FUNCION EXISTE
+// ------------------------------------------------------------
+//
+// Para escribir en R2 hacen falta unas claves de S3. Esas claves NO pueden
+// vivir en el navegador: cualquiera que abra las herramientas del navegador
+// las tendria, y con ellas el cubo entero — leer, escribir y BORRAR lo de
+// todo el mundo.
+//
+// Asi que el navegador no las ve nunca. Pide aqui un permiso, esta funcion
+// lo firma con las claves y devuelve una direccion que sirve para subir UN
+// archivo, de UN tamaño, de UN tipo, durante DIEZ MINUTOS. El archivo va
+// derecho del navegador a R2 sin pasar por aqui: son decenas de MB y
+// hacerlos rebotar seria pagar el viaje dos veces y chocar con el limite de
+// memoria de la funcion.
+//
+// Es el mismo reparto que ya usa `vimeo-subida`, y por las mismas razones.
+//
+// ------------------------------------------------------------
+// LO QUE QUEDA CLAVADO EN LA FIRMA
+// ------------------------------------------------------------
+//
+// El permiso no es un cheque en blanco. Van FIRMADOS:
+//
+//   · la clave      -> no se puede pisar el archivo de otra persona
+//   · content-type  -> no se puede colar un HTML donde se pidio un mp4
+//   · content-length-> no se pueden meter dos gigas donde se dijeron ocho megas
+//
+// Si el navegador cambia cualquiera de los tres, R2 contesta 403 y no
+// escribe nada. Sin esto, un permiso para subir un video de 8 MB serviria
+// para llenar el cubo entero, que es la unica forma de que esto cueste
+// dinero.
+//
+// La clave lleva un uuid al azar y NO lleva el id de la cuenta. El id de
+// la cuenta no es publico —es justo lo que la migracion 0004 saco de la
+// vista publica— y estas direcciones si lo son.
+//
+// ------------------------------------------------------------
+// SECRETOS (Supabase -> Edge Functions -> Secrets)
+// ------------------------------------------------------------
+//
+//   R2_CUENTA          el id de cuenta de Cloudflare
+//   R2_CUBO            el nombre del cubo
+//   R2_CLAVE_ID        Access Key ID del token de R2
+//   R2_CLAVE_SECRETA   Secret Access Key del token de R2
+//   R2_PUBLICO         de donde se LEEN los archivos ya subidos,
+//                      p. ej. https://cdn.sharee.fun
+// ============================================================
+
+import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { AwsClient } from 'npm:aws4fetch@1.0.20';
+import { cors, preflight, origenValido, cuerpoEsJson } from '../_compartido/cors.ts';
+
+/** Lo que se acepta, y con que extension se guarda cada cosa.
+ *
+ *  Lista blanca y no lista negra: lo que no este aqui no entra. Un cubo
+ *  publico donde se pueda dejar un `.html` es una pagina de sharee que
+ *  escribe cualquiera. */
+const TIPOS: Record<string, string> = {
+  'video/mp4': 'mp4',
+  'video/webm': 'webm',
+  'video/quicktime': 'mov',
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
+
+/** Donde va cada cosa dentro del cubo. */
+const CARPETAS: Record<string, string> = {
+  fondo: 'fondos',
+  poster: 'posters',
+};
+
+/* El tope de verdad, el que se firma. 64 MB da de sobra para un bucle de
+   fondo decente —guns.lol sirve 8 MB a 1080p y bandi.lol 16 MB a 1440p— y
+   deja el gratis de R2 (10 GB) lejos. */
+const MAX_BYTES = 64 * 1024 * 1024;
+
+/** Quien pide. Sin sesion no se sube: si no, el cubo es de todos. */
+async function quien(req: Request): Promise<{ id: string } | null> {
+  const auth = req.headers.get('authorization') ?? '';
+  const jwt = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  if (!jwt) return null;
+
+  const sb = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+  );
+  const { data, error } = await sb.auth.getUser(jwt);
+  if (error || !data.user) return null;
+  return { id: data.user.id };
+}
+
+function falta(): string[] {
+  return ['R2_CUENTA', 'R2_CUBO', 'R2_CLAVE_ID', 'R2_CLAVE_SECRETA', 'R2_PUBLICO']
+    .filter((n) => !Deno.env.get(n));
+}
+
+Deno.serve(async (req: Request) => {
+  const CORS = cors(req);
+
+  if (req.method === 'OPTIONS') return preflight(req);
+  if (req.method !== 'POST') {
+    return new Response('Method not allowed', { status: 405, headers: CORS });
+  }
+  if (!origenValido(req)) return new Response(null, { status: 403, headers: CORS });
+  if (!cuerpoEsJson(req)) return new Response(null, { status: 415, headers: CORS });
+
+  const json = (d: unknown, status = 200) =>
+    new Response(JSON.stringify(d), {
+      status,
+      headers: { ...CORS, 'Content-Type': 'application/json' },
+    });
+
+  /* Falla hacia cerrado y DICIENDO cual falta. Un 500 mudo por un secreto
+     sin poner se investiga durante media hora. */
+  const sinPoner = falta();
+  if (sinPoner.length) {
+    return json({ error: `R2 sin configurar: falta ${sinPoner.join(', ')}` }, 503);
+  }
+
+  const usuario = await quien(req);
+  if (!usuario) return new Response(null, { status: 401, headers: CORS });
+
+  let cuerpo: Record<string, unknown>;
+  try {
+    cuerpo = await req.json();
+  } catch {
+    return new Response('Bad request', { status: 400, headers: CORS });
+  }
+
+  const carpeta = CARPETAS[String(cuerpo.tipo ?? '')];
+  if (!carpeta) return json({ error: 'Tipo de archivo desconocido.' }, 400);
+
+  const contentType = String(cuerpo.contentType ?? '').toLowerCase().split(';')[0].trim();
+  const ext = TIPOS[contentType];
+  if (!ext) return json({ error: `No se admiten archivos ${contentType || 'sin tipo'}.` }, 400);
+
+  const tamano = Number(cuerpo.tamano);
+  if (!isFinite(tamano) || tamano <= 0 || tamano > MAX_BYTES) {
+    return json({ error: `El archivo debe pesar menos de ${MAX_BYTES / 1048576} MB.` }, 400);
+  }
+
+  const cuenta = Deno.env.get('R2_CUENTA') as string;
+  const cubo = Deno.env.get('R2_CUBO') as string;
+  const publico = (Deno.env.get('R2_PUBLICO') as string).replace(/\/+$/, '');
+
+  const clave = `${carpeta}/${crypto.randomUUID()}.${ext}`;
+
+  const cliente = new AwsClient({
+    accessKeyId: Deno.env.get('R2_CLAVE_ID') as string,
+    secretAccessKey: Deno.env.get('R2_CLAVE_SECRETA') as string,
+    service: 's3',
+    region: 'auto',
+  });
+
+  const destino = new URL(`https://${cuenta}.r2.cloudflarestorage.com/${cubo}/${clave}`);
+  /* Diez minutos. Lo justo para una subida lenta desde un movil, y no
+     tanto como para que un permiso filtrado sirva mañana. */
+  destino.searchParams.set('X-Amz-Expires', '600');
+
+  const firmada = await cliente.sign(destino.toString(), {
+    method: 'PUT',
+    headers: {
+      'content-type': contentType,
+      'content-length': String(tamano),
+    },
+    aws: { signQuery: true },
+  });
+
+  return json({
+    subirA: firmada.url,
+    /* Lo que se guarda en el perfil. Del dominio publico, no del punto de
+       escritura: por ahi se lee gratis y con la cache de Cloudflare
+       delante. */
+    url: `${publico}/${clave}`,
+    contentType,
+    tamano,
+  });
+});

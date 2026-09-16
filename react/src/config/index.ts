@@ -43,6 +43,18 @@ export const CONFIG = {
    */
   VIMEO: (env.VITE_VIMEO ?? '') !== '',
 
+  /**
+   * R2, el almacenamiento de Cloudflare, encendido o no.
+   *
+   * Igual que `VIMEO`: lo de verdad son los secretos de la función de
+   * borde, que el navegador no ve ni debe ver. Esto solo dice si el editor
+   * debe mandar por ahí los vídeos nuevos. Apagado, todo sigue como estaba
+   * — a Vimeo si hay Vimeo, y al cubo de Supabase si no.
+   *
+   * Se enciende poniendo VITE_R2 con cualquier valor.
+   */
+  R2: (env.VITE_R2 ?? '') !== '',
+
   /** Cubo de Storage. Se crea en Storage → New bucket. */
   BUCKET_MEDIA: env.VITE_BUCKET_MEDIA ?? 'media',
 

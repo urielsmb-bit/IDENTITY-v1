@@ -15,6 +15,7 @@ import { safeUrl, safeMedia } from '@/lib/utils';
 import { avatarDe } from '@/lib/avatar';
 import { incrustable } from '@/lib/validar';
 import { esVimeo, urlFondoVimeo } from '@/lib/vimeo';
+import { esBaja } from '@/lib/calidad';
 import { portadaPista } from '@/lib/music';
 
 
@@ -193,6 +194,12 @@ export function ProfileView({
   /** Hueco propio donde la API de YouTube monta su iframe. Tiene que ser un
    *  nodo sin hijos de React: si no, React y la API se pelean por el DOM. */
   const ytHostRef = useRef<HTMLDivElement>(null);
+  /** El marco de Vimeo, para poder preguntarle si ya se esta moviendo. */
+  const marcoRef = useRef<HTMLIFrameElement>(null);
+  /** Si el video ya tiene algo que enseñar. Solo se usa cuando hay foto
+   *  fija debajo: sin ella, esconder el marco seria esconder lo unico que
+   *  hay. */
+  const [videoEnMarcha, setVideoEnMarcha] = useState(false);
 
   // FX hooks
   // Las particulas estaban apagadas en la vista previa, asi que elegirlas en
@@ -506,16 +513,31 @@ export function ProfileView({
      pide en menor calidad, que es lo unico que se puede abaratar sin
      quitarle el movimiento.
 
-     Se lee el atributo en vez de un estado de React a proposito: esto lo
-     decide `lib/calidad.ts` midiendo fotogramas, fuera del arbol. Quien ya
-     visito la pagina lo trae puesto antes de que esto se pinte; quien llega
-     por primera vez se lleva el video a calidad normal, porque para cuando
-     se decide ya esta cargando y volver a montarlo lo cortaria a la vista. */
-  const modesto =
-    typeof document !== 'undefined' &&
-    document.documentElement.hasAttribute('data-llano');
+     SE PREGUNTA A `calidad.ts`, no al documento. Antes esto miraba si la
+     raiz tenia `data-llano`, y ese atributo no lo pone NADIE: la hoja se
+     renombro a `calidad.css` y el atributo pasó a ser `data-calidad`. O
+     sea que `modesto` valia false siempre y el `quality=540p` no se aplico
+     ni una sola vez — comprobado en produccion, la direccion del
+     reproductor sale sin el parametro. Preguntandoselo a la funcion no
+     puede volver a descuadrarse por un cambio de nombre.
+
+     `arrancarCalidad()` corre en `main.tsx` antes de montar React, asi que
+     cuando esto se pinta la respuesta ya es la buena. */
+  const modesto = esBaja();
   const fondoVimeo =
     p.bgType === 'video' && esVimeo(p.bgValue) ? urlFondoVimeo(p.bgValue, modesto) : '';
+  /**
+   * La foto fija del video, mientras el reproductor arranca.
+   *
+   * Medido: desde que se crea el marco hasta que el video se MUEVE pasan
+   * 1.324 ms, y eso con la conexion ya caliente. El marco no esta vacio
+   * ese rato: se pinta del color del tema, o sea un rectangulo liso donde
+   * deberia estar el fondo que la persona eligio.
+   *
+   * Con la foto puesta, el fondo esta ahi desde el primer pintado y el
+   * video entra encima cuando de verdad tiene algo que enseñar.
+   */
+  const posterVimeo = fondoVimeo ? safeMedia(p.bgPoster) : '';
   const fondoInline: React.CSSProperties = {};
   if (p.bgType === 'gradient' && p.bgValue) fondoInline.backgroundImage = p.bgValue;
   if (p.bgType === 'color' && p.bgValue) fondoInline.backgroundColor = p.bgValue;
@@ -541,6 +563,87 @@ export function ProfileView({
     window.addEventListener('pointerdown', alTocar, { once: true, passive: true });
     return () => window.removeEventListener('pointerdown', alTocar);
   }, [preview, p.bgType, rootRef]);
+
+  /**
+   * Destapar el video cuando de verdad se mueve.
+   *
+   * Vimeo va en un marco de otro dominio: no se le puede mirar por dentro,
+   * pero si se le puede pedir que avise. Se le pide al cargar y otra vez en
+   * cuanto contesta algo, porque el reproductor ignora los recados que
+   * llegan antes de estar listo.
+   *
+   * Solo cuando hay foto fija debajo. Sin ella el marco es lo unico que
+   * hay, y esconderlo dejaria el fondo en negro MAS rato, que es justo lo
+   * contrario de lo que se busca.
+   */
+  useEffect(() => {
+    if (preview || !fondoVimeo || !posterVimeo) return;
+    setVideoEnMarcha(false);
+    const marco = marcoRef.current;
+    if (!marco) return;
+
+    let vivo = true;
+    const pedirAvisos = () => {
+      for (const ev of ['play', 'playing', 'timeupdate']) {
+        try {
+          marco.contentWindow?.postMessage(
+            JSON.stringify({ method: 'addEventListener', value: ev }),
+            'https://player.vimeo.com',
+          );
+        } catch { /* el marco todavia no esta */ }
+      }
+    };
+    const alOir = (e: MessageEvent) => {
+      if (e.origin !== 'https://player.vimeo.com') return;
+      let d: { event?: string; method?: string } | null = null;
+      try {
+        d = typeof e.data === 'string' ? JSON.parse(e.data) : (e.data as typeof d);
+      } catch { return; }
+      if (d?.event === 'ready' || d?.method === 'addEventListener') pedirAvisos();
+      if (d?.event === 'play' || d?.event === 'playing' || d?.event === 'playProgress') {
+        if (vivo) setVideoEnMarcha(true);
+      }
+    };
+
+    /**
+     * Y el camino corto, que es el que de verdad manda.
+     *
+     * El recado de Vimeo es una MEJORA, no un requisito: si el reproductor
+     * no contesta —el dominio no esta autorizado a incrustarlo, un
+     * bloqueador, otra version— el video tiene que salir igual. Medido en
+     * produccion, entre que el marco carga y el video se mueve pasan 333 ms
+     * (991 → 1.324), asi que medio segundo despues de cargar es de sobra.
+     *
+     * La primera version de esto colgaba SOLO del recado, con un seguro a
+     * los ocho segundos. Y en la primera prueba el recado no llego: el
+     * video habria tardado ocho segundos en aparecer, peor que antes de
+     * tocar nada. Lo raro no es que fallara: es que fallar saliera caro.
+     */
+    let porLasBuenas = 0;
+    const alCargar = () => {
+      pedirAvisos();
+      window.clearTimeout(porLasBuenas);
+      porLasBuenas = window.setTimeout(() => { if (vivo) setVideoEnMarcha(true); }, 600);
+    };
+
+    window.addEventListener('message', alOir);
+    marco.addEventListener('load', alCargar);
+    pedirAvisos();
+
+    /* Y el suelo de todo: si ni siquiera llega el `load` —marco que no
+       carga, red que se atasca— a los cuatro segundos se enseña igual.
+       Que aparezca tarde es un defecto; que no aparezca nunca es una
+       pagina rota. */
+    const suelo = window.setTimeout(() => { if (vivo) setVideoEnMarcha(true); }, 4000);
+
+    return () => {
+      vivo = false;
+      window.clearTimeout(suelo);
+      window.clearTimeout(porLasBuenas);
+      window.removeEventListener('message', alOir);
+      marco.removeEventListener('load', alCargar);
+    };
+  }, [preview, fondoVimeo, posterVimeo]);
 
   const abrirPuerta = () => {
     setGateUnlocked(true);
@@ -1076,9 +1179,20 @@ export function ProfileView({
         style={fondoInline}
         aria-hidden="true"
       >
+        {p.bgType === 'video' && fondoVimeo && posterVimeo && (
+          /* Debajo del marco y con las MISMAS reglas que un fondo de
+             imagen, asi que hereda el encuadre y el zoom del perfil: la
+             foto fija y el video se ven en el mismo sitio, y al cambiar de
+             uno a otro no salta nada. */
+          <img className="pf-bgimg" src={posterVimeo} alt="" fetchPriority="high" decoding="async" />
+        )}
         {p.bgType === 'video' && fondoVimeo && (
           <iframe
-            className="pf-bgvideo"
+            ref={marcoRef}
+            className={
+              'pf-bgvideo' +
+              (posterVimeo ? (videoEnMarcha ? ' esta-listo' : ' esta-esperando') : '')
+            }
             src={fondoVimeo}
             title="Fondo en vídeo"
             allow="autoplay; fullscreen"
