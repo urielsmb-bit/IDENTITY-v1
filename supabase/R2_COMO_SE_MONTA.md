@@ -14,8 +14,13 @@ cubo de Supabase siguen ahí. Esto solo decide a dónde van los nuevos.
 
 Cloudflare → **R2 Object Storage** → *Create bucket*.
 
-- Nombre: `sharee-medios` (si pones otro, apúntalo: va en el paso 4)
+- Nombre: `sharee`
 - Location: *Automatic*
+- Default Storage Class: **Standard**
+
+`Standard` y no `Infrequent Access`: la segunda cobra por RECUPERAR los
+datos, que es exactamente lo que hace falta que sea gratis aquí, y además
+el regalo de los 10 GB no se aplica a esa clase.
 
 ## 2 · Que se pueda leer desde fuera
 
@@ -62,7 +67,7 @@ molesta tenerlos, quítalos cuando esté funcionando.
 R2 → **Manage API tokens** → *Create API token*
 
 - Permissions: **Object Read & Write**
-- Specify bucket: solo `sharee-medios`
+- Specify bucket: solo `sharee`
 
 Al crearlo te enseña **Access Key ID** y **Secret Access Key**. El secreto
 se ve **una sola vez**.
@@ -79,7 +84,7 @@ Supabase → **Edge Functions** → *Secrets*:
 | nombre | valor |
 |---|---|
 | `R2_CUENTA` | el Account ID de Cloudflare |
-| `R2_CUBO` | `sharee-medios` |
+| `R2_CUBO` | `sharee` |
 | `R2_CLAVE_ID` | el Access Key ID |
 | `R2_CLAVE_SECRETA` | el Secret Access Key |
 | `R2_PUBLICO` | `https://cdn.sharee.fun` |
