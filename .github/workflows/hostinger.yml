@@ -22,6 +22,9 @@
 #   VITE_SUPABASE_URL   los mismos valores que ya tienes en
 #   VITE_SUPABASE_KEY   react/.env.local. La clave es la ANONIMA, la que
 #                       ya viaja dentro del JavaScript publico
+#   VITE_R2             cualquier valor. Manda los videos NUEVOS a
+#                       Cloudflare R2 en vez de a Vimeo. Antes hay que
+#                       hacer los pasos de supabase/R2_COMO_SE_MONTA.md.
 #   VITE_VIMEO          cualquier valor. Enciende la subida de videos a
 #                       Vimeo; sin ella van al cubo, con un tope mucho
 #                       mas bajo. El token de verdad vive en la funcion
@@ -100,6 +103,7 @@ jobs:
           KEY: ${{ secrets.VITE_SUPABASE_KEY }}
           VIMEO: ${{ secrets.VITE_VIMEO }}
           FN_VISTAS: ${{ secrets.VITE_FN_VISTAS }}
+          R2: ${{ secrets.VITE_R2 }}
         run: |
           if [ -z "$URL" ] || [ -z "$KEY" ]; then
             echo "Faltan VITE_SUPABASE_URL o VITE_SUPABASE_KEY en los secretos."
@@ -129,6 +133,16 @@ jobs:
             printf 'VITE_FN_VISTAS=%s\n' "$FN_VISTAS" >> .env.local
           else
             echo "Aviso: sin VITE_FN_VISTAS. No se contaran las visitas."
+          fi
+          # Y la tercera: VITE_R2 manda los videos NUEVOS a Cloudflare R2
+          # en vez de a Vimeo, que es lo que quita el `iframe` del fondo.
+          # Sin ella no se rompe nada —los videos siguen yendo donde iban y
+          # los que YA estan subidos no se tocan nunca—: simplemente no se
+          # estrena el camino nuevo.
+          if [ -n "$R2" ]; then
+            printf 'VITE_R2=%s\n' "$R2" >> .env.local
+          else
+            echo "Aviso: sin VITE_R2. Los videos nuevos seguiran yendo a Vimeo."
           fi
 
       - name: Compilar
