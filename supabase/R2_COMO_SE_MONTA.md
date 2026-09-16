@@ -69,13 +69,29 @@ molesta tenerlos, quítalos cuando esté funcionando.
 
 ## 4 · Las llaves
 
-R2 → **Manage API tokens** → *Create API token*
+Pantalla principal de **R2 Object Storage** → columna derecha, panel
+**Account Details** → al lado de *API Tokens*, el enlace **Manage** → *Create
+API token*.
 
-- Permissions: **Object Read & Write**
-- Specify bucket: solo `sharee`
+- Permissions: **Object Read and Write**
+- Specify bucket(s): solo `sharee`
+- Y abajo: **Create Account API token** (no *User API token*)
 
-Al crearlo te enseña **Access Key ID** y **Secret Access Key**. El secreto
-se ve **una sola vez**.
+> OJO: no es la pantalla de *Account API tokens → Create a token*, la que
+> ofrece «Read all resources» y «Edit zone DNS». Esa crea un token general
+> de Cloudflare, de los de `Bearer`, y no sirve: R2 necesita credenciales
+> de S3 (un Access Key ID y un Secret Access Key), y solo salen por el
+> camino de arriba.
+
+De cuenta y no de usuario: el de usuario va atado a tu persona y muere con
+ella; este es una integracion de servidor y tiene que sobrevivir a que
+cambies de cuenta. «No expiration» por lo mismo — un token que caduca a los
+90 dias hace que las subidas dejen de funcionar un martes cualquiera sin
+que nadie lo relacione.
+
+Al crearlo te enseña **Access Key ID** y **Secret Access Key** (Cloudflare
+los llama a veces *Client ID* y *Client Secret*). El secreto se ve **una
+sola vez**: si cierras esa pantalla sin copiarlo, hay que crear otro token.
 
 > No me los pegues aquí. Van directos de esa pantalla a la siguiente.
 
