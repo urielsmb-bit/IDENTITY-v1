@@ -40,20 +40,42 @@
  *   node scripts/migrar-fondos-a-r2.mjs --hacerlo    sube de verdad
  *   node scripts/migrar-fondos-a-r2.mjs --solo shark  uno concreto
  *
- * Variables de entorno (en TU terminal, no en ningun archivo):
+ * ────────────────────────────────────────────────────────────────────────
+ * DONDE VAN LAS CLAVES
+ * ────────────────────────────────────────────────────────────────────────
  *
- *   VIMEO_TOKEN_ARCHIVOS   token de Vimeo CON el permiso `video_files`
- *   R2_CUENTA              id de cuenta de Cloudflare
- *   R2_CUBO                sharee
- *   R2_CLAVE_ID            Access Key ID de R2
- *   R2_CLAVE_SECRETA       Secret Access Key de R2
- *   R2_PUBLICO             https://cdn.sharee.fun
- *   VITE_SUPABASE_URL      para leer que perfiles hay (clave anonima)
- *   VITE_SUPABASE_KEY
+ * En `react/.env.migracion`, que git ignora. Se lee solo al arrancar.
+ *
+ *   VIMEO_TOKEN_ARCHIVOS=...    token de Vimeo CON el permiso `video_files`
+ *   R2_CUENTA=...               id de cuenta de Cloudflare
+ *   R2_CUBO=sharee
+ *   R2_CLAVE_ID=...             Access Key ID de R2
+ *   R2_CLAVE_SECRETA=...        Secret Access Key de R2
+ *   R2_PUBLICO=https://cdn.sharee.fun
+ *
+ * Lo de Supabase —`VITE_SUPABASE_URL` y `VITE_SUPABASE_KEY`, que solo sirven
+ * para leer la lista de perfiles— sale de `.env.local`, donde ya esta.
+ *
+ * Cuando termine la mudanza, BORRA `.env.migracion`. Esas claves dan
+ * escritura sobre el cubo y no tienen por que seguir en el disco de nadie
+ * despues de un trabajo que se hace una sola vez.
  */
 
 import { AwsClient } from 'aws4fetch';
 import { randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
+
+/* Los dos archivos de donde salen las variables, si existen. Los dos estan
+   ignorados por git —comprobado con `git check-ignore`, no leyendo el
+   `.gitignore` con la vista— asi que un secreto puesto ahi no se puede
+   subir por descuido.
+
+   `.env.local` ya existe y ya tiene lo de Supabase. `.env.migracion` es
+   para lo de esta mudanza, aparte, para poder borrarlo al terminar sin
+   tocar lo que usa la aplicacion. */
+for (const f of ['.env.local', '.env.migracion']) {
+  if (existsSync(f)) process.loadEnvFile(f);
+}
 
 const ARG = process.argv.slice(2);
 const HACERLO = ARG.includes('--hacerlo');
