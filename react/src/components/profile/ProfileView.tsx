@@ -645,6 +645,81 @@ export function ProfileView({
     };
   }, [preview, fondoVimeo, posterVimeo]);
 
+  /**
+   * Detrás de la puerta: descargar sí, descodificar no.
+   *
+   * ──────────────────────────────────────────────────────────────────────
+   * LO QUE PASABA, MEDIDO
+   * ──────────────────────────────────────────────────────────────────────
+   *
+   * Con la puerta puesta y sin que nadie hubiera tocado nada:
+   *
+   *     estaEnPausa ....... false        el vídeo se estaba reproduciendo
+   *     segundoActual ..... 4,6 s        ya iba por el segundo 4,6
+   *     buffer ............ [0 → 19,5]   el archivo entero ya descargado
+   *
+   * Y la puerta que lo tapaba no es un rectángulo negro: es
+   * `rgba(4,5,7,.86)` con un `backdrop-filter: blur(14px)` a pantalla
+   * completa. Así que el navegador estaba, sesenta veces por segundo:
+   * descodificando un fotograma de 1080p, desenfocándolo entero,
+   * mezclándolo bajo un negro al 86%, y tirándolo.
+   *
+   * La pantalla de entrada —lo primero que ve todo el mundo— era el
+   * momento más caro de la página, y era trabajo tirado.
+   *
+   * ──────────────────────────────────────────────────────────────────────
+   * POR QUE PAUSAR ARREGLA TAMBIEN EL DESENFOQUE
+   * ──────────────────────────────────────────────────────────────────────
+   *
+   * Un `backdrop-filter` cuesta por fotograma solo mientras lo que hay
+   * DEBAJO cambia. Con el vídeo quieto, el desenfoque se calcula una vez y
+   * se reutiliza. O sea que parar el vídeo no ahorra una cosa: ahorra dos.
+   *
+   * ──────────────────────────────────────────────────────────────────────
+   * Y POR QUE NO SE QUITA EL `autoplay`
+   * ──────────────────────────────────────────────────────────────────────
+   *
+   * Porque es lo que hace que Safari en el iPhone se digne a precargar el
+   * archivo. Quitándolo, la descarga no empezaría hasta el clic y esto
+   * saldría PEOR que antes en la mitad del tráfico. Se le deja arrancar y
+   * se le para enseguida: la descarga sigue siendo igual de agresiva —queda
+   * comprobado arriba que baja el vídeo entero— y lo único que se apaga es
+   * el trabajo que nadie ve.
+   *
+   * El marco de Vimeo se queda como está. Pararlo ya se intentó dos veces y
+   * las dos se revirtió; y el camino nuevo es este.
+   */
+  useEffect(() => {
+    if (preview || p.bgType !== 'video') return;
+    const v = rootRef.current?.querySelector('video');
+    if (!v) return;
+
+    if (!gateUnlocked) {
+      /* En cada oportunidad: `autoplay` lo arranca, y cada vez que lo
+         consiga se le para. No basta con pausarlo una vez — el navegador
+         puede reintentarlo cuando termina de bufferizar. */
+      const frenar = () => { if (!v.paused) v.pause(); };
+      frenar();
+      v.addEventListener('playing', frenar);
+      v.addEventListener('canplay', frenar);
+      return () => {
+        v.removeEventListener('playing', frenar);
+        v.removeEventListener('canplay', frenar);
+      };
+    }
+
+    /* Puerta abierta. Desde el principio: es el fotograma que enseña la
+       foto fija, así que al destaparse no salta nada. Antes se entraba por
+       donde estuviera —el segundo 4,6 en la medición— y el principio del
+       vídeo no lo veía nadie. */
+    try {
+      v.currentTime = 0;
+    } catch {
+      /* Todavía sin metadatos. Se queda donde esté, que es el segundo 0. */
+    }
+    void v.play().catch(() => {});
+  }, [preview, p.bgType, gateUnlocked, rootRef]);
+
   const abrirPuerta = () => {
     setGateUnlocked(true);
     setRevelando(true);
