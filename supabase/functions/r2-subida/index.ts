@@ -29,12 +29,14 @@
 //
 //   · la clave      -> no se puede pisar el archivo de otra persona
 //   · content-type  -> no se puede colar un HTML donde se pidio un mp4
-//   · content-length-> no se pueden meter dos gigas donde se dijeron ocho megas
 //
-// Si el navegador cambia cualquiera de los tres, R2 contesta 403 y no
-// escribe nada. Sin esto, un permiso para subir un video de 8 MB serviria
-// para llenar el cubo entero, que es la unica forma de que esto cueste
-// dinero.
+// Si el navegador cambia cualquiera de los dos, R2 contesta 403 y no
+// escribe nada.
+//
+// El tamaño NO va en la firma, aunque la primera version lo intentara:
+// `Content-Length` la pone el navegador y el codigo no puede tocarla, asi
+// que firmarla era prometer una comprobacion imposible de cumplir. Se
+// valida antes de firmar, que es donde se puede.
 //
 // La clave lleva un uuid al azar y NO lleva el id de la cuenta. El id de
 // la cuenta no es publico —es justo lo que la migracion 0004 saco de la
@@ -164,14 +166,24 @@ Deno.serve(async (req: Request) => {
      tanto como para que un permiso filtrado sirva mañana. */
   destino.searchParams.set('X-Amz-Expires', '600');
 
-  const firmada = await cliente.sign(destino.toString(), {
+  /* Tal cual lo documenta Cloudflare: un `Request` ya montado, y solo
+     `Content-Type` dentro de la firma.
+
+     Aqui iba tambien `content-length`, para que un permiso pedido para
+     ocho megas no sirviera para subir dos gigas. La idea era buena y la
+     ejecucion no: `Content-Length` es una cabecera PROHIBIDA para el
+     codigo — la pone el navegador y JavaScript no puede tocarla—, asi que
+     acababa en `X-Amz-SignedHeaders` prometiendo una comprobacion que del
+     otro lado nadie podia cumplir igual. Un permiso que no se puede usar
+     no protege de nada.
+
+     Lo que si queda: el tamaño se valida arriba antes de firmar, y la
+     clave lleva un uuid, asi que nadie pisa el archivo de otro. */
+  const peticion = new Request(destino.toString(), {
     method: 'PUT',
-    headers: {
-      'content-type': contentType,
-      'content-length': String(tamano),
-    },
-    aws: { signQuery: true },
+    headers: { 'Content-Type': contentType },
   });
+  const firmada = await cliente.sign(peticion, { aws: { signQuery: true } });
 
   return json({
     subirA: firmada.url,
