@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { subirFondoVimeo, type AvanceSubida } from '@/lib/vimeoSubida';
 import { hayR2, subirAR2 } from '@/lib/r2';
+import { sePuedeEncoger, conviene, encogerVideo } from '@/lib/comprimirVideo';
 import { prepararImagen, posterDeVideo } from '@/lib/imagen';
 import { safeMedia } from '@/lib/utils';
 import * as backend from '@/lib/backend';
@@ -33,7 +34,12 @@ interface SubirFondoProps {
   guia?: string;
 }
 
-type Fase = 'quieto' | 'imagen' | 'subiendo' | 'procesando';
+/* `encogiendo` y `procesando` son cosas distintas y por eso son dos fases
+   y no una: encoger pasa AQUI, en este navegador, y se sabe por donde va;
+   procesar pasa en Vimeo, tarda minutos y no se sabe nada. Reusar la misma
+   habria puesto «Vimeo lo esta procesando» delante de alguien cuyo video no
+   ha salido de su ordenador. */
+type Fase = 'quieto' | 'imagen' | 'encogiendo' | 'subiendo' | 'procesando';
 
 /** Lo que aguanta el cubo por archivo. Lo fija la migracion 0006. */
 const MAX_CUBO_MB = 8;
@@ -247,11 +253,47 @@ export function SubirFondo({
 
         const ctrlR2 = new AbortController();
         abortRef.current = ctrlR2;
-        setFase('subiendo');
-        setAvance({ enviados: 0, total: archivo.size, pct: 0 });
         try {
           const ratio = await medirVideo(archivo);
-          const url = await subirAR2(archivo, 'fondo', {
+
+          /**
+           * Encogerlo ANTES de subirlo.
+           *
+           * Vimeo recomprimia lo que le echaras; R2 guarda y sirve el
+           * archivo tal cual. La primera subida real fueron 41,5 MB a
+           * 3840x1632 —cinco veces el fondo de guns.lol— y eso se paga dos
+           * veces: en datos de quien mira y en descodificar 4K por
+           * fotograma, que es justo lo que atasca a las maquinas sin
+           * aceleracion.
+           *
+           * Devuelve `null` cuando no hace falta, cuando el navegador no
+           * sabe, o cuando el resultado no mejora al original. En los tres
+           * casos se sube lo que habia: encoger es una mejora, y perder el
+           * fondo por ella seria cambiar lo importante por lo accesorio.
+           */
+          let subir: File | Blob = archivo;
+          let dicho = '';
+          if (sePuedeEncoger() && conviene(archivo, Math.round(ratio * 1080))) {
+            setFase('encogiendo');
+            setAvance({ enviados: 0, total: 100, pct: 0 });
+            const chico = await encogerVideo(archivo, {
+              alAvanzar: (pct) =>
+                setAvance({ enviados: pct, total: 100, pct }),
+              signal: ctrlR2.signal,
+            });
+            if (chico) {
+              subir = new File([chico.blob], `fondo.${chico.extension}`, {
+                type: chico.blob.type,
+              });
+              dicho =
+                ` · de ${chico.antesMB.toFixed(1)} a ${chico.despuesMB.toFixed(1)} MB` +
+                ` (${chico.ancho}×${chico.alto})`;
+            }
+          }
+
+          setFase('subiendo');
+          setAvance({ enviados: 0, total: subir.size, pct: 0 });
+          const url = await subirAR2(subir, 'fondo', {
             alAvanzar: setAvance,
             signal: ctrlR2.signal,
           });
@@ -271,7 +313,11 @@ export function SubirFondo({
           }
 
           onSubido({ tipo: 'video', url, ratio, poster });
-          setNota(`Subido · ${mb.toFixed(1)} MB` + (poster ? ' · con portada' : ''));
+          setNota(
+            `Subido · ${(subir.size / 1048576).toFixed(1)} MB` +
+              dicho +
+              (poster ? ' · con portada' : ''),
+          );
         } catch (e) {
           if (e instanceof DOMException && e.name === 'AbortError') setError('Subida cancelada.');
           else setError(explicar(e));
@@ -418,25 +464,35 @@ export function SubirFondo({
           <div className="subvid__estado">
             <span className="subvid__t">
               {fase === 'imagen' && 'Preparando la imagen…'}
+              {fase === 'encogiendo' && `Aligerando el vídeo… ${avance?.pct ?? 0}%`}
               {fase === 'subiendo' && `Subiendo el vídeo… ${avance?.pct ?? 0}%`}
               {fase === 'procesando' && 'Vimeo lo está procesando…'}
             </span>
             <div
               className="subvid__barra"
               role="progressbar"
-              aria-valuenow={fase === 'subiendo' ? (avance?.pct ?? 0) : undefined}
+              aria-valuenow={
+                fase === 'subiendo' || fase === 'encogiendo' ? (avance?.pct ?? 0) : undefined
+              }
               aria-valuemin={0}
               aria-valuemax={100}
             >
               <i
-                className={fase === 'subiendo' ? '' : 'is-indef'}
-                style={{ width: fase === 'subiendo' ? `${avance?.pct ?? 0}%` : '100%' }}
+                className={fase === 'subiendo' || fase === 'encogiendo' ? '' : 'is-indef'}
+                style={{
+                  width:
+                    fase === 'subiendo' || fase === 'encogiendo'
+                      ? `${avance?.pct ?? 0}%`
+                      : '100%',
+                }}
               />
             </div>
             <span className="subvid__nota">
               {fase === 'procesando'
                 ? 'Tarda un par de minutos. El vídeo ya está a salvo en Vimeo.'
-                : 'Puedes seguir editando; no cierres esta pestaña.'}
+                : fase === 'encogiendo'
+                  ? 'Se hace aquí, en tu navegador, y tarda lo que dure el vídeo. Así pesa mucho menos para quien abra tu perfil.'
+                  : 'Puedes seguir editando; no cierres esta pestaña.'}
             </span>
           </div>
         )}
