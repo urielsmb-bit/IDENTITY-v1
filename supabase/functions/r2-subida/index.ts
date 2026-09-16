@@ -78,6 +78,26 @@ const CARPETAS: Record<string, string> = {
   poster: 'posters',
 };
 
+/**
+ * Cuanto vale lo que se sube.
+ *
+ * Un año, e `immutable`. No es optimismo: la clave de cada archivo lleva un
+ * uuid al azar, asi que una direccion concreta NUNCA cambia de contenido —
+ * cambiar de fondo crea otro archivo con otro nombre. Cuando el contenido
+ * de una URL no puede cambiar, cualquier caducidad que no sea «para
+ * siempre» es trabajo tirado: revalidaciones que siempre contestan lo
+ * mismo.
+ *
+ * `immutable` va aparte de `max-age` y dice algo mas: que ni siquiera al
+ * recargar la pagina hace falta preguntar. Sin el, un F5 vuelve a pedirlo
+ * todo aunque no haya caducado.
+ *
+ * R2 pone `max-age=14400` —cuatro horas— si no se le dice nada. bandi.lol
+ * sirve sus fondos con un año, y se le nota: medido, llevaba DIECISIETE
+ * DIAS en la cache del borde sin tocar su servidor una sola vez.
+ */
+const CACHE = 'public, max-age=31536000, immutable';
+
 /* El tope de verdad, el que se firma. 64 MB da de sobra para un bucle de
    fondo decente —guns.lol sirve 8 MB a 1080p y bandi.lol 16 MB a 1440p— y
    deja el gratis de R2 (10 GB) lejos. */
@@ -223,11 +243,15 @@ Deno.serve(async (req: Request) => {
      clave lleva un uuid, asi que nadie pisa el archivo de otro. */
   const peticion = new Request(destino.toString(), {
     method: 'PUT',
-    headers: { 'Content-Type': contentType },
+    headers: { 'Content-Type': contentType, 'Cache-Control': CACHE },
   });
   const firmada = await cliente.sign(peticion, { aws: { signQuery: true } });
 
   return json({
+    /* Se devuelven las DOS cabeceras firmadas para que el navegador mande
+       exactamente estas y no las que le parezcan: van dentro de la firma, y
+       una sola letra distinta es un 403. */
+    cacheControl: CACHE,
     subirA: firmada.url,
     /* Lo que se guarda en el perfil. Del dominio publico, no del punto de
        escritura: por ahi se lee gratis y con la cache de Cloudflare

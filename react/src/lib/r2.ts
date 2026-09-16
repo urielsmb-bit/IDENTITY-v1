@@ -55,6 +55,8 @@ interface Permiso {
   subirA: string;
   url: string;
   contentType: string;
+  /** Va firmada, asi que hay que mandarla TAL CUAL o R2 contesta 403. */
+  cacheControl?: string;
 }
 
 /**
@@ -99,7 +101,7 @@ async function pedirPermiso(
 function enviar(
   destino: string,
   archivo: Blob,
-  contentType: string,
+  permiso: Permiso,
   opciones: OpcionesR2,
 ): Promise<void> {
   return new Promise((listo, fallo) => {
@@ -107,7 +109,12 @@ function enviar(
     xhr.open('PUT', destino, true);
     /* El MISMO que se firmó. Si aquí fuera otro, R2 contesta 403: forma
        parte de la firma justamente para que no se pueda cambiar. */
-    xhr.setRequestHeader('content-type', contentType);
+    xhr.setRequestHeader('content-type', permiso.contentType);
+    /* La caducidad viaja CON el archivo: se guarda en el objeto y R2 la
+       sirve en cada lectura. La alternativa seria una regla en el panel de
+       Cloudflare, que funciona igual de bien pero vive en otro sitio y no
+       se ve desde aqui. */
+    if (permiso.cacheControl) xhr.setRequestHeader('cache-control', permiso.cacheControl);
 
     xhr.upload.onprogress = (e) => {
       if (!e.lengthComputable || !opciones.alAvanzar) return;
@@ -167,6 +174,6 @@ export async function subirAR2(
     delArchivo.trim().toLowerCase() || porExtension[laExtension] || '';
 
   const permiso = await pedirPermiso(archivo, tipo, contentType);
-  await enviar(permiso.subirA, archivo, permiso.contentType, opciones);
+  await enviar(permiso.subirA, archivo, permiso, opciones);
   return permiso.url;
 }

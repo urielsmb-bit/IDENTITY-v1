@@ -36,6 +36,7 @@ const PERMISO = {
   subirA: 'https://cuenta.r2.cloudflarestorage.com/cubo/fondos/abc.mp4?X-Amz-Signature=xxx',
   url: 'https://cdn.sharee.fun/fondos/abc.mp4',
   contentType: 'video/mp4',
+  cacheControl: 'public, max-age=31536000, immutable',
 };
 
 let pedidas: Array<{ url: string; cuerpo: unknown }> = [];
@@ -94,6 +95,27 @@ describe('subirAR2', () => {
     await subirAR2(new File(['x'], 'fondo.mp4', { type: 'video/mp4' }), 'fondo');
     expect(enviados[0]!.cabeceras['content-type']).toBe(PERMISO.contentType);
     expect(enviados[0]!.url).toBe(PERMISO.subirA);
+  });
+
+  /* Igual de literal que el content-type, y por lo mismo: va dentro de la
+     firma. Una letra distinta aquí es un 403 que al navegador le llega
+     como «se cortó la conexión», sin decir por qué. */
+  it('y la caducidad, tal cual vino', async () => {
+    const { subirAR2 } = await import('./r2');
+    await subirAR2(new File(['x'], 'fondo.mp4', { type: 'video/mp4' }), 'fondo');
+    expect(enviados[0]!.cabeceras['cache-control']).toBe(PERMISO.cacheControl);
+  });
+
+  /* Un permiso de una versión anterior de la función no la trae. Mandar
+     `undefined` como cabecera rompería una subida que antes funcionaba. */
+  it('si el permiso no la trae, no se manda', async () => {
+    vi.stubGlobal('fetch', async () => ({
+      ok: true, status: 200,
+      json: async () => ({ ...PERMISO, cacheControl: undefined }),
+    } as Response));
+    const { subirAR2 } = await import('./r2');
+    await subirAR2(new File(['x'], 'fondo.mp4', { type: 'video/mp4' }), 'fondo');
+    expect(enviados[0]!.cabeceras['cache-control']).toBeUndefined();
   });
 
   it('devuelve la dirección pública, nunca la firmada', async () => {

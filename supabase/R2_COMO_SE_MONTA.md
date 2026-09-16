@@ -54,7 +54,7 @@ Cubo → **Settings** → *CORS Policy* → **Add CORS policy** → pestaña JSO
       "http://localhost:5200"
     ],
     "AllowedMethods": ["PUT"],
-    "AllowedHeaders": ["Content-Type"],
+    "AllowedHeaders": ["Content-Type", "Cache-Control"],
     "ExposeHeaders": ["ETag"],
     "MaxAgeSeconds": 86400
   }
