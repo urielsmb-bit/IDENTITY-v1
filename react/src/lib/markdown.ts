@@ -148,8 +148,43 @@ export function markdownAHtml(md: string): string {
      del navegador de turno. */
   /** Qué lista está abierta, si hay alguna. */
   let lista: 'ul' | 'ol' | null = null;
+  /** Las filas de la tabla que se está leyendo, tal cual vienen. */
+  let filas: string[] = [];
+
+  /**
+   * LA PRIVACIDAD TIENE DOS TABLAS Y SALÍAN COMO UNA HILERA DE BARRAS.
+   *
+   * Literalmente: «| Quién | Para qué | |---|---| | Supabase | Base de
+   * datos…», todo seguido y en mitad del texto, porque una línea que
+   * empieza por `|` no era nada para el analizador y acababa de párrafo.
+   * Así estuvieron publicadas — y son justo las dos que más se miran: qué
+   * datos se guardan y con quién se comparten.
+   *
+   * Lo curioso es que el estilo ya estaba escrito y esperando desde el
+   * principio (`.lg__doc table` en `panels.css`, con su `.lg__tabla` que
+   * las desplaza de lado en el móvil). Solo faltaba que alguien emitiera
+   * la etiqueta.
+   */
+  const volcarTabla = () => {
+    if (filas.length === 0) return;
+    const celdas = (f: string) =>
+      f.replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim());
+    /* La segunda fila de una tabla de markdown es la que separa la
+       cabecera del cuerpo: `|---|---|`. Si no está, no hay cabecera. */
+    const separador = filas.length > 1 && /^\|?[\s:|-]+$/.test(filas[1]!);
+    const cabeza = separador
+      ? `<thead><tr>${celdas(filas[0]!).map((c) => `<th>${enLinea(c)}</th>`).join('')}</tr></thead>`
+      : '';
+    const cuerpo = filas
+      .slice(separador ? 2 : 0)
+      .map((f) => `<tr>${celdas(f).map((c) => `<td>${enLinea(c)}</td>`).join('')}</tr>`)
+      .join('');
+    salida.push(`<div class="lg__tabla"><table>${cabeza}<tbody>${cuerpo}</tbody></table></div>`);
+    filas = [];
+  };
 
   const volcar = () => {
+    volcarTabla();
     if (!tipo || buffer.length === 0) {
       buffer = [];
       tipo = null;
@@ -157,8 +192,24 @@ export function markdownAHtml(md: string): string {
     }
     const texto = enLinea(buffer.join(' '));
     if (tipo === 'li') salida.push(`<li>${texto}</li>`);
-    else if (tipo === 'cita') salida.push(`<blockquote>${texto}</blockquote>`);
-    else salida.push(`<p>${texto}</p>`);
+    else if (tipo === 'cita') {
+      /* UNA CITA PUEDE TENER VARIOS PÁRRAFOS, y se separan con un `>`
+         solo, igual que un texto normal se separa con una línea en
+         blanco. Sin esto, la cabecera de los tres documentos legales
+         —versión, responsable y contacto, tres cosas distintas— salía
+         como un renglón corrido: «…16 de septiembre de 2026 Responsable:
+         sharee, un proyecto… Contacto: hola@sharee.fun Está escrita
+         para…». Se lee tres veces antes de entender dónde acaba cada
+         una. */
+      const parrafos = buffer
+        .join('\n')
+        .split(/\n\s*\n/)
+        .map((p) => p.split('\n').join(' ').trim())
+        .filter(Boolean);
+      salida.push(
+        `<blockquote>${parrafos.map((p) => `<p>${enLinea(p)}</p>`).join('')}</blockquote>`,
+      );
+    } else salida.push(`<p>${texto}</p>`);
     buffer = [];
     tipo = null;
   };
@@ -235,6 +286,19 @@ export function markdownAHtml(md: string): string {
       buffer.push(linea.replace(/^>\s*/, ''));
       continue;
     }
+
+    /* Una fila. La primera cierra lo que hubiera abierto; las siguientes
+       no, porque cerrar incluye volcar la tabla y sería volcarla entera
+       fila a fila. */
+    if (linea.startsWith('|')) {
+      if (filas.length === 0) {
+        volcar();
+        cerrarLista();
+      }
+      filas.push(linea.trim());
+      continue;
+    }
+    volcarTabla();
 
     /* Una línea normal. Si venimos de un elemento de lista o de una cita,
        la continúa; si no, empieza o sigue un párrafo. */

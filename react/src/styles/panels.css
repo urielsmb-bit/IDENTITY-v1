@@ -771,6 +771,9 @@ a.tpl__a:hover{ color:var(--text-secondary); }
   color:var(--p-dim); font-size:var(--t3);
 }
 .lg__doc blockquote p{ margin:0; }
+/* Una cita con varios parrafos —la cabecera de los legales tiene tres—
+   necesita aire entre ellos, o vuelve a leerse como un renglon corrido. */
+.lg__doc blockquote p + p{ margin-top:10px; }
 .lg__doc code{
   background:var(--p-surface-2, rgba(255,255,255,.07));
   padding:1px 5px; border-radius:4px; font-size:.9em;

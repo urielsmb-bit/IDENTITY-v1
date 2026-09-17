@@ -63,7 +63,7 @@ export const CONFIG = {
    * Al cambiar los términos se sube este número y se puede
    * distinguir quién aceptó qué.
    */
-  VERSION_LEGAL: env.VITE_VERSION_LEGAL ?? '2026-08-29',
+  VERSION_LEGAL: env.VITE_VERSION_LEGAL ?? '2026-09-16',
 
   /** ¿Hay backend, o seguimos en el modo de siempre? */
   hayBackend(): boolean {

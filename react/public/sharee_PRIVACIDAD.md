@@ -1,13 +1,13 @@
 # sharee — Política de privacidad
 
-> **Borrador.** Lo he escrito para que sea claro y honesto, no para que suene a
-> abogado. No soy abogado: antes de abrir al público conviene que alguien que sí
-> lo sea le eche un ojo, sobre todo a la sección de menores y a la de datos de
-> terceros. Los huecos marcados `[…]` los rellenas tú.
+> **Versión 2026-09-16** · **En vigor desde el 16 de septiembre de 2026**
 >
-> **Última actualización:** `[fecha de publicación]`
-> **Responsable:** `[tu nombre o el de la sociedad]`, `[país]`
-> **Contacto:** `[correo de privacidad]`
+> **Responsable:** sharee, un proyecto operado por una persona natural residente
+> en **Colombia**.
+> **Contacto:** **hola@sharee.fun**
+>
+> Está escrita para que sea clara y honesta, no para que suene a abogado. Dice lo
+> que el sitio hace de verdad, no lo que queda bien decir.
 
 ---
 
@@ -104,14 +104,15 @@ reparar averías y frenar abusos.
 Sí usamos las estrictamente necesarias: mantenerte dentro, proteger tu cuenta y
 que funcione lo básico. Esas no se pueden desactivar sin romper el servicio.
 
-Además, el proveedor que sirve y protege la página (`[Vercel / Cloudflare]`)
-puede poner sus propias cookies técnicas para repartir el tráfico y defenderse de
-ataques. Son necesarias para que el sitio esté disponible.
+Además, **Cloudflare** —que está delante de la página para repartir el tráfico y
+defenderla de ataques— puede poner sus propias cookies técnicas. Son necesarias
+para que el sitio esté disponible, y no sirven para identificarte ni para
+perfilarte.
 
-Si en el alta o en algún formulario usamos una comprobación anti‑robots, el
-proveedor de esa comprobación recibe señales de tu navegador (dirección de red,
-identificación del navegador) para distinguir a una persona de un programa. Se
-usa contra el spam y el fraude, no para perfilarte.
+**Hoy no hay ninguna comprobación anti‑robots** —ni captcha, ni casillas de «no
+soy un robot»—. Si algún día hiciera falta una contra el spam, lo diremos aquí
+antes de ponerla, y solo se usaría para distinguir a una persona de un programa,
+nunca para perfilarte.
 
 ---
 
@@ -184,7 +185,7 @@ también.
   imágenes y el vídeo.
 - **Los datos de Discord y Spotify** se borran en cuanto desvinculas, sin esperar
   a los 30 días.
-- **Las copias de seguridad** pueden conservar rastros hasta **`[30/90]` días**
+- **Las copias de seguridad** pueden conservar rastros hasta **30 días**
   más, por el propio funcionamiento del sistema de copias. Esas copias no se
   consultan ni se usan para nada salvo restaurar una avería.
 - **Los contadores agregados** (número de visitas de un día) pueden sobrevivir
@@ -198,10 +199,16 @@ Con nadie, salvo con la infraestructura necesaria para que esto funcione:
 
 | Quién | Para qué |
 |---|---|
-| `[Supabase]` | Base de datos, cuentas y almacenamiento de archivos |
-| `[Vercel]` | Servir la página |
+| **Supabase** | Base de datos, cuentas y almacenamiento de imágenes |
+| **Hostinger** | Guarda y sirve la página |
+| **Cloudflare** | Reparte la página por el mundo y la defiende de ataques; guarda también los vídeos e imágenes de fondo |
+| **Vimeo** | Los fondos de vídeo subidos antes de septiembre de 2026, que siguen alojados ahí |
+| **YouTube** | Reproduce la música que eliges para tu perfil; recibe la petición de tu navegador al abrirlo |
+| **Google Fonts** | Sirve las tipografías; recibe la petición de tu navegador |
 | Discord / Spotify | Solo si tú los vinculas, y solo para pedirles lo de arriba |
-| Google Fonts | Sirve las tipografías; recibe la petición de tu navegador |
+
+**No usamos analítica de terceros, ni Google Analytics, ni píxeles de redes
+sociales, ni ninguna otra pieza que exista para seguirte.**
 
 También lo entregaríamos si nos lo exige una autoridad competente por vía legal.
 
@@ -235,7 +242,7 @@ Puedes pedirnos en cualquier momento:
 - **llevártelo** en un archivo que puedas leer,
 - **oponerte** a un tratamiento concreto.
 
-Escribe a `[correo de privacidad]`. Respondemos en un plazo máximo de **30
+Escribe a **hola@sharee.fun**. Respondemos en un plazo máximo de **30
 días**. Lo de ver, corregir y borrar puedes hacerlo tú mismo desde los ajustes,
 sin escribir a nadie.
 
@@ -253,14 +260,8 @@ edad mínima que exija la ley de su país, si es mayor de 13**. No recogemos a
 sabiendas datos de menores por debajo de esa edad.
 
 Si detectamos una cuenta así, la eliminamos. Si eres madre, padre o tutor y crees
-que un menor a tu cargo tiene una cuenta aquí, escribe a `[correo de privacidad]`
+que un menor a tu cargo tiene una cuenta aquí, escribe a **hola@sharee.fun**
 y la borramos.
-
-> **Nota para ti:** esta es la fórmula estándar del sector, y resuelve el problema
-> de tener que elegir un número. En lugar de apostar por 13, 14 o 16 y equivocarte
-> en algún país, pones 13 como suelo y remites a la ley local cuando pida más.
-> Así funciona en la práctica y te desbloquea sin necesidad de abogado para este
-> punto concreto.
 
 ---
 
@@ -280,7 +281,7 @@ y la borramos.
 Los perfiles los escriben sus dueños; no revisamos cada uno antes de publicarlo.
 Si ves un perfil que suplanta a alguien, publica datos de otra persona, o
 contiene material ilegal, denúncialo desde el propio perfil o escribe a
-`[correo de abuso]`. Lo revisamos y, si procede, lo retiramos.
+**hola@sharee.fun**. Lo revisamos y, si procede, lo retiramos.
 
 ---
 
@@ -293,30 +294,11 @@ que entre en vigor. La fecha de arriba dice cuándo se actualizó por última ve
 
 ## 10. Documentos relacionados
 
-- [Términos del servicio](sharee_TERMINOS.md) — las reglas del sitio, qué se
+- [Términos del servicio](/terminos) — las reglas del sitio, qué se
   puede publicar y qué pasa si no.
-- [Política de derechos de autor y DMCA](sharee_COPYRIGHT.md) — cómo denunciar
+- [Política de derechos de autor y DMCA](/copyright) — cómo denunciar
   una infracción y cómo responder si te retiran algo.
 
 ---
 
-## Notas para ti (borrar antes de publicar)
-
-1. **Rellena los `[…]`.** Sin correo de contacto real, esta política no sirve de
-   nada legalmente.
-2. **La edad mínima es la decisión más delicada.** Un producto de enlaces
-   sociales atrae adolescentes; decide el número, ponlo también en los Términos
-   y en el alta, y que sea el mismo en los tres sitios.
-3. **Los tres documentos se publican juntos** y se enlazan entre sí, con enlace
-   en el pie de página y en el alta.
-4. **En el alta hace falta una casilla de aceptación**, y guardar cuándo se
-   aceptó y qué versión. Sin ese registro no puedes demostrar nada.
-5. **Si un día metes anuncios o analítica de terceros**, hay que volver aquí y
-   también poner un aviso de cookies de verdad. Mientras no los haya, no hace
-   falta.
-6. **Esta política describe lo que el sistema hara, no todo lo que hace hoy.**
-   El conteo de visitas de la seccion 1.3 ya esta construido
-   (`supabase/migrations/0001_fundacion.sql` y la funcion de borde
-   `registrar-vista`): guarda la huella, nunca la IP. Faltan por construir las
-   sesiones de servidor (1.4) y los registros de error (1.5), que llegan con
-   Supabase Auth. Publicar la politica y construir eso van juntos.
+**Contacto:** **hola@sharee.fun**

@@ -1,12 +1,10 @@
 # sharee — Política de derechos de autor y DMCA
 
-> **Borrador.** Este es el documento **más delicado de los tres** y el que más
-> conviene que revise un abogado, porque no es solo una promesa: es la pieza que
-> te protege legalmente de lo que suban tus usuarios. Los huecos `[…]` los
-> rellenas tú.
+> **Versión 2026-09-16** · **En vigor desde el 16 de septiembre de 2026**
 >
-> **Última actualización:** `[fecha]`
-> **Contacto para asuntos de copyright:** `[legal@tudominio]`
+> **Responsable:** sharee, un proyecto operado por una persona natural residente
+> en **Colombia**.
+> **Contacto para asuntos de copyright:** **hola@sharee.fun**
 
 ---
 
@@ -53,7 +51,7 @@ infringe o no, consulta con un abogado antes de enviar nada.
 ## 1. A dónde se escribe
 
 Todas las notificaciones y contranotificaciones van por correo a
-**`[legal@tudominio]`**. Solo aceptamos este canal. Una notificación incompleta
+****hola@sharee.fun****. Solo aceptamos este canal. Una notificación incompleta
 puede retrasarse o rechazarse.
 
 ---
@@ -107,10 +105,6 @@ Las cuentas con infracciones repetidas o especialmente graves se suspenden o se
 cierran. Valoramos cuántas notificaciones válidas hay, si la persona respondió, y
 su historial previo.
 
-> **Nota para ti:** esta sección no es opcional ni decorativa. Tener y **aplicar**
-> una política de reincidentes es uno de los requisitos del puerto seguro. Si no
-> cortas a quien reincide, lo pierdes.
-
 ---
 
 ## 5. Abuso del procedimiento
@@ -129,15 +123,11 @@ identificar el servicio, sin sugerir que nos patrocinen ni que estemos asociados
 a ellos. Los logotipos son de sus respectivos titulares.
 
 Si eres titular de una marca y quieres que retiremos su icono, escríbenos a
-`[legal@tudominio]`.
-
-> **Nota para ti:** este apartado te protege por los 40 iconos de marca que ya
-> están en `js/nets.js`. Varias marcas exigen no alterar proporciones ni colores;
-> los iconos se usan tal cual, que es lo correcto. Lo que sí revisaría con
-> cuidado antes de lanzar es la **decoración de avatar de Discord**: es un
-> cosmético de pago de Discord, y mostrarlo fuera de Discord no es lo mismo que
-> mostrar un avatar.
+**hola@sharee.fun**.
 
 ---
 
-**Preguntas:** `[legal@tudominio]` · **Soporte general:** `[soporte@tudominio]`
+**Preguntas, notificaciones y soporte:** **hola@sharee.fun**
+
+**Documentos relacionados:** [Términos del servicio](/terminos) ·
+[Política de privacidad](/privacidad)

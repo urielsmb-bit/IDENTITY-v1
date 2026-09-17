@@ -114,3 +114,64 @@ describe('markdown · lo que no se publica', () => {
     expect(html).not.toContain('undefined');
   });
 });
+
+describe('markdown · tablas', () => {
+  /* Las dos de la politica de privacidad estuvieron publicadas como una
+     hilera de barras verticales en mitad de un parrafo. Son justo las dos
+     que mas se miran: que datos se guardan, y con quien se comparten. */
+  it('convierte una tabla en <table>, con cabecera y cuerpo', () => {
+    const html = markdownAHtml('| Quien | Para que |\n|---|---|\n| Supabase | La base de datos |');
+    expect(html).toContain('<th>Quien</th>');
+    expect(html).toContain('<th>Para que</th>');
+    expect(html).toContain('<td>Supabase</td>');
+    expect(html).toContain('<td>La base de datos</td>');
+    expect(html).not.toContain('|');
+  });
+
+  it('la envuelve para que se desplace de lado en el movil', () => {
+    const html = markdownAHtml('| a | b |\n|---|---|\n| 1 | 2 |');
+    expect(html).toContain('<div class="lg__tabla"><table>');
+  });
+
+  it('formatea lo que hay DENTRO de una celda', () => {
+    const html = markdownAHtml('| Quien | Para que |\n|---|---|\n| **Supabase** | con `codigo` |');
+    expect(html).toContain('<strong>Supabase</strong>');
+    expect(html).toContain('<code>codigo</code>');
+  });
+
+  /* Sin separador no hay cabecera: todas las filas son cuerpo. Es lo que
+     manda markdown, y evita ascender una fila de datos a titulo. */
+  it('sin la fila |---| no inventa cabecera', () => {
+    const html = markdownAHtml('| uno | dos |\n| tres | cuatro |');
+    expect(html).not.toContain('<th>');
+    expect(html).toContain('<td>uno</td>');
+    expect(html).toContain('<td>tres</td>');
+  });
+
+  it('el parrafo de despues no se cuela dentro de la tabla', () => {
+    const html = markdownAHtml('| a |\n|---|\n| 1 |\n\nUn parrafo suelto.');
+    expect(html).toContain('</table></div><p>Un parrafo suelto.</p>');
+  });
+
+  /* Dos tablas seguidas en el mismo documento —la privacidad tiene
+     exactamente eso— no pueden acabar fundidas en una sola. */
+  it('dos tablas separadas por un titulo son dos tablas', () => {
+    const html = markdownAHtml('| a |\n|---|\n| 1 |\n\n## Medio\n\n| b |\n|---|\n| 2 |');
+    expect(html.match(/<table>/g)).toHaveLength(2);
+  });
+});
+
+describe('markdown · citas de varios parrafos', () => {
+  /* La cabecera de los tres legales son tres cosas distintas —version,
+     responsable, contacto— dentro de una sola cita. Sin separarlas salia
+     un renglon corrido que habia que leer dos veces. */
+  it('un > solo separa dos parrafos dentro de la cita', () => {
+    const html = markdownAHtml('> Primera cosa.\n>\n> Segunda cosa.');
+    expect(html).toBe('<blockquote><p>Primera cosa.</p><p>Segunda cosa.</p></blockquote>');
+  });
+
+  it('una cita de un solo parrafo sigue siendo un solo parrafo', () => {
+    const html = markdownAHtml('> Una sola\n> cosa partida en dos lineas.');
+    expect(html).toBe('<blockquote><p>Una sola cosa partida en dos lineas.</p></blockquote>');
+  });
+});

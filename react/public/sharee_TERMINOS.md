@@ -1,12 +1,13 @@
 # sharee — Términos del servicio
 
-> **Borrador.** Escrito para que se entienda, no para sonar a abogado. No soy
-> abogado: conviene que lo revise uno antes de abrir al público, sobre todo las
-> secciones 4 (licencia), 8 (pagos) y 10 (responsabilidad). Los huecos `[…]` los
-> rellenas tú.
+> **Versión 2026-09-16** · **En vigor desde el 16 de septiembre de 2026**
 >
-> **Última actualización:** `[fecha]` · **Responsable:** `[nombre / sociedad]`,
-> `[país]` · **Contacto:** `[soporte@tudominio]`
+> **Responsable:** sharee, un proyecto operado por una persona natural residente
+> en **Colombia**.
+> **Contacto:** **hola@sharee.fun**
+>
+> Está escrito para que se entienda, no para sonar a abogado. Si algo aquí no
+> te queda claro, escríbenos y te lo explicamos en las mismas palabras.
 
 ---
 
@@ -36,13 +37,13 @@ desconocido.
 - Debes tener al menos **13 años**, o la edad mínima que exija la ley de tu país
   si es mayor. Si no la alcanzas, no puedes crear cuenta.
 - **Una persona, una cuenta.** Cada cuenta tiene **un perfil**.
-- Eres responsable de tu contraseña. Avísanos en `[soporte@tudominio]` si crees
+- Eres responsable de tu contraseña. Avísanos en **hola@sharee.fun** si crees
   que alguien ha entrado en tu cuenta.
 - No compartas ni vendas el acceso a tu cuenta.
 
 ### Nombres de usuario
 
-Tu nombre de usuario es tu dirección: `[tudominio]/tunombre`. Reglas:
+Tu nombre de usuario es tu dirección: `sharee.fun/tunombre`. Reglas:
 
 - No puede ser ilegal, engañoso, ofensivo ni infringir derechos de otros.
 - **No puede hacerse pasar por sharee** ni por sus responsables. Nombres como
@@ -138,7 +139,7 @@ Puedes vincular Discord o Spotify. Es opcional; el perfil funciona sin ellas.
 
 Al vincular, nos autorizas a leer y guardar lo que ese servicio nos permita
 según los permisos que concedas, y solo para mostrarlo en tu perfil. Lo que
-guardamos exactamente está en la [Política de privacidad](sharee_PRIVACIDAD.md).
+guardamos exactamente está en la [Política de privacidad](/privacidad).
 
 Tu relación con Discord y con Spotify se rige por **sus** términos. No
 respondemos de lo que hagan o dejen de hacer, ni de que cambien su API y algo
@@ -157,13 +158,15 @@ o contrarios a estos Términos.
 
 ---
 
-## 8. Pagos `[si llega a haberlos]`
+## 8. Pagos
 
-> Rellenar cuando exista un plan de pago. Debe cubrir: qué incluye, precio e
-> impuestos, renovación automática y cómo cancelarla, política de reembolso, y el
-> **derecho de desistimiento de 14 días** si vendes a consumidores de la Unión
-> Europea. Hasta que exista, esta sección se puede publicar como «sharee es
-> gratuito».
+**sharee es gratuito.** Hoy no hay suscripciones, ni cobros, ni forma de pagar
+nada: todo lo que ves funciona sin poner una tarjeta.
+
+Si algún día existe un plan de pago, estos Términos se actualizarán **antes** de
+cobrarle nada a nadie, y esa versión dirá qué incluye, cuánto cuesta con
+impuestos, cómo se renueva, cómo se cancela y cómo se devuelve el dinero. Lo que
+hoy tienes gratis no se volverá de pago sin avisarte con antelación.
 
 ---
 
@@ -187,16 +190,12 @@ que no se pierdan datos, ni que esté siempre disponible.
 En la medida en que la ley lo permita, no respondemos de daños indirectos, ni del
 lucro cesante, ni de la pérdida de datos derivada del uso del servicio.
 
-> **Nota para ti:** esta cláusula tiene límites distintos en cada país, y frente a
-> consumidores en la Unión Europea no se puede excluir todo. Es de las que hay que
-> revisar con un abogado.
-
 ---
 
 ## 11. Copyright
 
 Las reclamaciones de derechos de autor van por su propio cauce, descrito en la
-[Política de derechos de autor y DMCA](sharee_COPYRIGHT.md).
+[Política de derechos de autor y DMCA](/copyright).
 
 ---
 
@@ -210,22 +209,12 @@ antelación por correo. Si no aceptas la nueva versión, deja de usar el servici
 
 ## 13. Ley aplicable
 
-Estos Términos se rigen por la ley de `[Colombia]`, sin perjuicio de los derechos
+Estos Términos se rigen por la ley de **Colombia**, sin perjuicio de los derechos
 que como consumidor te correspondan en tu país de residencia.
 
 ---
 
-## Notas para ti (borrar antes de publicar)
+**Contacto:** **hola@sharee.fun**
 
-1. **Los tres documentos se publican juntos** y se enlazan entre sí: Términos,
-   Privacidad y Copyright. Un enlace a los tres en el pie de página y en el alta.
-2. **En el alta hace falta una casilla** de aceptación, y guardar cuándo se
-   aceptó y qué versión. Sin ese registro, no puedes demostrar que alguien los
-   aceptó.
-3. **La edad mínima** aparece aquí y en Privacidad: que sea el mismo número.
-4. **La sección 5 es tu defensa económica.** Es la que te permite decir «no» a
-   quien intente usar tu almacenamiento como CDN, que es el escenario que te
-   funde la cuota de Supabase.
-5. **La sección 3, punto de visitas infladas**, es consecuencia directa de haber
-   decidido que Descubrir ordene por visitas y valoración. Sin regla escrita, no
-   puedes sancionar a quien lo haga.
+**Documentos relacionados:** [Política de privacidad](/privacidad) ·
+[Política de derechos de autor y DMCA](/copyright)

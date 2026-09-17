@@ -67,7 +67,7 @@ export default function LegalPage() {
         <div className="cargando" aria-busy="true" />
       ) : (
         <article
-          className="legal-content"
+          className="legal-content lg__doc"
           style={{ lineHeight: '1.7', fontSize: 'var(--t3)', color: 'var(--text-primary)' }}
           dangerouslySetInnerHTML={{ __html: html }}
         />
