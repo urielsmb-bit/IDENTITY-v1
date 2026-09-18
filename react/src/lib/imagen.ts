@@ -173,9 +173,28 @@ export async function prepararImagen(
  * error que enseñar: sin poster el fondo se sigue viendo, solo que un
  * segundo más tarde.
  */
+/**
+ * El lado largo del poster. Es el mismo tope que el del vídeo
+ * (`ANCHO_MAX` en `comprimirVideo`), y a propósito: así el poster nunca se
+ * estira.
+ *
+ * Estaba en 1280, y para un fondo de 1920x1080 eso salía un 1280x720 que
+ * el navegador agrandaba a pantalla completa —vez y media— encima de un
+ * WebP ya comprimido a 0,72. Cuarenta kilobytes repartidos entre dos
+ * millones de píxeles. El comentario de abajo decía «esto se ve un segundo
+ * y debajo de la tarjeta», y las dos cosas eran falsas: ocupa la pantalla
+ * entera, y en una conexión lenta se ve bastante más de un segundo, que es
+ * justo cuando alguien decide si se queda.
+ *
+ * A 1920 pesa unos ochenta kilobytes en vez de cuarenta. Sigue siendo dos
+ * órdenes de magnitud menos que el vídeo, que es lo único que este número
+ * tenía que cumplir.
+ */
+const LADO_POSTER = 1920;
+
 export async function posterDeVideo(
   archivo: File,
-  lado = 1280,
+  lado = LADO_POSTER,
 ): Promise<ImagenLista | null> {
   const url = URL.createObjectURL(archivo);
   const v = document.createElement('video');
@@ -231,8 +250,10 @@ export async function posterDeVideo(
     ctx.drawImage(v, 0, 0, ancho, alto);
 
     const { mime, extension } = formatoSalida();
-    /* Calidad más baja que una foto: esto se ve un segundo y debajo de la
-       tarjeta. Lo que importa es que pese poco y llegue antes que el vídeo. */
+    /* Calidad más baja que una foto: lo que importa es que pese poco y
+       llegue antes que el vídeo. Con el lado ya a 1920 el detalle lo pone
+       la resolución, así que bajar de aquí sería cambiar bloques por
+       bytes que no hacen falta. */
     const blob = await new Promise<Blob | null>((resolver) => {
       lienzo.toBlob(resolver, mime, 0.72);
     });
