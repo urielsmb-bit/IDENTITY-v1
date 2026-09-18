@@ -26,10 +26,18 @@
  * QUE SE PIERDE Y QUE NO
  * ────────────────────────────────────────────────────────────────────────
  *
- * Calidad VISIBLE, nada. Este vídeo se pinta detrás de una tarjeta, bajo
- * un velo oscuro, en una pantalla que casi nunca pasa de 1080p. Lo que se
- * tira son píxeles que no se miran y bits de un bitrate de cámara pensado
- * para editar, no para servir.
+ * Aqui ponia «calidad VISIBLE, nada», y era mentira. El fondo de
+ * juanbeltran salio emborronado a pantalla completa y se veia desde el
+ * primer vistazo. Lo que fallaba no era la idea —tirar pixeles que no se
+ * miran sigue siendo correcto— sino los numeros: iban calculados para el
+ * caso comodo y este es el incomodo, un blanco y negro oscuro y con
+ * grano, que es justo donde un bitrate corto se nota mas.
+ *
+ * Lo que se tira, con los numeros de ahora, son pixeles por encima de
+ * 1080p y bits de un bitrate de camara pensado para editar, no para
+ * servir. Y ya no se toca lo que llega bien: recodificar algo que ya
+ * paso por un codificador es una segunda generacion, y cada generacion
+ * alisa. Esa es la parte que de verdad emborronaba.
  *
  * Y el audio se tira ENTERO, a propósito: un fondo va mudo por definición
  * —el `video` lleva `muted` y el navegador no lo dejaría sonar de todos
@@ -90,7 +98,12 @@
      guns.lol .......... 0,100
      bandi.lol H264 .... 0,030
      bandi.lol AV1 ..... 0,019
-     lo de aqui ........ 0,056   <- entre los dos, mas cerca del holgado
+
+   Con el primer intento se apunto a 0,056 —«entre los dos»— y salio 0,036,
+   porque el numero que se le da al codificador es un techo y no lo llena.
+   Apuntar a la mitad del camino y quedarse corto acaba abajo del todo. Se
+   apunta ahora al de guns.lol, que es el unico de los tres que se mira
+   para decir «se ve bien».
    ──────────────────────────────────────────────────────────────────── */
 
 /**
@@ -106,23 +119,75 @@
 const ANCHO_MAX = 1920;
 
 /**
- * Bits por segundo del resultado.
+ * Bits por pixel y fotograma.
  *
- * Entre los dos de la tabla: por encima del H.264 de bandi por pixel, por
- * debajo de guns.lol. Mas alto no se nota debajo del velo; mas bajo empieza
- * a verse el bloqueo en los degradados oscuros, que es justo lo que mas
- * abunda en estos videos.
+ * ────────────────────────────────────────────────────────────────────────
+ * DE DONDE SALE, Y POR QUE CAMBIO
+ * ────────────────────────────────────────────────────────────────────────
  *
- * Con esto, el video de 19,2 s que disparo todo esto pasa de 39,6 MB a unos
- * 8,4 — que es exactamente donde esta guns.lol.
+ * Aqui habia un numero plano —3,5 Mbps para cualquier medida— colocado
+ * «entre los dos de la tabla», y con el se publicaron dos fondos. Medidos
+ * en produccion:
+ *
+ *     juanbeltran   1920x1080   26,0s   6,89 MB   2,22 Mbps
+ *     shark         1920x816    19,5s   5,75 MB   2,48 Mbps
+ *
+ * Ninguno llego a los 3,5 que se le pedian. Y se ve: el de juanbeltran es
+ * un blanco y negro oscuro y con grano, y sale emborronado a pantalla
+ * completa. El comentario de antes ya lo predecia sin saberlo —«mas bajo
+ * empieza a verse el bloqueo en los degradados oscuros, que es justo lo
+ * que mas abunda en estos videos»— y aun asi se quedo corto.
+ *
+ * El fallo de raiz es que `videoBitsPerSecond` es un TECHO, no un
+ * objetivo. El codificador gasta lo que le parece y se para antes; con
+ * ruido sintetico llega al tope (medido: 3,47 de 3,5) y con video real,
+ * que ya viene comprimido y por tanto alisado, se queda en dos tercios.
+ * Poner un techo justo es pedirle al codificador que decida la calidad,
+ * y decide mal.
+ *
+ * Asi que el numero se ata a lo medido en quien se ve bien, y se escala
+ * con el tamaño en vez de ser plano —un 720p no necesita los bits de un
+ * 1080p—:
+ *
+ *     guns.lol .......... 0,100 bits/px/fotograma   <- este
+ *     bandi.lol H264 .... 0,030
+ *     bandi.lol AV1 ..... 0,019
+ *
+ *     1920x1080 -> 6,2 Mbps      1920x816 -> 4,7 Mbps
+ *     1280x720  -> 2,8 Mbps
+ *
+ * Subir el techo cuesta bytes de descarga, NO cuesta descodificacion: eso
+ * lo manda el numero de pixeles, que no se toca. Y el egreso de R2 es
+ * gratis. En segundos por megabyte quedamos donde guns.lol.
  */
-const BITRATE = 3_500_000;
+const BITS_POR_PIXEL = 0.1;
+const FPS = 30;
+
+/** Los bits por segundo que se le piden a un tamaño dado. */
+function bitratePara(ancho: number, alto: number): number {
+  return Math.round(ancho * alto * FPS * BITS_POR_PIXEL);
+}
 
 /**
- * A partir de aquí merece la pena. Un vídeo ya pequeño se sube tal cual:
- * recodificar por recodificar solo quita calidad y hace esperar.
+ * Cuanto puede pasarse el original antes de que recodificar compense.
+ *
+ * Recodificar SIEMPRE pierde: es una segunda generacion sobre algo que ya
+ * paso por un codificador. Si el archivo que llega ya esta cerca de donde
+ * lo dejariamos nosotros, tocarlo solo lo empeora.
  */
-const DESDE_MB = 10;
+const HOLGURA = 1.4;
+
+/**
+ * Por debajo de esto no se toca nada, pese lo que pese el calculo.
+ *
+ * OJO CON LEER ESTO COMO UN LIMITE DE PESO. Lo era, y estaba mal: un
+ * video de 26 segundos a unos razonables 4 Mbps son 13 MB y cruzaba el
+ * umbral, asi que se recodificaba un archivo que estaba perfectamente. El
+ * peso total crece con la DURACION, y la duracion no tiene nada que ver
+ * con si un video esta bien comprimido. Lo que decide es el bitrate; esto
+ * solo evita molestar a un archivo diminuto.
+ */
+const DESDE_MB = 4;
 
 export interface VideoEncogido {
   encogido: true;
@@ -157,7 +222,26 @@ export interface OpcionesEncoger {
  */
 function tipoDeSalida(): string | null {
   if (typeof MediaRecorder === 'undefined') return null;
+  /* EL PERFIL SE PIDE, NO SE HEREDA. Pidiendo `avc1` a secas, Chrome
+     devuelve Baseline —lo dice el `avcC` de los dos fondos publicados:
+     byte de perfil 0x42, o sea 66—, que es H.264 sin B-frames y sin
+     CABAC. `avc1.640028` es High 4.0, y `isTypeSupported` no basta para
+     saber si lo respeta, asi que se comprobo codificando de verdad:
+
+         avc1 .......... perfil 66  (Baseline)
+         avc1.4D0028 ... perfil 77  (Main)
+         avc1.640028 ... perfil 100 (High)
+
+     Lo honesto es decir que en esa misma prueba High NO salio mejor a
+     igual bitrate: 37,30 de detalle frente a 37,33, que es ruido. Puede
+     ser que el codificador por hardware ignore las herramientas de mas,
+     o que el contenido de la prueba —grano aleatorio— sea justo donde
+     menos ayudan. Se pide igualmente porque no cuesta nada y porque
+     donde si se usen, ayudan; pero el arreglo de verdad es el bitrate,
+     no esto. */
   const candidatos = [
+    'video/mp4;codecs=avc1.640028',
+    'video/mp4;codecs=avc1.4D0028',
     'video/mp4;codecs=avc1',
     'video/mp4',
     'video/webm;codecs=vp9',
@@ -177,9 +261,44 @@ export function sePuedeEncoger(): boolean {
   );
 }
 
-/** Si merece la pena para ESTE archivo. */
-export function conviene(archivo: File, ancho: number): boolean {
-  return archivo.size > DESDE_MB * 1024 * 1024 || ancho > ANCHO_MAX;
+/**
+ * Si merece la pena tocar ESTE archivo, sabiendo ya lo que mide y lo que
+ * dura. Se llama desde dentro, cuando el navegador ya ha leido la
+ * cabecera: antes solo se tenia el peso y una proporcion.
+ *
+ * Habia una version exportada que recibia `(archivo, ancho)` y el ancho
+ * se lo inventaba quien llamaba —`Math.round(ratio * 1080)`, o sea la
+ * proporcion multiplicada por un alto supuesto—. Para un 3840x1632 eso da
+ * 2540, que no es su ancho ni se le parece. Decidir con un numero
+ * inventado es peor que no decidir.
+ */
+export function hayQueTocarlo(
+  bytes: number,
+  ancho: number,
+  alto: number,
+  duracion: number,
+): { si: true } | { si: false; motivo: string } {
+  /* Demasiados pixeles que descodificar en cada fotograma. Esto manda por
+     encima de todo lo demas: es el motivo por el que existe esto. */
+  if (ancho > ANCHO_MAX) return { si: true };
+
+  if (bytes <= DESDE_MB * 1024 * 1024) {
+    return { si: false, motivo: `ya pesaba poco (${(bytes / 1048576).toFixed(1)} MB)` };
+  }
+
+  if (!duracion || !isFinite(duracion)) return { si: true };
+
+  const suyo = (bytes * 8) / duracion;
+  const nuestro = bitratePara(ancho, alto);
+  if (suyo <= nuestro * HOLGURA) {
+    return {
+      si: false,
+      motivo:
+        `ya venia bien comprimido (${ancho}×${alto} a ` +
+        `${(suyo / 1e6).toFixed(1)} Mbps)`,
+    };
+  }
+  return { si: true };
 }
 
 /**
@@ -232,6 +351,17 @@ export async function encogerVideo(
       v.onerror = () => fallo(new Error('El navegador no sabe leer ese vídeo.'));
     });
 
+    /* AHORA se decide, que es cuando se sabe. Antes lo decidia quien
+       llamaba con el peso y un ancho supuesto; aqui estan el ancho, el
+       alto y la duracion de verdad. */
+    const veredicto = hayQueTocarlo(
+      archivo.size,
+      v.videoWidth,
+      v.videoHeight,
+      v.duration,
+    );
+    if (!veredicto.si) return noSePudo(veredicto.motivo);
+
     const { w, h } = medidaDestino(v.videoWidth, v.videoHeight);
     const lienzo = document.createElement('canvas');
     lienzo.width = w;
@@ -239,10 +369,18 @@ export async function encogerVideo(
     const pincel = lienzo.getContext('2d', { alpha: false });
     if (!pincel) return noSePudo('el navegador no dio un lienzo donde pintar');
 
-    const flujo = lienzo.captureStream(30);
+    /* Nunca por encima de lo que traia el original: pedir mas bits de los
+       que tenia no inventa detalle, solo engorda el archivo guardando el
+       ruido de la primera compresion. */
+    const suyo = v.duration && isFinite(v.duration)
+      ? (archivo.size * 8) / v.duration
+      : Infinity;
+    const bitrate = Math.round(Math.min(bitratePara(w, h), suyo));
+
+    const flujo = lienzo.captureStream(FPS);
     const grabadora = new MediaRecorder(flujo, {
       mimeType: tipo,
-      videoBitsPerSecond: BITRATE,
+      videoBitsPerSecond: bitrate,
     });
     const trozos: Blob[] = [];
     let fallo = '';

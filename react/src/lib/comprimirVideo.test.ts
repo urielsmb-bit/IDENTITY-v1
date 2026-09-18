@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { sePuedeEncoger, conviene, encogerVideo } from './comprimirVideo';
+import { sePuedeEncoger, hayQueTocarlo, encogerVideo } from './comprimirVideo';
 
 /**
  * Pruebas del encogido de vídeos.
@@ -26,25 +26,75 @@ function archivoDe(mb: number): File {
 
 afterEach(() => vi.unstubAllGlobals());
 
-describe('conviene', () => {
-  it('un vídeo ya ligero y a 1080p se deja en paz', () => {
-    expect(conviene(archivoDe(6), 1920)).toBe(false);
+/** Un archivo de N megas, de D segundos: lo que define su bitrate. */
+function bytesDe(mb: number): number {
+  return Math.round(mb * 1024 * 1024);
+}
+
+describe('hayQueTocarlo', () => {
+  /* El caso del primer video real: 4K. Aunque pese poco, descodificar esa
+     medida en cada fotograma es el trabajo que atasca a las maquinas sin
+     aceleracion. Manda por encima de cualquier cuenta de bitrate. */
+  it('4K siempre, aunque pese poco y venga bien comprimido', () => {
+    expect(hayQueTocarlo(bytesDe(3), 3840, 2160, 20).si).toBe(true);
   });
 
-  it('pesado, aunque sea 1080p', () => {
-    expect(conviene(archivoDe(12), 1920)).toBe(true);
+  it('justo en el limite de ancho no se toca, un pixel mas si', () => {
+    expect(hayQueTocarlo(bytesDe(60), 1920, 1080, 20).si).toBe(true);
+    expect(hayQueTocarlo(bytesDe(3), 1920, 1080, 20).si).toBe(false);
+    expect(hayQueTocarlo(bytesDe(3), 1922, 1080, 20).si).toBe(true);
   });
 
-  /* El caso del primer vídeo real que se subió: 4K. Aunque pesara poco,
-     descodificar esa medida en cada fotograma es el trabajo que atasca a
-     las máquinas sin aceleración. */
-  it('4K siempre, aunque pese poco', () => {
-    expect(conviene(archivoDe(3), 3840)).toBe(true);
+  it('un video diminuto se deja en paz', () => {
+    const r = hayQueTocarlo(bytesDe(3), 1920, 1080, 10);
+    expect(r.si).toBe(false);
+    if (!r.si) expect(r.motivo).toContain('ya pesaba poco');
   });
 
-  it('justo en el límite de ancho, no', () => {
-    expect(conviene(archivoDe(1), 1920)).toBe(false);
-    expect(conviene(archivoDe(1), 1922)).toBe(true);
+  /* LA REGRESION QUE MOTIVO TODO ESTO.
+     El umbral era de PESO TOTAL, 10 MB. Un video de 26 segundos a unos
+     razonables 4,2 Mbps son 13,7 MB, asi que cruzaba el umbral y se
+     recodificaba un archivo que estaba perfectamente — y salia peor, que
+     es lo que se vio publicado. El peso total crece con la duracion; la
+     duracion no dice nada de si algo esta bien comprimido. */
+  it('uno largo pero bien comprimido NO se toca, aunque pese mucho', () => {
+    // 1920x1080, 26 s, 13,7 MB -> 4,4 Mbps, por debajo de 6,2 x 1,4
+    const r = hayQueTocarlo(bytesDe(13.7), 1920, 1080, 26);
+    expect(r.si).toBe(false);
+    if (!r.si) expect(r.motivo).toContain('ya venia bien comprimido');
+  });
+
+  it('uno corto pero derrochando SI se toca', () => {
+    // 1920x1080, 10 s, 25 MB -> 21 Mbps, muy por encima
+    expect(hayQueTocarlo(bytesDe(25), 1920, 1080, 10).si).toBe(true);
+  });
+
+  /* El objetivo escala con el tamaño: lo que es derroche a 720p es
+     normal a 1080p. Con un numero plano los dos recibian lo mismo. */
+  it('el liston depende de la medida, no es uno solo', () => {
+    // 5 Mbps: normal para 1080p (objetivo 6,2), derroche para 720p (2,8)
+    expect(hayQueTocarlo(bytesDe(12.5), 1920, 1080, 20).si).toBe(false);
+    expect(hayQueTocarlo(bytesDe(12.5), 1280, 720, 20).si).toBe(true);
+  });
+
+  /* LOS DOS QUE SE PUBLICARON EMBORRONADOS, con sus medidas de verdad
+     leidas de produccion. Ya salieron del codificador, asi que vuelven a
+     entrar a 2,2 y 2,5 Mbps: la regla nueva NO los toca, que es lo
+     correcto —recodificar algo ya aplastado solo lo aplasta mas—. Para
+     que se arreglen hay que volver a subir el ORIGINAL. */
+  it('no vuelve a pasar por el codificador lo que ya salio de el', () => {
+    // juanbeltran: 1920x1080, 26,03 s, 6,89 MB -> 2,22 Mbps
+    expect(hayQueTocarlo(7222780, 1920, 1080, 26.03).si).toBe(false);
+    // shark: 1920x816, 19,47 s, 5,75 MB -> 2,48 Mbps
+    expect(hayQueTocarlo(6026612, 1920, 816, 19.47).si).toBe(false);
+  });
+
+  /* Sin duracion no hay bitrate que calcular. Recodificar es la respuesta
+     segura: como mucho se gasta tiempo, y nunca se deja pasar un archivo
+     enorme por no poder medirlo. */
+  it('sin duracion legible, se recodifica', () => {
+    expect(hayQueTocarlo(bytesDe(30), 1920, 1080, 0).si).toBe(true);
+    expect(hayQueTocarlo(bytesDe(30), 1920, 1080, Infinity).si).toBe(true);
   });
 });
 

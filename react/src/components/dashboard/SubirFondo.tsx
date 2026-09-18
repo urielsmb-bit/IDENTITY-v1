@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { subirFondoVimeo, type AvanceSubida } from '@/lib/vimeoSubida';
 import { hayR2, subirAR2 } from '@/lib/r2';
-import { sePuedeEncoger, conviene, encogerVideo } from '@/lib/comprimirVideo';
+import { sePuedeEncoger, encogerVideo } from '@/lib/comprimirVideo';
 import { prepararImagen, posterDeVideo } from '@/lib/imagen';
 import { safeMedia } from '@/lib/utils';
 import * as backend from '@/lib/backend';
@@ -273,7 +273,13 @@ export function SubirFondo({
            */
           let subir: File | Blob = archivo;
           let dicho = '';
-          if (sePuedeEncoger() && conviene(archivo, Math.round(ratio * 1080))) {
+          /* Ya no se decide aqui. Se decidia con `ratio * 1080` como
+             ancho —la proporcion por un alto supuesto— y para un 3840x1632
+             eso da 2540, que no es su ancho. `encogerVideo` lee la cabecera
+             de todos modos, asi que decide alli con las medidas de verdad y
+             devuelve `encogido:false` con el motivo cuando no hacia falta,
+             que es justo lo que este bloque ya sabe enseñar. */
+          if (sePuedeEncoger()) {
             setFase('encogiendo');
             setAvance({ enviados: 0, total: 100, pct: 0 });
             const chico = await encogerVideo(archivo, {
