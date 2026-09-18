@@ -174,9 +174,7 @@ export async function prepararImagen(
  * segundo más tarde.
  */
 /**
- * El lado largo del poster. Es el mismo tope que el del vídeo
- * (`ANCHO_MAX` en `comprimirVideo`), y a propósito: así el poster nunca se
- * estira.
+ * El lado largo del poster.
  *
  * Estaba en 1280, y para un fondo de 1920x1080 eso salía un 1280x720 que
  * el navegador agrandaba a pantalla completa —vez y media— encima de un
@@ -186,9 +184,20 @@ export async function prepararImagen(
  * entera, y en una conexión lenta se ve bastante más de un segundo, que es
  * justo cuando alguien decide si se queda.
  *
- * A 1920 pesa unos ochenta kilobytes en vez de cuarenta. Sigue siendo dos
- * órdenes de magnitud menos que el vídeo, que es lo único que este número
- * tenía que cumplir.
+ * NO SIGUE A `ANCHO_MAX`, y antes decía que sí. Cuando el vídeo se quedaba
+ * en 1920 los dos números coincidían y era cómodo contarlo como «el poster
+ * nunca se estira»; con el vídeo a 2560 esa frase habría obligado a subir
+ * también esto, y son dos trabajos distintos:
+ *
+ *   · el vídeo tiene todo el tiempo del mundo para llegar
+ *   · el poster existe PARA llegar antes, y solo sirve mientras el vídeo no
+ *     está
+ *
+ * A 2560 pesaría unos ciento cuarenta kilobytes en vez de ochenta, para no
+ * estirarse en las pantallas que pasan de 1920 —que son las menos— durante
+ * el segundo y pico que dura. Pagar el doble de espera en todas para que
+ * unas pocas no vean un aumento de un tercio es al revés de lo que este
+ * archivo viene a hacer.
  */
 const LADO_POSTER = 1920;
 

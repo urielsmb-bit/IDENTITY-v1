@@ -39,10 +39,28 @@ describe('hayQueTocarlo', () => {
     expect(hayQueTocarlo(bytesDe(3), 3840, 2160, 20).si).toBe(true);
   });
 
+  /* El liston sube con el tope: 12,6 Mbps es normal para un 2K (objetivo
+     11,1, liston 15,5) y derroche para un 1080p (objetivo 6,2, liston
+     8,7). Con un tope plano los dos recibian el mismo veredicto. */
+  it('el mismo bitrate se juzga distinto segun la medida', () => {
+    expect(hayQueTocarlo(bytesDe(30), 2560, 1440, 20).si).toBe(false);
+    expect(hayQueTocarlo(bytesDe(30), 1920, 1080, 20).si).toBe(true);
+  });
+
   it('justo en el limite de ancho no se toca, un pixel mas si', () => {
-    expect(hayQueTocarlo(bytesDe(60), 1920, 1080, 20).si).toBe(true);
-    expect(hayQueTocarlo(bytesDe(3), 1920, 1080, 20).si).toBe(false);
-    expect(hayQueTocarlo(bytesDe(3), 1922, 1080, 20).si).toBe(true);
+    expect(hayQueTocarlo(bytesDe(3), 2560, 1440, 20).si).toBe(false);
+    expect(hayQueTocarlo(bytesDe(3), 2562, 1440, 20).si).toBe(true);
+  });
+
+  /* LO QUE SE PIDIO: que lo que ya viene a 2K se quede a 2K, y solo se
+     reduzca lo que pasa de ahi. Antes el tope era 1920, asi que un 2K
+     entraba al codificador solo por ser mas ancho de la cuenta y salia a
+     1080p aunque estuviera perfecto. */
+  it('un 2K bien comprimido se queda tal cual, no baja a 1080p', () => {
+    // 2560x1440, 20 s, 20 MB -> 8,4 Mbps, por debajo de 11,1 x 1,4
+    const r = hayQueTocarlo(bytesDe(20), 2560, 1440, 20);
+    expect(r.si).toBe(false);
+    if (!r.si) expect(r.motivo).toContain('2560×1440');
   });
 
   it('un video diminuto se deja en paz', () => {

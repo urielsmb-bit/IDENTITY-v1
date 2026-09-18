@@ -107,16 +107,40 @@
    ──────────────────────────────────────────────────────────────────── */
 
 /**
- * Lo ancho que se deja. Por encima, a 1080p.
+ * Lo ancho que se deja. Por encima, a 2K. Lo que ya viene a 2K o menos se
+ * queda con su medida.
  *
- * Bandi sirve 1440p y se ve magnifico, pero bandi optimiza para que se vea
+ * ────────────────────────────────────────────────────────────────────────
+ * ESTO ERA 1920 Y SE SUBIO A PROPOSITO
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * El argumento de antes era bueno y sigue siendo cierto: «bandi sirve
+ * 1440p y se ve magnifico, pero bandi optimiza para que se vea
  * espectacular y aqui el problema es OTRO: que vaya fluido en equipos sin
- * aceleracion por hardware. 1440p son 1,8 veces mas pixeles que descodificar
- * en cada fotograma, y detras de una tarjeta y bajo un velo oscuro esa
- * diferencia no se ve. 1080p es la medida de guns.lol, que es el que va
- * fino en todo.
+ * aceleracion por hardware». 1440p son 1,8 veces mas pixeles que
+ * descodificar en cada fotograma.
+ *
+ * Lo que fallaba era la conclusion —«esa diferencia no se ve»—. Se vio: el
+ * fondo de juanbeltran, un blanco y negro oscuro con grano, salio
+ * emborronado a pantalla completa. Y aunque aquello era sobre todo culpa
+ * del bitrate, la decision de con cuantos pixeles quedarse es de quien
+ * lleva el producto, no mia: se pidio 2K para lo que venga por encima, y
+ * 2K es lo que hay.
+ *
+ * QUE SE PAGA, para que este escrito y no haya que redescubrirlo:
+ *
+ *   · 1,8 veces mas pixeles por fotograma que descodificar. En equipos sin
+ *     aceleracion por hardware eso se nota, y es justo el problema que
+ *     llevo a quitar el `iframe` de Vimeo.
+ *   · 1,8 veces mas bitrate para la misma calidad: 11,1 Mbps a 2K contra
+ *     6,2 a 1080p. Un bucle de 26 segundos pasa de unos 20 MB a unos 36.
+ *   · Con el tope de subida en 64 MB, a 2K caben unos 46 segundos de
+ *     video. Para un bucle de fondo sobra; para algo mas largo, no.
+ *
+ * Si algun dia alguien se queja de que va a tirones en un portatil viejo,
+ * el numero a mirar es este, y bajarlo a 1920 es un cambio de una linea.
  */
-const ANCHO_MAX = 1920;
+const ANCHO_MAX = 2560;
 
 /**
  * Bits por pixel y fotograma.
@@ -153,8 +177,15 @@ const ANCHO_MAX = 1920;
  *     bandi.lol H264 .... 0,030
  *     bandi.lol AV1 ..... 0,019
  *
- *     1920x1080 -> 6,2 Mbps      1920x816 -> 4,7 Mbps
- *     1280x720  -> 2,8 Mbps
+ *     2560x1440 -> 11,1 Mbps     1920x1080 -> 6,2 Mbps
+ *     1920x816  ->  4,7 Mbps     1280x720  -> 2,8 Mbps
+ *
+ * Escala recto con los pixeles, sin curva. Se puede defender que un
+ * fotograma grande aguanta menos bits por pixel —el detalle se reparte y
+ * el ojo lo integra— y bandi lo practica: 0,030 a 1440p. Pero bandi es el
+ * unico de los dos que se puede mirar de cerca sin que cante, y una curva
+ * inventada para ahorrar cuatro megabytes es exactamente el tipo de
+ * numero que ya se quedo corto una vez.
  *
  * Subir el techo cuesta bytes de descarga, NO cuesta descodificacion: eso
  * lo manda el numero de pixeles, que no se toca. Y el egreso de R2 es
