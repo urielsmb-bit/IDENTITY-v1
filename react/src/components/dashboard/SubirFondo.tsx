@@ -73,21 +73,55 @@ function topeDelVideoMB(): number {
  * terminar de transcodificar; aqui lo dice el navegador en cuanto lee la
  * cabecera, sin descargar el video entero.
  */
-function medirVideo(archivo: File): Promise<number> {
+interface MedidaVideo {
+  ratio: number;
+  /** 0 si el navegador no supo leer el archivo. */
+  ancho: number;
+  alto: number;
+}
+
+function medirVideo(archivo: File): Promise<MedidaVideo> {
   return new Promise((listo) => {
     const url = URL.createObjectURL(archivo);
     const v = document.createElement('video');
-    const acabar = (r: number) => {
+    const acabar = (m: MedidaVideo) => {
       URL.revokeObjectURL(url);
-      listo(r);
+      listo(m);
     };
     v.preload = 'metadata';
     v.onloadedmetadata = () =>
-      acabar(v.videoHeight ? v.videoWidth / v.videoHeight : 16 / 9);
+      acabar({
+        ratio: v.videoHeight ? v.videoWidth / v.videoHeight : 16 / 9,
+        ancho: v.videoWidth,
+        alto: v.videoHeight,
+      });
     // Si el navegador no sabe leerlo, 16:9 es la apuesta menos mala.
-    v.onerror = () => acabar(16 / 9);
+    v.onerror = () => acabar({ ratio: 16 / 9, ancho: 0, alto: 0 });
     v.src = url;
   });
+}
+
+/**
+ * Por debajo de esto, un fondo se ve borroso y no hay nada que hacer.
+ *
+ * NO SE PUEDE ARREGLAR AGRANDANDO. Un fondo ocupa la pantalla entera, asi
+ * que un original de 854 de ancho en un monitor de 1920 se estira dos
+ * veces y media, y agrandar no inventa detalle: solo pesa mas para
+ * enseñar lo mismo, mas borroso. La unica solucion es subir un archivo
+ * mejor, y para eso hay que saberlo.
+ *
+ * 1280 es donde empieza a cantar: vez y media de estirado en una pantalla
+ * corriente. Es un aviso, no un impedimento — si alguien quiere ese video,
+ * es suyo.
+ */
+const ANCHO_FLOJO = 1280;
+
+function avisoDeMedida(m: MedidaVideo): string {
+  if (!m.ancho || m.ancho >= ANCHO_FLOJO) return '';
+  return (
+    ` · ojo: el original es de ${m.ancho}×${m.alto} y un fondo ocupa la` +
+    ' pantalla entera, asi que se vera borroso. Sube uno mas grande si puedes.'
+  );
 }
 
 /**
@@ -254,7 +288,8 @@ export function SubirFondo({
         const ctrlR2 = new AbortController();
         abortRef.current = ctrlR2;
         try {
-          const ratio = await medirVideo(archivo);
+          const medida = await medirVideo(archivo);
+          const ratio = medida.ratio;
 
           /**
            * Encogerlo ANTES de subirlo.
@@ -328,7 +363,8 @@ export function SubirFondo({
           setNota(
             `Subido · ${(subir.size / 1048576).toFixed(1)} MB` +
               dicho +
-              (poster ? ' · con portada' : ''),
+              (poster ? ' · con portada' : '') +
+              avisoDeMedida(medida),
           );
         } catch (e) {
           if (e instanceof DOMException && e.name === 'AbortError') setError('Subida cancelada.');
@@ -365,7 +401,7 @@ export function SubirFondo({
         }
         setFase('subiendo');
         try {
-          const ratio = await medirVideo(archivo);
+          const ratio = (await medirVideo(archivo)).ratio;
           const ext = (archivo.name.split('.').pop() || 'mp4').toLowerCase();
           const url = await backend.subirMedio(archivo, 'fondo', ext, anterior);
 
