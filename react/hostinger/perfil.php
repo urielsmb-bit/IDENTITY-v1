@@ -120,7 +120,7 @@ function imagenTarjeta($url): string
  * minuto de margen para absorber una punta de trafico es util; un dia de
  * copia vieja en el navegador de cada uno, no.
  */
-function servir(string $cuerpo, int $segundos, int $estado = 200): void
+function servir(string $cuerpo, int $segundos, int $estado = 200, string $cuando = ''): void
 {
     /**
      * Y con ETag, que es lo que convierte «revalida siempre» en algo
@@ -143,6 +143,58 @@ function servir(string $cuerpo, int $segundos, int $estado = 200): void
     $etag = '"' . md5($cuerpo) . '"';
     header("Cache-Control: public, max-age=0, must-revalidate, s-maxage=$segundos");
     header("ETag: $etag");
+
+    /**
+     * Y `Last-Modified`, porque el ETag NO LLEGA.
+     *
+     * Comprobado en produccion: se pone —el codigo esta desplegado, un
+     * `If-None-Match: *` contesta 304— pero la cabecera no aparece en la
+     * respuesta, ni con compresion ni sin ella. Alguien de la cadena la
+     * quita: los ETag FUERTES se caen a menudo cuando el servidor o el CDN
+     * recomprimen, porque el cuerpo que sale ya no es el que se resumio.
+     *
+     * `Last-Modified` sobrevive mucho mejor a esa misma cadena, y ademas
+     * aqui es mas honesto que un resumen: la fecha sale de `actualizado`,
+     * o sea de cuando su dueño toco el perfil por ultima vez. Si no lo ha
+     * tocado, no ha cambiado.
+     *
+     * Se mandan los dos y se acepta cualquiera de los dos. Lo que
+     * sobreviva, sirve.
+     */
+    if ($cuando !== '') {
+        /**
+         * LA MAS RECIENTE DE LAS DOS, Y ESTO NO ES UN DETALLE.
+         *
+         * `actualizado` dice cuando toco su dueño el perfil. Pero esta
+         * respuesta es perfil MAS cascaron, y el cascaron cambia en cada
+         * despliegue: nombres de bundle nuevos, que son justo los que hay
+         * que entregar.
+         *
+         * Con la fecha del perfil a secas, alguien que vuelve despues de un
+         * despliegue mandaria su `If-Modified-Since`, el perfil no habria
+         * cambiado, se le contestaria 304 y se quedaria con el HTML viejo
+         * apuntando a ficheros que ya no existen. O sea exactamente el
+         * fallo que se acaba de arreglar, reintroducido por la puerta de
+         * atras y solo para quien repite visita.
+         *
+         * Asi que manda la mas nueva de las dos.
+         */
+        $ts = strtotime($cuando);
+        $delCascaron = @filemtime(__DIR__ . '/index.html');
+        if ($delCascaron && (!$ts || $delCascaron > $ts)) $ts = $delCascaron;
+        if ($ts) {
+            $fecha = gmdate('D, d M Y H:i:s', $ts) . ' GMT';
+            header("Last-Modified: $fecha");
+            $desde = trim((string) ($_SERVER['HTTP_IF_MODIFIED_SINCE'] ?? ''));
+            if ($desde !== '' && $estado === 200) {
+                $t2 = strtotime($desde);
+                if ($t2 && $ts <= $t2) {
+                    http_response_code(304);
+                    exit;
+                }
+            }
+        }
+    }
 
     $traido = trim((string) ($_SERVER['HTTP_IF_NONE_MATCH'] ?? ''));
     /* El navegador puede mandarlo con el prefijo `W/` de validador debil, o
@@ -294,4 +346,6 @@ if ($pos !== false) {
             . substr($salida, $pos);
 }
 
-servir($salida, 300);
+/* Con la fecha de la ultima edicion: es lo que hace que un visitante que
+   vuelve reciba un 304 de cero bytes en vez del HTML entero. */
+servir($salida, 300, 200, (string) ($fila['actualizado'] ?? ''));
