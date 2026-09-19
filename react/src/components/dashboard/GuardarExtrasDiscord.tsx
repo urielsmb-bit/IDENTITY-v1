@@ -91,15 +91,21 @@ export function GuardarExtrasDiscord({
     if (!yaAvisado.current && avisar && extras.nitro !== null) {
       yaAvisado.current = true;
       const cuantas = insigniasDe(extras.flags, extras.nitro).length;
+      /* Con los numeros de verdad cuando no sale ninguna. «No tienes» y
+         «Discord no me lo ha querido decir» se parecen desde fuera, y la
+         diferencia entre las dos cambia por completo que hay que hacer. */
+      const prem =
+        extras.premiumCrudo === null ? 'Discord no mando el dato de Nitro' :
+        extras.premiumCrudo === 0 ? 'sin Nitro' : `Nitro (tipo ${extras.premiumCrudo})`;
       avisar(
         cuantas > 0
           ? `Discord leido: ${cuantas} insignia${cuantas === 1 ? '' : 's'}${extras.nitro ? ', Nitro incluido' : ''}.`
-          : 'Discord leido: esta cuenta no tiene insignias de las que Discord publica.',
+          : `Discord leido: public_flags ${extras.flags ?? '?'}, ${prem}. Lo que llevas en Discord no esta en su API.`,
       );
     }
   }, [
     update, avisar,
-    extras.deco, extras.tag, extras.tagIcono, extras.nitro, extras.flags,
+    extras.deco, extras.tag, extras.tagIcono, extras.nitro, extras.flags, extras.premiumCrudo,
     profile.discordId, profile.discordDecoUrl, profile.discordTag,
     profile.discordTagIcono, profile.discordNitro, profile.discordFlags,
   ]);

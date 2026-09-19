@@ -387,6 +387,8 @@ export interface ExtrasDiscord {
    * Discord conteste, y la insignia se le caería sola.
    */
   nitro: boolean | null;
+  /** `premium_type` tal cual, o `null` si Discord no mando el campo. */
+  premiumCrudo: number | null;
   /**
    * `public_flags` tal cual: un numero donde cada bit es una insignia.
    *
@@ -406,7 +408,7 @@ export function useDecoracionDeLaSesion(): ExtrasDiscord {
   const hayDiscord = useAuthStore((s) =>
     !!s.user?.identities?.some((i) => i.provider === 'discord'),
   );
-  const [extras, setExtras] = useState<ExtrasDiscord>({ deco: '', tag: '', tagIcono: '', nitro: null, flags: null });
+  const [extras, setExtras] = useState<ExtrasDiscord>({ deco: '', tag: '', tagIcono: '', nitro: null, flags: null, premiumCrudo: null });
 
   useEffect(() => {
     if (!token || !hayDiscord) return;
@@ -437,12 +439,18 @@ export function useDecoracionDeLaSesion(): ExtrasDiscord {
         };
         if (!vivo) return;
 
-        const salida: ExtrasDiscord = { deco: '', tag: '', tagIcono: '', nitro: null, flags: null };
+        const salida: ExtrasDiscord = { deco: '', tag: '', tagIcono: '', nitro: null, flags: null, premiumCrudo: null };
 
         /* Se compara con numeros y no con `truthy`: Discord manda 0 para
            quien no tiene, y un 0 tambien es falso por su cuenta — pero si
            algun dia mandara la cadena '0', `!!'0'` seria verdadero. */
+        /* AUSENTE Y CERO NO SON LO MISMO, y hasta ahora se trataban igual.
+           Si Discord manda `premium_type: 0` es que no hay Nitro; si NO
+           manda el campo, es que el token no lleva permiso para saberlo, y
+           decir «no tiene Nitro» seria afirmar algo que nadie ha dicho.
+           Se distingue para poder contarlo bien cuando algo no cuadra. */
         const prem = j?.premium_type;
+        salida.premiumCrudo = typeof prem === 'number' ? prem : null;
         salida.nitro = typeof prem === 'number' && prem > 0;
 
         const fl = j?.public_flags;
