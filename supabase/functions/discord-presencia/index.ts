@@ -539,6 +539,16 @@ Deno.serve(async (req) => {
         claves: Object.keys(u),
         primary_guild: u.primary_guild ?? null,
         avatar_decoration_data: u.avatar_decoration_data ?? null,
+        /* Las insignias, para poder mirar por que un perfil no enseña
+           ninguna. Casi siempre la respuesta es que vale 0, que es lo
+           normal: `public_flags` solo lleva las de Discord —equipo,
+           HypeSquad, cazador de bugs, desarrollador activo— y una cuenta
+           corriente, aunque tenga Nitro y impulse servidores, vale 0. */
+        public_flags: u.public_flags ?? null,
+        /* Y esto sale SIEMPRE ausente a proposito, para que se vea: el
+           Nitro Discord solo se lo cuenta a la propia cuenta, nunca a un
+           bot. Si algun dia apareciera aqui, es que han cambiado la API. */
+        premium_type: u.premium_type ?? null,
       },
       { status: 200 },
     );

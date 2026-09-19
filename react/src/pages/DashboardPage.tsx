@@ -10,6 +10,7 @@ import '@/styles/guia.css';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { EditorMovil } from '@/components/dashboard/movil/EditorMovil';
+import { GuardarExtrasDiscord } from '@/components/dashboard/GuardarExtrasDiscord';
 import '@/styles/editorMovil.css';
 import { useProfileStore } from '@/stores/profileStore';
 import { useAvatarDeLaCuenta, useIdentidadDeLaSesion } from '@/hooks/useAuth';
@@ -1064,6 +1065,11 @@ export default function DashboardPage() {
   const quiere = searchParams.get('movil');
   if (quiere !== 'clasico' && (quiere === 'nuevo' || esTelefono)) {
     return (
+      <>
+      {/* Lo que solo se puede preguntar en la vuelta del enlace de
+          Discord. Va en los DOS editores porque el token caduca y da
+          igual con cual estuvieras cuando volviste. */}
+      <GuardarExtrasDiscord profile={profile} update={update} />
       <EditorMovil
         profile={profile}
         insignias={insigniasGanadasDelPerfil}
@@ -1083,11 +1089,16 @@ export default function DashboardPage() {
         onPublicar={() => void publicarYVer()}
         onSalir={() => { window.location.href = '/dashboard'; }}
       />
+      </>
     );
   }
 
   return (
     <div className={`dashboard-layout ve-${vistaMovil}`}>
+      {/* Idem: en cuanto vuelves del enlace de Discord se le pregunta lo
+          que solo se puede saber con ese token, sin tener que abrir
+          ningun bloque. */}
+      <GuardarExtrasDiscord profile={profile} update={update} />
       {/* EL ANUNCIO DE LA SEMANA.
           Va aqui arriba y no dentro de una seccion porque es lo primero
           que tiene que verse al entrar, y porque `<dialog>` con

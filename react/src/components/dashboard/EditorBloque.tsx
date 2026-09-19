@@ -22,7 +22,6 @@ import {
   useDiscord,
   useIdDiscordDeLaSesion,
   useCuentaDiscordDeLaSesion,
-  useDecoracionDeLaSesion,
   useEntrarEnElServidor,
 } from '@/hooks/useDiscord';
 import { useAuth } from '@/hooks/useAuth';
@@ -570,7 +569,11 @@ function GuardarCuenta({
   /* El marco de Nitro. Se pregunta a Discord con el token del propio
      enlace y se guarda aqui, porque quien visita el perfil no tiene ese
      token: sin esto el marco solo se veia estando en Lanyard. */
-  const extras = useDecoracionDeLaSesion();
+  /* Los extras —marco, etiqueta, Nitro, insignias— ya NO se guardan aqui.
+     Estaban en este componente, que solo se monta con el panel de Discord
+     abierto, asi que reconectar la cuenta no bastaba: habia que ademas
+     abrir este bloque o el token se gastaba sin usar. Ahora eso lo hace
+     `GuardarExtrasDiscord`, montado en el panel entero. */
   /* Y de paso, al servidor donde el bot puede ver tu estado. Va aqui
      porque es el mismo momento —y el mismo token— que el marco. */
   useEntrarEnElServidor();
@@ -582,34 +585,10 @@ function GuardarCuenta({
     if (usuario && profile.discordUser !== usuario) cambios.discordUser = usuario;
     if (mostrar && profile.discordName !== mostrar) cambios.discordName = mostrar;
     if (avatar && profile.discordAvatar !== avatar) cambios.discordAvatar = avatar;
-    if (extras.deco && profile.discordDecoUrl !== extras.deco) {
-      cambios.discordDecoUrl = extras.deco;
-    }
-    if (extras.tag && profile.discordTag !== extras.tag) cambios.discordTag = extras.tag;
-    if (extras.tagIcono && profile.discordTagIcono !== extras.tagIcono) {
-      cambios.discordTagIcono = extras.tagIcono;
-    }
-    /* Nitro se guarda tambien cuando es `false`, al reves que los demas.
-       Los otros son direcciones y una vacia solo quiere decir «Discord no
-       la ha mandado esta vez», asi que pisar lo que ya habia con nada seria
-       perder el marco por un fallo de red. Esto es un si o un no: si dejara
-       de guardarse el no, quien deje de pagar Nitro se quedaria con la
-       insignia puesta para siempre. */
-    if (extras.nitro !== null && profile.discordNitro !== extras.nitro) {
-      cambios.discordNitro = extras.nitro;
-    }
-    /* Igual que Nitro: se guarda tambien cuando vale 0, porque una insignia
-       que se pierde tiene que poder perderse aqui tambien. */
-    if (extras.flags !== null && profile.discordFlags !== extras.flags) {
-      cambios.discordFlags = extras.flags;
-    }
     if (Object.keys(cambios).length > 0) update(cambios);
   }, [
     id, usuario, mostrar, avatar, update,
-    extras.deco, extras.tag, extras.tagIcono, extras.nitro, extras.flags,
     profile.discordId, profile.discordUser, profile.discordName, profile.discordAvatar,
-    profile.discordDecoUrl, profile.discordTag, profile.discordTagIcono,
-    profile.discordNitro, profile.discordFlags,
   ]);
   return null;
 }
