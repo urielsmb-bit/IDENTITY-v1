@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useDecoracionDeLaSesion } from '@/hooks/useDiscord';
+import { insigniasDe } from '@/data/insigniasDiscord';
 import type { Profile } from '@/types';
 
 /**
@@ -38,11 +39,15 @@ import type { Profile } from '@/types';
 export function GuardarExtrasDiscord({
   profile,
   update,
+  avisar,
 }: {
   profile: Profile;
   update: (p: Partial<Profile>) => void;
+  /** Para decirlo en voz alta cuando pasa. Ver el aviso de abajo. */
+  avisar?: (texto: string, mal?: boolean) => void;
 }) {
   const extras = useDecoracionDeLaSesion();
+  const yaAvisado = useRef(false);
 
   useEffect(() => {
     if (!profile.discordId) return;
@@ -71,8 +76,29 @@ export function GuardarExtrasDiscord({
     }
 
     if (Object.keys(cambios).length > 0) update(cambios);
+
+    /**
+     * Y SE DICE EN VOZ ALTA, UNA VEZ.
+     *
+     * Esto pasa en un instante que no se ve: `provider_token` solo existe
+     * mientras Discord acaba de devolverte, y Supabase lo tira en el primer
+     * refresco de sesion. O sea que si sale bien no hay nada que mirar, y
+     * si sale mal tampoco — y las dos cosas se parecen demasiado.
+     *
+     * Costo una tarde averiguar que no estaba pasando. Un aviso de dos
+     * lineas lo convierte en algo que se ve.
+     */
+    if (!yaAvisado.current && avisar && extras.nitro !== null) {
+      yaAvisado.current = true;
+      const cuantas = insigniasDe(extras.flags, extras.nitro).length;
+      avisar(
+        cuantas > 0
+          ? `Discord leido: ${cuantas} insignia${cuantas === 1 ? '' : 's'}${extras.nitro ? ', Nitro incluido' : ''}.`
+          : 'Discord leido: esta cuenta no tiene insignias de las que Discord publica.',
+      );
+    }
   }, [
-    update,
+    update, avisar,
     extras.deco, extras.tag, extras.tagIcono, extras.nitro, extras.flags,
     profile.discordId, profile.discordDecoUrl, profile.discordTag,
     profile.discordTagIcono, profile.discordNitro, profile.discordFlags,

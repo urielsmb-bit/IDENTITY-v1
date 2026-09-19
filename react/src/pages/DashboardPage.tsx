@@ -1069,7 +1069,7 @@ export default function DashboardPage() {
       {/* Lo que solo se puede preguntar en la vuelta del enlace de
           Discord. Va en los DOS editores porque el token caduca y da
           igual con cual estuvieras cuando volviste. */}
-      <GuardarExtrasDiscord profile={profile} update={update} />
+      <GuardarExtrasDiscord profile={profile} update={update} avisar={toast} />
       <EditorMovil
         profile={profile}
         insignias={insigniasGanadasDelPerfil}
@@ -1098,7 +1098,7 @@ export default function DashboardPage() {
       {/* Idem: en cuanto vuelves del enlace de Discord se le pregunta lo
           que solo se puede saber con ese token, sin tener que abrir
           ningun bloque. */}
-      <GuardarExtrasDiscord profile={profile} update={update} />
+      <GuardarExtrasDiscord profile={profile} update={update} avisar={toast} />
       {/* EL ANUNCIO DE LA SEMANA.
           Va aqui arriba y no dentro de una seccion porque es lo primero
           que tiene que verse al entrar, y porque `<dialog>` con
