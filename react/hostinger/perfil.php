@@ -122,9 +122,43 @@ function imagenTarjeta($url): string
  */
 function servir(string $cuerpo, int $segundos, int $estado = 200): void
 {
+    /**
+     * Y con ETag, que es lo que convierte «revalida siempre» en algo
+     * barato.
+     *
+     * `max-age=0, must-revalidate` obliga al navegador a preguntar en cada
+     * visita, que es lo que queremos. Pero sin un validador no hay nada que
+     * comparar: el servidor no puede contestar «no ha cambiado» y tiene que
+     * mandar el HTML ENTERO cada vez. Medido antes de esto: `/shark` no
+     * traia ni `ETag` ni `Last-Modified`.
+     *
+     * El resumen sale del cuerpo ya montado, o sea que incluye el perfil
+     * escrito dentro: si alguien cambia su nombre, su tema o un enlace, el
+     * ETag cambia y la respuesta viaja. Si no ha cambiado nada, son 304 y
+     * cero bytes.
+     *
+     * Ojo con el orden: el 304 se contesta ANTES de escribir nada, y sin
+     * cuerpo — un 304 con cuerpo es una respuesta invalida.
+     */
+    $etag = '"' . md5($cuerpo) . '"';
+    header("Cache-Control: public, max-age=0, must-revalidate, s-maxage=$segundos");
+    header("ETag: $etag");
+
+    $traido = trim((string) ($_SERVER['HTTP_IF_NONE_MATCH'] ?? ''));
+    /* El navegador puede mandarlo con el prefijo `W/` de validador debil, o
+       varios separados por coma. Basta con que el nuestro este entre ellos. */
+    if ($traido !== '' && $estado === 200) {
+        foreach (explode(',', $traido) as $uno) {
+            $uno = trim($uno);
+            if ($uno === $etag || $uno === 'W/' . $etag || $uno === '*') {
+                http_response_code(304);
+                exit;
+            }
+        }
+    }
+
     http_response_code($estado);
     header('Content-Type: text/html; charset=utf-8');
-    header("Cache-Control: public, max-age=0, must-revalidate, s-maxage=$segundos");
     echo $cuerpo;
     exit;
 }
