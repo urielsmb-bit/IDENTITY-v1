@@ -155,6 +155,23 @@ export function reproductorYouTube(contenedor: HTMLElement, videoId: string, cb:
     if (calentado || calentando || !listo || !yt || muerto) return;
     try {
       yt.mute();
+      /**
+       * SE CALIENTA DONDE VA A SONAR, NO EN EL SEGUNDO CERO.
+       *
+       * El calentamiento existe para que al pulsar ya este el audio
+       * bajado: son 80 ms en vez de 861. Pero llenaba el buffer en el
+       * principio del video, y con un recorte lo que suena es el segundo
+       * 45 — asi que al arrancar habia que saltar alli, tirar lo que se
+       * acababa de preparar y esperar a que bajara otra vez.
+       *
+       * O sea que el recorte deshacia justo la optimizacion que hace que
+       * la musica suene al instante, y el sintoma era exactamente ese: con
+       * la cancion recortada tarda en sonar.
+       *
+       * Se salta ANTES de pedir que suene, para que lo que se baje sea ya
+       * el trozo bueno.
+       */
+      if (inicio > 0) yt.seekTo(inicio, true);
       yt.playVideo();
       calentando = true;
     } catch { /* reproductor que no esta para nadie */ }
@@ -223,7 +240,10 @@ export function reproductorYouTube(contenedor: HTMLElement, videoId: string, cb:
           if (calentando && e.data === 1) {
             calentando = false;
             calentado = true;
-            try { yt.pauseVideo(); yt.seekTo(0, true); } catch { /* ya no esta */ }
+            /* Al principio DEL TROZO, no del video: rebobinar a cero
+               despues de haber bajado el trozo bueno lo tiraba otra vez. */
+            try { yt.pauseVideo(); yt.seekTo(inicio > 0 ? inicio : 0, true); }
+            catch { /* ya no esta */ }
             return;
           }
           if (e.data === 0 && cb.alTerminar) cb.alTerminar();
@@ -252,7 +272,19 @@ export function reproductorYouTube(contenedor: HTMLElement, videoId: string, cb:
         yt.cueVideoById(id);
       }
     },
-    buscar: (seg: number) => { if (listo && yt) yt.seekTo(seg, true); },
+    /**
+     * `nuevo` dice si se le permite a YouTube PEDIR datos para llegar.
+     *
+     * Con `true` el reproductor abre una peticion aunque el trozo ya este
+     * bajado, y eso es un hueco de silencio. La vuelta del bucle salta a un
+     * sitio por el que se acaba de pasar —lo tiene en el buffer seguro— asi
+     * que ahi va `false` y el salto es inmediato.
+     *
+     * Se queda en `true` por defecto porque quien arrastra la aguja de la
+     * barra si puede ir a un sitio que no esta bajado, y ahi hay que
+     * pedirlo.
+     */
+    buscar: (seg: number, nuevo = true) => { if (listo && yt) yt.seekTo(seg, nuevo); },
     /* YouTube SABE como se llama la cancion, y lo sabe desde que el
        reproductor esta listo. No hacia falta pedirselo a nadie: solo
        preguntarselo. Sin esto el bloque ponia «Pista de audio», que es lo
@@ -355,7 +387,9 @@ export function crearReproductor(host: HTMLElement, pistas: any[], cb: any = {})
          calla a los quince segundos parece roto, y el bucle es lo que hace
          que un recorte corto siga siendo musica de fondo. */
       if (fin > 0 && ahora >= fin) {
-        buscar(inicioDePista());
+        /* Sin pedir datos: por ese segundo se acaba de pasar y esta en el
+           buffer. Pidiendolos, la vuelta del bucle es un silencio. */
+        buscar(inicioDePista(), false);
         if (cb.alAvanzar) cb.alAvanzar(inicioDePista(), duracionTrack());
         return;
       }
@@ -457,9 +491,9 @@ export function crearReproductor(host: HTMLElement, pistas: any[], cb: any = {})
     ir(i - 1, arrancar !== false);
   }
 
-  function buscar(seg: number) {
+  function buscar(seg: number, nuevo = true) {
     const m = motor();
-    if (m === 'yt' && yt) yt.buscar(seg);
+    if (m === 'yt' && yt) yt.buscar(seg, nuevo);
     else if (m === 'au' && au) au.currentTime = seg;
     if (cb.alAvanzar) cb.alAvanzar(seg, duracionTrack());
   }
