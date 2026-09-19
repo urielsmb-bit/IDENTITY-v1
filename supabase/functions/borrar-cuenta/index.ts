@@ -21,7 +21,10 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { cors, preflight, origenValido, cuerpoEsJson } from '../_compartido/cors.ts';
 
-const CABECERAS = 'content-type, authorization';
+/* Incluye `x-client-info` porque `functions.invoke()` la manda siempre.
+   Sin ella el preflight falla y el borrado de cuenta no ocurre — ver el
+   porque entero en `_compartido/cors.ts`. */
+const CABECERAS = 'content-type, authorization, x-client-info';
 
 Deno.serve(async (req: Request) => {
   const CORS = cors(req, 'POST, OPTIONS', CABECERAS);

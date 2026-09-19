@@ -50,8 +50,32 @@ function permitidos(): string[] {
    cliente con la clave publica, y con el JWT de la sesion cuando la hay—,
    asi que dejarla fuera del defecto significa que cada funcion nueva nace
    rota y no se nota hasta que falla el preflight en produccion. Paso
-   exactamente eso con `registrar-vista` y `vimeo-subida`. */
-export function cors(req: Request, metodos = 'POST, OPTIONS', cabeceras = 'content-type, authorization'): HeadersInit {
+   exactamente eso con `registrar-vista` y `vimeo-subida`.
+
+   Y VOLVIO A PASAR, con `x-client-info`. Visto en la consola de
+   produccion, tres veces seguidas:
+
+       Access to fetch at '.../functions/v1/discord-entrar' from origin
+       'https://sharee.fun' has been blocked by CORS policy: Request header
+       field x-client-info is not allowed by Access-Control-Allow-Headers
+       in preflight response.
+
+   `supabase.functions.invoke()` la manda SIEMPRE —lleva el nombre y la
+   version de la libreria— y no se puede quitar desde fuera. O sea que
+   cualquier funcion llamada asi con el defecto de antes tenia el preflight
+   roto, y el sintoma era que la funcion sencillamente no ocurria: sin
+   error propio, sin registro en el servidor, nada. `discord-entrar` es la
+   que mete al dueño en el servidor del bot, asi que lo que se veia era que
+   la presencia no llegaba nunca.
+
+   Tres veces el mismo fallo es que el defecto estaba mal, no que se
+   olvidara tres veces. Aqui va lo que el cliente manda SIEMPRE, y lo
+   especifico de cada funcion se sigue añadiendo por parametro. */
+export function cors(
+  req: Request,
+  metodos = 'POST, OPTIONS',
+  cabeceras = 'content-type, authorization, x-client-info',
+): HeadersInit {
   const origen = req.headers.get('origin') ?? '';
   const lista = permitidos();
 
