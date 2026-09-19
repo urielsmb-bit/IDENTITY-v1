@@ -453,6 +453,21 @@ export function useDecoracionDeLaSesion(): ExtrasDiscord {
         salida.premiumCrudo = typeof prem === 'number' ? prem : null;
         salida.nitro = typeof prem === 'number' && prem > 0;
 
+        /**
+         * Y se deja dicho en la consola QUE MANDA DISCORD, por nombres.
+         *
+         * Aqui se llego con tres insignias en el perfil de Discord, cero en
+         * `public_flags` y sin Nitro: los tres numeros correctos y el
+         * resultado vacio. Eso solo puede querer decir que lo que esa
+         * cuenta lleva vive en un campo que no estamos mirando —las cosas
+         * nuevas de Discord, coleccionables y demas, no tienen bit— y la
+         * unica forma de saber cual es preguntarle a la respuesta.
+         *
+         * Solo los NOMBRES de los campos, nunca su contenido: esto es para
+         * saber si algo llega, no para volcar los datos de nadie.
+         */
+        console.info('[discord] campos que manda:', Object.keys(j || {}).join(', '));
+
         const fl = j?.public_flags;
         salida.flags = typeof fl === 'number' && isFinite(fl) ? fl : 0;
 
