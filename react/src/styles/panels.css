@@ -1829,3 +1829,85 @@ body.probando .view{ padding-top:0; }
   .ayu__lat-raiz,
   .ayu__grupo a{ min-height:40px; display:flex; align-items:center; }
 }
+
+/* ── Recortar la cancion: la ventana que se arrastra ─────────────
+   Las barras son un DIBUJO, no el audio: no se puede leer el de un
+   `iframe` de YouTube. Van parejas a proposito —sin picos dramaticos—
+   para que inviten a usar la ventana en vez de a leerlas, porque leerlas
+   engaña. Ver el porque entero en `OndaRecorte.tsx`. */
+.onda{ margin:10px 0 4px; }
+.onda__pista{
+  position:relative;
+  display:flex; align-items:center; gap:2px;
+  height:64px; padding:0 6px;
+  /* Centradas y con tope de ancho: con `flex:1` a secas, en el panel de
+     escritorio salian barras de veintidos pixeles, que ya no parecen una
+     onda sino un grafico de barras. */
+  justify-content:center;
+  border-radius:10px;
+  background:var(--p-surface-2, rgba(255,255,255,.04));
+  touch-action:none;
+  user-select:none;
+}
+/* Las barras van POR ENCIMA del degradado, no debajo. Pintadas debajo, la
+   ventana las tapaba y el recorte era un rectangulo de color liso: se
+   perdia justo lo que hace que parezca audio. */
+.onda__b{
+  position:relative; z-index:2;
+  flex:1 1 0; min-width:0; max-width:6px;
+  border-radius:99px;
+  /* Con reserva: `--p-dim` es una variable DEL PERFIL y aqui no existe,
+     asi que `var(--p-dim)` a secas resolvia a transparente y las barras de
+     fuera de la ventana no se veian. Medido: `rgba(0, 0, 0, 0)`. */
+  background:var(--p-dim, rgba(255,255,255,.5));
+  opacity:.5;
+  transition:opacity .12s ease, background-color .12s ease;
+}
+.onda__b.is-dentro{ opacity:1; background:#fff; }
+
+/* La ventana. El degradado es el de la referencia: naranja a rosa a
+   morado, que es lo que la hace reconocible de un vistazo. */
+.onda__ventana{
+  position:absolute; top:-3px; bottom:-3px;
+  z-index:1;
+  display:flex; align-items:stretch;
+  border-radius:10px;
+  padding:3px;
+  background:linear-gradient(90deg,#ff8a00,#ff2d90 55%,#8a2be2);
+  box-shadow:0 0 0 1px rgba(0,0,0,.35);
+  min-width:18px;
+}
+/* Y las asas por encima de las barras, o no habria de donde agarrar. */
+.onda__cuerpo{
+  position:relative; z-index:3;
+  flex:1 1 auto; min-width:0;
+  cursor:grab;
+  border-radius:7px;
+}
+.onda__cuerpo:active{ cursor:grabbing; }
+/* Las asas son anchas de verdad: un borde de dos pixeles se falla con el
+   raton y es imposible con el dedo. */
+.onda__asa{
+  position:relative; z-index:3;
+  flex:none; width:14px;
+  cursor:ew-resize;
+  border-radius:7px;
+  position:relative;
+}
+.onda__asa::after{
+  content:''; position:absolute; inset:0;
+  margin:auto; width:2px; height:18px;
+  border-radius:99px; background:rgba(255,255,255,.9);
+}
+.onda__cuerpo:focus-visible,
+.onda__asa:focus-visible{
+  outline:2px solid #fff; outline-offset:2px;
+}
+
+.onda__pie{
+  display:flex; justify-content:space-between; align-items:center;
+  gap:8px; margin-top:6px;
+  font-family:var(--p-fm, inherit); font-size:var(--t2);
+  color:var(--p-dim, rgba(255,255,255,.55));
+}
+.onda__pie b{ color:var(--p-text, #fff); font-weight:600; }

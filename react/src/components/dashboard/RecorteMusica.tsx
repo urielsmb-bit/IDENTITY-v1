@@ -1,22 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
-import { Deslizador } from './Controles';
+import { OndaRecorte } from './OndaRecorte';
 import { reproductorYouTube } from '@/lib/music';
 
 /**
  * Desde qué segundo suena la canción, y cuánto.
  *
  * ────────────────────────────────────────────────────────────────────────
- * POR QUE NO HAY FORMA DE ONDA
+ * LA ONDA ES UN DIBUJO
  * ────────────────────────────────────────────────────────────────────────
  *
- * La referencia era el recortador de Instagram, que pinta la onda del audio
- * y te deja arrastrar una ventana encima. Eso no se puede hacer aquí, y no
- * por falta de ganas: el audio vive dentro de un `iframe` de YouTube, de
- * otro origen, y el navegador no deja leer ni una muestra. Instagram puede
- * porque el archivo es suyo.
+ * La referencia era el recortador de Instagram. Su forma de onda es el
+ * audio de verdad; la nuestra no puede serlo, porque el audio vive dentro
+ * de un `iframe` de YouTube y el navegador no deja leer ni una muestra.
  *
- * Lo que sí se puede es lo que la onda servía para elegir —desde dónde y
- * cuánto— con la duración de verdad de la canción como tope. Eso es esto.
+ * Se pinta igualmente porque se pidió así, pero el porqué y lo que implica
+ * están escritos en `OndaRecorte.tsx`, que es donde se dibuja. Lo que sí es
+ * de verdad es la ventana: sus bordes son segundos reales, y el botón de
+ * escuchar suena exactamente lo que sonará el perfil.
  *
  * ────────────────────────────────────────────────────────────────────────
  * DE DONDE SALE LA DURACION
@@ -28,9 +28,9 @@ import { reproductorYouTube } from '@/lib/music';
  * vídeo se reemplaza; guardarlo seria quedarse con una copia que puede
  * dejar de ser cierta sin que nadie se entere.
  *
- * Mientras no ha llegado, los deslizadores se quedan quietos en vez de
- * fingir un tope: uno que se mueve solo a mitad de gesto es peor que uno
- * que todavia no está.
+ * Mientras no ha llegado no se dibuja nada, en vez de fingir un tope: una
+ * ventana que se recoloca sola a mitad de gesto es peor que una que
+ * todavía no está.
  */
 
 function mmss(s: number): string {
@@ -123,32 +123,12 @@ export function RecorteMusica({
 
       {videoId && listo && (
         <>
-          <Deslizador
-            label="Empieza en"
-            desc={`De ${mmss(0)} a ${mmss(total)}. Lo que se oye al entrar en tu perfil.`}
-            value={Math.min(inicio, total - 1)}
-            min={0}
-            max={Math.max(1, total - 1)}
-            onChange={(n) => {
-              /* El trozo no puede salirse de la cancion: si el inicio se
-                 mete tan adentro que ya no cabe lo que dura, se acorta lo
-                 que dura en vez de dejar un recorte imposible. */
-              const cabe = total - n;
-              onChange({ inicio: n, duracion: duracion > 0 ? Math.min(duracion, cabe) : 0 });
-            }}
-          />
-
-          <Deslizador
-            label="Cuánto suena"
-            desc={
-              duracion > 0
-                ? `Vuelve a ${mmss(inicio)} al llegar a ${mmss(finReal)}.`
-                : 'Entera. Muévelo para recortarla.'
-            }
-            value={duracion}
-            min={0}
-            max={Math.max(1, total - inicio)}
-            onChange={(n) => onChange({ inicio, duracion: n })}
+          <OndaRecorte
+            videoId={videoId}
+            total={total}
+            inicio={inicio}
+            duracion={duracion}
+            onChange={onChange}
           />
 
           <div className="f__fila">
