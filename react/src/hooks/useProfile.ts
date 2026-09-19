@@ -143,7 +143,25 @@ export function useMyProfile() {
       }
       return useProfileStore.getState().mine() ?? null;
     },
-    staleTime: 1000 * 60 * 5,
+    /**
+     * ESTE SI SE REFRESCA AL VOLVER A LA PESTAÑA, al reves que los demas.
+     *
+     * El ajuste global lo apaga, y para el perfil de OTRA persona esta
+     * bien: nadie esta pendiente de si le han cambiado el color mientras
+     * tenia la pestaña de fondo, y era una consulta por foco y por
+     * visitante para no enterarse de casi nada.
+     *
+     * Este es el tuyo, y ahi el riesgo no es ver algo viejo: es
+     * PISARLO. Editas en el movil, vuelves a la pestaña que tenias abierta
+     * en el ordenador, tocas cualquier cosa y se guarda encima lo de antes
+     * —con lo que acabas de hacer en el movil dentro del saco—. Perder
+     * trabajo propio es mucho peor que una consulta de mas.
+     *
+     * Y el medio minuto es para lo mismo: cinco minutos era tiempo de
+     * sobra para volver de otro dispositivo y encontrarse la copia vieja.
+     */
+    staleTime: 1000 * 30,
+    refetchOnWindowFocus: true,
   });
 
   return {

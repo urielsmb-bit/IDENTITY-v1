@@ -117,16 +117,26 @@ export default async function handler(req: Request): Promise<Response> {
       status: estado,
       headers: {
         'content-type': 'text/html; charset=utf-8',
-        /* Se guarda en el borde, no en el navegador: un perfil muy
+        /* Se guarda en el BORDE, no en el navegador: un perfil muy
            compartido deja de consultar la base en cada visita, y un cambio
-           en el perfil se ve en minutos y no cuando caduque un navegador.
+           se ve en minutos y no cuando caduque un navegador.
 
-           `revalida` se separa porque guardar un SI y guardar un NO no
-           valen lo mismo. Servir un dia entero la tarjeta de un perfil que
-           existe no rompe nada; servir un dia entero «este perfil no
-           existe» deja el enlace de alguien muerto para todos los robots
-           mucho despues de que el problema se haya arreglado. */
-        'cache-control': `public, max-age=0, s-maxage=${segundos}, stale-while-revalidate=${revalida}`,
+           SIN `stale-while-revalidate`, que es lo que habia. Esa directiva
+           sirve la copia VIEJA mientras comprueba si hay algo nuevo, y
+           estaba en veinticuatro horas: quien ya habia visitado un perfil
+           veia el de su visita anterior, y el actual solo en la carga
+           siguiente. Ademas este HTML lleva la fila del perfil escrita
+           dentro y apunta a los `assets/` de su despliegue, asi que un
+           HTML de ayer eran datos de ayer Y aplicacion de ayer.
+
+           `revalida` sobrevive solo para el 404, y ahi como `s-maxage`:
+           guardar un SI y guardar un NO no valen lo mismo. Servir un rato
+           la tarjeta de un perfil que existe no rompe nada; servir «este
+           perfil no existe» deja el enlace de alguien muerto para los
+           robots mucho despues de arreglarlo, asi que ese se guarda menos
+           y nunca en el navegador. */
+        'cache-control':
+          `public, max-age=0, must-revalidate, s-maxage=${Math.min(segundos, revalida)}`,
       },
     });
 

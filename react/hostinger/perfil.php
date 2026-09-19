@@ -98,17 +98,33 @@ function imagenTarjeta($url): string
 /**
  * Servir el HTML y salir.
  *
- * La cabecera es la misma que en Vercel. `s-maxage` no hace nada sin un CDN
- * delante, y no estorba: el dia que se ponga uno —Cloudflare, sin ir mas
- * lejos— empieza a valer sin tocar esto. Se guarda en el borde y NO en el
- * navegador a proposito: asi un cambio en el perfil se ve en minutos y no
- * cuando le caduque la copia a cada visitante.
+ * Se guarda en el BORDE y no en el navegador, a proposito: asi un cambio en
+ * el perfil se ve en minutos y no cuando le caduque la copia a cada
+ * visitante.
+ *
+ * ---- POR QUE YA NO HAY `stale-while-revalidate` -----------------------
+ *
+ * Habia uno de 86.400 segundos. Lo que hace esa directiva es: mientras se
+ * comprueba si hay algo nuevo, SIRVE LA COPIA VIEJA. Durante veinticuatro
+ * horas. Asi que quien ya habia visitado un perfil veia el de su visita
+ * anterior al instante, y el actual solo en la carga SIGUIENTE.
+ *
+ * Y no era solo el aspecto: este HTML lleva la fila del perfil escrita
+ * dentro -`perfil-precargado`- y el cliente la usa sin preguntar a nadie.
+ * O sea que un HTML de ayer son DATOS de ayer, y nada los refrescaba.
+ *
+ * Tambien apuntaba a los `assets/` de su despliegue, que llevan resumen en
+ * el nombre: HTML viejo, bundle viejo, aplicacion vieja.
+ *
+ * `s-maxage` se queda -eso es el CDN, no el visitante- pero corto. Un
+ * minuto de margen para absorber una punta de trafico es util; un dia de
+ * copia vieja en el navegador de cada uno, no.
  */
 function servir(string $cuerpo, int $segundos, int $estado = 200): void
 {
     http_response_code($estado);
     header('Content-Type: text/html; charset=utf-8');
-    header("Cache-Control: public, max-age=0, s-maxage=$segundos, stale-while-revalidate=86400");
+    header("Cache-Control: public, max-age=0, must-revalidate, s-maxage=$segundos");
     echo $cuerpo;
     exit;
 }

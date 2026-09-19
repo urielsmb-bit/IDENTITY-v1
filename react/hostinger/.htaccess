@@ -56,6 +56,31 @@ DirectoryIndex index.html
   # Todo lo que no sea un fichero de verdad lo pinta React. Sin esto,
   # entrar directo a /top o recargar dentro de /dashboard da 404: esas
   # rutas no existen en el disco, existen en el navegador.
+  #
+  # PERO `assets/` Y `fuentes/` NO. Esa es la regla que faltaba, y costaba
+  # caro: un fichero que ya no esta ahi caia en este cajon y se respondia
+  # el HTML del cascaron CON ESTADO 200.
+  #
+  # Medido en produccion:
+  #
+  #     /assets/index-DG7myCpD.js  ->  200  text/html
+  #     /assets/index-C1Lk_1Wy.js  ->  200  text/html
+  #     /assets/no-existe.js       ->  200  text/html
+  #
+  # Los dos primeros son bundles de despliegues anteriores que `rsync
+  # --delete` borro, como debe. Y ahi esta el problema entero:
+  #
+  #   1. Alguien vuelve con el HTML de su visita anterior en el navegador.
+  #   2. Ese HTML pide su bundle, que ya no existe.
+  #   3. En vez de un 404 recibe el HTML del cascaron, con un 200.
+  #   4. El navegador intenta ejecutar HTML como JavaScript, el tipo MIME
+  #      no cuadra, y bloquea el guion.
+  #   5. Pagina en blanco. Y como es un 200, nada reintenta.
+  #
+  # `vite:preloadError` —que ya esta puesto en `main.tsx` y recarga sola—
+  # no puede saltar, porque no hubo fallo de red que capturar: hubo un 200.
+  # Un 404 de verdad es lo que le devuelve la vida a ese rescate.
+  RewriteCond %{REQUEST_URI} !^/(assets|fuentes)/
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule . index.html [L]
@@ -120,15 +145,59 @@ DirectoryIndex index.html
   # pero un `crossdomain.xml` que alguien suba por error sigue valiendo.
   Header always set X-Permitted-Cross-Domain-Policies "none"
 
-  # Los ficheros de `assets/` llevan un resumen en el nombre: si cambia el
-  # contenido, cambia el nombre. Por eso pueden guardarse un año sin riesgo
-  # de servir una version vieja.
-  <FilesMatch "\.(js|css|woff2|png|jpg|jpeg|webp|avif|svg)$">
+  # ---- lo que se guarda, y por cuanto --------------------------------
+  #
+  # SE DECIDE POR EL NOMBRE, NO POR LA EXTENSION. Aqui habia una sola regla
+  # que casaba `js|css|woff2|png|jpg|jpeg|webp|avif|svg` en cualquier sitio
+  # y les ponia un año de `immutable`. El comentario decia «los ficheros de
+  # `assets/` llevan un resumen en el nombre», que es verdad — pero la
+  # regla no lo comprobaba, asi que tambien alcanzaba a lo que NO lo lleva.
+  #
+  # Medido en produccion antes de arreglarlo:
+  #
+  #     /icono.svg -> max-age=31536000, immutable   ·   Age: 613585
+  #
+  # Siete dias servido de una copia que dura un año, con nombre fijo. O
+  # sea: cambiar el logo y que nadie lo vea hasta 2027.
+  #
+  # `immutable` solo es seguro cuando el nombre cambia con el contenido.
+  # Vite pone un resumen de ocho caracteres antes de la extension
+  # -`index-C2EGOy88.js`- y ESO es lo que se comprueba. Lo que no lo lleva
+  # se guarda tambien, pero con fecha de caducidad y con `ETag`, asi que
+  # preguntar cuesta una respuesta vacia y no una descarga.
+  #
+  # El orden importa: `Header set` pisa lo puesto antes, asi que lo general
+  # va primero y la regla del resumen al final, que es la que manda.
+
+  # 1 · Imagenes e iconos sin resumen. Una hora.
+  <FilesMatch "\.(png|jpg|jpeg|webp|avif|svg|ico|gif)$">
+    Header set Cache-Control "public, max-age=3600, must-revalidate"
+  </FilesMatch>
+
+  # 2 · Fuentes. Nombre fijo, pero un `.woff2` no cambia de contenido casi
+  #     nunca: una semana.
+  <FilesMatch "\.(woff2|woff|ttf|otf)$">
+    Header set Cache-Control "public, max-age=604800, must-revalidate"
+  </FilesMatch>
+
+  # 3 · Los documentos que se leen DENTRO de la pagina —los legales, los
+  #     articulos de ayuda— y el manifiesto. Los edita una persona y no
+  #     llevan resumen: cinco minutos. Sin esto no tenian NINGUNA cabecera
+  #     y el navegador se inventaba cuanto guardarlos.
+  <FilesMatch "\.(md|webmanifest|json|txt)$">
+    Header set Cache-Control "public, max-age=300, must-revalidate"
+  </FilesMatch>
+
+  # 4 · Y lo que lleva resumen de ocho caracteres: un año y sin preguntar.
+  #     Va al final porque pisa a las tres de arriba: un `.woff2` dentro de
+  #     `assets/` SI lleva resumen y merece el año.
+  <FilesMatch "-[A-Za-z0-9_-]{8}\.(js|css|woff2|png|jpg|jpeg|webp|avif|svg)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
 
-  # El cascaron NO: es el que apunta a esos ficheros, y guardado en el
-  # navegador dejaria a alguien con la version de antes para siempre.
+  # 5 · El cascaron NO se guarda: es el que apunta a los ficheros con
+  #     resumen, y guardado en el navegador dejaria a alguien con la
+  #     version de antes para siempre.
   <FilesMatch "^index\.html$">
     Header set Cache-Control "public, max-age=0, must-revalidate"
   </FilesMatch>
