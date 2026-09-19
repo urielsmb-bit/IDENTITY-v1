@@ -389,6 +389,8 @@ export interface ExtrasDiscord {
   nitro: boolean | null;
   /** `premium_type` tal cual, o `null` si Discord no mando el campo. */
   premiumCrudo: number | null;
+  /** El Nitro no lo dijo Discord: se dedujo de la decoracion de avatar. */
+  nitroDeducido: boolean;
   /**
    * `public_flags` tal cual: un numero donde cada bit es una insignia.
    *
@@ -408,7 +410,7 @@ export function useDecoracionDeLaSesion(): ExtrasDiscord {
   const hayDiscord = useAuthStore((s) =>
     !!s.user?.identities?.some((i) => i.provider === 'discord'),
   );
-  const [extras, setExtras] = useState<ExtrasDiscord>({ deco: '', tag: '', tagIcono: '', nitro: null, flags: null, premiumCrudo: null });
+  const [extras, setExtras] = useState<ExtrasDiscord>({ deco: '', tag: '', tagIcono: '', nitro: null, flags: null, premiumCrudo: null, nitroDeducido: false });
 
   useEffect(() => {
     if (!token || !hayDiscord) return;
@@ -439,7 +441,7 @@ export function useDecoracionDeLaSesion(): ExtrasDiscord {
         };
         if (!vivo) return;
 
-        const salida: ExtrasDiscord = { deco: '', tag: '', tagIcono: '', nitro: null, flags: null, premiumCrudo: null };
+        const salida: ExtrasDiscord = { deco: '', tag: '', tagIcono: '', nitro: null, flags: null, premiumCrudo: null, nitroDeducido: false };
 
         /* Se compara con numeros y no con `truthy`: Discord manda 0 para
            quien no tiene, y un 0 tambien es falso por su cuenta — pero si
@@ -478,6 +480,36 @@ export function useDecoracionDeLaSesion(): ExtrasDiscord {
         if (typeof asset === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(asset)) {
           salida.deco =
             `https://cdn.discordapp.com/avatar-decoration-presets/${asset}.png?size=160&passthrough=true`;
+        }
+
+        /**
+         * NITRO DEDUCIDO DE LA DECORACION, CUANDO DISCORD NO LO DICE.
+         *
+         * Esto no deberia hacer falta y se pone a regañadientes. Medido
+         * con la cuenta del dueño, que tiene Nitro Basic activo —la
+         * insignia se le ve en Discord, «Suscriptor desde 9 jul 2026»—:
+         *
+         *     public_flags .... 0
+         *     premium_type .... 0     <- mandado, no ausente
+         *
+         * O sea que Discord contesta que no hay Nitro a una cuenta que lo
+         * tiene. No es que falte un permiso ni que se lea mal el campo:
+         * viene el cero. No he podido averiguar por que.
+         *
+         * Lo que si es cierto es que esa cuenta lleva decoracion de
+         * avatar, y la decoracion es cosa de Nitro. Asi que cuando Discord
+         * dice cero pero hay decoracion, se da por bueno el Nitro.
+         *
+         * LO QUE ESTO PUEDE EQUIVOCAR, y conviene tenerlo escrito: desde
+         * 2024 las decoraciones tambien se compran sueltas en la tienda,
+         * sin Nitro. A quien haya hecho eso le saldra la insignia sin
+         * tenerlo. Es un fallo menos malo que el de ahora —no enseñarsela
+         * a quien SI paga— pero es un fallo, y si algun dia Discord
+         * empieza a contestar bien, esto sobra y se quita.
+         */
+        if (salida.nitro === false && salida.deco) {
+          salida.nitro = true;
+          salida.nitroDeducido = true;
         }
 
         const pg = j?.primary_guild;

@@ -97,15 +97,19 @@ export function GuardarExtrasDiscord({
       const prem =
         extras.premiumCrudo === null ? 'Discord no mando el dato de Nitro' :
         extras.premiumCrudo === 0 ? 'sin Nitro' : `Nitro (tipo ${extras.premiumCrudo})`;
+      /* Y se dice cuando el Nitro no lo dijo Discord sino la decoracion.
+         Una insignia deducida no es lo mismo que una confirmada, y quien
+         mire esto dentro de un año tiene que poder saber cual era. */
+      const comoSalio = extras.nitroDeducido ? ' (Nitro por la decoracion)' : '';
       avisar(
         cuantas > 0
-          ? `Discord leido: ${cuantas} insignia${cuantas === 1 ? '' : 's'}${extras.nitro ? ', Nitro incluido' : ''}.`
+          ? `Discord leido: ${cuantas} insignia${cuantas === 1 ? '' : 's'}${extras.nitro ? ', Nitro incluido' : ''}.${comoSalio}`
           : `Discord leido: public_flags ${extras.flags ?? '?'}, ${prem}. Lo que llevas en Discord no esta en su API.`,
       );
     }
   }, [
     update, avisar,
-    extras.deco, extras.tag, extras.tagIcono, extras.nitro, extras.flags, extras.premiumCrudo,
+    extras.deco, extras.tag, extras.tagIcono, extras.nitro, extras.flags, extras.premiumCrudo, extras.nitroDeducido,
     profile.discordId, profile.discordDecoUrl, profile.discordTag,
     profile.discordTagIcono, profile.discordNitro, profile.discordFlags,
   ]);
