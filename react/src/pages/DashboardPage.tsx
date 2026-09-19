@@ -982,7 +982,14 @@ export default function DashboardPage() {
                       ? fichaVimeo?.miniatura
                       : profile.bgType === 'image'
                         ? profile.bgValue
-                        : ''
+                        /* Y del video, su portada. Faltaba este caso: desde
+                           que los fondos van a R2, `vimeoActivo` es falso y
+                           el tipo es `video`, asi que se caia al hueco y la
+                           caja salia vacia con un fondo puesto. El poster
+                           es justo el primer fotograma de ese video. */
+                        : profile.bgType === 'video'
+                          ? profile.bgPoster || ''
+                          : ''
                   }
                   onSubido={(r) =>
                     update(
@@ -1434,6 +1441,11 @@ export default function DashboardPage() {
                   lado={512}
                   maxAnimadoMB={2}
                   value={profile.avatarUrl || ''}
+                  /* Sin avatar propio, el perfil enseña el de Discord. La
+                     caja se veia vacia mientras la previa de al lado
+                     enseñaba una cara: parecia que no se habia guardado. */
+                  heredada={profile.discordAvatar || ''}
+                  heredadaDe="el de tu Discord"
                   onChange={(r) => updateField('avatarUrl', r.url)}
                 />
               }

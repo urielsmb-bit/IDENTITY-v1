@@ -24,6 +24,22 @@ interface SubirMedioProps {
   maxAnimadoMB?: number;
   /** Id de la pista de la guia que apunta aqui. */
   guia?: string;
+  /**
+   * Lo que se ENSEÑA cuando no hay nada subido aqui.
+   *
+   * No es lo mismo «no hay imagen» que «hay una, pero no la has subido
+   * tu». El avatar de un perfil con Discord conectado sale de Discord y
+   * `avatarUrl` esta vacio: la caja se veia vacia mientras el perfil
+   * enseñaba una cara, que es exactamente lo que hace dudar de si se
+   * guardo algo.
+   *
+   * Va aparte de `value` a proposito: `value` es lo TUYO —lo que se
+   * sustituye al subir y lo que se borra al quitar— y esto es solo lo que
+   * hay puesto ahora mismo.
+   */
+  heredada?: string;
+  /** De donde viene lo heredado, para decirlo en el pie. */
+  heredadaDe?: string;
 }
 
 /**
@@ -41,6 +57,8 @@ export function SubirMedio({
   lado = 512,
   maxAnimadoMB = 3,
   guia,
+  heredada,
+  heredadaDe,
 }: SubirMedioProps) {
   const entradaRef = useRef<HTMLInputElement>(null);
   const [ocupado, setOcupado] = useState(false);
@@ -77,7 +95,10 @@ export function SubirMedio({
     [onChange, destino, lado, maxAnimadoMB, value],
   );
 
-  const previa = safeMedia(value);
+  /* Lo tuyo manda; lo heredado solo tapa el hueco. */
+  const propia = safeMedia(value);
+  const prestada = propia ? '' : safeMedia(heredada);
+  const previa = propia || prestada;
 
   return (
     <div className="f" data-guia={guia}>
@@ -110,7 +131,11 @@ export function SubirMedio({
         }}
       >
         {previa ? (
-          <img className="drop__previa" src={previa} alt={`${titulo}: elegido`} />
+          <img
+            className="drop__previa"
+            src={previa}
+            alt={propia ? `${titulo}: elegido` : `${titulo}: el que hay puesto`}
+          />
         ) : (
           <span className="drop__ico" aria-hidden="true">
             <svg
@@ -143,7 +168,12 @@ export function SubirMedio({
             {error}
           </span>
         ) : (
-          <span className="drop__nota">{nota || `JPG, PNG, WebP o GIF · ${lado}px`}</span>
+          <span className="drop__nota">
+            {nota ||
+              (prestada && heredadaDe
+                ? `Ahora mismo sale ${heredadaDe}. Sube una para cambiarlo.`
+                : `JPG, PNG, WebP o GIF · ${lado}px`)}
+          </span>
         )}
         {previa && !ocupado && (
           <button

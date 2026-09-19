@@ -202,11 +202,39 @@ function bitratePara(ancho: number, alto: number): number {
 /**
  * Cuanto puede pasarse el original antes de que recodificar compense.
  *
- * Recodificar SIEMPRE pierde: es una segunda generacion sobre algo que ya
- * paso por un codificador. Si el archivo que llega ya esta cerca de donde
- * lo dejariamos nosotros, tocarlo solo lo empeora.
+ * ────────────────────────────────────────────────────────────────────────
+ * ERA 1,4 Y SE SUBE, PORQUE NUESTRO CODIFICADOR NO CUMPLE
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * `videoBitsPerSecond` es un TECHO, no un objetivo, y ya se sabia. Lo que
+ * no se sabia es cuanto se queda corto con video de verdad. Medido sobre
+ * un fondo recodificado en produccion:
+ *
+ *     se le pidieron ..... 6,22 Mbps
+ *     salieron ........... 1,67 Mbps      1920x1080, High, 30 fps
+ *
+ * Un setenta y tres por ciento por debajo. Y no es que falten fotogramas
+ * -se contaron 23 en 0,8 s de video, o sea los 30 de rigor- ni que el
+ * perfil sea pobre: es que el control de tasa de Chrome decide solo y no
+ * hay donde decirle que gaste mas. `MediaRecorder` no expone nada mas.
+ *
+ * Con eso encima de la mesa, la cuenta cambia de sentido. Recodificar ya
+ * no es «ajustar el tamaño»: es tirar dos tercios del detalle a cambio de
+ * bytes. Asi que deja de ser el camino normal y pasa a ser el ultimo
+ * recurso.
+ *
+ * QUE JUSTIFICA TOCAR UN VIDEO, ENTONCES:
+ *
+ *   · Demasiados pixeles por fotograma. Eso no lo arregla nada mas, se ve
+ *     en maquinas sin aceleracion, y va por `ANCHO_MAX` aparte de esto.
+ *   · Un derroche de verdad: tres veces lo que haria falta. Ahi hasta un
+ *     recodificado flojo sale ganando.
+ *
+ * Lo que queda en medio -un 1080p a ocho o diez Mbps, que antes se
+ * recodificaba- pasa entero. Pesa mas y se ve como lo subieron, que es lo
+ * que se pidio. El tope de subida de 64 MB ya acota lo peor.
  */
-const HOLGURA = 1.4;
+const HOLGURA = 3;
 
 /**
  * Por debajo de esto no se toca nada, pese lo que pese el calculo.

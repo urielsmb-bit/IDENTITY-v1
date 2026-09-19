@@ -39,12 +39,12 @@ describe('hayQueTocarlo', () => {
     expect(hayQueTocarlo(bytesDe(3), 3840, 2160, 20).si).toBe(true);
   });
 
-  /* El liston sube con el tope: 12,6 Mbps es normal para un 2K (objetivo
-     11,1, liston 15,5) y derroche para un 1080p (objetivo 6,2, liston
-     8,7). Con un tope plano los dos recibian el mismo veredicto. */
+  /* El liston sube con el tope: 25 Mbps es normal para un 2K (objetivo
+     11,1, liston 33,2) y derroche para un 1080p (objetivo 6,2, liston
+     18,7). Con un tope plano los dos recibian el mismo veredicto. */
   it('el mismo bitrate se juzga distinto segun la medida', () => {
-    expect(hayQueTocarlo(bytesDe(30), 2560, 1440, 20).si).toBe(false);
-    expect(hayQueTocarlo(bytesDe(30), 1920, 1080, 20).si).toBe(true);
+    expect(hayQueTocarlo(bytesDe(60), 2560, 1440, 20).si).toBe(false);
+    expect(hayQueTocarlo(bytesDe(60), 1920, 1080, 20).si).toBe(true);
   });
 
   it('justo en el limite de ancho no se toca, un pixel mas si', () => {
@@ -83,16 +83,33 @@ describe('hayQueTocarlo', () => {
   });
 
   it('uno corto pero derrochando SI se toca', () => {
-    // 1920x1080, 10 s, 25 MB -> 21 Mbps, muy por encima
-    expect(hayQueTocarlo(bytesDe(25), 1920, 1080, 10).si).toBe(true);
+    // 1920x1080, 10 s, 40 MB -> 33,6 Mbps, muy por encima del liston de 18,7
+    expect(hayQueTocarlo(bytesDe(40), 1920, 1080, 10).si).toBe(true);
   });
 
   /* El objetivo escala con el tamaño: lo que es derroche a 720p es
      normal a 1080p. Con un numero plano los dos recibian lo mismo. */
   it('el liston depende de la medida, no es uno solo', () => {
-    // 5 Mbps: normal para 1080p (objetivo 6,2), derroche para 720p (2,8)
-    expect(hayQueTocarlo(bytesDe(12.5), 1920, 1080, 20).si).toBe(false);
-    expect(hayQueTocarlo(bytesDe(12.5), 1280, 720, 20).si).toBe(true);
+    // 12,6 Mbps: normal para 1080p (liston 18,7), derroche para 720p (8,3)
+    expect(hayQueTocarlo(bytesDe(30), 1920, 1080, 20).si).toBe(false);
+    expect(hayQueTocarlo(bytesDe(30), 1280, 720, 20).si).toBe(true);
+  });
+
+  /**
+   * RECODIFICAR ES EL ULTIMO RECURSO, Y ESTA PRUEBA LO FIJA.
+   *
+   * Medido sobre un fondo recodificado en produccion: se le pidieron 6,22
+   * Mbps y salieron 1,67. `videoBitsPerSecond` es un techo y el control de
+   * tasa de Chrome decide solo; no hay donde decirle que gaste mas.
+   *
+   * Con eso, un 1080p a diez Mbps NO se toca: pesa mas, pero se ve como lo
+   * subieron. Antes se recodificaba y salia a menos de dos.
+   */
+  it('un 1080p generoso pero razonable pasa entero', () => {
+    // 1920x1080, 20 s, 25 MB -> 10,5 Mbps. Antes: se tocaba. Ahora no.
+    const r = hayQueTocarlo(bytesDe(25), 1920, 1080, 20);
+    expect(r.si).toBe(false);
+    if (!r.si) expect(r.motivo).toContain('ya venia bien comprimido');
   });
 
   /* LOS DOS QUE SE PUBLICARON EMBORRONADOS, con sus medidas de verdad
