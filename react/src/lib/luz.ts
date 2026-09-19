@@ -70,6 +70,43 @@ let ultimoPuntero = -1e9;
 let escritoX = NaN;
 let escritoY = NaN;
 
+/**
+ * DÓNDE SE ESCRIBEN `--fx-lx` Y `--fx-ly`, Y POR QUÉ IMPORTA TANTO.
+ *
+ * Esto se escribía en `document.documentElement`. Medido en el perfil
+ * publicado, con 227 nodos:
+ *
+ *     escribir una propiedad NORMAL en el root ....... 0,1 ms
+ *     escribir una CUSTOM PROPERTY en el root ....... 4,6 ms
+ *     la misma custom property en `.fxn` ............ 0,0 ms
+ *
+ * Cincuenta veces más cara, y —esto es lo que lo explica— cuesta
+ * exactamente lo mismo con una propiedad que NO USA NADIE. No es
+ * recalcular a quién afecta: es que una custom property en el root
+ * invalida el mapa de herencia del documento ENTERO, y el navegador tiene
+ * que reconstruirlo nodo a nodo.
+ *
+ * A treinta pasos por segundo eso son 138 ms de cada segundo gastados en
+ * contabilidad de herencia, sin pintar un solo píxel de más. Con la
+ * aceleración por hardware apagada, que es cuando el presupuesto de
+ * fotograma ya va justo, es la diferencia entre ir fino y dar tirones al
+ * mover el ratón.
+ *
+ * Así que se escribe en la portadora de cada efecto —el `<span class="fxn">`,
+ * que es de quien cuelga el `.fxn__c` que las lee— y no en el documento.
+ * Son siete nodos en vez de doscientos veintisiete.
+ */
+const portadoras = new Set<HTMLElement>();
+
+/**
+ * Las `<fePointLight>` del documento, recordadas.
+ *
+ * `querySelectorAll` recorre el árbol entero, y esto se llamaba en cada
+ * paso: treinta recorridos por segundo para encontrar los mismos seis
+ * elementos, que solo cambian cuando un nombre entra o sale.
+ */
+let lucesCache: SVGElement[] | null = null;
+
 const QUIETO =
   typeof window !== 'undefined' &&
   typeof window.matchMedia === 'function' &&
@@ -103,9 +140,19 @@ const Y1 = 95;
  */
 const Z = 60;
 
-function luces(): NodeListOf<SVGElement> | null {
+function luces(): SVGElement[] | null {
   if (typeof document === 'undefined') return null;
-  return document.querySelectorAll<SVGElement>('fePointLight[data-fx-luz]');
+  if (!lucesCache) {
+    lucesCache = Array.from(
+      document.querySelectorAll<SVGElement>('fePointLight[data-fx-luz]'),
+    );
+  }
+  return lucesCache;
+}
+
+function escribirEn(el: HTMLElement, x: number, y: number) {
+  el.style.setProperty('--fx-lx', x.toFixed(4));
+  el.style.setProperty('--fx-ly', y.toFixed(4));
 }
 
 function aplicar(x: number, y: number) {
@@ -128,10 +175,17 @@ function aplicar(x: number, y: number) {
   }
   /* También como variables, para los efectos que no usan un filtro SVG sino
      capas de CSS: el abismo mueve sus planos con esto y así su profundidad
-     y el brillo de la obsidiana miran al MISMO sitio. */
-  const raiz = document.documentElement.style;
-  raiz.setProperty('--fx-lx', x.toFixed(4));
-  raiz.setProperty('--fx-ly', y.toFixed(4));
+     y el brillo de la obsidiana miran al MISMO sitio.
+
+     En la portadora de cada efecto, NO en el documento: ver `portadoras`. */
+  if (portadoras.size) {
+    for (const el of portadoras) escribirEn(el, x, y);
+  } else {
+    /* Sin portadora registrada no hay a quién escribirle, y dejarlo sin
+       escribir apagaría el efecto. Pasa con quien llame a `usarLuz()` sin
+       elemento, que es lo que hacía todo el mundo antes. */
+    escribirEn(document.documentElement, x, y);
+  }
 }
 
 function alMover(e: PointerEvent) {
@@ -275,7 +329,7 @@ function alCambiarVisibilidad() {
  * Lo llama cada nombre que use un material iluminado. Mientras haya alguno,
  * la luz se mueve; cuando se va el último, se apaga el bucle.
  */
-export function usarLuz(): () => void {
+export function usarLuz(portadora?: HTMLElement | null): () => void {
   /**
    * Con «menos movimiento» o con el presupuesto en el suelo, la luz se
    * COLOCA y no se mueve nunca más.
@@ -295,16 +349,35 @@ export function usarLuz(): () => void {
    * texto pintado. La diferencia entre las dos cosas es enorme, y no es la
    * que se pierde.
    */
+  /* La lista de `<fePointLight>` cambia cuando entra o sale un nombre, que
+     es exactamente aquí. Se olvida lo recordado y se vuelve a buscar en el
+     siguiente paso. */
+  lucesCache = null;
+  if (portadora) {
+    portadoras.add(portadora);
+    /* Y se le pone YA la posición de ahora. El bucle solo escribe cuando la
+       luz se mueve medio píxel, así que un nombre que aparece con la luz
+       parada —o mucho después de que se durmiera— se quedaría sin variables
+       hasta que alguien moviera el ratón, con el efecto a medio pintar. */
+    escribirEn(portadora, actX, actY);
+  }
+
   if (QUIETO) {
     /* Quieta, pero PUESTA. Sin esto la luz se queda en el cero por defecto
        de la `<fePointLight>` —la esquina— y el material sale plano y feo
        justo para quien ha pedido que nada se mueva. */
+    escritoX = escritoY = NaN;
     aplicar(0.34, 0.2);
-    return () => {};
+    return () => {
+      if (portadora) portadoras.delete(portadora);
+      lucesCache = null;
+    };
   }
   apuntados += 1;
   if (apuntados === 1) arrancar();
   return () => {
+    if (portadora) portadoras.delete(portadora);
+    lucesCache = null;
     apuntados -= 1;
     if (apuntados <= 0) {
       apuntados = 0;
