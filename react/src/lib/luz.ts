@@ -221,15 +221,85 @@ const QUIETA = 0.0001;
  * INERCIA -la luz parece pesar- y eso no mejora con más fotogramas. En
  * calidad baja se espacia todavía más, porque el presupuesto manda.
  */
+/**
+ * EL RITMO SE CALIBRA SOLO, Y POR ESO NO HAY ESCALONES.
+ *
+ * Aquí hubo un escalón fijo —treinta pasos por segundo en calidad alta,
+ * dieciocho en media— y se quitó con razón: «una luz que persigue al ratón
+ * a saltos se nota». Un número decidido de antemano se equivoca en las dos
+ * direcciones, porque adivina la máquina en vez de mirarla.
+ *
+ * Lo que cuesta de verdad no es este bucle: es lo que dispara. Los tres
+ * materiales iluminados son cadenas de filtro SVG que Chrome calcula en la
+ * CPU píxel a píxel, y mover la luz obliga a rehacer la cadena entera.
+ * Medido, con la misma medida que tiene un nombre en pantalla:
+ *
+ *     sin filtro ...................................  0,8 ms
+ *     turbulencia + desplazamiento .................  6,2 ms
+ *     + iluminación difusa .........................  6,1 ms
+ *     + iluminación especular ...................... 11,5 ms
+ *     las dos juntas, que es lo que hay ............ 18,6 ms
+ *
+ * Dieciocho coma seis milisegundos no caben en los dieciséis coma siete de
+ * un fotograma a sesenta. En una máquina con aceleración por hardware el
+ * resto de la página va por otro camino y no se nota; sin ella, cada paso
+ * de luz se come el fotograma entero y lo que se ve es el tirón.
+ *
+ * Así que en vez de elegir un número, se mide si la máquina LLEGA. El
+ * intervalo real entre pasos dice la verdad sin tener que atribuirla a
+ * nadie: si se pidieron 33 ms y llegan 33, todo bien; si llegan 55, es que
+ * pintar lo que hay cuesta más de lo que cabe, y apretar más solo hace
+ * cola.
+ *
+ * En una máquina que llega esto devuelve 33 siempre y NO CAMBIA NADA: el
+ * aspecto es exactamente el de antes. En una que no llega, la luz se
+ * espacia hasta donde esa máquina pueda sostenerla, que es justo lo que se
+ * pidió —fluidez por encima de efectos caros— y lo contrario de dar
+ * tirones.
+ */
+const PASO_MIN = 33;
+const PASO_MAX = 100;
+/** Lo que de verdad han tardado los últimos pasos. */
+let retrasos: number[] = [];
+let pasoActual = PASO_MIN;
+/** El instante del paso anterior, para que la persecución vaya por tiempo. */
+let anteriorCuadro = 0;
+
+/**
+ * Qué hueco pedir la próxima vez, visto lo que tardó la anterior.
+ *
+ * Aparte y exportada porque es la única parte de todo esto que se puede
+ * comprobar sin un navegador: el resto necesita `requestAnimationFrame`, y
+ * un bucle que solo corre cuando la pestaña está delante no se prueba.
+ */
+export function siguientePaso(mediana: number, actual: number): number {
+  /* Un margen del 35 %: por debajo de eso es ruido del propio navegador y
+     no un problema de la máquina. */
+  if (mediana > actual * 1.35) {
+    return Math.min(PASO_MAX, Math.round(actual * 1.3));
+  }
+  if (mediana < actual * 1.1 && actual > PASO_MIN) {
+    /* Y se vuelve, porque la causa puede irse: otra pestaña que soltó la
+       CPU, una ventana que se hizo pequeña, un vídeo que acabó. */
+    return Math.max(PASO_MIN, Math.round(actual / 1.2));
+  }
+  return actual;
+}
+
+function anotarRitmo(real: number) {
+  /* El primero tras despertar no cuenta: viene de estar dormida y mide la
+     siesta, no lo que cuesta pintar. */
+  if (real > PASO_MAX * 4) return;
+  retrasos.push(real);
+  if (retrasos.length < 8) return;
+
+  const ord = [...retrasos].sort((a, b) => a - b);
+  retrasos = [];
+  pasoActual = siguientePaso(ord[Math.floor(ord.length / 2)]!, pasoActual);
+}
+
 function paso(): number {
-  /* Treinta por segundo en alta; dieciocho en media.
-     El numero no sale de lo que se ve sino de lo que cuesta: cada paso
-     rehace la cadena de filtro SVG entera por CPU. Y se puede bajar tanto
-     porque la luz persigue con inercia -un 7,5 % de lo que le falta- asi
-     que el ojo lee el peso del movimiento, no los fotogramas. */
-  /* Treinta por segundo para todos. El escalon de dieciocho se quito con
-     los demas: una luz que persigue al raton a saltos se nota. */
-  return 33;
+  return pasoActual;
 }
 
 /**
@@ -269,6 +339,10 @@ function cuadro(t: number) {
     }, Math.max(1, falta));
     return;
   }
+  /* Lo que ha tardado DE VERDAD este paso. Si sale mucho mayor que lo que
+     se pidió, es que pintar lo que hay encima —la cadena de filtro— no cabe
+     en ese hueco, y `anotarRitmo` ensancha el siguiente. */
+  if (ultimoCuadro) anotarRitmo(t - ultimoCuadro);
   ultimoCuadro = t;
 
   /* Sin puntero reciente, la luz sigue su órbita. Las dos vueltas no duran
@@ -280,11 +354,22 @@ function cuadro(t: number) {
   }
 
   /* Persigue, no salta. Es lo que hace que el cambio entre «te sigue» y
-     «va sola» no se vea, y además le da peso: la luz parece tener inercia. */
+     «va sola» no se vea, y además le da peso: la luz parece tener inercia.
+
+     EL 7,5 % ES POR CADA 33 ms, NO POR PASO. Escrito como estaba —un tanto
+     por ciento fijo cada vez que pasa por aquí— la luz tarda el triple en
+     llegar si los pasos se espacian el triple, y entonces sí se nota: se
+     queda atrás del ratón. Convertido a tiempo, la luz recorre el mismo
+     camino en los mismos milisegundos dé los pasos que dé, que es lo que
+     mantiene el movimiento igual en una máquina que aprieta y en una que
+     no. */
+  const dt = Math.min(PASO_MAX * 2, Math.max(1, t - (anteriorCuadro || t - PASO_MIN)));
+  anteriorCuadro = t;
+  const k = 1 - Math.pow(1 - 0.075, dt / PASO_MIN);
   const dx = objX - actX;
   const dy = objY - actY;
-  actX += dx * 0.075;
-  actY += dy * 0.075;
+  actX += dx * k;
+  actY += dy * k;
   aplicar(actX, actY);
 
   /* ¿Queda algo que hacer? Solo si la luz aún se está moviendo hacia algún
@@ -305,6 +390,11 @@ function arrancar() {
 
 function parar() {
   if (dormido) { clearTimeout(dormido); dormido = 0; }
+  /* Las medidas a medias no valen para el siguiente arranque: entre una vez
+     y otra puede haber pasado cualquier cosa. El ritmo aprendido sí se
+     queda, que la máquina es la misma. */
+  retrasos = [];
+  anteriorCuadro = 0;
   if (!latido) return;
   cancelAnimationFrame(latido);
   latido = 0;
