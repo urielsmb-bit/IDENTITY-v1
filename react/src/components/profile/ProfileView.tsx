@@ -10,6 +10,7 @@ import { useParticles } from '@/hooks/useParticles';
 import { useTilt } from '@/hooks/useTilt';
 import { useCursor } from '@/hooks/useCursor';
 import { useDiscord, COLOR_ESTADO } from '@/hooks/useDiscord';
+import { insigniasDe, urlInsignia } from '@/data/insigniasDiscord';
 import { useMusic } from '@/hooks/useMusic';
 import { safeUrl, safeMedia } from '@/lib/utils';
 import { avatarDe } from '@/lib/avatar';
@@ -845,6 +846,23 @@ export function ProfileView({
   const dcUsuario = discord?.usuario || p.discordUser || '';
   const dcAvatar = discord?.avatar || p.discordAvatar || '';
   const hayDiscord = !!(dcNombre || dcUsuario);
+  /* Se deducen del numero guardado, no se guardan hechas: asi el dia que
+     Discord añada un bit, basta una fila en la tabla para que aparezca en
+     los perfiles que ya lo tuvieran. */
+  const insigniasDiscord = useMemo(
+    /* MANDA LO QUE DICE EL BOT, y el perfil es el respaldo.
+       Las insignias de `public_flags` las trae la presencia, que el bot
+       refresca cada minuto: eso las hace salir en CUALQUIER perfil y no
+       solo en el del dueño, y ademas se actualizan solas cuando alguien se
+       gana una. Lo guardado en el perfil solo sirve mientras la presencia
+       no haya llegado —o si nunca llega.
+
+       El Nitro va aparte y siempre del perfil: Discord solo le cuenta
+       `premium_type` a la propia cuenta, nunca a un bot, asi que ese si se
+       copia al enlazar. */
+    () => insigniasDe(discord?.flags || p.discordFlags, p.discordNitro),
+    [discord?.flags, p.discordFlags, p.discordNitro],
+  );
 
   /**
    * Encaja el lienzo libre en pantallas estrechas SIN deshacerlo.
@@ -1547,30 +1565,37 @@ export function ProfileView({
                       estado. Ahora se copia de Discord al enlazar la
                       cuenta, igual que el marco y por lo mismo — quien
                       visita tu perfil no tiene tu token para preguntarla. */}
-                  {/* NITRO.
+                  {/* LAS INSIGNIAS DE DISCORD.
 
-                      Se guarda en el perfil al enlazar la cuenta, igual que
-                      el marco y la etiqueta y por lo mismo: `premium_type`
-                      va en el usuario, no en la presencia, y quien visita tu
-                      perfil no tiene tu token para preguntarlo.
+                      Salen de dos cosas que vienen en la MISMA respuesta
+                      que el marco de avatar, asi que no cuestan ni una
+                      peticion mas: `premium_type` para el Nitro y
+                      `public_flags` para el resto, que es un numero donde
+                      cada bit es una insignia.
 
-                      El dibujo es nuestro. Discord no sirve las insignias en
-                      una direccion publica como si hace con los escudos de
-                      servidor, asi que se pinta el rombo y ya. Es un uso
-                      nominativo —decir que esa cuenta tiene Nitro— del mismo
-                      tipo que los cuarenta iconos de servicio que ya hay en
-                      los enlaces. */}
-                  {p.discordNitro && (
-                    <b className="pf-dc__nitro" title="Tiene Discord Nitro">
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path
-                          fill="currentColor"
-                          d="M12 2.1 21.9 12 12 21.9 2.1 12 12 2.1Zm0 3.02L5.12 12 12 18.88 18.88 12 12 5.12Z"
+                      Los iconos los sirve Discord en su propio CDN, igual
+                      que los escudos de servidor que ya se enseñan aqui al
+                      lado. Se pintan tal cual, sin recolorear ni recortar,
+                      que es como piden que se usen.
+
+                      OJO con lo que NO puede salir: impulsar un servidor va
+                      por servidor y no por persona, y lo que Discord va
+                      añadiendo —misiones, orbes— no tiene bit. Alguien
+                      puede llevar en Discord una insignia que aqui no
+                      aparezca, y no es un fallo de esto. */}
+                  {insigniasDiscord.length > 0 && (
+                    <span className="pf-dc__insignias">
+                      {insigniasDiscord.map((b) => (
+                        <img
+                          key={b.id}
+                          src={urlInsignia(b.icono)}
+                          alt={b.nombre}
+                          title={b.nombre}
+                          loading="lazy"
+                          decoding="async"
                         />
-                        <circle cx="12" cy="12" r="2.6" fill="currentColor" />
-                      </svg>
-                      Nitro
-                    </b>
+                      ))}
+                    </span>
                   )}
                   {(discord?.guild?.tag || p.discordTag) && (
                     <b

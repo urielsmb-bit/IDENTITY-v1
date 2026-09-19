@@ -598,13 +598,18 @@ function GuardarCuenta({
     if (extras.nitro !== null && profile.discordNitro !== extras.nitro) {
       cambios.discordNitro = extras.nitro;
     }
+    /* Igual que Nitro: se guarda tambien cuando vale 0, porque una insignia
+       que se pierde tiene que poder perderse aqui tambien. */
+    if (extras.flags !== null && profile.discordFlags !== extras.flags) {
+      cambios.discordFlags = extras.flags;
+    }
     if (Object.keys(cambios).length > 0) update(cambios);
   }, [
     id, usuario, mostrar, avatar, update,
-    extras.deco, extras.tag, extras.tagIcono, extras.nitro,
+    extras.deco, extras.tag, extras.tagIcono, extras.nitro, extras.flags,
     profile.discordId, profile.discordUser, profile.discordName, profile.discordAvatar,
     profile.discordDecoUrl, profile.discordTag, profile.discordTagIcono,
-    profile.discordNitro,
+    profile.discordNitro, profile.discordFlags,
   ]);
   return null;
 }

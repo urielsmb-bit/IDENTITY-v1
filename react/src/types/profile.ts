@@ -316,6 +316,15 @@ export interface Profile {
    * con el token del propio enlace. Quien visita tu perfil no lo tiene.
    */
   discordNitro?: boolean;
+  /**
+   * Las insignias de Discord, en un solo numero (`public_flags`).
+   *
+   * Se guarda el numero y no la lista: la lista se deduce de el, y el dia
+   * que Discord añada un bit basta con una fila mas en la tabla para que
+   * los perfiles que ya lo tengan guardado enseñen la insignia sin que
+   * nadie vuelva a conectar nada.
+   */
+  discordFlags?: number;
 
   /* background */
   bgType: 'none' | 'color' | 'gradient' | 'image' | 'video';

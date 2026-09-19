@@ -596,21 +596,18 @@
   opacity:.9;
 }
 .pf-dc__gt img{ width:14px; height:14px; display:block; flex:none; }
-/* Nitro. Misma pastilla que la etiqueta de servidor —es lo mismo que es:
-   un distintivo que se lleva al lado del nombre— y el morado de Discord,
-   que es lo que la hace reconocible de un vistazo sin tener que leerla. */
-.pf-dc__nitro{
+/* Las insignias de Discord. Los iconos son suyos y se pintan tal cual:
+   ni se recolorean ni se recortan, que es como piden que se usen. La fila
+   no se parte —son cuatro o cinco como mucho— y encoge antes que el
+   nombre, que es lo que de verdad hay que leer. */
+.pf-dc__insignias{
   display:inline-flex; align-items:center; gap:3px;
-  padding:1px 6px 1px 4px;
-  border:1px solid color-mix(in srgb, #b57cff 45%, transparent);
-  border-radius:6px;
-  background:color-mix(in srgb, #b57cff 14%, transparent);
-  color:#cba6ff;
-  font-family:var(--p-fm); font-size:var(--t1); font-weight:700;
-  letter-spacing:.03em;
   flex:none;
 }
-.pf-dc__nitro svg{ width:12px; height:12px; display:block; flex:none; }
+.pf-dc__insignias img{
+  width:16px; height:16px; display:block; flex:none;
+  object-fit:contain;
+}
 /* El logo de lo que esta haciendo. Va en el hueco donde estuvo la
    caratula de la cancion, que se quito por repetir el texto de al lado.
    Este no lo repite: el nombre se lee, el logo se reconoce.

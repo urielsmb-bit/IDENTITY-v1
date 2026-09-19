@@ -118,6 +118,8 @@ interface Fila {
   tag?: string;
   tag_icono?: string;
   deco?: string;
+  /** `public_flags`: las insignias de la cuenta, en un solo numero. */
+  flags?: number;
   actualizado: string;
 }
 
@@ -212,6 +214,8 @@ function aFila(p: Presencia, ahora: string): Fila | null {
 
 /** Se conecta, recoge las presencias del servidor y cierra. */
 interface DelUsuario {
+  /** `public_flags` de Discord: cada bit es una insignia. */
+  flags: number;
   tag: string;
   tag_icono: string;
   deco: string;
@@ -237,6 +241,10 @@ async function delUsuario(token: string, id: string): Promise<DelUsuario | null>
     if (!r.ok) return null;
     const u = (await r.json()) as {
       avatar_decoration_data?: { asset?: unknown };
+      /* Las insignias. Un bot SI puede leerlas de cualquiera; lo que no
+         puede leer es `premium_type`, o sea el Nitro, que Discord solo le
+         cuenta a la propia cuenta. */
+      public_flags?: unknown;
       primary_guild?: {
         tag?: unknown;
         badge?: unknown;
@@ -245,7 +253,10 @@ async function delUsuario(token: string, id: string): Promise<DelUsuario | null>
       };
     };
 
-    const out: DelUsuario = { tag: '', tag_icono: '', deco: '' };
+    const out: DelUsuario = { tag: '', tag_icono: '', deco: '', flags: 0 };
+
+    const fl = u.public_flags;
+    if (typeof fl === 'number' && isFinite(fl) && fl >= 0) out.flags = Math.floor(fl);
 
     const asset = u.avatar_decoration_data?.asset;
     if (typeof asset === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(asset)) {
@@ -586,12 +597,13 @@ Deno.serve(async (req) => {
       if (
         error &&
         (error.code === 'PGRST204' ||
-          /cancion_id|tag|deco|actividad_img/.test(error.message))
+          /cancion_id|tag|deco|actividad_img|flags/.test(error.message))
       ) {
         console.warn('discord-presencia · faltan columnas nuevas; se escribe sin ellas');
         const sinId = filas.map(
           ({
             cancion_id: _a, tag: _b, tag_icono: _c, deco: _d, actividad_img: _e,
+            flags: _f,
             ...resto
           }) => resto,
         );

@@ -366,6 +366,12 @@ function esquema(ID: any) {
     /* Nitro es un si o un no y nada mas: no hay direccion que comprobar
        porque la insignia la dibujamos nosotros. */
     discordNitro: bool,
+    /* Un entero sin signo y nada mas. No se comprueba que los bits sean
+       conocidos: uno que no lo sea, sencillamente no pinta nada. */
+    discordFlags: (v: any) => {
+      const n2 = Number(v);
+      return Number.isFinite(n2) && n2 >= 0 ? Math.floor(n2) : 0;
+    },
     /* El marco, con la misma regla y por el mismo motivo. */
     discordDecoUrl: (v: any) => {
       const s = String(v ?? '').trim().slice(0, 300);

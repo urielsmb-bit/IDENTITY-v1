@@ -43,6 +43,15 @@ export interface PresenciaDiscord {
    */
   guild: { tag: string; icono: string } | null;
   /**
+   * `public_flags`: las insignias de la cuenta, en un solo numero.
+   *
+   * Viene por el BOT y no por el enlace, que es lo que hace que salgan las
+   * de cualquier perfil y no solo las del dueño — y que se refresquen
+   * solas. El Nitro no puede venir por aqui: Discord solo le cuenta
+   * `premium_type` a la propia cuenta, nunca a un bot.
+   */
+  flags: number;
+  /**
    * Lo que suena en Spotify, con caratula.
    *
    * Viene aparte de `activities` y con mas cosas: Lanyard da el titulo, el
@@ -244,6 +253,7 @@ export function useDiscord(id: string | undefined, activo = true) {
         actividad: String(data.actividad ?? ''),
         detalle: String(data.detalle ?? ''),
         actividadImg: String(data.actividad_img ?? ''),
+        flags: Number(data.flags) || 0,
         guild: data.tag
           ? { tag: String(data.tag), icono: String(data.tag_icono ?? '') }
           : null,
@@ -377,6 +387,18 @@ export interface ExtrasDiscord {
    * Discord conteste, y la insignia se le caería sola.
    */
   nitro: boolean | null;
+  /**
+   * `public_flags` tal cual: un numero donde cada bit es una insignia.
+   *
+   * Se guarda el numero y no la lista de insignias a proposito. La lista se
+   * deduce de el en un momento, y el dia que Discord añada un bit nuevo
+   * basta con añadir una fila a la tabla: los perfiles que ya lo tuvieran
+   * guardado enseñaran la insignia sin que nadie vuelva a conectar nada.
+   * Guardando la lista habria que pedirsela otra vez a todo el mundo.
+   *
+   * `null` mientras no se sepa, por lo mismo que `nitro`.
+   */
+  flags: number | null;
 }
 
 export function useDecoracionDeLaSesion(): ExtrasDiscord {
@@ -384,7 +406,7 @@ export function useDecoracionDeLaSesion(): ExtrasDiscord {
   const hayDiscord = useAuthStore((s) =>
     !!s.user?.identities?.some((i) => i.provider === 'discord'),
   );
-  const [extras, setExtras] = useState<ExtrasDiscord>({ deco: '', tag: '', tagIcono: '', nitro: null });
+  const [extras, setExtras] = useState<ExtrasDiscord>({ deco: '', tag: '', tagIcono: '', nitro: null, flags: null });
 
   useEffect(() => {
     if (!token || !hayDiscord) return;
@@ -401,6 +423,8 @@ export function useDecoracionDeLaSesion(): ExtrasDiscord {
           /* Nitro. Venia en esta misma respuesta desde el principio y no se
              leia: 0 es no tener, 1 a 3 son Classic, Nitro y Basic. */
           premium_type?: unknown;
+          /* Las insignias, en un solo numero. */
+          public_flags?: unknown;
           /* La etiqueta de servidor. Antes la mandaba Lanyard y al quitarlo
              se perdio, porque la presencia de la pasarela NO la trae: va
              en el usuario, no en el estado. Aqui si esta. */
@@ -413,13 +437,16 @@ export function useDecoracionDeLaSesion(): ExtrasDiscord {
         };
         if (!vivo) return;
 
-        const salida: ExtrasDiscord = { deco: '', tag: '', tagIcono: '', nitro: null };
+        const salida: ExtrasDiscord = { deco: '', tag: '', tagIcono: '', nitro: null, flags: null };
 
         /* Se compara con numeros y no con `truthy`: Discord manda 0 para
            quien no tiene, y un 0 tambien es falso por su cuenta — pero si
            algun dia mandara la cadena '0', `!!'0'` seria verdadero. */
         const prem = j?.premium_type;
         salida.nitro = typeof prem === 'number' && prem > 0;
+
+        const fl = j?.public_flags;
+        salida.flags = typeof fl === 'number' && isFinite(fl) ? fl : 0;
 
         /* Cada identificador se comprueba antes de meterlo en una
            direccion: llegan de fuera, y una barra o dos puntos ahi dentro
