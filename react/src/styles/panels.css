@@ -1888,7 +1888,7 @@ body.probando .view{ padding-top:0; }
 /* Las asas son anchas de verdad: un borde de dos pixeles se falla con el
    raton y es imposible con el dedo. */
 .onda__asa{
-  position:relative; z-index:3;
+  position:relative; z-index:4;
   flex:none; width:14px;
   cursor:ew-resize;
   border-radius:7px;
@@ -1899,6 +1899,20 @@ body.probando .view{ padding-top:0; }
   margin:auto; width:2px; height:18px;
   border-radius:99px; background:rgba(255,255,255,.9);
 }
+/* LA ZONA QUE AGARRA ES MAS GRANDE QUE LA QUE SE VE.
+   Catorce pixeles se ven bien y se fallan: hay que apuntar. Esto estira el
+   area sensible diez pixeles a cada lado y ocho arriba y abajo sin tocar
+   el dibujo, asi que el raton la encuentra antes de llegar y el dedo no
+   tiene que afinar. Es invisible a proposito: engordar el asa de verdad
+   comeria ventana, y en un recorte corto la ventana es casi todo asa. */
+.onda__asa::before{
+  content:''; position:absolute;
+  top:-8px; bottom:-8px; left:-10px; right:-10px;
+}
+/* Y el cuerpo por debajo de las asas donde se solapan: en una ventana
+   estrecha las dos zonas se pisan, y ahi tiene que ganar el asa — mover
+   se puede desde cualquier punto, estirar solo desde el borde. */
+.onda__cuerpo{ z-index:3; }
 .onda__cuerpo:focus-visible,
 .onda__asa:focus-visible{
   outline:2px solid #fff; outline-offset:2px;
