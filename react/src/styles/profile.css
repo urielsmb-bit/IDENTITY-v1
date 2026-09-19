@@ -596,6 +596,21 @@
   opacity:.9;
 }
 .pf-dc__gt img{ width:14px; height:14px; display:block; flex:none; }
+/* Nitro. Misma pastilla que la etiqueta de servidor —es lo mismo que es:
+   un distintivo que se lleva al lado del nombre— y el morado de Discord,
+   que es lo que la hace reconocible de un vistazo sin tener que leerla. */
+.pf-dc__nitro{
+  display:inline-flex; align-items:center; gap:3px;
+  padding:1px 6px 1px 4px;
+  border:1px solid color-mix(in srgb, #b57cff 45%, transparent);
+  border-radius:6px;
+  background:color-mix(in srgb, #b57cff 14%, transparent);
+  color:#cba6ff;
+  font-family:var(--p-fm); font-size:var(--t1); font-weight:700;
+  letter-spacing:.03em;
+  flex:none;
+}
+.pf-dc__nitro svg{ width:12px; height:12px; display:block; flex:none; }
 /* El logo de lo que esta haciendo. Va en el hueco donde estuvo la
    caratula de la cancion, que se quito por repetir el texto de al lado.
    Este no lo repite: el nombre se lee, el logo se reconoce.

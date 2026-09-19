@@ -589,12 +589,22 @@ function GuardarCuenta({
     if (extras.tagIcono && profile.discordTagIcono !== extras.tagIcono) {
       cambios.discordTagIcono = extras.tagIcono;
     }
+    /* Nitro se guarda tambien cuando es `false`, al reves que los demas.
+       Los otros son direcciones y una vacia solo quiere decir «Discord no
+       la ha mandado esta vez», asi que pisar lo que ya habia con nada seria
+       perder el marco por un fallo de red. Esto es un si o un no: si dejara
+       de guardarse el no, quien deje de pagar Nitro se quedaria con la
+       insignia puesta para siempre. */
+    if (extras.nitro !== null && profile.discordNitro !== extras.nitro) {
+      cambios.discordNitro = extras.nitro;
+    }
     if (Object.keys(cambios).length > 0) update(cambios);
   }, [
     id, usuario, mostrar, avatar, update,
-    extras.deco, extras.tag, extras.tagIcono,
+    extras.deco, extras.tag, extras.tagIcono, extras.nitro,
     profile.discordId, profile.discordUser, profile.discordName, profile.discordAvatar,
     profile.discordDecoUrl, profile.discordTag, profile.discordTagIcono,
+    profile.discordNitro,
   ]);
   return null;
 }

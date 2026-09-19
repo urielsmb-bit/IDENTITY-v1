@@ -308,6 +308,14 @@ export interface Profile {
    */
   discordTag?: string;
   discordTagIcono?: string;
+  /**
+   * Si la cuenta de Discord enlazada tiene Nitro.
+   *
+   * Se guarda por lo mismo que el marco y la etiqueta: `premium_type` va en
+   * el USUARIO, no en la presencia, y al usuario solo se le puede preguntar
+   * con el token del propio enlace. Quien visita tu perfil no lo tiene.
+   */
+  discordNitro?: boolean;
 
   /* background */
   bgType: 'none' | 'color' | 'gradient' | 'image' | 'video';

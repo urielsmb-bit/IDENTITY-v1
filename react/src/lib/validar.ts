@@ -363,6 +363,9 @@ function esquema(ID: any) {
       const s = String(v ?? '').trim().slice(0, 300);
       return /^https:\/\/cdn\.discordapp\.com\/[\w./-]+(\?[\w=&.-]*)?$/.test(s) ? s : '';
     },
+    /* Nitro es un si o un no y nada mas: no hay direccion que comprobar
+       porque la insignia la dibujamos nosotros. */
+    discordNitro: bool,
     /* El marco, con la misma regla y por el mismo motivo. */
     discordDecoUrl: (v: any) => {
       const s = String(v ?? '').trim().slice(0, 300);

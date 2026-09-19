@@ -1547,6 +1547,31 @@ export function ProfileView({
                       estado. Ahora se copia de Discord al enlazar la
                       cuenta, igual que el marco y por lo mismo — quien
                       visita tu perfil no tiene tu token para preguntarla. */}
+                  {/* NITRO.
+
+                      Se guarda en el perfil al enlazar la cuenta, igual que
+                      el marco y la etiqueta y por lo mismo: `premium_type`
+                      va en el usuario, no en la presencia, y quien visita tu
+                      perfil no tiene tu token para preguntarlo.
+
+                      El dibujo es nuestro. Discord no sirve las insignias en
+                      una direccion publica como si hace con los escudos de
+                      servidor, asi que se pinta el rombo y ya. Es un uso
+                      nominativo —decir que esa cuenta tiene Nitro— del mismo
+                      tipo que los cuarenta iconos de servicio que ya hay en
+                      los enlaces. */}
+                  {p.discordNitro && (
+                    <b className="pf-dc__nitro" title="Tiene Discord Nitro">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                          fill="currentColor"
+                          d="M12 2.1 21.9 12 12 21.9 2.1 12 12 2.1Zm0 3.02L5.12 12 12 18.88 18.88 12 12 5.12Z"
+                        />
+                        <circle cx="12" cy="12" r="2.6" fill="currentColor" />
+                      </svg>
+                      Nitro
+                    </b>
+                  )}
                   {(discord?.guild?.tag || p.discordTag) && (
                     <b
                       className="pf-dc__gt"

@@ -166,6 +166,27 @@ export function reproductorYouTube(contenedor: HTMLElement, videoId: string, cb:
     calentando = false;
     try { yt.unMute(); } catch { /* da igual: sonara al volumen que tenga */ }
     yt.playVideo();
+    /**
+     * Y SE COMPRUEBA QUE EL MUDO SE HAYA QUITADO DE VERDAD.
+     *
+     * En el movil esta es la pieza fragil. `playVideo()` dentro de un gesto
+     * se concede siempre; `unMute()` se acepta sin rechistar y a veces no
+     * hace nada, asi que el video corre, el estado dice «sonando» y no se
+     * oye nada. Es la peor forma de fallar, porque desde fuera la pagina
+     * parece que va bien y lo unico que se nota es que no hay musica.
+     *
+     * No se puede adelantar fuera del gesto, y esto se probo: quitar el
+     * mudo con el reproductor en pausa RELANZA el video —medido, estados 3
+     * y 1 detras del 2— o sea sonido antes de que nadie toque la puerta,
+     * que es justo lo que la puerta existe para impedir.
+     *
+     * Asi que se insiste un momento despues, ya con el video en marcha.
+     * Aqui no hay riesgo de sonar sin permiso: suena porque lo han pedido.
+     */
+    setTimeout(() => {
+      if (muerto || !yt) return;
+      try { if (yt.isMuted && yt.isMuted()) yt.unMute(); } catch { /* ya no esta */ }
+    }, 250);
   }
 
   cargarAPIYouTube(() => {

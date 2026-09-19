@@ -359,6 +359,24 @@ export interface ExtrasDiscord {
   tag: string;
   /** El escudito que la acompaña. */
   tagIcono: string;
+  /**
+   * Si la cuenta tiene Nitro.
+   *
+   * Venía en la MISMA respuesta que el marco y no se leía: `premium_type`,
+   * que Discord manda a cualquiera con permiso `identify` — o sea el del
+   * propio inicio de sesión que ya se estaba usando. Ni una petición más.
+   *
+   * 0 es sin Nitro, y del 1 al 3 son las tres formas que tiene de haberlo:
+   * Classic, Nitro y Basic. Aquí no se distinguen porque en el perfil no
+   * hace falta: la insignia dice «tiene Nitro», no cuál de los tres paga.
+   *
+   * `null` MIENTRAS NO SE SEPA, y no `false`. Los otros campos de aquí son
+   * direcciones, y una vacía ya significa «todavía nada»; un booleano no
+   * tiene ese hueco. Con `false` de partida, el perfil de alguien CON Nitro
+   * se guardaría como «sin Nitro» en el instante entre montar esto y que
+   * Discord conteste, y la insignia se le caería sola.
+   */
+  nitro: boolean | null;
 }
 
 export function useDecoracionDeLaSesion(): ExtrasDiscord {
@@ -366,7 +384,7 @@ export function useDecoracionDeLaSesion(): ExtrasDiscord {
   const hayDiscord = useAuthStore((s) =>
     !!s.user?.identities?.some((i) => i.provider === 'discord'),
   );
-  const [extras, setExtras] = useState<ExtrasDiscord>({ deco: '', tag: '', tagIcono: '' });
+  const [extras, setExtras] = useState<ExtrasDiscord>({ deco: '', tag: '', tagIcono: '', nitro: null });
 
   useEffect(() => {
     if (!token || !hayDiscord) return;
@@ -380,6 +398,9 @@ export function useDecoracionDeLaSesion(): ExtrasDiscord {
         if (!r.ok) return;
         const j = (await r.json()) as {
           avatar_decoration_data?: { asset?: unknown };
+          /* Nitro. Venia en esta misma respuesta desde el principio y no se
+             leia: 0 es no tener, 1 a 3 son Classic, Nitro y Basic. */
+          premium_type?: unknown;
           /* La etiqueta de servidor. Antes la mandaba Lanyard y al quitarlo
              se perdio, porque la presencia de la pasarela NO la trae: va
              en el usuario, no en el estado. Aqui si esta. */
@@ -392,7 +413,13 @@ export function useDecoracionDeLaSesion(): ExtrasDiscord {
         };
         if (!vivo) return;
 
-        const salida: ExtrasDiscord = { deco: '', tag: '', tagIcono: '' };
+        const salida: ExtrasDiscord = { deco: '', tag: '', tagIcono: '', nitro: null };
+
+        /* Se compara con numeros y no con `truthy`: Discord manda 0 para
+           quien no tiene, y un 0 tambien es falso por su cuenta — pero si
+           algun dia mandara la cadena '0', `!!'0'` seria verdadero. */
+        const prem = j?.premium_type;
+        salida.nitro = typeof prem === 'number' && prem > 0;
 
         /* Cada identificador se comprueba antes de meterlo en una
            direccion: llegan de fuera, y una barra o dos puntos ahi dentro
