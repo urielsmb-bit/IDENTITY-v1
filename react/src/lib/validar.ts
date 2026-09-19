@@ -28,6 +28,20 @@ function numOnulo(v: any, min: number, max: number): number | null {
   return Math.min(max, Math.max(min, n));
 }
 
+/**
+ * Un segundo de pista: entero, no negativo, y con techo.
+ *
+ * El techo son seis horas porque es el limite de YouTube. Sin el, un numero
+ * absurdo —o uno que llegue manipulado— manda el reproductor a un sitio del
+ * que no vuelve: se queda buscando para siempre y el bloque de musica no
+ * llega a sonar nunca.
+ */
+export function segundosDePista(v: any): number {
+  const n = Math.floor(Number(v));
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(n, 6 * 60 * 60);
+}
+
 export function bool(v: any): boolean {
   return v === true || v === 'true' || v === 1 || v === '1';
 }
@@ -505,6 +519,11 @@ export function perfil(p: any, defectos: any, catalogs: Record<string, unknown>)
       cover: medio(p.audio.cover) || texto(p.audio.cover, 8),
       yt: String(p.audio.yt || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 20),
       ytUrl: medio(p.audio.ytUrl),
+      /* Segundos enteros y no negativos. El tope de seis horas no es por
+         gusto: es el limite de YouTube, y sin tope un numero absurdo
+         mandaria el reproductor a un sitio del que no vuelve. */
+      inicio: segundosDePista(p.audio.inicio),
+      duracion: segundosDePista(p.audio.duracion),
       tracks: Array.isArray(p.audio.tracks)
         ? p.audio.tracks.slice(0, 30).map((t: any) => {
             if (!t || typeof t !== 'object') return null;

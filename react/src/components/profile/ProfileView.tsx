@@ -315,6 +315,12 @@ export function ProfileView({
         url: a.ytUrl || '',
         length: '',
         embed: '',
+        /* El recorte viaja CON la pista y no aparte: el reproductor
+           recibe una lista de pistas y nada mas, y meterle un segundo
+           canal de ajustes por fuera obliga a mantener los dos en el
+           mismo orden. */
+        inicio: a.inicio || 0,
+        duracion: a.duracion || 0,
       },
     ];
     /* `audioKey` es tu musica; la cancion de Discord es el respaldo. Sin

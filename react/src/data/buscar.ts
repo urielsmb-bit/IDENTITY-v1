@@ -86,6 +86,7 @@ const CONTROL: Record<ControlId, Ficha> = {
   monoRedes: { nombre: 'Iconos de un solo color', alias: ['monocromo', 'blanco y negro', 'sin color'] },
 
   enlaceMusica: { nombre: 'Enlace de la música', alias: ['canción', 'spotify', 'youtube', 'audio'] },
+  recorteMusica: { nombre: 'Recortar la canción', alias: ['recorte', 'empezar', 'inicio', 'duración', 'trozo', 'estribillo'] },
   portadaMusica: { nombre: 'Portada de la música', alias: ['carátula', 'disco', 'álbum'] },
 
   posAvatar: { nombre: 'Posición del avatar', alias: ['foto', 'al lado', 'arriba'] },

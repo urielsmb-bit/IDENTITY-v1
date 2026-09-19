@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { RecorteMusica } from './RecorteMusica';
 import { Link } from 'react-router-dom';
 import type { Profile, BlockStyle } from '@/types';
 import type { ControlId, DefBloque, GrupoControles } from '@/data/bloques';
@@ -1082,6 +1083,40 @@ export function EditorBloque({
                 No reconozco ese enlace de YouTube.
               </p>
             )}
+          </Campo>
+        );
+      }
+
+      case 'recorteMusica': {
+        const audio = profile.audio;
+        return (
+          <Campo
+            key={id}
+            label="Recortar la canción"
+            valor={audio?.duracion ? 'recortada' : undefined}
+          >
+            <RecorteMusica
+              videoId={audio?.yt || ''}
+              inicio={audio?.inicio || 0}
+              duracion={audio?.duracion || 0}
+              onChange={(r) =>
+                update({
+                  audio: {
+                    provider: 'youtube',
+                    src: 'manual',
+                    title: '',
+                    artist: '',
+                    cover: '',
+                    yt: '',
+                    ytUrl: '',
+                    tracks: [],
+                    ...(audio ?? {}),
+                    inicio: r.inicio,
+                    duracion: r.duracion,
+                  },
+                })
+              }
+            />
           </Campo>
         );
       }

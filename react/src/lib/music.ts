@@ -144,6 +144,8 @@ export function reproductorYouTube(contenedor: HTMLElement, videoId: string, cb:
   let calentando = false;
   /** Ya tiene bocado: el siguiente play es inmediato. */
   let calentado = false;
+  /** El segundo por el que arranca esta pista. Lo pone quien la elige. */
+  let inicio = 0;
 
   /* Se arranca mudo, que es lo que el navegador deja hacer sin que nadie
      haya tocado nada. Si lo niega igualmente —modo ahorro de bateria en el
@@ -160,6 +162,16 @@ export function reproductorYouTube(contenedor: HTMLElement, videoId: string, cb:
 
   function arrancar() {
     if (!listo || !yt) { pendiente = 'play'; return; }
+    /* Al segundo que pidio su dueño, si lo pidio. El calentamiento deja el
+       video rebobinado a cero, asi que sin esto el recorte se ignoraba
+       justo en el arranque, que es la unica vez que casi todo el mundo lo
+       oye. La tolerancia de un segundo evita rebobinar cuando ya esta
+       donde toca: un `seekTo` de mas vacia el buffer. */
+    if (inicio > 0) {
+      try {
+        if (Math.abs((yt.getCurrentTime() || 0) - inicio) > 1) yt.seekTo(inicio, true);
+      } catch { /* aun no esta */ }
+    }
     /* Si se pulsa MIENTRAS calienta, deja de ser un calentamiento y pasa a
        ser lo que la persona ha pedido: se quita el mudo y el estado vuelve
        a contarse. */
@@ -222,6 +234,7 @@ export function reproductorYouTube(contenedor: HTMLElement, videoId: string, cb:
   });
 
   return {
+    fijarInicio: (n: number) => { inicio = Math.max(0, Number(n) || 0); },
     play: () => { if (listo && yt) arrancar(); else pendiente = 'play'; },
     pause: () => { if (listo && yt) yt.pauseVideo(); else pendiente = null; },
     cargar: (id: string, arrancarYa: boolean) => {
@@ -309,11 +322,44 @@ export function crearReproductor(host: HTMLElement, pistas: any[], cb: any = {})
     });
   }
 
+  /**
+   * EL RECORTE: donde empieza y donde vuelve.
+   *
+   * Una cancion de fondo casi nunca quiere empezar por el principio. Lo que
+   * la gente pone en un perfil es el estribillo, y sin esto habia que oir
+   * la intro entera cada vez que alguien entraba.
+   *
+   * `duracion` en cero significa ENTERA, que es lo que tiene quien no toca
+   * nada. Y el final se vigila desde el latido que ya existia —cuatro veces
+   * por segundo— en vez de poner otro reloj: el error de recorte que se
+   * puede colar son 250 ms al final de un trozo que dura segundos, y eso no
+   * se oye. Un reloj mas fino costaria mas de lo que arregla.
+   */
+  function inicioDePista(): number {
+    const t = actual();
+    return Math.max(0, Number(t?.inicio) || 0);
+  }
+  function finDePista(): number {
+    const t = actual();
+    const d = Math.max(0, Number(t?.duracion) || 0);
+    return d > 0 ? inicioDePista() + d : 0;
+  }
+
   function arrancarLatido() {
     pararLatido();
     latido = setInterval(() => {
       if (muerto) return;
-      if (cb.alAvanzar) cb.alAvanzar(tiempo(), duracionTrack());
+      const ahora = tiempo();
+      const fin = finDePista();
+      /* Se vuelve al principio del trozo en vez de parar: un fondo que se
+         calla a los quince segundos parece roto, y el bucle es lo que hace
+         que un recorte corto siga siendo musica de fondo. */
+      if (fin > 0 && ahora >= fin) {
+        buscar(inicioDePista());
+        if (cb.alAvanzar) cb.alAvanzar(inicioDePista(), duracionTrack());
+        return;
+      }
+      if (cb.alAvanzar) cb.alAvanzar(ahora, duracionTrack());
     }, 250);
   }
   function pararLatido() { clearInterval(latido); latido = 0; }
@@ -331,8 +377,10 @@ export function crearReproductor(host: HTMLElement, pistas: any[], cb: any = {})
         alTerminar: () => { siguiente(true); },
         alListo: avisarFicha,
       });
+      yt.fijarInicio(inicioDePista());
       if (arrancar) yt.play();
     } else {
+      yt.fijarInicio(inicioDePista());
       yt.cargar(t.yt, arrancar);
     }
   }

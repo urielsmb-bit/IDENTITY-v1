@@ -98,6 +98,10 @@ export interface AudioTrack {
   preview: string;
   url: string;
   embed: string;
+  /** Desde que segundo suena. Ver `ProfileAudio.inicio`. */
+  inicio?: number;
+  /** Cuanto suena antes de volver al principio. 0 es entera. */
+  duracion?: number;
 }
 
 export interface ProfileAudio {
@@ -109,6 +113,25 @@ export interface ProfileAudio {
   yt: string;
   ytUrl: string;
   tracks: AudioTrack[];
+  /**
+   * EL RECORTE: desde que segundo empieza y cuanto suena.
+   *
+   * Una cancion de fondo casi nunca quiere empezar por el principio. Lo que
+   * la gente pone en un perfil es el estribillo, y con el reproductor tal
+   * cual habia que oir la intro entera cada vez que alguien entraba.
+   *
+   * `inicio` es el segundo por el que arranca. `duracion` es cuanto suena
+   * antes de volver a `inicio`.
+   *
+   * CERO EN `duracion` SIGNIFICA ENTERA, y es el valor por defecto a
+   * proposito: quien no toque nada tiene lo de siempre. Y no se guarda la
+   * duracion real de la cancion aqui —esa la sabe YouTube y puede cambiar
+   * si el video se reemplaza—: guardar un cero es decir «lo que dure»,
+   * guardar 217 seria decir «217 segundos» y dejar de ser cierto el dia que
+   * el video sea otro.
+   */
+  inicio?: number;
+  duracion?: number;
 }
 
 export interface Profile {

@@ -58,6 +58,7 @@ export type ControlId =
   | 'listaInsignias'
   | 'monoRedes'
   | 'enlaceMusica'
+  | 'recorteMusica'
   | 'portadaMusica'
   | 'posAvatar'
   | 'formaAvatar'
@@ -296,7 +297,7 @@ export const BLOQUES: DefBloque[] = [
     // La pista se ponía sólo en «Fondo & Audio», o sea en otra sección:
     // se entraba a editar el bloque de música y no había música que poner.
     grupos: [
-      { titulo: 'Pista', controles: ['enlaceMusica', 'portadaMusica', 'visible'] },
+      { titulo: 'Pista', controles: ['enlaceMusica', 'recorteMusica', 'portadaMusica', 'visible'] },
       CAJA_PROPIA,
       COMPOSICION,
     ],
