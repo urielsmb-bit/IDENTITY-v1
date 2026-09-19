@@ -68,8 +68,24 @@ export function GuardarExtrasDiscord({
        `false` y `0`. Son un si o un no, y si el no no se guardara, quien
        deje de pagar Nitro se quedaria la insignia puesta para siempre.
        `null` es «todavia no se sabe», que no es lo mismo que «no». */
-    if (extras.nitro !== null && profile.discordNitro !== extras.nitro) {
-      cambios.discordNitro = extras.nitro;
+    /**
+     * Y LA DECORACION QUE YA ESTABA TAMBIEN CUENTA.
+     *
+     * La deduccion vivia dentro del hook, que solo ve la respuesta recien
+     * traida. Con la cuenta del dueño eso no bastaba: Discord no mando
+     * decoracion esta vez —el bot tampoco la ve— pero el perfil tiene una
+     * guardada de un enlace anterior, y ADEMAS animada (`a_`), que es de
+     * las que solo da Nitro.
+     *
+     * Aqui se ven las dos: la de ahora y la que ya estaba. Con cualquiera
+     * de las dos basta.
+     */
+    const hayDeco = !!(extras.deco || profile.discordDecoUrl);
+    const nitro = extras.nitro === false && hayDeco ? true : extras.nitro;
+    const deducido = extras.nitroDeducido || (extras.nitro === false && hayDeco);
+
+    if (nitro !== null && profile.discordNitro !== nitro) {
+      cambios.discordNitro = nitro;
     }
     if (extras.flags !== null && profile.discordFlags !== extras.flags) {
       cambios.discordFlags = extras.flags;
@@ -90,7 +106,7 @@ export function GuardarExtrasDiscord({
      */
     if (!yaAvisado.current && avisar && extras.nitro !== null) {
       yaAvisado.current = true;
-      const cuantas = insigniasDe(extras.flags, extras.nitro).length;
+      const cuantas = insigniasDe(extras.flags, nitro).length;
       /* Con los numeros de verdad cuando no sale ninguna. «No tienes» y
          «Discord no me lo ha querido decir» se parecen desde fuera, y la
          diferencia entre las dos cambia por completo que hay que hacer. */
@@ -100,10 +116,10 @@ export function GuardarExtrasDiscord({
       /* Y se dice cuando el Nitro no lo dijo Discord sino la decoracion.
          Una insignia deducida no es lo mismo que una confirmada, y quien
          mire esto dentro de un año tiene que poder saber cual era. */
-      const comoSalio = extras.nitroDeducido ? ' (Nitro por la decoracion)' : '';
+      const comoSalio = deducido ? ' (Nitro por la decoracion)' : '';
       avisar(
         cuantas > 0
-          ? `Discord leido: ${cuantas} insignia${cuantas === 1 ? '' : 's'}${extras.nitro ? ', Nitro incluido' : ''}.${comoSalio}`
+          ? `Discord leido: ${cuantas} insignia${cuantas === 1 ? '' : 's'}${nitro ? ', Nitro incluido' : ''}.${comoSalio}`
           : `Discord leido: public_flags ${extras.flags ?? '?'}, ${prem}. Lo que llevas en Discord no esta en su API.`,
       );
     }
