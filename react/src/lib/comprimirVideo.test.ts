@@ -32,104 +32,62 @@ function bytesDe(mb: number): number {
 }
 
 describe('hayQueTocarlo', () => {
-  /* El caso del primer video real: 4K. Aunque pese poco, descodificar esa
-     medida en cada fotograma es el trabajo que atasca a las maquinas sin
-     aceleracion. Manda por encima de cualquier cuenta de bitrate. */
-  it('4K siempre, aunque pese poco y venga bien comprimido', () => {
-    expect(hayQueTocarlo(bytesDe(3), 3840, 2160, 20).si).toBe(true);
-  });
-
-  /* El liston sube con el tope: 25 Mbps es normal para un 2K (objetivo
-     11,1, liston 33,2) y derroche para un 1080p (objetivo 6,2, liston
-     18,7). Con un tope plano los dos recibian el mismo veredicto. */
-  it('el mismo bitrate se juzga distinto segun la medida', () => {
-    expect(hayQueTocarlo(bytesDe(60), 2560, 1440, 20).si).toBe(false);
-    expect(hayQueTocarlo(bytesDe(60), 1920, 1080, 20).si).toBe(true);
-  });
-
-  it('justo en el limite de ancho no se toca, un pixel mas si', () => {
-    expect(hayQueTocarlo(bytesDe(3), 2560, 1440, 20).si).toBe(false);
-    expect(hayQueTocarlo(bytesDe(3), 2562, 1440, 20).si).toBe(true);
-  });
-
-  /* LO QUE SE PIDIO: que lo que ya viene a 2K se quede a 2K, y solo se
-     reduzca lo que pasa de ahi. Antes el tope era 1920, asi que un 2K
-     entraba al codificador solo por ser mas ancho de la cuenta y salia a
-     1080p aunque estuviera perfecto. */
-  it('un 2K bien comprimido se queda tal cual, no baja a 1080p', () => {
-    // 2560x1440, 20 s, 20 MB -> 8,4 Mbps, por debajo de 11,1 x 1,4
-    const r = hayQueTocarlo(bytesDe(20), 2560, 1440, 20);
-    expect(r.si).toBe(false);
-    if (!r.si) expect(r.motivo).toContain('2560×1440');
-  });
-
-  it('un video diminuto se deja en paz', () => {
-    const r = hayQueTocarlo(bytesDe(3), 1920, 1080, 10);
-    expect(r.si).toBe(false);
-    if (!r.si) expect(r.motivo).toContain('ya pesaba poco');
-  });
-
-  /* LA REGRESION QUE MOTIVO TODO ESTO.
-     El umbral era de PESO TOTAL, 10 MB. Un video de 26 segundos a unos
-     razonables 4,2 Mbps son 13,7 MB, asi que cruzaba el umbral y se
-     recodificaba un archivo que estaba perfectamente — y salia peor, que
-     es lo que se vio publicado. El peso total crece con la duracion; la
-     duracion no dice nada de si algo esta bien comprimido. */
-  it('uno largo pero bien comprimido NO se toca, aunque pese mucho', () => {
-    // 1920x1080, 26 s, 13,7 MB -> 4,4 Mbps, por debajo de 6,2 x 1,4
-    const r = hayQueTocarlo(bytesDe(13.7), 1920, 1080, 26);
-    expect(r.si).toBe(false);
-    if (!r.si) expect(r.motivo).toContain('ya venia bien comprimido');
-  });
-
-  it('uno corto pero derrochando SI se toca', () => {
-    // 1920x1080, 10 s, 40 MB -> 33,6 Mbps, muy por encima del liston de 18,7
-    expect(hayQueTocarlo(bytesDe(40), 1920, 1080, 10).si).toBe(true);
-  });
-
-  /* El objetivo escala con el tamaño: lo que es derroche a 720p es
-     normal a 1080p. Con un numero plano los dos recibian lo mismo. */
-  it('el liston depende de la medida, no es uno solo', () => {
-    // 12,6 Mbps: normal para 1080p (liston 18,7), derroche para 720p (8,3)
-    expect(hayQueTocarlo(bytesDe(30), 1920, 1080, 20).si).toBe(false);
-    expect(hayQueTocarlo(bytesDe(30), 1280, 720, 20).si).toBe(true);
-  });
-
   /**
-   * RECODIFICAR ES EL ULTIMO RECURSO, Y ESTA PRUEBA LO FIJA.
+   * SOLO DECIDE LA MEDIDA. Y llegar aqui costo tres subidas de verdad.
    *
-   * Medido sobre un fondo recodificado en produccion: se le pidieron 6,22
-   * Mbps y salieron 1,67. `videoBitsPerSecond` es un techo y el control de
-   * tasa de Chrome decide solo; no hay donde decirle que gaste mas.
+   * Antes habia una segunda puerta: si el archivo traia mucho mas bitrate
+   * del que le pondriamos nosotros, se recodificaba. El margen se subio de
+   * 1,4 a 3 y no basto, porque el problema no era el margen:
    *
-   * Con eso, un 1080p a diez Mbps NO se toca: pesa mas, pero se ve como lo
-   * subieron. Antes se recodificaba y salia a menos de dos.
+   *     se pidieron 3,50 Mbps -> salieron 2,22
+   *     se pidieron 6,22 Mbps -> salieron 1,67
+   *     se pidieron 6,22 Mbps -> salieron 3,19
+   *
+   * El codificador del navegador nunca gasta lo que se le pide, y no hay
+   * donde decirselo. Asi que recodificar solo se sostiene para lo unico
+   * que no se arregla de otra forma: bajar el numero de pixeles. Para el
+   * peso ya esta el tope de subida.
    */
-  it('un 1080p generoso pero razonable pasa entero', () => {
-    // 1920x1080, 20 s, 25 MB -> 10,5 Mbps. Antes: se tocaba. Ahora no.
-    const r = hayQueTocarlo(bytesDe(25), 1920, 1080, 20);
-    expect(r.si).toBe(false);
-    if (!r.si) expect(r.motivo).toContain('ya venia bien comprimido');
+  it('lo que pasa de 2K se reduce, pese lo que pese', () => {
+    expect(hayQueTocarlo(bytesDe(3), 3840, 2160).si).toBe(true);
+    expect(hayQueTocarlo(bytesDe(200), 2562, 1440).si).toBe(true);
   });
 
-  /* LOS DOS QUE SE PUBLICARON EMBORRONADOS, con sus medidas de verdad
-     leidas de produccion. Ya salieron del codificador, asi que vuelven a
-     entrar a 2,2 y 2,5 Mbps: la regla nueva NO los toca, que es lo
-     correcto —recodificar algo ya aplastado solo lo aplasta mas—. Para
-     que se arreglen hay que volver a subir el ORIGINAL. */
+  it('justo en el limite no se toca, un pixel mas si', () => {
+    expect(hayQueTocarlo(bytesDe(3), 2560, 1440).si).toBe(false);
+    expect(hayQueTocarlo(bytesDe(3), 2562, 1440).si).toBe(true);
+  });
+
+  /* LO QUE MOTIVO EL CAMBIO, fijado para que no vuelva. Un 1080p generoso
+     —el caso que el dueño subio tres veces y tres veces salio peor— pasa
+     entero. Pesa mas y se ve como lo subieron. */
+  it('un 1080p, pese lo que pese, pasa entero', () => {
+    for (const mb of [5, 20, 50, 64]) {
+      const r = hayQueTocarlo(bytesDe(mb), 1920, 1080);
+      expect(r.si).toBe(false);
+      if (!r.si) expect(r.motivo).toContain('se sube tal cual');
+    }
+  });
+
+  it('y un 720p tambien, que el bitrate ya no decide nada', () => {
+    expect(hayQueTocarlo(bytesDe(60), 1280, 720).si).toBe(false);
+  });
+
+  /* Los dos fondos que se publicaron emborronados, con sus medidas reales.
+     Ya salieron del codificador: volver a pasarlos solo los aplastaria
+     mas. */
   it('no vuelve a pasar por el codificador lo que ya salio de el', () => {
-    // juanbeltran: 1920x1080, 26,03 s, 6,89 MB -> 2,22 Mbps
-    expect(hayQueTocarlo(7222780, 1920, 1080, 26.03).si).toBe(false);
-    // shark: 1920x816, 19,47 s, 5,75 MB -> 2,48 Mbps
-    expect(hayQueTocarlo(6026612, 1920, 816, 19.47).si).toBe(false);
+    expect(hayQueTocarlo(7222780, 1920, 1080).si).toBe(false);
+    expect(hayQueTocarlo(6026612, 1920, 816).si).toBe(false);
   });
 
-  /* Sin duracion no hay bitrate que calcular. Recodificar es la respuesta
-     segura: como mucho se gasta tiempo, y nunca se deja pasar un archivo
-     enorme por no poder medirlo. */
-  it('sin duracion legible, se recodifica', () => {
-    expect(hayQueTocarlo(bytesDe(30), 1920, 1080, 0).si).toBe(true);
-    expect(hayQueTocarlo(bytesDe(30), 1920, 1080, Infinity).si).toBe(true);
+  it('el motivo dice la medida y el peso, para poder mirarlo luego', () => {
+    const r = hayQueTocarlo(bytesDe(12), 1920, 1080);
+    expect(r.si).toBe(false);
+    if (!r.si) {
+      expect(r.motivo).toContain('1920×1080');
+      expect(r.motivo).toContain('12.0 MB');
+    }
   });
 });
 

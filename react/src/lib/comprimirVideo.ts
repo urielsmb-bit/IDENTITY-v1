@@ -199,54 +199,9 @@ function bitratePara(ancho: number, alto: number): number {
   return Math.round(ancho * alto * FPS * BITS_POR_PIXEL);
 }
 
-/**
- * Cuanto puede pasarse el original antes de que recodificar compense.
- *
- * ────────────────────────────────────────────────────────────────────────
- * ERA 1,4 Y SE SUBE, PORQUE NUESTRO CODIFICADOR NO CUMPLE
- * ────────────────────────────────────────────────────────────────────────
- *
- * `videoBitsPerSecond` es un TECHO, no un objetivo, y ya se sabia. Lo que
- * no se sabia es cuanto se queda corto con video de verdad. Medido sobre
- * un fondo recodificado en produccion:
- *
- *     se le pidieron ..... 6,22 Mbps
- *     salieron ........... 1,67 Mbps      1920x1080, High, 30 fps
- *
- * Un setenta y tres por ciento por debajo. Y no es que falten fotogramas
- * -se contaron 23 en 0,8 s de video, o sea los 30 de rigor- ni que el
- * perfil sea pobre: es que el control de tasa de Chrome decide solo y no
- * hay donde decirle que gaste mas. `MediaRecorder` no expone nada mas.
- *
- * Con eso encima de la mesa, la cuenta cambia de sentido. Recodificar ya
- * no es «ajustar el tamaño»: es tirar dos tercios del detalle a cambio de
- * bytes. Asi que deja de ser el camino normal y pasa a ser el ultimo
- * recurso.
- *
- * QUE JUSTIFICA TOCAR UN VIDEO, ENTONCES:
- *
- *   · Demasiados pixeles por fotograma. Eso no lo arregla nada mas, se ve
- *     en maquinas sin aceleracion, y va por `ANCHO_MAX` aparte de esto.
- *   · Un derroche de verdad: tres veces lo que haria falta. Ahi hasta un
- *     recodificado flojo sale ganando.
- *
- * Lo que queda en medio -un 1080p a ocho o diez Mbps, que antes se
- * recodificaba- pasa entero. Pesa mas y se ve como lo subieron, que es lo
- * que se pidio. El tope de subida de 64 MB ya acota lo peor.
- */
-const HOLGURA = 3;
 
-/**
- * Por debajo de esto no se toca nada, pese lo que pese el calculo.
- *
- * OJO CON LEER ESTO COMO UN LIMITE DE PESO. Lo era, y estaba mal: un
- * video de 26 segundos a unos razonables 4 Mbps son 13 MB y cruzaba el
- * umbral, asi que se recodificaba un archivo que estaba perfectamente. El
- * peso total crece con la DURACION, y la duracion no tiene nada que ver
- * con si un video esta bien comprimido. Lo que decide es el bitrate; esto
- * solo evita molestar a un archivo diminuto.
- */
-const DESDE_MB = 4;
+
+
 
 export interface VideoEncogido {
   encogido: true;
@@ -335,29 +290,50 @@ export function hayQueTocarlo(
   bytes: number,
   ancho: number,
   alto: number,
-  duracion: number,
 ): { si: true } | { si: false; motivo: string } {
   /* Demasiados pixeles que descodificar en cada fotograma. Esto manda por
      encima de todo lo demas: es el motivo por el que existe esto. */
   if (ancho > ANCHO_MAX) return { si: true };
 
-  if (bytes <= DESDE_MB * 1024 * 1024) {
-    return { si: false, motivo: `ya pesaba poco (${(bytes / 1048576).toFixed(1)} MB)` };
-  }
-
-  if (!duracion || !isFinite(duracion)) return { si: true };
-
-  const suyo = (bytes * 8) / duracion;
-  const nuestro = bitratePara(ancho, alto);
-  if (suyo <= nuestro * HOLGURA) {
-    return {
-      si: false,
-      motivo:
-        `ya venia bien comprimido (${ancho}×${alto} a ` +
-        `${(suyo / 1e6).toFixed(1)} Mbps)`,
-    };
-  }
-  return { si: true };
+  /**
+   * Y SE ACABO. EL BITRATE YA NO DECIDE NADA.
+   *
+   * Aqui habia una segunda puerta: si el archivo venia con mucho mas
+   * bitrate del que le pondriamos nosotros, se recodificaba. Primero con
+   * un margen de 1,4 y luego de 3, cada vez mas generoso. No basto:
+   *
+   *     se pidieron 3,50 Mbps -> salieron 2,22
+   *     se pidieron 6,22 Mbps -> salieron 1,67
+   *     se pidieron 6,22 Mbps -> salieron 3,19
+   *
+   * Tres subidas de verdad, con los tres ajustes distintos. El
+   * codificador del navegador NUNCA gasta lo que se le pide:
+   * `videoBitsPerSecond` es un techo y el control de tasa decide solo,
+   * sin ningun sitio donde decirle que gaste mas. Subir el numero pedido
+   * no sube el entregado.
+   *
+   * Entonces la pregunta deja de ser «cuanto margen doy» y pasa a ser
+   * otra: para que se recodifica. Y solo hay una respuesta que se sostiene
+   * —bajar el numero de pixeles, que es lo que atasca a un equipo sin
+   * aceleracion y no se arregla de ninguna otra forma—. Eso ya esta
+   * resuelto tres lineas mas arriba.
+   *
+   * Para el peso no hace falta: el tope de subida son 64 MB y lo aplica
+   * quien sube, antes de llegar aqui. Un 1080p de 64 MB se baja una vez y
+   * se ve como se subio; recodificarlo lo dejaba en un tercio del detalle
+   * a cambio de megabytes que el egreso de R2 no cobra.
+   *
+   * Lo que se pierde escribiendolo asi: alguien puede subir un 1080p de
+   * cincuenta megas y sus visitantes se los bajan. Lo que se gana: nadie
+   * vuelve a ver su fondo emborronado sin haber hecho nada raro. Se pidio
+   * calidad tres veces; esto es lo que significa.
+   */
+  return {
+    si: false,
+    motivo:
+      `se sube tal cual (${ancho}×${alto}, ${(bytes / 1048576).toFixed(1)} MB). ` +
+      'Solo se recodifica lo que pasa de 2K',
+  };
 }
 
 /**
@@ -413,12 +389,7 @@ export async function encogerVideo(
     /* AHORA se decide, que es cuando se sabe. Antes lo decidia quien
        llamaba con el peso y un ancho supuesto; aqui estan el ancho, el
        alto y la duracion de verdad. */
-    const veredicto = hayQueTocarlo(
-      archivo.size,
-      v.videoWidth,
-      v.videoHeight,
-      v.duration,
-    );
+    const veredicto = hayQueTocarlo(archivo.size, v.videoWidth, v.videoHeight);
     if (!veredicto.si) return noSePudo(veredicto.motivo);
 
     const { w, h } = medidaDestino(v.videoWidth, v.videoHeight);
