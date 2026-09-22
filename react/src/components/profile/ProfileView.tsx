@@ -162,14 +162,27 @@ function arrancarFondo(raiz: HTMLElement | null) {
   if (video) void video.play().catch(() => {});
 
   const marco = raiz.querySelector<HTMLIFrameElement>('iframe.pf-bgvideo');
+  if (!marco) return;
+
+  /* Aqui SI habia que mirar antes, y el `try/catch` que habia no valia:
+     `postMessage` a un origen que no cuadra no lanza — escribe el error en
+     la consola y sigue—, asi que el `catch` no se ejecutaba nunca y el
+     error salia igual.
+
+     Mientras el marco no ha cargado es `about:blank` y hereda nuestro
+     origen, asi que se le puede leer `location`. En cuanto tiene a Vimeo
+     dentro, leerlo lanza. La excepcion es la señal de que ya se le puede
+     hablar. */
   try {
-    marco?.contentWindow?.postMessage(
-      JSON.stringify({ method: 'play' }),
-      'https://player.vimeo.com',
-    );
+    void marco.contentWindow?.location.href;
+    return;   // se dejo leer: todavia en blanco, no hay a quien hablarle
   } catch {
-    /* Marco todavia sin cargar. Se queda como estaba. */
+    /* de otro dominio: es Vimeo y ya escucha */
   }
+  marco.contentWindow?.postMessage(
+    JSON.stringify({ method: 'play' }),
+    'https://player.vimeo.com',
+  );
 }
 
 export function ProfileView({
@@ -596,23 +609,81 @@ export function ProfileView({
     if (!marco) return;
 
     let vivo = true;
-    const pedirAvisos = () => {
-      for (const ev of ['play', 'playing', 'timeupdate']) {
-        try {
-          marco.contentWindow?.postMessage(
-            JSON.stringify({ method: 'addEventListener', value: ev }),
-            'https://player.vimeo.com',
-          );
-        } catch { /* el marco todavia no esta */ }
+
+    /**
+     * ¿El marco ya tiene a Vimeo dentro?
+     *
+     * Hay que preguntarlo porque `postMessage` con un origen que no cuadra
+     * NO lanza: escribe el error en la consola y sigue adelante. O sea que
+     * el `try/catch` que habia aqui no atrapaba absolutamente nada — lo
+     * unico que conseguia era dar la impresion de que el caso estaba
+     * contemplado mientras la consola se llenaba.
+     *
+     * Un marco recien creado es `about:blank`, que hereda NUESTRO origen,
+     * asi que leerle `location.href` funciona. Uno que ya ha cargado a
+     * Vimeo es de otro dominio y leerlo LANZA. Aqui la excepcion es la
+     * buena noticia, y es lo unico que se puede mirar desde fuera de un
+     * marco ajeno.
+     */
+    const yaTieneVimeo = () => {
+      try {
+        void marco.contentWindow?.location.href;
+        return false;   // se dejo leer: sigue en blanco
+      } catch {
+        return true;    // lanzo: ya es de otro dominio
       }
     };
+
+    /* El tope es un seguro, no un ajuste. Suscribirse son tres recados y
+       hacen falta dos veces como mucho —al cargar y al estar listo—; si
+       algun dia algo vuelve a llamar aqui en cadena, esto lo corta en la
+       tercera en vez de dejarlo crecer. */
+    let rondas = 0;
+    const pedirAvisos = () => {
+      if (!vivo || rondas >= 3 || !yaTieneVimeo()) return;
+      rondas++;
+      for (const ev of ['play', 'playing', 'timeupdate']) {
+        marco.contentWindow?.postMessage(
+          JSON.stringify({ method: 'addEventListener', value: ev }),
+          'https://player.vimeo.com',
+        );
+      }
+    };
+
     const alOir = (e: MessageEvent) => {
       if (e.origin !== 'https://player.vimeo.com') return;
+      /* Y que venga de NUESTRO marco. El oyente esta en `window`, asi que
+         sin esto cualquier otro reproductor de Vimeo que hubiera en la
+         pagina estaria conduciendo a este. */
+      if (e.source !== marco.contentWindow) return;
       let d: { event?: string; method?: string } | null = null;
       try {
         d = typeof e.data === 'string' ? JSON.parse(e.data) : (e.data as typeof d);
       } catch { return; }
-      if (d?.event === 'ready' || d?.method === 'addEventListener') pedirAvisos();
+
+      /**
+       * SOLO `ready`. Y esto es la correccion de un fallo que llego a
+       * escribir 101.420 errores en una sola visita.
+       *
+       * Aqui ponia `if (d?.event === 'ready' || d?.method === 'addEventListener')`.
+       * El segundo caso parecia razonable —"si contesta algo, vuelve a
+       * pedirselo"— y es exactamente el bucle:
+       *
+       *   Vimeo ACUSA RECIBO de cada `addEventListener` devolviendo un
+       *   mensaje con `method:'addEventListener'` dentro. Medido contra el
+       *   reproductor de verdad:
+       *
+       *     enviado  {"method":"addEventListener","value":"play"}
+       *     recibido {"method":"addEventListener","value":"play"}
+       *
+       *   O sea que cada ronda de 3 recados provocaba 3 acuses, y cada
+       *   acuse otra ronda: 3 → 9 → 27 → 81… En diez rondas van 88.572
+       *   mensajes y en once, 265.719. Los 101.420 de la captura estaban
+       *   entre las dos, todavia subiendo.
+       *
+       * El acuse es una confirmacion, no una peticion. No se contesta.
+       */
+      if (d?.event === 'ready') pedirAvisos();
       if (d?.event === 'play' || d?.event === 'playing' || d?.event === 'playProgress') {
         if (vivo) setVideoEnMarcha(true);
       }
