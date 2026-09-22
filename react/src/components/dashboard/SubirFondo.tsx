@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
-import { subirFondoVimeo, type AvanceSubida } from '@/lib/vimeoSubida';
 import { hayR2, subirAR2 } from '@/lib/r2';
+import { type AvanceSubida } from '@/lib/vimeoSubida';
 import { sePuedeEncoger, encogerVideo } from '@/lib/comprimirVideo';
 import { prepararImagen, posterDeVideo } from '@/lib/imagen';
 import { safeMedia } from '@/lib/utils';
@@ -26,7 +26,18 @@ interface SubirFondoProps {
       al sustituirlo. No sirve `previa`: cuando el fondo es un video de
       Vimeo, `previa` trae la miniatura de Vimeo y no el archivo nuestro. */
   anterior?: string;
-  /** Y su poster, que es otro archivo y hay que barrerlo igual. */
+  /** Y su poster, que es otro archivo y habria que barrerlo igual.
+   *
+   *  HOY NO LO LEE NADIE, y queda escrito para que no parezca un descuido.
+   *  Lo usaba la subida al cubo de Supabase, que se ha quitado al cerrar
+   *  todo lo que no fuera Cloudflare. Y la subida a R2 no lo ha barrido
+   *  NUNCA: `r2.ts` no tiene con que —solo expone `hayR2` y `subirAR2`—,
+   *  asi que cada sustitucion de fondo deja el archivo viejo en el cubo.
+   *
+   *  Eso ya pasaba antes de este cambio y no se arregla aqui: hace falta
+   *  un borrado en R2, que es el mismo agujero que tiene `borrar-cuenta`.
+   *  Se queda el campo porque quien llama ya lo pasa y porque el dia que
+   *  exista ese borrado, este es su sitio. */
   anteriorPoster?: string;
   onSubido: (r: FondoSubido) => void;
   onQuitar?: () => void;
@@ -183,7 +194,6 @@ export function SubirFondo({
   titulo,
   previa,
   anterior,
-  anteriorPoster,
   onSubido,
   onQuitar,
   guia,
@@ -382,84 +392,31 @@ export function SubirFondo({
          El cubo ya acepta mp4 y webm; lo unico que cambia es el tope, que
          es mucho mas bajo. Se dice el tope EN MB de verdad y lo que pesa el
          archivo, para que se sepa cuanto hay que recortar. */
-      if (!CONFIG.VIMEO) {
-        const mb = archivo.size / (1024 * 1024);
-        if (mb > MAX_CUBO_MB) {
-          setError(
-            `Ese vídeo pesa ${mb.toFixed(1)} MB y el tope es ${MAX_CUBO_MB} MB, ` +
-              'porque ahora mismo los vídeos se guardan sin optimizar y se ' +
-              'descargan enteros en cada visita. Con Vimeo conectado el tope ' +
-              `sube a ${MAX_VIDEO_MB} MB y él se encarga de comprimirlo.`,
-          );
-          if (entradaRef.current) entradaRef.current.value = '';
-          return;
-        }
-        if (!hasBackend() || !backend.haySesion()) {
-          setError('Hay que entrar en la cuenta para subir un vídeo.');
-          if (entradaRef.current) entradaRef.current.value = '';
-          return;
-        }
-        setFase('subiendo');
-        try {
-          const ratio = (await medirVideo(archivo)).ratio;
-          const ext = (archivo.name.split('.').pop() || 'mp4').toLowerCase();
-          const url = await backend.subirMedio(archivo, 'fondo', ext, anterior);
+      /* ────────────────────────────────────────────────────────────────
+         Y AQUI SE ACABA EL CAMINO.
 
-          /* Y su primer fotograma, DESPUÉS del vídeo y sin poder tumbarlo.
-             Un vídeo de fondo tarda en llegar aunque pese poco, y mientras
-             tanto detrás de la tarjeta no hay nada: treinta kilobytes de
-             poster tapan ese hueco. Si el navegador no sabe decodificar
-             ese formato, se sube sin poster — es un adorno, y perder el
-             fondo entero por su miniatura sería cambiar lo importante por
-             lo accesorio. */
-          let poster = '';
-          try {
-            const img = await posterDeVideo(archivo);
-            if (img) {
-              poster = await backend.subirMedio(
-                img.blob,
-                'poster',
-                img.extension,
-                anteriorPoster,
-              );
-            }
-          } catch {
-            /* ídem: el fondo ya está arriba y es lo que se pidió. */
-          }
+         Debajo habia dos salidas mas: el cubo de Supabase cuando Vimeo no
+         estaba conectado, y Vimeo cuando si. Las dos se han quitado. Un
+         video de fondo se guarda en Cloudflare, y si Cloudflare no esta,
+         no se guarda en ninguna parte.
 
-          onSubido({ tipo: 'video', url, ratio, poster });
-          setNota(
-            `Subido · ${mb.toFixed(1)} MB` + (poster ? ' · con portada' : ''),
-          );
-        } catch (e) {
-          setError(explicar(e));
-        } finally {
-          setFase('quieto');
-          if (entradaRef.current) entradaRef.current.value = '';
-        }
-        return;
-      }
+         POR QUE SE CIERRA LA ENTRADA Y NO SE VACIA LA CASA
 
-      const ctrl = new AbortController();
-      abortRef.current = ctrl;
-      setFase('subiendo');
-      setAvance({ enviados: 0, total: archivo.size, pct: 0 });
-      try {
-        const r = await subirFondoVimeo(archivo, {
-          alAvanzar: setAvance,
-          alProcesar: () => setFase('procesando'),
-          signal: ctrl.signal,
-        });
-        onSubido({ tipo: 'video', url: `https://vimeo.com/${r.id}`, ratio: r.ratio });
-      } catch (e) {
-        if (e instanceof DOMException && e.name === 'AbortError') setError('Subida cancelada.');
-        else setError(explicar(e));
-      } finally {
-        setFase('quieto');
-        setAvance(null);
-        abortRef.current = null;
-        if (entradaRef.current) entradaRef.current.value = '';
-      }
+         Los fondos que YA estan en Vimeo se siguen viendo exactamente
+         igual: el perfil los pinta como siempre y aqui no se ha tocado
+         nada de eso. El plazo que queda es justo para que sus dueños
+         tengan tiempo de cambiarlos ellos.
+
+         Lo que no puede seguir pasando es que entre uno NUEVO por una
+         puerta que se va a cerrar — eso seria fabricar el mismo problema
+         un mes mas tarde. Cerrar la entrada y vaciar la casa son dos
+         trabajos distintos, y este es el primero.
+         ──────────────────────────────────────────────────────────────── */
+      setError(
+        'Los vídeos se guardan en Cloudflare y ahora mismo no está ' +
+          'disponible. Inténtalo en un momento: tu perfil no ha cambiado.',
+      );
+      if (entradaRef.current) entradaRef.current.value = '';
     },
     [onSubido],
   );

@@ -315,6 +315,19 @@ function createBlankProfile(username = 'usuario', nombre = ''): Profile {
   };
 }
 
+/**
+ * El dia que los fondos de Vimeo dejan de verse.
+ *
+ * Vive aqui, escrito una sola vez, porque lo miran el aviso del editor y
+ * cualquier cosa que venga despues. Una fecha repetida a mano en dos
+ * sitios es una fecha que el dia que se mueva va a quedarse a medias.
+ *
+ * Cuando pase: se quita el aviso, se quita `useVimeo` y se quita
+ * `esVimeo` del perfil. Hasta entonces los seis que quedan se ven igual
+ * que siempre — el plazo es suyo, no nuestro.
+ */
+const FIN_DE_VIMEO = '30 de septiembre';
+
 export default function DashboardPage() {
   const [searchParams] = useSearchParams();
   const claimParam = searchParams.get('claim');
@@ -1520,71 +1533,67 @@ export default function DashboardPage() {
                   tener un perfil. La imagen cubre de sobra a quien no
                   paga. */}
               <Pro bloqueado={!premium}>
-              <Campo
-                label="…o pegar un enlace de Vimeo"
-                valor={vimeoActivo ? `ID ${idVimeo(profile.bgValue)}` : undefined}
-              >
-                <input
-                  type="url"
-                  className="inp"
-                  placeholder="https://vimeo.com/123456789"
-                  value={profile.bgType === 'video' ? profile.bgValue || '' : ''}
-                  onChange={(e) => {
-                    const url = e.target.value.trim();
-                    update(
-                      url
-                        ? { bgType: 'video', bgValue: url }
-                        : { bgType: 'gradient', bgValue: '' },
-                    );
-                  }}
-                />
-                {profile.bgType === 'video' && profile.bgValue && !vimeoActivo && (
+              {/* LA CASILLA DE PEGAR UN ENLACE DE VIMEO YA NO ESTA.
+
+                  Aqui habia un `<input type="url">` que guardaba cualquier
+                  `vimeo.com/...` como fondo del perfil. Se quita porque los
+                  videos pasan a guardarse solo en Cloudflare.
+
+                  Dejarla habria significado que alguien puede seguir atando
+                  su perfil a un sitio del que nos estamos yendo. O sea:
+                  fabricar el mismo problema otra vez, un mes mas tarde.
+
+                  Lo que SI se queda, y solo para quien ya tiene uno puesto,
+                  es la ficha, los avisos y la fecha en la que deja de verse.
+                  Un plazo no sirve de nada si quien tiene que actuar no se
+                  entera de que existe. */}
+              {vimeoActivo && (
+                <Campo
+                  label="Tu fondo está en Vimeo"
+                  valor={`ID ${idVimeo(profile.bgValue)}`}
+                >
                   <p className="drop__err" role="alert">
-                    No reconozco ese enlace de Vimeo.
+                    <b>Este fondo deja de verse el {FIN_DE_VIMEO}.</b> sharee ya
+                    no guarda vídeos en Vimeo: ahora van a Cloudflare, que es
+                    nuestro y empieza a verse antes. El tuyo funciona hasta esa
+                    fecha, pero no se puede mudar solo.
                   </p>
-                )}
-                {vimeoActivo && estadoVimeo === 'error' && (
-                  <p className="drop__err" role="alert">
-                    Vimeo no da la ficha de ese vídeo. Si es privado, copia el
-                    enlace completo con su código; si no, comprueba que se puede
-                    incrustar.
+                  <p className="f__d">
+                    Para arreglarlo, vuelve a subir el mismo archivo aquí arriba.
+                    Queda mejor que ahora: pasa por el aligerado del editor y se
+                    guarda con portada, así que tu perfil aparece antes.
                   </p>
-                )}
-                {/* El vídeo existe y Vimeo contesta, pero se niega a
-                    reproducirlo FUERA de vimeo.com. Sin este aviso el editor
-                    dice «listo», se guarda el perfil, y lo que ve quien entra
-                    es un rectángulo negro con un «Lo sentimos» de Vimeo —
-                    desde fuera parece que el roto es nuestro. El dato viene en
-                    la misma respuesta que la proporción: teniéndolo delante,
-                    callárselo es dejar que se publique así. */}
-                {vimeoActivo && estadoVimeo === 'listo' && fichaVimeo && !fichaVimeo.embebible && (
-                  <p className="drop__err" role="alert">
-                    Vimeo no deja incrustar este vídeo en{' '}
-                    <b>{typeof window !== 'undefined' ? window.location.hostname : 'este sitio'}</b>,
-                    así que el fondo saldría en negro. En Vimeo: el vídeo →
-                    Settings → Privacy → «Where can this be embedded?» →{' '}
-                    <b>Anywhere</b>, o añade ese dominio a la lista.
-                  </p>
-                )}
-                {vimeoActivo && (
+                  {estadoVimeo === 'error' && (
+                    <p className="drop__err" role="alert">
+                      Y ahora mismo Vimeo ni siquiera da la ficha de este vídeo,
+                      así que puede dejar de verse antes de esa fecha.
+                    </p>
+                  )}
+                  {estadoVimeo === 'listo' && fichaVimeo && !fichaVimeo.embebible && (
+                    <p className="drop__err" role="alert">
+                      Vimeo tampoco deja incrustarlo en{' '}
+                      <b>{typeof window !== 'undefined' ? window.location.hostname : 'este sitio'}</b>,
+                      así que puede que ya se esté viendo en negro.
+                    </p>
+                  )}
                   <p className="vimeo__ficha">
                     {estadoVimeo === 'cargando' && 'Leyendo el vídeo…'}
                     {estadoVimeo === 'listo' && fichaVimeo && (
                       <>
                         {fichaVimeo.titulo || 'Sin título'} ·{' '}
                         <b>{proporcionVimeo(fichaVimeo.ratio)}</b>
-                        {Math.abs(fichaVimeo.ratio - 16 / 9) > 0.05 && (
-                          <>
-                            {' '}
-                            — no es 16:9, así que el fondo se recorta por los
-                            lados para cubrir la pantalla.
-                          </>
-                        )}
                       </>
                     )}
                   </p>
-                )}
+                  <button
+                    type="button"
+                    className="btn btn--sm btn--quiet"
+                    onClick={() => update({ bgType: 'gradient', bgValue: '' })}
+                  >
+                    Quitar este fondo
+                  </button>
               </Campo>
+              )}
               </Pro>
 
               {esMedia && (
