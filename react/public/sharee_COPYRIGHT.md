@@ -1,10 +1,10 @@
 # sharee — Política de derechos de autor y DMCA
 
-> **Versión 2026-09-16** · **En vigor desde el 16 de septiembre de 2026**
+> **Versión 2026-09-23** · **En vigor desde el 23 de septiembre de 2026**
 >
 > **Responsable:** sharee, un proyecto operado por una persona natural residente
 > en **Colombia**.
-> **Contacto para asuntos de copyright:** **hola@sharee.fun**
+> **Contacto para asuntos de copyright:** **hello@sharee.fun**
 
 ---
 
@@ -51,7 +51,7 @@ infringe o no, consulta con un abogado antes de enviar nada.
 ## 1. A dónde se escribe
 
 Todas las notificaciones y contranotificaciones van por correo a
-****hola@sharee.fun****. Solo aceptamos este canal. Una notificación incompleta
+****hello@sharee.fun****. Solo aceptamos este canal. Una notificación incompleta
 puede retrasarse o rechazarse.
 
 ---
@@ -123,11 +123,11 @@ identificar el servicio, sin sugerir que nos patrocinen ni que estemos asociados
 a ellos. Los logotipos son de sus respectivos titulares.
 
 Si eres titular de una marca y quieres que retiremos su icono, escríbenos a
-**hola@sharee.fun**.
+**hello@sharee.fun**.
 
 ---
 
-**Preguntas, notificaciones y soporte:** **hola@sharee.fun**
+**Preguntas, notificaciones y soporte:** **hello@sharee.fun**
 
 **Documentos relacionados:** [Términos del servicio](/terminos) ·
 [Política de privacidad](/privacidad)

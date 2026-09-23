@@ -198,7 +198,7 @@ export function markdownAHtml(md: string): string {
          blanco. Sin esto, la cabecera de los tres documentos legales
          —versión, responsable y contacto, tres cosas distintas— salía
          como un renglón corrido: «…16 de septiembre de 2026 Responsable:
-         sharee, un proyecto… Contacto: hola@sharee.fun Está escrita
+         sharee, un proyecto… Contacto: hello@sharee.fun Está escrita
          para…». Se lee tres veces antes de entender dónde acaba cada
          una. */
       const parrafos = buffer

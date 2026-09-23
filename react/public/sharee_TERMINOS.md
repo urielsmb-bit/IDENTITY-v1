@@ -1,10 +1,10 @@
 # sharee — Términos del servicio
 
-> **Versión 2026-09-16** · **En vigor desde el 16 de septiembre de 2026**
+> **Versión 2026-09-23** · **En vigor desde el 23 de septiembre de 2026**
 >
 > **Responsable:** sharee, un proyecto operado por una persona natural residente
 > en **Colombia**.
-> **Contacto:** **hola@sharee.fun**
+> **Contacto:** **hello@sharee.fun**
 >
 > Está escrito para que se entienda, no para sonar a abogado. Si algo aquí no
 > te queda claro, escríbenos y te lo explicamos en las mismas palabras.
@@ -37,7 +37,7 @@ desconocido.
 - Debes tener al menos **13 años**, o la edad mínima que exija la ley de tu país
   si es mayor. Si no la alcanzas, no puedes crear cuenta.
 - **Una persona, una cuenta.** Cada cuenta tiene **un perfil**.
-- Eres responsable de tu contraseña. Avísanos en **hola@sharee.fun** si crees
+- Eres responsable de tu contraseña. Avísanos en **hello@sharee.fun** si crees
   que alguien ha entrado en tu cuenta.
 - No compartas ni vendas el acceso a tu cuenta.
 
@@ -214,7 +214,7 @@ que como consumidor te correspondan en tu país de residencia.
 
 ---
 
-**Contacto:** **hola@sharee.fun**
+**Contacto:** **hello@sharee.fun**
 
 **Documentos relacionados:** [Política de privacidad](/privacidad) ·
 [Política de derechos de autor y DMCA](/copyright)

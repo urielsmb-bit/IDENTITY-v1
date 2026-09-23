@@ -1,10 +1,10 @@
 # sharee — Política de privacidad
 
-> **Versión 2026-09-16** · **En vigor desde el 16 de septiembre de 2026**
+> **Versión 2026-09-23** · **En vigor desde el 23 de septiembre de 2026**
 >
 > **Responsable:** sharee, un proyecto operado por una persona natural residente
 > en **Colombia**.
-> **Contacto:** **hola@sharee.fun**
+> **Contacto:** **hello@sharee.fun**
 >
 > Está escrita para que sea clara y honesta, no para que suene a abogado. Dice lo
 > que el sitio hace de verdad, no lo que queda bien decir.
@@ -242,7 +242,7 @@ Puedes pedirnos en cualquier momento:
 - **llevártelo** en un archivo que puedas leer,
 - **oponerte** a un tratamiento concreto.
 
-Escribe a **hola@sharee.fun**. Respondemos en un plazo máximo de **30
+Escribe a **hello@sharee.fun**. Respondemos en un plazo máximo de **30
 días**. Lo de ver, corregir y borrar puedes hacerlo tú mismo desde los ajustes,
 sin escribir a nadie.
 
@@ -260,7 +260,7 @@ edad mínima que exija la ley de su país, si es mayor de 13**. No recogemos a
 sabiendas datos de menores por debajo de esa edad.
 
 Si detectamos una cuenta así, la eliminamos. Si eres madre, padre o tutor y crees
-que un menor a tu cargo tiene una cuenta aquí, escribe a **hola@sharee.fun**
+que un menor a tu cargo tiene una cuenta aquí, escribe a **hello@sharee.fun**
 y la borramos.
 
 ---
@@ -281,7 +281,7 @@ y la borramos.
 Los perfiles los escriben sus dueños; no revisamos cada uno antes de publicarlo.
 Si ves un perfil que suplanta a alguien, publica datos de otra persona, o
 contiene material ilegal, denúncialo desde el propio perfil o escribe a
-**hola@sharee.fun**. Lo revisamos y, si procede, lo retiramos.
+**hello@sharee.fun**. Lo revisamos y, si procede, lo retiramos.
 
 ---
 
@@ -301,4 +301,4 @@ que entre en vigor. La fecha de arriba dice cuándo se actualizó por última ve
 
 ---
 
-**Contacto:** **hola@sharee.fun**
+**Contacto:** **hello@sharee.fun**
