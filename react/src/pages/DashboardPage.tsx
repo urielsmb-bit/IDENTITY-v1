@@ -294,10 +294,22 @@ function createBlankProfile(username = 'usuario', nombre = ''): Profile {
     showStats: true,
     bgType: 'gradient',
     bgValue: 'linear-gradient(135deg, #0d0c22 0%, #1e1b4b 50%, #0f172a 100%)',
-    socials: [
-      { net: 'github', url: 'https://github.com', label: 'GitHub' },
-      { net: 'x', url: 'https://x.com', label: 'X' },
-    ],
+    /* NACE SIN REDES, y antes nacia con dos.
+
+       Aqui habia un GitHub y una X apuntando a `https://github.com` y
+       `https://x.com` a secas. O sea que cualquiera que se creaba un
+       perfil salia con dos iconos puestos que no habia elegido y que no
+       llevaban a su cuenta: llevaban a la portada de esas dos webs.
+
+       Es la misma clase de error que el nombre que nacia morado y el
+       barrido que se encendia solo: un valor de ejemplo que se quedo
+       dentro y que a partir de ahi cada persona tenia que DESHACER. Un
+       perfil vacio es un perfil listo para llenar; uno con relleno de
+       muestra es trabajo que le has dado a alguien sin preguntar.
+
+       Los perfiles que YA existen no se tocan: esto solo lo lee
+       `createBlankProfile`, que corre una vez, al crear la cuenta. */
+    socials: [],
     links: [],
     projects: [],
     gallery: [],
