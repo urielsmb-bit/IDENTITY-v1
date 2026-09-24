@@ -50,6 +50,7 @@ import { PanelInsignias } from '@/components/dashboard/PanelInsignias';
 import { PublicarPlantilla } from '@/components/dashboard/PublicarPlantilla';
 import { useInsignias } from '@/hooks/useInsignias';
 import { diasDePrueba, tienePlan } from '@/lib/insignias';
+import { sinPlanNoEntra } from '@/lib/candadoPro';
 import { DIBUJOS } from '@/components/dashboard/dibujos';
 import { BLOQUE_POR_ID, type DefBloque, BLOQUES_APAGADOS_POR_DEFECTO } from '@/data/bloques';
 import { APARIENCIA_APAGADA, BASE_PERSONALIZADA } from '@/data/plantillasBase';
@@ -373,7 +374,7 @@ export default function DashboardPage() {
     viewport,
     dirty,
     init,
-    update,
+    update: updateSinCandado,
     updateField,
     setSection,
     setViewport,
@@ -500,6 +501,21 @@ export default function DashboardPage() {
    */
   const diasPrueba = diasDePrueba(datosInsignias);
 
+  /* Y se le dice al store, que es donde de verdad se guarda y el unico
+     sitio que tiene delante el perfil ANTERIOR — que es contra lo que el
+     candado compara.
+
+     SOLO CUANDO SE SABE. Mientras `concedidas` sea `undefined`, el
+     servidor no ha contestado todavia, ha fallado, o no hay servidor: en
+     los tres casos se manda `null` y el candado se queda abierto.
+     Cerrarlo a ciegas se tragaria el primer cambio de alguien que SI ha
+     pagado, y lo haria sin decir nada, que es la peor forma de fallar. */
+  const fijarPlan = useProfileStore((st) => st.setPlan);
+  const insigniasLlegaron = Array.isArray(datosInsignias.concedidas);
+  useEffect(() => {
+    fijarPlan(insigniasLlegaron ? premium : null);
+  }, [fijarPlan, insigniasLlegaron, premium]);
+
   /**
    * El anuncio de la semana, una vez por cuenta.
    *
@@ -558,6 +574,44 @@ export default function DashboardPage() {
   const storeKeyRef = useRef('');
   /** Perfil para el que ya se inicializó el editor (undefined = ninguno todavía). */
   const initializedFor = useRef<string | null | undefined>(undefined);
+  /**
+   * El perfil tal y como estaba al abrir el editor: «lo que ya era suyo».
+   *
+   * Contra ESTO compara el candado del plan, y no contra lo ultimo
+   * guardado. Con lo ultimo guardado, alguien sin plan que aplicara sin
+   * querer una plantilla base —que apagan todos los efectos— perdia los
+   * suyos en el siguiente autoguardado, y «deshacer» ya no podia
+   * devolverselos: volver a encenderlos contaba como ponerlos nuevos. Lo
+   * que tenia al entrar sigue siendo suyo durante toda la sesion.
+   */
+  const yaSuyo = useRef<Profile | null>(null);
+
+  /**
+   * Todo cambio del editor entra por aqui, y aqui esta el candado del plan.
+   *
+   * En la PUERTA y no solo al guardar. Al guardar llegaba tarde dos veces:
+   * `handleSave` manda a la nube el perfil del editor, no el del almacen,
+   * asi que lo de pago subia igual; y aunque no subiera, la vista previa lo
+   * habria enseñado un segundo antes de quitarlo, que se lee como un fallo.
+   * Aqui lo de pago ni siquiera llega a pintarse.
+   *
+   * Y se avisa: aplicar una plantilla y que le falte el halo sin
+   * explicacion se lee como que la plantilla esta rota.
+   */
+  const update = useCallback(
+    (cambios: Partial<Profile>) => {
+      if (useProfileStore.getState().plan !== false) {
+        updateSinCandado(cambios);
+        return;
+      }
+      const pasa = sinPlanNoEntra(cambios, yaSuyo.current);
+      updateSinCandado(pasa);
+      if (JSON.stringify(pasa) !== JSON.stringify(cambios)) {
+        toast('Parte de esto es del plan Pro y no se ha aplicado. Lo que ya tenías sigue igual.');
+      }
+    },
+    [updateSinCandado, toast],
+  );
 
   // Initialize editor with current profile or a blank profile.
   // Sólo se reinicia cuando cambia el perfil dueño: reiniciar en cada guardado
@@ -613,6 +667,7 @@ export default function DashboardPage() {
     cuentaMontada.current = idCuenta;
     initializedFor.current = p.username;
     storeKeyRef.current = p.username;
+    yaSuyo.current = p;
     init(p);
   }, [mineName, claimParam, init, perfilDeLaCuenta, cargandoCuenta, idCuenta, authLista]);
 
@@ -623,7 +678,10 @@ export default function DashboardPage() {
 
     setSaving(true);
     try {
-      saveProfileToStore(profile, storeKeyRef.current);
+      /* A la nube va lo que devuelve el almacen, no `profile`: es el que ha
+         pasado por el candado del plan. Mandando `profile`, el candado
+         cerraba la copia local y la nube se quedaba con lo de pago. */
+      const guardable = saveProfileToStore(profile, storeKeyRef.current, yaSuyo.current) ?? profile;
       // Los refs se actualizan antes de que el efecto de init vuelva a correr,
       // para que un renombrado no se confunda con un cambio de perfil.
       storeKeyRef.current = profile.username;
@@ -631,7 +689,7 @@ export default function DashboardPage() {
       markClean();
 
       if (hasBackend()) {
-        const saved = await backend.guardarPerfil(profile);
+        const saved = await backend.guardarPerfil(guardable);
         // Devolver la marca del servidor mantiene viva la concurrencia optimista
         // y limpia `_sucio`, que si no bloqueaba para siempre receiveFromServer().
         const marks: Partial<Profile> = {};
@@ -669,13 +727,13 @@ export default function DashboardPage() {
 
       setSaving(true);
       try {
-        saveProfileToStore(p, storeKeyRef.current);
+        const guardable = saveProfileToStore(p, storeKeyRef.current, yaSuyo.current) ?? p;
         storeKeyRef.current = p.username;
         initializedFor.current = p.username;
         markClean();
 
         if (hasBackend()) {
-          const guardado = await backend.guardarPerfil(p);
+          const guardado = await backend.guardarPerfil(guardable);
           const marcas: Partial<Profile> = {};
           if (guardado?._id) marcas._id = guardado._id;
           if (guardado?._actualizado) marcas._actualizado = guardado._actualizado;

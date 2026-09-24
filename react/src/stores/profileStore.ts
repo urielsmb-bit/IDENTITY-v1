@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sinPlanNoEntra } from '@/lib/candadoPro';
 import type { Profile } from '@/types';
 import { normalizarPerfil } from '@/lib/normalizar';
 
@@ -130,8 +131,32 @@ interface ProfileState {
 
   /** Save a profile locally and mark it pending cloud sync.
    *  Pass `prevUsername` when the handle changed so the entry is moved
-   *  instead of duplicated. */
-  save: (profile: Profile, prevUsername?: string) => void;
+   *  instead of duplicated.
+   *
+   *  Devuelve el perfil que se ha guardado DE VERDAD, ya pasado por el
+   *  candado del plan. Lo que se mande a la nube tiene que ser eso y no lo
+   *  que se le paso: si no, el candado cerraba el almacen y la nube no.
+   *
+   *  `yaSuyo` es contra que compara el candado. El editor pasa el perfil
+   *  tal y como estaba al abrirlo; sin el, se compara con lo guardado. */
+  save: (
+    profile: Profile,
+    prevUsername?: string,
+    yaSuyo?: Partial<Profile> | null,
+  ) => Profile | undefined;
+
+  /**
+   * Si esta cuenta tiene plan. `null` = todavia no se sabe.
+   *
+   * LOS TRES ESTADOS SON A PROPOSITO y el `null` es el importante. Las
+   * insignias llegan del servidor un instante despues de montar el panel;
+   * si mientras tanto esto valiera `false`, el candado se tragaria el
+   * primer cambio de alguien que SI ha pagado, y lo haria en silencio.
+   *
+   * Solo se cierra cuando se sabe que no hay plan. Ante la duda, pasa.
+   */
+  plan: boolean | null;
+  setPlan: (v: boolean | null) => void;
 
   /** Clear the pending-cloud flag after a successful server write, merging
    *  back the server-owned marks (`_id`, `_actualizado`). */
@@ -153,14 +178,42 @@ interface ProfileState {
 export const useProfileStore = create<ProfileState>((set, get) => ({
   profiles: leerPerfiles(),
   mineName: read<string | null>(MINE_KEY, null),
+  plan: null,
+  setPlan: (v) => set({ plan: v }),
 
   get: (username) => {
     return get().profiles[username];
   },
 
-  save: (profile, prevUsername) => {
+  save: (profile, prevUsername, yaSuyo) => {
     const username = profile.username;
     if (!username) return;
+
+    /* EL CANDADO DEL PLAN, y va aqui porque aqui estan las dos cosas que
+       hace falta comparar: lo que llega y lo que ya habia.
+
+       Se aplica a todo lo que escribe —el editor y, sobre todo, aplicar
+       una plantilla, que hoy reparte `halo` y fondo de video a cualquiera
+       que la elija—. Lo que NO toca es `receiveFromServer`: lo que manda
+       el servidor es la verdad y no se filtra, o a quien tenga el plan y
+       tarde en cargarlo le borrariamos su perfil al recibirlo.
+
+       Y no corre con `plan: null`. Mirar `!get().plan` en vez de esto
+       seria cerrar el candado durante el segundo que tardan en llegar las
+       insignias, que es justo cuando el panel escribe por primera vez.
+
+       Si quien guarda no dice que era suyo, se compara con lo guardado, y
+       se busca por el nombre ANTERIOR. Al cambiar tu @usuario, bajo el
+       nombre nuevo todavia no hay nada: buscando ahi, todo lo de pago
+       pareceria recien puesto y se le quitaria a quien solo se ha cambiado
+       el nombre. */
+    if (get().plan === false) {
+      const antes =
+        yaSuyo !== undefined
+          ? yaSuyo
+          : get().profiles[prevUsername || username] ?? get().profiles[username] ?? null;
+      profile = sinPlanNoEntra(profile, antes) as Profile;
+    }
 
     // Mark as dirty for cloud sync. `_actualizado` no se toca aquí: es la
     // marca de concurrencia del servidor y pisarla obliga a guardarPerfil()
@@ -187,6 +240,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
       return { profiles: next, mineName };
     });
+    return profile;
   },
 
   markSynced: (username, patch) => {
