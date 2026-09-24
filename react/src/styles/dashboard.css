@@ -2864,9 +2864,9 @@
 .pzas--suelta{ margin-top:var(--s3); }
 
 .pza{
-  /* En fila los tres mandos, y el contenido desplegado debajo ocupando el
-     ancho entero: por eso `wrap` y no un `flex` a secas. */
-  display:flex; align-items:stretch; flex-wrap:wrap;
+  /* En fila los tres mandos. El contenido desplegado ya no va aqui dentro
+     sino en su propio elemento de la lista (`.pza-abre`). */
+  display:flex; align-items:stretch;
   border:1px solid var(--border);
   border-radius:var(--radius-md);
   background:var(--bg-primary);
@@ -2956,9 +2956,115 @@
 .pza__cfg svg{ width:17px; height:17px; display:block; }
 .pza__cfg:hover{ color:var(--text-primary); background:var(--surface-3); }
 
-/* Envuelve la lista sin ser una caja. `display:contents` da un ancestro
-   sin meterse en la colocacion. */
-.pzas-todo{ display:contents; }
+/* ---- las piezas, en dos columnas ------------------------------------
+   Once filas de ancho entero eran una pared que habia que bajar. En
+   rejilla de dos se leen de un vistazo, como las insignias.
+
+   Lo que decide cuantas caben es el ancho de la LISTA, no el de la
+   ventana: la misma lista vive en el panel del escritorio y en la hoja del
+   movil. Por eso la envoltura es un contenedor y no una caja invisible.
+
+   A media anchura la fila de siempre no cabe: el ojo y el engranaje se
+   comian 86 px y a «OFICIO Y UBICACIÓN» le quedaban noventa. Asi que en
+   dos columnas cada pieza es una tarjeta —el icono arriba, el ojo y el
+   engranaje en su esquina, y el nombre y lo que hay puesto debajo, con
+   todo el ancho para ellos—. Por debajo de 340 px vuelve a una columna y
+   a la fila de siempre, que ahi si cabe. */
+.pzas-todo{ container-type:inline-size; container-name:pzas; }
+
+/* `dense`: el contenido desplegado ocupa la fila entera. Si sale de la
+   tarjeta de la izquierda, la de la derecha sube a rellenar el hueco que
+   deja en vez de quedarse un agujero —y asi las dos siguen donde estaban—. */
+.pzas--rejilla{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-auto-flow:row dense;
+}
+
+/* La pieza abierta y su contenido. En una columna van pegados, como si
+   fueran una sola caja: el contenido sale de debajo de su fila. */
+.pza.is-abierta{
+  border-color:var(--border-strong);
+  background:var(--surface-2);
+  border-bottom-left-radius:0; border-bottom-right-radius:0;
+}
+.pza-abre{
+  grid-column:1 / -1;
+  /* El hueco de la lista es 6 px: con 7 se monta un pixel sobre el borde
+     de la fila y los dos comparten la linea. */
+  margin-top:-7px;
+  padding:4px 14px 14px;
+  border:1px solid var(--border-strong);
+  border-top-color:var(--border);
+  border-radius:0 0 var(--radius-md) var(--radius-md);
+  background:var(--surface-2);
+}
+/* En una columna el nombre de la pieza esta justo encima: no se repite. */
+.pza-abre__t{ display:none; }
+
+@container pzas (min-width: 340px){
+  .pzas--rejilla{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+
+  /* Los tres mandos en la misma celda: el cuerpo la ocupa entera y el ojo
+     y el engranaje se le posan encima, arriba a la derecha. Asi toda la
+     tarjeta se puede pulsar y los dos botones siguen siendo botones. */
+  .pzas--rejilla .pza{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto auto;
+    align-items:start;
+  }
+  .pzas--rejilla .pza > *{ grid-row:1; }
+
+  .pzas--rejilla .pza__cuerpo{
+    grid-column:1 / -1;
+    align-self:stretch;
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-rows:auto 1fr;
+    align-items:end;
+    gap:9px 6px;
+    padding:10px 12px 11px;
+  }
+  .pzas--rejilla .pza__ico{ grid-column:1; grid-row:1; justify-self:start; align-self:start; }
+  .pzas--rejilla .pza__txt{ grid-column:1; grid-row:2; }
+  .pzas--rejilla .pza__caret{ grid-column:2; grid-row:2; }
+
+  .pzas--rejilla .pza__ojo,
+  .pzas--rejilla .pza__cfg{
+    position:relative; z-index:1;
+    width:30px; height:30px;
+    margin-top:10px;
+    border:0; border-radius:8px;
+  }
+  .pzas--rejilla .pza__ojo{ grid-column:2; }
+  .pzas--rejilla .pza__cfg{ grid-column:3; margin:10px 8px 0 2px; }
+
+  /* Con el dedo, 44 y cuadrados: `cuenta.css` solo les sube el alto, y un
+     ojo de 30 x 44 sale alargado. */
+  @media (pointer:coarse){
+    .pzas--rejilla .pza__ojo,
+    .pzas--rejilla .pza__cfg{ width:44px; height:44px; margin-top:4px; }
+    .pzas--rejilla .pza__cfg{ margin-right:4px; }
+  }
+
+  /* El contenido va en la fila de abajo entera, que puede no ser la de
+     justo debajo de su tarjeta: se separa, y lleva el nombre de la pieza
+     para que se sepa de cual de las dos sale. */
+  .pza.is-abierta{ border-radius:var(--radius-md); }
+  .pza-abre{
+    margin-top:0;
+    padding:12px 14px 14px;
+    border-top-color:var(--border-strong);
+    border-radius:var(--radius-md);
+  }
+  .pza-abre__t{
+    display:block;
+    margin:0 0 10px;
+    font-family:var(--font-mono);
+    font-size:var(--t1); font-weight:500;
+    letter-spacing:.1em; text-transform:uppercase;
+    color:var(--text-muted);
+  }
+}
 
 /* AQUI HABIA UN PUNTO AMBAR EN LOS DOCE ENGRANAJES.
    Tenia sentido cuando detras del engranaje estaba TODO de pago: avisaba
@@ -3197,17 +3303,12 @@
 .pza__cuerpo[aria-expanded="true"] .pza__caret{ transform:rotate(90deg); color:var(--text-secondary); }
 .pza__cuerpo:hover .pza__caret{ color:var(--text-secondary); }
 
-.pza__abre{
-  flex-basis:100%;
-  padding:4px 14px 14px;
-  border-top:1px solid var(--border);
-  background:var(--surface-2);
-}
 /* Dentro va el editor de la pieza recortado a su contenido: sin el aire
-   que se da a si mismo cuando ocupa un panel entero. */
-.pza__abre .grupo{ padding-top:0; margin-bottom:0; border-top:0; }
-.pza__abre .f:last-child,
-.pza__abre .sw-row:last-child{ margin-bottom:0; }
+   que se da a si mismo cuando ocupa un panel entero. La caja en si
+   (`.pza-abre`) esta con la rejilla de las piezas. */
+.pza-abre .grupo{ padding-top:0; margin-bottom:0; border-top:0; }
+.pza-abre .f:last-child,
+.pza-abre .sw-row:last-child{ margin-bottom:0; }
 
 /* ---- que insignias se enseñan ------------------------------------- */
 /* Ganarlas las decide el servidor; enseñarlas, su dueño. Se pintan con la

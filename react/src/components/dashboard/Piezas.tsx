@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { Fragment, useMemo, useState, type ReactNode } from 'react';
 import type { Profile } from '@/types';
 import { BLOQUES, type DefBloque } from '@/data/bloques';
 import { NETS } from '@/data/nets';
@@ -195,10 +195,11 @@ export function Piezas({
        que editar donde no lo hay: esas abren sus ajustes directamente. */
     const contenido = (b.grupos[0]?.controles ?? []).some((c) => c !== 'visible');
     const desplegada = abierta === b.id;
+    const idAbre = `pza-abre-${b.id}`;
     return (
+      <Fragment key={b.id}>
       <li
-        key={b.id}
-        className={`pza${puesto ? '' : ' is-off'}`}
+        className={`pza${puesto ? '' : ' is-off'}${desplegada ? ' is-abierta' : ''}`}
         /* Para que la guia pueda señalar una pieza concreta. */
         data-guia={`pieza-${b.id}`}
       >
@@ -222,6 +223,7 @@ export function Piezas({
           type="button"
           className="pza__cuerpo"
           aria-expanded={contenido ? desplegada : undefined}
+          aria-controls={contenido && desplegada ? idAbre : undefined}
           onClick={() => (contenido ? setAbierta(desplegada ? null : b.id) : onAbrir(b.id))}
         >
           <span className="pza__ico" aria-hidden="true" dangerouslySetInnerHTML={{ __html: b.icono }} />
@@ -245,34 +247,43 @@ export function Piezas({
         >
           {ENGRANAJE}
         </button>
-
-        {/* El contenido, debajo y dentro de la misma fila. Es el editor de
-            siempre recortado a su primer grupo: un solo sitio donde vive
-            cada control, y una pieza que gane un campo nuevo lo tiene aqui
-            sin tocar nada. */}
-        {desplegada && (
-          <div className="pza__abre">
-            <EditorBloque
-              compacto
-              soloContenido
-              premium={premium}
-              insignias={insignias}
-              def={b}
-              profile={profile}
-              update={update}
-              onVolver={() => setAbierta(null)}
-            />
-          </div>
-        )}
       </li>
+
+      {/* El contenido, justo debajo. Es el editor de siempre recortado a
+          su primer grupo: un solo sitio donde vive cada control, y una
+          pieza que gane un campo nuevo lo tiene aqui sin tocar nada.
+
+          Va en su PROPIO elemento de la lista y no dentro de la tarjeta:
+          con dos columnas, un formulario metido en media tarjeta no cabe, y
+          estirar la tarjeta a todo el ancho la movia de sitio —la pulsabas
+          y se iba de debajo del dedo—. Asi ocupa la fila de abajo entera y
+          las dos tarjetas de arriba se quedan donde estaban. */}
+      {desplegada && (
+        <li className="pza-abre" id={idAbre}>
+          {/* Con dos columnas no se ve de cual de las dos sale. */}
+          <p className="pza-abre__t">{b.nombre}</p>
+          <EditorBloque
+            compacto
+            soloContenido
+            premium={premium}
+            insignias={insignias}
+            def={b}
+            profile={profile}
+            update={update}
+            onVolver={() => setAbierta(null)}
+          />
+        </li>
+      )}
+      </Fragment>
     );
   };
 
   return (
-    /* `display:contents`: envuelve sin meter una caja que cambie la
-       colocación de nada. */
+    /* La caja que se mide para decidir si caben dos columnas: se mide la
+       lista y no la ventana, porque la misma lista vive en el panel del
+       escritorio y en la hoja del movil, que miden cosas muy distintas. */
     <div className="pzas-todo">
-      <ul className="pzas" data-guia="bloques">
+      <ul className="pzas pzas--rejilla" data-guia="bloques">
         {BLOQUES.filter((b) => b.id !== 'avatar').map(fila)}
 
         {/* El cursor. No es un bloque —no se pinta dentro de la tarjeta—
