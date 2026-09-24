@@ -315,6 +315,33 @@
 }
 .hero > *{ position:relative; }
 
+/* El fondo de la marca: el logo repetido, detras de la primera pantalla.
+   Solo en la portada.
+
+   Va muy bajo a proposito: es textura, no un dibujo que haya que mirar.
+   Si se nota antes que el titular, esta demasiado alto.
+
+   En la pagina y no en `.hero`, porque `.hero` tiene ancho maximo y el
+   fondo tiene que llegar de borde a borde. Sube lo que mide la barra para
+   empezar arriba del todo: la barra es una pastilla que flota, y por
+   detras de ella se ve el fondo. Abajo se desvanece en vez de cortarse:
+   un corte recto a media pagina parece un fallo, no un final. */
+.landing-page{ position:relative; isolation:isolate; }
+.landing-page::before{
+  content:"";
+  position:absolute;
+  left:0; right:0;
+  top:calc(-1 * var(--nav-h));
+  height:calc(100vh + var(--nav-h));
+  height:calc(100dvh + var(--nav-h));
+  background:url('../assets/portada/fondo-marca.webp') center top / cover no-repeat;
+  opacity:.14;
+  -webkit-mask-image:linear-gradient(180deg, #000 55%, transparent);
+  mask-image:linear-gradient(180deg, #000 55%, transparent);
+  pointer-events:none;
+  z-index:-1;
+}
+
 .hero__eyebrow{
   display:inline-flex; align-items:center; gap:var(--s2);
   padding:5px 12px 5px 8px;
