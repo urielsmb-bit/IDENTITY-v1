@@ -36,6 +36,19 @@ export function tituloTarjeta(p: DatosTarjeta): string {
 }
 
 /**
+ * El título de la PESTAÑA de un perfil: su nombre y nada más. Sin nombre,
+ * el usuario.
+ *
+ * No es el de la tarjeta. En la tarjeta de Discord hace falta decir qué es
+ * esto —el @usuario y que es de sharee— porque la lee alguien que no lo ha
+ * abierto; en la pestaña ya estás dentro, y todo lo que no sea el nombre
+ * solo lo corta antes.
+ */
+export function tituloPestana(p: DatosTarjeta): string {
+  return linea(p.name, 60) || linea(p.username, 32);
+}
+
+/**
  * La biografía; si no hay, el oficio; si tampoco, una frase que al menos
  * diga de quién es la página. Un `og:description` vacío deja la tarjeta
  * con un hueco donde debería estar el motivo para pulsar.

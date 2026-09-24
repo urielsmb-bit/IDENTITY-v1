@@ -4,6 +4,7 @@ import {
   descripcionTarjeta,
   imagenTarjeta,
   caraTarjeta,
+  tituloPestana,
   datosEstructurados,
   linea,
 } from './tarjeta';
@@ -160,5 +161,15 @@ describe('los datos para Google', () => {
     expect('description' in p).toBe(false);
     expect('image' in p).toBe(false);
     expect('sameAs' in p).toBe(false);
+  });
+});
+
+describe('el titulo de la pestaña de un perfil', () => {
+  it('es solo el nombre, sin @usuario ni «· sharee»', () => {
+    expect(tituloPestana({ username: 'shark', name: 'sharkiiii' })).toBe('sharkiiii');
+  });
+
+  it('sin nombre, el usuario', () => {
+    expect(tituloPestana({ username: 'shark', name: '   ' })).toBe('shark');
   });
 });

@@ -30,7 +30,7 @@
    extension es un error. Salia en rojo en cada despliegue desde que este
    fichero dejo de armar sus propios textos. */
 import {
-  NOMBRE_SITIO, linea, tituloTarjeta, descripcionTarjeta, caraTarjeta, IMAGEN_MARCA,
+  NOMBRE_SITIO, linea, tituloTarjeta, tituloPestana, descripcionTarjeta, caraTarjeta, IMAGEN_MARCA,
   datosEstructurados,
 } from '../src/lib/tarjeta.js';
 
@@ -249,7 +249,8 @@ export default async function handler(req: Request): Promise<Response> {
     : [];
 
   const etiquetas = [
-    `<title>${esc(titulo)}</title>`,
+    /* La pestaña, solo el nombre; la tarjeta, abajo, con todo. */
+    `<title>${esc(tituloPestana(datos))}</title>`,
     `<meta name="description" content="${esc(descripcion)}" />`,
     `<link rel="canonical" href="${esc(enlace)}" />`,
     `<meta property="og:site_name" content="${NOMBRE_SITIO}" />`,

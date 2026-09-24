@@ -74,6 +74,14 @@ function tituloTarjeta(array $p): string
     return $nombre . ' (@' . $usuario . ') · ' . NOMBRE_SITIO;
 }
 
+/** El titulo de la PESTAÑA: el nombre y nada mas; sin nombre, el usuario.
+ *  Gemelo de `tituloPestana()`. No es el de la tarjeta: ese lo lee alguien
+ *  que no ha abierto el perfil y necesita el @usuario y el «· sharee». */
+function tituloPestana(array $p): string
+{
+    return linea($p['name'] ?? '', 60) ?: linea($p['username'] ?? '', 32);
+}
+
 /** La biografia; si no hay, el oficio; si tampoco, una frase que al menos
  *  diga de quien es la pagina. Gemelo de `descripcionTarjeta()`. */
 function descripcionTarjeta(array $p): string
@@ -368,7 +376,8 @@ $ld = json_encode(
 $ld = is_string($ld) ? str_replace('<', '\\u003c', $ld) : '';
 
 $etiquetas = array_filter([
-    '<title>' . esc($titulo) . '</title>',
+    /* La pestaña, solo el nombre; la tarjeta, abajo, con todo. */
+    '<title>' . esc(tituloPestana($datos)) . '</title>',
     '<meta name="description" content="' . esc($descripcion) . '" />',
     '<link rel="canonical" href="' . esc($enlace) . '" />',
     '<meta property="og:site_name" content="' . NOMBRE_SITIO . '" />',

@@ -17,8 +17,11 @@ import { useEffect } from 'react';
  *
  * Cada página dice el suyo. Sin `titulo` vuelve al de la casa, que es lo
  * que tiene que pasar al salir de un perfil.
+ *
+ * El de la casa es la dirección y nada más, igual que el de `index.html`:
+ * en una pestaña el eslogan no se llega a leer, se corta.
  */
-export const TITULO_POR_DEFECTO = 'sharee — Tu identidad, en línea.';
+export const TITULO_POR_DEFECTO = 'sharee.fun';
 
 export function useTitulo(titulo?: string | null): void {
   useEffect(() => {

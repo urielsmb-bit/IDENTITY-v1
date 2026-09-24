@@ -9,7 +9,7 @@ import * as publico from '@/lib/publico';
 import { useInsignias } from '@/hooks/useInsignias';
 
 import { useTitulo } from '@/hooks/useTitulo';
-import { tituloTarjeta } from '@/lib/tarjeta';
+import { tituloPestana } from '@/lib/tarjeta';
 
 /**
  * Abrir la conexión con Vimeo ANTES de saber si hace falta.
@@ -90,18 +90,13 @@ export default function ProfilePage() {
   const faltaPerfil = !profile && !esperando && !error && !sinRed;
   const nombre = useEstadoDelNombre(cleanUsername, faltaPerfil);
 
-  /* El mismo titulo que escribe `api/perfil.ts` en el servidor para la
-     tarjeta de Discord, de la misma funcion. Llegando directo ya venia
-     puesto; llegando desde el top o desde Descubrir, la pestana se
-     quedaba con el titulo de la pagina anterior. */
+  /* El mismo titulo que escribe `perfil.php` en el servidor, de la misma
+     funcion: solo el nombre. Llegando directo ya venia puesto; llegando
+     desde el top o desde Descubrir, la pestana se quedaba con el titulo de
+     la pagina anterior. */
   useTitulo(
     profile
-      ? tituloTarjeta({
-          username: profile.username,
-          name: profile.name,
-          title: profile.title,
-          bio: profile.bio,
-        })
+      ? tituloPestana({ username: profile.username, name: profile.name })
       : esperando
         ? null
         : `@${cleanUsername ?? ''} · sharee`,
