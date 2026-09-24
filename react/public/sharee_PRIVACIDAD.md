@@ -1,6 +1,6 @@
 # sharee — Política de privacidad
 
-> **Versión 2026-09-23** · **En vigor desde el 23 de septiembre de 2026**
+> **Versión 2026-09-24** · **En vigor desde el 24 de septiembre de 2026**
 >
 > **Responsable:** sharee, un proyecto operado por una persona natural residente
 > en **Colombia**.
@@ -205,6 +205,7 @@ Con nadie, salvo con la infraestructura necesaria para que esto funcione:
 | **Vimeo** | Los fondos de vídeo subidos antes de septiembre de 2026, que siguen alojados ahí |
 | **YouTube** | Reproduce la música que eliges para tu perfil; recibe la petición de tu navegador al abrirlo |
 | **Google Fonts** | Sirve las tipografías; recibe la petición de tu navegador |
+| **Resend** | Envía los correos de tu cuenta —confirmar el registro, cambiar la contraseña o el correo—; recibe tu dirección y el texto de ese correo |
 | Discord / Spotify | Solo si tú los vinculas, y solo para pedirles lo de arriba |
 
 **No usamos analítica de terceros, ni Google Analytics, ni píxeles de redes

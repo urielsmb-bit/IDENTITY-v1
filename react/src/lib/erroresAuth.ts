@@ -69,6 +69,18 @@ export function traducirError(e: unknown): string {
   if (m.includes('supabase no está configurado'))
     return 'Esta copia no tiene servidor configurado: puedes editar tu perfil, pero no crear cuenta.';
 
+  /* El correo no salio. «Email address not authorized» es el que da el
+     correo de pruebas de Supabase —solo manda a los miembros del proyecto—
+     y «Error sending … email», el que da un servidor de correo que falla.
+     Llegaban en ingles y sin salida; aqui se dice que no es culpa suya y
+     por donde puede entrar mientras tanto. */
+  if (
+    m.includes('email address not authorized') ||
+    m.includes('error sending') ||
+    codigo === 'email_address_not_authorized'
+  )
+    return 'No hemos podido enviarte el correo ahora mismo. Vuelve a probar en unos minutos, o entra con Discord o con Google.';
+
   return texto || 'No se pudo completar la operación.';
 }
 

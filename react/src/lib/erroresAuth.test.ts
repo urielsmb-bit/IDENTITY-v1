@@ -76,3 +76,17 @@ describe('traducirErrorDeEnlace · conectar una cuenta', () => {
     );
   });
 });
+
+/* El correo que no sale. Con el correo de pruebas de Supabase, registrarse
+   con email a una direccion que no es del equipo da este error, en ingles
+   y sin salida. */
+describe('cuando el correo no se puede mandar', () => {
+  it('el correo de pruebas de Supabase', () => {
+    expect(traducirError(deSupabase('Email address not authorized'))).toContain('Discord o con Google');
+  });
+
+  it('un servidor de correo que falla', () => {
+    expect(traducirError(deSupabase('Error sending confirmation email'))).toContain('No hemos podido enviarte');
+    expect(traducirError(deSupabase('Error sending recovery email'))).toContain('No hemos podido enviarte');
+  });
+});

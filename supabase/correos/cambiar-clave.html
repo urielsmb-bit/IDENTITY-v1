@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Cambia tu contraseña</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;">
+<!-- La linea que enseña la bandeja de entrada al lado del asunto. Sin
+     ella, Gmail pone lo primero que encuentra: el texto alternativo del logo. -->
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">Alguien ha pedido cambiar la contraseña de tu cuenta de sharee.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f4f5;">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;background:#ffffff;border:1px solid #e4e4e7;border-radius:14px;">
+        <tr>
+          <td style="padding:32px 32px 8px;">
+            <img src="https://sharee.fun/icono-192.png" width="40" height="40" alt="sharee" style="display:block;border:0;border-radius:10px;">
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:16px 32px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif;">
+            <h1 style="margin:0 0 12px;font-size:22px;line-height:1.3;font-weight:700;color:#09090b;">Cambia tu contraseña</h1>
+            <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#3f3f46;">Hemos recibido una petición para cambiar la contraseña de tu cuenta. Pulsa el botón para elegir una nueva. El enlace caduca en una hora.</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 32px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="border-radius:10px;background:#09090b;">
+                  <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:13px 22px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px;">Elegir contraseña nueva</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 32px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif;">
+            <p style="margin:0 0 6px;font-size:13px;line-height:1.5;color:#71717a;">Si el botón no funciona, copia este enlace en el navegador:</p>
+            <p style="margin:0;font-size:12px;line-height:1.5;word-break:break-all;"><a href="{{ .ConfirmationURL }}" style="color:#52525b;">{{ .ConfirmationURL }}</a></p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 32px 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif;">
+            <p style="margin:0;padding-top:20px;border-top:1px solid #e4e4e7;font-size:13px;line-height:1.6;color:#71717a;">Si no lo has pedido tú, ignora este correo: tu contraseña sigue siendo la misma y nadie puede cambiarla sin este enlace.</p>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:16px 0 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif;font-size:12px;color:#a1a1aa;">
+        <a href="https://sharee.fun" style="color:#a1a1aa;text-decoration:none;">sharee.fun</a> · <a href="mailto:hello@sharee.fun" style="color:#a1a1aa;text-decoration:none;">hello@sharee.fun</a>
+      </p>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
