@@ -1925,3 +1925,52 @@ body.probando .view{ padding-top:0; }
   color:var(--p-dim, rgba(255,255,255,.55));
 }
 .onda__pie b{ color:var(--p-text, #fff); font-weight:600; }
+
+/* ---- los errores de la web, en el panel de administracion --------------
+   Una fila por fallo: el contador y la fecha a la vista, que es lo que
+   decide que se arregla primero; la pila detras, al abrirla. */
+.adm-err{ margin-top:var(--s6); }
+.adm-err__cab{ display:flex; align-items:center; justify-content:space-between; gap:var(--s3); }
+.adm-err__cab .grupo__t{ margin:0; }
+.adm-err__aviso{ font-size:var(--t2); color:var(--text-secondary); }
+.adm-err__vacio{ font-size:var(--t2); color:var(--text-muted); }
+.adm-err__l{ list-style:none; margin:var(--s3) 0 0; padding:0; display:grid; gap:6px; }
+.adm-err__it{
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  background:var(--bg-primary);
+}
+.adm-err__it[open]{ border-color:var(--border-strong); background:var(--surface-2); }
+.adm-err__it summary{
+  display:grid; grid-template-columns:auto minmax(0,1fr); gap:2px 12px;
+  padding:10px 14px;
+  cursor:pointer; list-style:none;
+}
+.adm-err__it summary::-webkit-details-marker{ display:none; }
+.adm-err__veces{
+  grid-row:span 2; align-self:center;
+  font-family:var(--font-mono); font-size:var(--t2); font-weight:600;
+  color:var(--text-primary);
+  min-width:3.5ch; text-align:right;
+}
+.adm-err__msj{
+  font-size:var(--t2); color:var(--text-primary);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.adm-err__meta{ font-size:var(--t1); color:var(--text-muted); }
+.adm-err__dl{
+  display:grid; grid-template-columns:auto minmax(0,1fr); gap:4px 12px;
+  margin:0; padding:4px 14px 10px;
+  font-size:var(--t1);
+}
+.adm-err__dl dt{ color:var(--text-muted); }
+.adm-err__dl dd{ margin:0; color:var(--text-secondary); overflow-wrap:anywhere; }
+.adm-err__pila{
+  margin:0 14px 14px; padding:10px 12px;
+  max-height:260px; overflow:auto;
+  border-radius:var(--radius-sm);
+  background:var(--bg-secondary);
+  font-family:var(--font-mono); font-size:11px; line-height:1.5;
+  color:var(--text-secondary);
+  white-space:pre-wrap; overflow-wrap:anywhere;
+}

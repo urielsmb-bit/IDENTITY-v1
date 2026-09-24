@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import { arrancarCalidad } from './lib/calidad';
+import { vigilarErrores } from './lib/errores';
 
 // Styles — imported in layer order matching the original project
 import './styles/base.css';
@@ -40,6 +41,10 @@ import './styles/calidad.css';
  * por minuto: si la recarga tampoco lo soluciona el problema es otro, y un
  * bucle de recargas lo taparia en vez de enseñarlo.
  */
+/* Lo primero, antes de montar nada: un fallo al arrancar es justo el que
+   deja a alguien con la pantalla en blanco, y es el que mas hay que saber. */
+vigilarErrores();
+
 const MARCA_RECARGA = 'identity.recarga-version';
 window.addEventListener('vite:preloadError', (e) => {
   let ultima = 0;

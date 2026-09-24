@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BADGES, COLOR_RAREZA, NOMBRE_RAREZA, type FuenteInsignia } from '@/data/badges';
 import * as admin from '@/lib/admin';
+import { ErroresRecientes } from '@/components/admin/ErroresRecientes';
 import { useToast } from '@/hooks/useToast';
 import { useTitulo } from '@/hooks/useTitulo';
 import { avatarDe } from '@/lib/avatar';
@@ -259,6 +260,8 @@ export default function AdminPage() {
           })}
         </>
       )}
+
+      <ErroresRecientes />
 
       <p className="adm__pie">
         Nombrar a otra persona para que pueda repartir no se hace aquí: se

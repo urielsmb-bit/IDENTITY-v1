@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { avisarError } from '@/lib/errores';
 
 interface Props {
   children: ReactNode;
@@ -44,6 +45,9 @@ export class Frontera extends Component<Props, Estado> {
     // A la consola entero, que es donde sirve. A la pantalla, no: un
     // volcado de pila no le dice nada a quien está montando su perfil.
     console.error(`[frontera: ${this.props.donde}]`, error, info.componentStack);
+    /* Y a la base, que es donde te enteras. Antes el fallo moria aqui: se
+       pintaba «algo ha ido mal» y nadie mas lo sabia. */
+    avisarError(error, 'frontera');
   }
 
   componentDidUpdate(anterior: Props) {

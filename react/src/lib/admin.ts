@@ -104,3 +104,32 @@ export async function buscarPerfil(
     avatarUrl: String(ap.avatarUrl ?? ''),
   };
 }
+
+/** Un fallo del navegador, agrupado: el mismo fallo en el mismo sitio del
+ *  codigo es una fila con su contador. */
+export interface ErrorRegistrado {
+  mensaje: string;
+  pila: string | null;
+  donde: string | null;
+  origen: string;
+  navegador: string | null;
+  /** El @usuario de quien lo vio, si habia entrado. */
+  usuario: string | null;
+  veces: number;
+  creado: string;
+  visto: string;
+}
+
+/**
+ * Los ultimos cien fallos que le han salido a la gente (APLICAR_0029).
+ *
+ * Como todo lo de aqui, el permiso lo mira la base: `errores_recientes`
+ * contesta 42501 a quien no es administrador. Si la 0029 no se ha aplicado
+ * todavia la funcion no existe, y el error lo dice quien llama.
+ */
+export async function erroresRecientes(): Promise<ErrorRegistrado[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase.rpc('errores_recientes');
+  if (error) throw traducir(error);
+  return (data ?? []) as ErrorRegistrado[];
+}
