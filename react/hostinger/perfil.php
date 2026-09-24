@@ -91,8 +91,60 @@ function descripcionTarjeta(array $p): string
  *  de una tarjeta no existe. Gemelo de `imagenTarjeta()`. */
 function imagenTarjeta($url): string
 {
-    $s = (string) $url;
+    $s = is_string($url) ? $url : '';
     return preg_match('#^https://#i', $s) ? substr($s, 0, 500) : '';
+}
+
+/** La cara que enseña el perfil: la subida, la de Discord o la de la
+ *  cuenta, en ese orden. Gemelo de `caraTarjeta()`. Aqui solo se miraba la
+ *  subida, asi que quien entraba con Discord tenia un perfil CON cara y una
+ *  tarjeta SIN ella. */
+function caraTarjeta(array $ap): string
+{
+    foreach (['avatarUrl', 'discordAvatar', 'cuentaAvatar'] as $k) {
+        $u = imagenTarjeta($ap[$k] ?? '');
+        if ($u !== '') return $u;
+    }
+    return '';
+}
+
+/** Sin cara, la de la marca: la de la portada, 1200 x 630. Gemelo de
+ *  `IMAGEN_MARCA`. Una tarjeta sin imagen se lee como enlace sospechoso. */
+const IMAGEN_MARCA = '/compartir.jpg';
+
+/** `ProfilePage` de schema.org, lo que le dice a Google que esto es el
+ *  perfil de una persona. Gemelo de `datosEstructurados()`. */
+function datosEstructurados(array $d): array
+{
+    $redes = [];
+    foreach ((is_array($d['redes'] ?? null) ? $d['redes'] : []) as $r) {
+        $u = imagenTarjeta(is_array($r) ? ($r['url'] ?? '') : '');
+        /* Con algo detras del dominio: `https://discord.gg/` a secas es una
+           red añadida y sin rellenar, no la cuenta de nadie. */
+        if (preg_match('#^https://[^/]+/[^?\#]#i', $u)) $redes[] = $u;
+        if (count($redes) >= 20) break;
+    }
+    $persona = [
+        '@type'         => 'Person',
+        'name'          => linea($d['nombre'] ?? '', 60) ?: $d['usuario'],
+        'alternateName' => '@' . $d['usuario'],
+        'identifier'    => $d['usuario'],
+        'url'           => $d['enlace'],
+    ];
+    $bio = linea($d['bio'] ?? '', 160);
+    if ($bio !== '') $persona['description'] = $bio;
+    if (($d['cara'] ?? '') !== '') $persona['image'] = $d['cara'];
+    if ($redes) $persona['sameAs'] = $redes;
+
+    $pagina = [
+        '@context'   => 'https://schema.org',
+        '@type'      => 'ProfilePage',
+        'url'        => $d['enlace'],
+        'mainEntity' => $persona,
+    ];
+    if (is_string($d['creado'] ?? null) && $d['creado'] !== '') $pagina['dateCreated'] = $d['creado'];
+    if (is_string($d['actualizado'] ?? null) && $d['actualizado'] !== '') $pagina['dateModified'] = $d['actualizado'];
+    return $pagina;
 }
 
 /**
@@ -285,11 +337,35 @@ $datos = [
 ];
 $titulo      = tituloTarjeta($datos);
 $descripcion = descripcionTarjeta($datos);
-$imagen      = imagenTarjeta($ap['avatarUrl'] ?? '');
 
 $esquema = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+/* Detras de Cloudflare, PHP puede ver la conexion interna en claro aunque
+   el visitante llegue por https. La imagen tiene que ir en https: una en
+   http la descartan casi todos los robots. */
+if (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') $esquema = 'https';
 $host    = (string) ($_SERVER['HTTP_HOST'] ?? '');
-$enlace  = $esquema . '://' . $host . '/' . $usuario;
+$origen  = $esquema . '://' . $host;
+$enlace  = $origen . '/' . $usuario;
+
+$cara   = caraTarjeta($ap);
+$imagen = $cara !== '' ? $cara : $origen . IMAGEN_MARCA;
+
+/* El `<` escapado, igual que en la precarga: un `</script` en una
+   biografia cerraria la etiqueta y lo que siguiera seria HTML. */
+$ld = json_encode(
+    datosEstructurados([
+        'enlace'      => $enlace,
+        'usuario'     => $usuario,
+        'nombre'      => $datos['name'],
+        'bio'         => $datos['bio'],
+        'cara'        => $cara,
+        'redes'       => $ap['socials'] ?? [],
+        'creado'      => $fila['creado'] ?? '',
+        'actualizado' => $fila['actualizado'] ?? '',
+    ]),
+    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+);
+$ld = is_string($ld) ? str_replace('<', '\\u003c', $ld) : '';
 
 $etiquetas = array_filter([
     '<title>' . esc($titulo) . '</title>',
@@ -300,13 +376,17 @@ $etiquetas = array_filter([
     '<meta property="og:url" content="' . esc($enlace) . '" />',
     '<meta property="og:title" content="' . esc($titulo) . '" />',
     '<meta property="og:description" content="' . esc($descripcion) . '" />',
-    $imagen ? '<meta property="og:image" content="' . esc($imagen) . '" />' : '',
-    /* `summary` y no `summary_large_image`: un avatar es cuadrado, y pedir
-       tarjeta ancha lo deja recortado o con franjas a los lados. */
-    '<meta name="twitter:card" content="summary" />',
+    '<meta property="og:image" content="' . esc($imagen) . '" />',
+    $cara === '' ? '<meta property="og:image:width" content="1200" />' : '',
+    $cara === '' ? '<meta property="og:image:height" content="630" />' : '',
+    /* `summary` con la cara: un avatar es cuadrado, y pedir tarjeta ancha
+       lo deja recortado o con franjas a los lados. La de la marca SI es
+       ancha y va en grande. */
+    '<meta name="twitter:card" content="' . ($cara !== '' ? 'summary' : 'summary_large_image') . '" />',
     '<meta name="twitter:title" content="' . esc($titulo) . '" />',
     '<meta name="twitter:description" content="' . esc($descripcion) . '" />',
-    $imagen ? '<meta name="twitter:image" content="' . esc($imagen) . '" />' : '',
+    '<meta name="twitter:image" content="' . esc($imagen) . '" />',
+    $ld !== '' ? '<script type="application/ld+json">' . $ld . '</script>' : '',
 ]);
 $etiquetas = implode("\n  ", $etiquetas);
 

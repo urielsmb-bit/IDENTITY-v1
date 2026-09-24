@@ -1,0 +1,9 @@
+# Si has encontrado un fallo de seguridad en sharee, escribenos aqui.
+# Lo leemos y contestamos. Por favor, no lo publiques hasta que este
+# arreglado. Formato: RFC 9116.
+
+Contact: mailto:security@sharee.fun
+Contact: mailto:hello@sharee.fun
+Expires: 2027-09-01T00:00:00.000Z
+Preferred-Languages: es, en
+Canonical: https://sharee.fun/.well-known/security.txt

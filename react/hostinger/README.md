@@ -27,7 +27,8 @@ npm run build:hostinger
 ```
 
 Deja todo listo en `salida-hostinger/`: la aplicación compilada más
-`perfil.php`, `.htaccess` y un `config.php` generado desde tu `.env.local`.
+`perfil.php`, `sitemap.php`, `.htaccess` y un `config.php` generado desde
+tu `.env.local`.
 
 ## 2 · Subirlo
 

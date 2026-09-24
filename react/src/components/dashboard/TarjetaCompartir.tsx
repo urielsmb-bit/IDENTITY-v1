@@ -1,7 +1,6 @@
 import type { Profile } from '@/types';
 import { safeMedia } from '@/lib/utils';
-import { tituloTarjeta, descripcionTarjeta, imagenTarjeta } from '@/lib/tarjeta';
-import { avatarDe } from '@/lib/avatar';
+import { tituloTarjeta, descripcionTarjeta, caraTarjeta, IMAGEN_MARCA } from '@/lib/tarjeta';
 
 /**
  * Cómo se verá tu enlace cuando lo pegues.
@@ -25,10 +24,12 @@ import { avatarDe } from '@/lib/avatar';
 export function TarjetaCompartir({ profile }: { profile: Profile }) {
   const titulo = tituloTarjeta(profile);
   const descripcion = descripcionTarjeta(profile);
-  /* La misma cara que ve todo el mundo, no solo la que subiste: quien
-     comparte su enlace nada mas conectar Discord tenia una tarjeta sin
-     imagen aunque su perfil si la enseñara. */
-  const imagen = imagenTarjeta(avatarDe(profile).url);
+  /* La misma cara que ve todo el mundo, no solo la que subiste, y sacada de
+     la MISMA funcion que usa el servidor. Aqui ya se miraban las tres
+     fotos, pero el servidor solo miraba la subida: esta previa prometia una
+     imagen que luego no salia. Sin ninguna, va la de la marca. */
+  const cara = caraTarjeta(profile);
+  const imagen = cara || IMAGEN_MARCA;
 
   /* El dominio real cuando lo hay. En local sale `localhost`, que es
      justo lo que se vería si compartieras desde aquí. */
@@ -38,27 +39,11 @@ export function TarjetaCompartir({ profile }: { profile: Profile }) {
     <div>
       <div className="ogcard">
         <div className="ogcard__thumb">
-          {imagen ? (
-            <img
-              src={safeMedia(imagen)}
-              alt=""
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
-          ) : (
-            /* Sin avatar en la red no hay imagen que mandar, y decirlo aquí
-               es el aviso: la tarjeta va a salir sin foto. */
-            <div
-              aria-hidden="true"
-              style={{
-                width: '100%', height: '100%',
-                display: 'grid', placeItems: 'center',
-                color: 'var(--text-faint)', fontSize: 'var(--t1)',
-                textAlign: 'center', padding: '0 8px', lineHeight: 1.35,
-              }}
-            >
-              sin foto
-            </div>
-          )}
+          <img
+            src={cara ? safeMedia(imagen) : imagen}
+            alt=""
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
         </div>
 
         <div className="ogcard__b">
@@ -69,9 +54,9 @@ export function TarjetaCompartir({ profile }: { profile: Profile }) {
       </div>
 
       <p className="f__d" style={{ marginTop: 0 }}>
-        {imagen
+        {cara
           ? 'Esto es lo que verá quien pegue tu enlace en Discord, WhatsApp o Twitter. Sale de tu nombre, tu biografía y tu foto.'
-          : 'Así saldrá tu enlace al pegarlo. Sin una foto de perfil subida, la tarjeta va sin imagen — que es la mitad de lo que hace que alguien pulse.'}
+          : 'Así saldrá tu enlace al pegarlo. Sin foto de perfil, la tarjeta lleva la imagen de sharee; con tu foto, lleva tu cara, que es la mitad de lo que hace que alguien pulse.'}
       </p>
     </div>
   );

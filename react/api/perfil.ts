@@ -30,7 +30,8 @@
    extension es un error. Salia en rojo en cada despliegue desde que este
    fichero dejo de armar sus propios textos. */
 import {
-  NOMBRE_SITIO, linea, tituloTarjeta, descripcionTarjeta, imagenTarjeta,
+  NOMBRE_SITIO, linea, tituloTarjeta, descripcionTarjeta, caraTarjeta, IMAGEN_MARCA,
+  datosEstructurados,
 } from '../src/lib/tarjeta.js';
 
 export const config = { runtime: 'edge' };
@@ -206,9 +207,18 @@ export default async function handler(req: Request): Promise<Response> {
   };
   const titulo = tituloTarjeta(datos);
   const descripcion = descripcionTarjeta(datos);
-  const imagen = imagenTarjeta(ap.avatarUrl);
+  /* La cara que enseña el perfil —la subida, la de Discord o la de la
+     cuenta—; sin ninguna, la de la marca, que es ancha. */
+  const cara = caraTarjeta(ap);
+  const imagen = cara || `${origen}${IMAGEN_MARCA}`;
 
   const enlace = `${origen}/${usuario}`;
+  const esquema = JSON.stringify(
+    datosEstructurados({
+      enlace, usuario, nombre: datos.name, bio: datos.bio, cara,
+      redes: ap.socials, creado: fila.creado, actualizado: fila.actualizado,
+    }),
+  ).replace(/</g, '\\u003c');
 
   /**
    * El saludo a Vimeo, desde la CABECERA.
@@ -247,13 +257,17 @@ export default async function handler(req: Request): Promise<Response> {
     `<meta property="og:url" content="${esc(enlace)}" />`,
     `<meta property="og:title" content="${esc(titulo)}" />`,
     `<meta property="og:description" content="${esc(descripcion)}" />`,
-    imagen ? `<meta property="og:image" content="${esc(imagen)}" />` : '',
-    /* `summary` y no `summary_large_image`: un avatar es cuadrado, y pedir
-       tarjeta ancha lo deja recortado o con franjas a los lados. */
-    `<meta name="twitter:card" content="summary" />`,
+    `<meta property="og:image" content="${esc(imagen)}" />`,
+    cara ? '' : '<meta property="og:image:width" content="1200" />',
+    cara ? '' : '<meta property="og:image:height" content="630" />',
+    /* `summary` con la cara: un avatar es cuadrado, y pedir tarjeta ancha
+       lo deja recortado o con franjas a los lados. La de la marca SI es
+       ancha y va en grande. */
+    `<meta name="twitter:card" content="${cara ? 'summary' : 'summary_large_image'}" />`,
     `<meta name="twitter:title" content="${esc(titulo)}" />`,
     `<meta name="twitter:description" content="${esc(descripcion)}" />`,
-    imagen ? `<meta name="twitter:image" content="${esc(imagen)}" />` : '',
+    `<meta name="twitter:image" content="${esc(imagen)}" />`,
+    `<script type="application/ld+json">${esquema}</script>`,
     ...preconexiones,
   ]
     .filter(Boolean)

@@ -16,3 +16,8 @@ Allow: /
 Disallow: /dashboard
 Disallow: /analytics
 Disallow: /entrar
+Disallow: /admin
+
+# Donde esta todo lo que si hay que encontrar: las paginas, la ayuda y
+# cada perfil publico, con la fecha de su ultimo cambio.
+Sitemap: https://sharee.fun/sitemap.xml

@@ -16,6 +16,9 @@
   <link rel="dns-prefetch" href="https://i.ytimg.com" />
 
   <link rel="icon" href="/icono.svg" type="image/svg+xml" />
+  <!-- El iPhone no usa el SVG: al guardar sharee en la pantalla de inicio
+       ponia una captura de la pagina en miniatura. Quiere un PNG de 180. -->
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest" />
 
   <title>sharee.fun</title>
@@ -33,9 +36,19 @@
   <meta property="og:type" content="website" />
   <meta property="og:title" content="sharee — Tu identidad, en línea." />
   <meta property="og:description" content="Crea un perfil que se sienta como tú. Temas, efectos, badges y estadísticas." />
-  <meta name="twitter:card" content="summary" />
+  <meta property="og:locale" content="es_ES" />
+  <!-- Y con imagen. Sin ella la tarjeta salia como una linea de texto
+       suelta, que es lo que parece un enlace sospechoso. Direccion
+       ABSOLUTA: los robots no resuelven una relativa. JPG y de 52 kB a
+       proposito: WhatsApp deja de enseñar las que pasan de ~300 kB. -->
+  <meta property="og:image" content="https://sharee.fun/compartir.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="sharee — Tu identidad, en línea." />
+  <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="sharee — Tu identidad, en línea." />
   <meta name="twitter:description" content="Crea un perfil que se sienta como tú. Temas, efectos, badges y estadísticas." />
+  <meta name="twitter:image" content="https://sharee.fun/compartir.jpg" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

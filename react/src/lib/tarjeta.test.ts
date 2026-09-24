@@ -3,6 +3,8 @@ import {
   tituloTarjeta,
   descripcionTarjeta,
   imagenTarjeta,
+  caraTarjeta,
+  datosEstructurados,
   linea,
 } from './tarjeta';
 
@@ -97,5 +99,66 @@ describe('linea', () => {
     expect(linea(null, 10)).toBe('');
     expect(linea(undefined, 10)).toBe('');
     expect(linea(42, 10)).toBe('42');
+  });
+});
+
+describe('la cara de la tarjeta', () => {
+  const discord = 'https://cdn.discordapp.com/avatars/1/a.png';
+  const google = 'https://lh3.googleusercontent.com/a/x';
+
+  /* El caso que salia mal en produccion: perfil con cara, tarjeta sin ella. */
+  it('sin foto subida, la de Discord, como en el perfil', () => {
+    expect(caraTarjeta({ avatarUrl: '', discordAvatar: discord, cuentaAvatar: google })).toBe(discord);
+  });
+
+  it('la subida manda sobre las otras dos', () => {
+    expect(caraTarjeta({ avatarUrl: 'https://cdn.sharee.fun/a.webp', discordAvatar: discord })).toBe(
+      'https://cdn.sharee.fun/a.webp',
+    );
+  });
+
+  /* Una foto que solo vive en el navegador de su dueño no es una cara para
+     nadie mas: se salta y se mira la siguiente. */
+  it('una foto local no cuenta y se pasa a la siguiente', () => {
+    expect(caraTarjeta({ avatarUrl: 'media:abc', cuentaAvatar: google })).toBe(google);
+  });
+
+  it('sin ninguna, vacio: ahi entra la imagen de la marca', () => {
+    expect(caraTarjeta({})).toBe('');
+  });
+});
+
+describe('los datos para Google', () => {
+  const base = { enlace: 'https://sharee.fun/shark', usuario: 'shark' };
+
+  it('es la pagina de perfil de una persona', () => {
+    const d = datosEstructurados({ ...base, nombre: 'Uriel' });
+    expect(d['@type']).toBe('ProfilePage');
+    expect(d.mainEntity).toMatchObject({
+      '@type': 'Person', name: 'Uriel', alternateName: '@shark', identifier: 'shark',
+    });
+  });
+
+  it('las redes van en sameAs, y solo las que son https', () => {
+    const d = datosEstructurados({
+      ...base,
+      redes: [
+        { url: 'https://instagram.com/x' },
+        { url: 'javascript:alert(1)' },
+        { url: '' },
+        null,
+        /* Una red añadida y sin rellenar: el dominio a secas. */
+        { url: 'https://discord.gg/' },
+      ],
+    });
+    expect((d.mainEntity as Record<string, unknown>).sameAs).toEqual(['https://instagram.com/x']);
+  });
+
+  it('lo que no hay no sale, en vez de salir vacio', () => {
+    const p = datosEstructurados(base).mainEntity as Record<string, unknown>;
+    expect(p.name).toBe('shark');
+    expect('description' in p).toBe(false);
+    expect('image' in p).toBe(false);
+    expect('sameAs' in p).toBe(false);
   });
 });

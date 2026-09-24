@@ -11,6 +11,14 @@
 Options -Indexes
 DirectoryIndex index.html
 
+# Sin la barra automatica. Apache redirige `/carpeta` a `/carpeta/` ANTES
+# de mirar las reglas de abajo, y eso le quitaba `/ayuda` a la aplicacion
+# (ver «la ayuda», mas abajo). Con los listados apagados —`-Indexes`,
+# arriba— no hay nada que esa redireccion estuviera protegiendo.
+<IfModule mod_dir.c>
+  DirectorySlash Off
+</IfModule>
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
@@ -33,6 +41,26 @@ DirectoryIndex index.html
   RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
   RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
 
+  # ---- la ayuda: una pagina Y una carpeta ----------------------------
+  # `/ayuda` es la pagina del centro de ayuda y `ayuda/` es la carpeta de
+  # sus articulos (`ayuda/discord.md`). Como la carpeta existe, las reglas
+  # de abajo se la saltaban —`!-d`— y Apache hacia lo suyo con una carpeta:
+  # redirigir a `/ayuda/` y, sin indice dentro, contestar 403.
+  #
+  # Medido en produccion: `/ayuda` -> 301 -> `/ayuda/` -> 403. O sea que
+  # entrar al centro de ayuda desde Google, desde un enlace o recargando
+  # daba «prohibido». Solo funcionaba navegando dentro de la aplicacion.
+  #
+  # Aqui arriba, antes de que nadie la trate como carpeta. Los `.md` de
+  # dentro no pasan por aqui: esos si son ficheros y se sirven tal cual.
+  RewriteRule ^ayuda/?$ index.html [L]
+
+  # ---- el sitemap ---------------------------------------------------
+  # Antes de la regla de los perfiles, que lo tomaria por un nombre de
+  # usuario. Un nombre no puede llevar punto, asi que no le quita el sitio
+  # a nadie.
+  RewriteRule ^sitemap\.xml$ sitemap.php [L]
+
   # ---- 2 · el perfil pasa por PHP ----------------------------------
   # Un solo segmento que no sea una ruta de la aplicacion ni un fichero de
   # verdad es un nombre de usuario. Es lo unico que NO puede resolver el
@@ -47,7 +75,7 @@ DirectoryIndex index.html
   #
   # `[L]` y no `[R]`: se sirve aqui mismo. Una redireccion cambiaria la
   # direccion que ve quien comparte el enlace.
-  RewriteCond %{REQUEST_URI} !^/(dashboard|entrar|top|analytics|plantillas|templates|probar|pricing|terminos|privacidad|copyright|salud|assets|fuentes|api)(/|$)
+  RewriteCond %{REQUEST_URI} !^/(dashboard|entrar|top|analytics|plantillas|templates|probar|pricing|terminos|privacidad|copyright|salud|ayuda|admin|assets|fuentes|api)(/|$)
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule ^([A-Za-z0-9_.-]{1,32})/?$ perfil.php?u=$1 [L,QSA]
@@ -80,7 +108,12 @@ DirectoryIndex index.html
   # `vite:preloadError` —que ya esta puesto en `main.tsx` y recarga sola—
   # no puede saltar, porque no hubo fallo de red que capturar: hubo un 200.
   # Un 404 de verdad es lo que le devuelve la vida a ese rescate.
-  RewriteCond %{REQUEST_URI} !^/(assets|fuentes)/
+  #
+  # Y `.well-known/` tampoco, por lo mismo al reves: ahi los robots buscan
+  # ficheros con nombre fijo —`security.txt`, los de las apps— y un 200 con
+  # el HTML de la pagina les dice que existen y que son basura. Medido:
+  # `/.well-known/security.txt` -> 200 text/html. Lo que no este, 404.
+  RewriteCond %{REQUEST_URI} !^/(assets|fuentes|\.well-known)/
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule . index.html [L]
@@ -218,6 +251,10 @@ DirectoryIndex index.html
 <IfModule mod_mime.c>
   AddType image/avif .avif
   AddType image/avif-sequence .avifs
+  # El manifiesto salia como `text/plain`. Chrome lo lee igual, pero es el
+  # fichero que decide si sharee se puede instalar, y el tipo es parte de
+  # lo que comprueba cualquier validador.
+  AddType application/manifest+json .webmanifest
 </IfModule>
 
 # ---- 6 · comprimir ------------------------------------------------

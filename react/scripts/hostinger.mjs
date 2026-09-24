@@ -35,6 +35,7 @@ mkdirSync(salida, { recursive: true });
 cpSync(dist, salida, { recursive: true });
 
 cpSync(join(raiz, 'hostinger', 'perfil.php'), join(salida, 'perfil.php'));
+cpSync(join(raiz, 'hostinger', 'sitemap.php'), join(salida, 'sitemap.php'));
 cpSync(join(raiz, 'hostinger', '.htaccess'), join(salida, '.htaccess'));
 
 /* ---- la configuracion del PHP -------------------------------------

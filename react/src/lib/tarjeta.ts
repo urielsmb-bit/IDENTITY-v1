@@ -60,3 +60,76 @@ export function imagenTarjeta(avatarUrl: unknown): string {
   const s = String(avatarUrl ?? '');
   return /^https:\/\//i.test(s) ? s.slice(0, 500) : '';
 }
+
+/**
+ * La cara del perfil: la misma que enseña el perfil a quien lo abre.
+ *
+ * La subida, la de Discord o la de la cuenta, en ese orden — el mismo de
+ * `avatarDe()`. Las etiquetas del servidor solo miraban la subida, asi que
+ * quien entraba con Discord y no subia foto tenia un perfil CON cara y una
+ * tarjeta SIN ella, y la previsualizacion del editor —que si miraba las
+ * tres— prometia una imagen que luego no salia.
+ */
+export function caraTarjeta(p: {
+  avatarUrl?: unknown;
+  discordAvatar?: unknown;
+  cuentaAvatar?: unknown;
+}): string {
+  return (
+    imagenTarjeta(p.avatarUrl) || imagenTarjeta(p.discordAvatar) || imagenTarjeta(p.cuentaAvatar)
+  );
+}
+
+/**
+ * Y si no hay cara, la de la marca. Una tarjeta sin imagen se lee como un
+ * enlace sospechoso, no como un perfil. Es la misma de la portada: 1200 x
+ * 630, que va en tarjeta ANCHA y no en la cuadrada del avatar.
+ */
+export const IMAGEN_MARCA = '/compartir.jpg';
+
+/**
+ * Lo que lee Google para entender que esto es el perfil de una persona:
+ * `ProfilePage` de schema.org. Es lo que le deja enseñar el nombre, la
+ * foto y las redes en el resultado en vez de una linea de texto suelta.
+ *
+ * `sameAs` son las redes de verdad —solo direcciones https—, que es como
+ * Google ata este perfil con los de esa persona en otros sitios. Y con
+ * algo detras del dominio: `https://discord.gg/` a secas es una red que se
+ * añadio y no se relleno, no la cuenta de nadie.
+ */
+export function datosEstructurados(d: {
+  enlace: string;
+  usuario: string;
+  nombre?: string;
+  bio?: string;
+  cara?: string;
+  redes?: unknown;
+  creado?: unknown;
+  actualizado?: unknown;
+}): Record<string, unknown> {
+  const redes = (Array.isArray(d.redes) ? d.redes : [])
+    .map((r) => imagenTarjeta((r as { url?: unknown } | null)?.url))
+    .filter((u) => /^https:\/\/[^/]+\/[^?#]/i.test(u))
+    .slice(0, 20);
+  const persona: Record<string, unknown> = {
+    '@type': 'Person',
+    name: linea(d.nombre, 60) || d.usuario,
+    alternateName: `@${d.usuario}`,
+    identifier: d.usuario,
+    url: d.enlace,
+  };
+  const bio = linea(d.bio, 160);
+  if (bio) persona.description = bio;
+  if (d.cara) persona.image = d.cara;
+  if (redes.length) persona.sameAs = redes;
+
+  const pagina: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    url: d.enlace,
+    mainEntity: persona,
+  };
+  if (typeof d.creado === 'string' && d.creado) pagina.dateCreated = d.creado;
+  if (typeof d.actualizado === 'string' && d.actualizado) pagina.dateModified = d.actualizado;
+  return pagina;
+}
