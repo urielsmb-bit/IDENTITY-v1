@@ -331,3 +331,10 @@ body.editor-tactil{ overflow:hidden; }
   cursor:pointer;
 }
 .em__ctx-x svg{ width:16px; height:16px; }
+
+/* «Premium» al final del riel: no es una herramienta, abre la ventana de
+   comprar. En morado, el color del diamante, para que no se lea como una
+   herramienta más que no hace nada. */
+.em__h--premium{ color:#c084fc; }
+.em__h-ic{ display:grid; place-items:center; }
+.em__h-ic svg{ width:19px; height:19px; }

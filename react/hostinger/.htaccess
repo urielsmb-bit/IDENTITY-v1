@@ -138,7 +138,12 @@ DirectoryIndex index.html
   #
   # Son dos hosts exactos y nada mas: el del guion y el que recibe el dato.
   # Sin comodines, sin 'unsafe-inline', y no se toca ninguna otra directiva.
-  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' https://www.youtube.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://*.r2.cloudflarestorage.com https://cloudflareinsights.com https://discord.com https://vimeo.com https://*.vimeo.com https://*.cloud.vimeo.com https://ypvipmhfnraalcqbttiq.supabase.co wss://ypvipmhfnraalcqbttiq.supabase.co https://open.spotify.com https://api.spotify.com https://accounts.spotify.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://open.spotify.com https://player.vimeo.com; base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'self'; upgrade-insecure-requests"
+  #
+  # Y los de Tebex, que cobra el Premium: `js.tebex.io` es el guion del
+  # pago, `headless.tebex.io` donde se crea la cesta, y `pay`/`portal` la
+  # ventana del pago y la de sus recibos. El guion solo se descarga cuando
+  # alguien pulsa «Conseguir Premium».
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' https://www.youtube.com https://static.cloudflareinsights.com https://js.tebex.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://headless.tebex.io https://*.r2.cloudflarestorage.com https://cloudflareinsights.com https://discord.com https://vimeo.com https://*.vimeo.com https://*.cloud.vimeo.com https://ypvipmhfnraalcqbttiq.supabase.co wss://ypvipmhfnraalcqbttiq.supabase.co https://open.spotify.com https://api.spotify.com https://accounts.spotify.com; frame-src https://pay.tebex.io https://portal.tebex.io https://www.youtube.com https://www.youtube-nocookie.com https://open.spotify.com https://player.vimeo.com; base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'self'; upgrade-insecure-requests"
   # El navegador se acuerda de que este sitio es SOLO https durante un ano, y
   # a partir de la primera visita deja de intentarlo en claro. Sin esto, quien
   # escriba «sharee.fun» a pelo hace el primer viaje sin cifrar, y ese viaje

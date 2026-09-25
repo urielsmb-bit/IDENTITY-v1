@@ -1,6 +1,6 @@
 # sharee — Política de privacidad
 
-> **Versión 2026-09-24** · **En vigor desde el 24 de septiembre de 2026**
+> **Versión 2026-09-25** · **En vigor desde el 25 de septiembre de 2026**
 >
 > **Responsable:** sharee, un proyecto operado por una persona natural residente
 > en **Colombia**.
@@ -47,6 +47,10 @@ cuenta abierta de cualquier red social.
 | Correo electrónico | Entrar, recuperar la cuenta, avisarte de algo importante | **No** |
 | Contraseña | Solo se guarda cifrada; nadie, tampoco nosotros, puede leerla | **No** |
 | Fecha de alta y de última edición | Antigüedad de la cuenta y orden en Descubrir | Parcial |
+| Si compras Premium: el número de la compra, el importe, la moneda y la fecha | Darte el plan, y retirarlo si el pago se devuelve | **No** |
+
+Los datos de pago —tarjeta, nombre de facturación, dirección— no llegan a
+sharee: los pide y los guarda **Tebex**, que es quien cobra (ver el apartado 4).
 
 ### 1.3 · Lo que se mide
 
@@ -206,6 +210,7 @@ Con nadie, salvo con la infraestructura necesaria para que esto funcione:
 | **YouTube** | Reproduce la música que eliges para tu perfil; recibe la petición de tu navegador al abrirlo |
 | **Google Fonts** | Sirve las tipografías; recibe la petición de tu navegador |
 | **Resend** | Envía los correos de tu cuenta —confirmar el registro, cambiar la contraseña o el correo—; recibe tu dirección y el texto de ese correo |
+| **Tebex** | Cobra Premium como vendedor y comerciante registrado: recibe lo que pide su formulario de pago —correo, nombre, país y datos de pago— y nos dice solo el número de la compra y a qué perfil va. Solo si compras |
 | Discord / Spotify | Solo si tú los vinculas, y solo para pedirles lo de arriba |
 
 **No usamos analítica de terceros, ni Google Analytics, ni píxeles de redes

@@ -3778,3 +3778,9 @@
 @media (pointer:coarse){
   .est__col{ width:32px; height:32px; }
 }
+
+/* «Premium» en el menú del editor: abre la ventana encima, no es una
+   sección. En el morado del diamante para que se distinga de las cuatro
+   secciones de arriba. */
+.dash__premium{ --fg:#c084fc; }
+.dash__premium:hover{ --fg:#d8b4fe; }

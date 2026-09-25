@@ -1,6 +1,6 @@
 # sharee — Términos del servicio
 
-> **Versión 2026-09-23** · **En vigor desde el 23 de septiembre de 2026**
+> **Versión 2026-09-25** · **En vigor desde el 25 de septiembre de 2026**
 >
 > **Responsable:** sharee, un proyecto operado por una persona natural residente
 > en **Colombia**.
@@ -160,13 +160,29 @@ o contrarios a estos Términos.
 
 ## 8. Pagos
 
-**sharee es gratuito.** Hoy no hay suscripciones, ni cobros, ni forma de pagar
-nada: todo lo que ves funciona sin poner una tarjeta.
+**sharee es gratuito.** Todo lo que no está marcado como Premium funciona sin
+poner una tarjeta, y lo que hoy tienes gratis no se volverá de pago sin avisarte
+con antelación.
 
-Si algún día existe un plan de pago, estos Términos se actualizarán **antes** de
-cobrarle nada a nadie, y esa versión dirá qué incluye, cuánto cuesta con
-impuestos, cómo se renueva, cómo se cancela y cómo se devuelve el dinero. Lo que
-hoy tienes gratis no se volverá de pago sin avisarte con antelación.
+**Premium de por vida.** Es un **pago único**: no es una suscripción, no se
+renueva y no hay nada que cancelar. Incluye lo que dice la página de planes el día
+que lo compras. El precio es el de esa página; los impuestos de tu país los
+calcula el sistema de pago y los ves en el total **antes** de confirmar. «De por
+vida» quiere decir mientras sharee siga funcionando.
+
+**Quién cobra.** El pago lo gestiona **Tebex**, que actúa como vendedor y
+comerciante registrado: es quien te cobra, te manda el recibo y se ocupa de los
+impuestos. Al pagar aceptas también sus términos. Nosotros no vemos ni guardamos
+los datos de tu tarjeta.
+
+**Si algo va mal.** Premium se activa en cuanto el pago se confirma, por eso el
+sistema de pago te pide renunciar al plazo de desistimiento que algunos países
+dan para lo digital que se entrega al momento. Aun así, si Premium no funciona
+como se describe, escríbenos a **hello@sharee.fun**: lo revisamos contigo y, si
+no podemos arreglarlo, pedimos a Tebex que te devuelva el dinero.
+
+**Si se devuelve el pago** —por un reembolso o por una reclamación a tu banco—,
+Premium se retira. Si borras tu cuenta, Premium se va con ella.
 
 ---
 

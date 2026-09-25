@@ -8,6 +8,8 @@ import { ContenidoHerramienta } from './ContenidoHerramienta';
 import { BarraContextual } from './BarraContextual';
 import { HERRAMIENTAS, HERRAMIENTA_POR_ID, type IdHerramienta } from '@/data/herramientasMovil';
 import { BLOQUE_POR_ID } from '@/data/bloques';
+import { BADGES } from '@/data/badges';
+import { useUIStore } from '@/stores/uiStore';
 import type { DatosInsignias } from '@/lib/insignias';
 import type { ReactNode } from 'react';
 import type { Profile } from '@/types';
@@ -95,6 +97,7 @@ export function EditorMovil({
   nodoFondo, nodoAnimacion, ajustes, guardando, onPublicar, onSalir,
 }: EditorMovilProps) {
   const [herramienta, setHerramienta] = useState<IdHerramienta | null>(null);
+  const abrirPremium = useUIStore((s) => s.abrirPremium);
   /**
    * El bloque abierto DENTRO de la hoja.
    *
@@ -359,6 +362,19 @@ export function EditorMovil({
               </button>
             </li>
           ))}
+          {/* Lo mismo que el «Premium» del menú del escritorio: no es una
+              herramienta, abre la ventana de comprar encima. */}
+          <li>
+            <button
+              type="button"
+              className="em__h em__h--premium"
+              title="Mejorar a Premium"
+              onClick={abrirPremium}
+            >
+              <span className="em__h-ic" aria-hidden="true" dangerouslySetInnerHTML={{ __html: BADGES.premium!.icon }} />
+              <span>Premium</span>
+            </button>
+          </li>
         </ul>
       </nav>
 

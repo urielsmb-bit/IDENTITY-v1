@@ -1974,3 +1974,100 @@ body.probando .view{ padding-top:0; }
   color:var(--text-secondary);
   white-space:pre-wrap; overflow-wrap:anywhere;
 }
+
+/* ============================================================
+   «MEJORAR A PREMIUM», LA VENTANA
+   Encima de lo que estés haciendo, como en guns.lol. Una capa fija y no
+   un <dialog> modal: el modal iria a la capa superior y dejaria inerte la
+   capa del pago de Tebex (ver `MejorarPremium.tsx`). Por eso el z-index es
+   alto pero corriente: la de Tebex queda por encima.
+   ============================================================ */
+.mpr{
+  position:fixed; inset:0; z-index:1000;
+  display:grid; place-items:center;
+  padding:16px;
+  background:rgba(0,0,0,.62);
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  animation:mpr-entra .16s ease-out;
+}
+@keyframes mpr-entra{ from{ opacity:0; } to{ opacity:1; } }
+@media (prefers-reduced-motion:reduce){ .mpr{ animation:none; } }
+
+.mpr__caja{
+  width:100%; max-width:400px;
+  max-height:calc(100dvh - 32px); overflow:auto;
+  padding:14px;
+  border:1px solid var(--border-strong);
+  border-radius:18px;
+  background:var(--bg-secondary);
+  box-shadow:0 24px 80px rgba(0,0,0,.6);
+}
+.mpr__cab{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 2px 12px;
+  font-size:var(--t2); font-weight:600; color:var(--text-primary);
+}
+.mpr__x{
+  display:grid; place-items:center;
+  width:30px; height:30px;
+  border:0; border-radius:8px;
+  background:none; color:var(--text-muted);
+  cursor:pointer;
+}
+.mpr__x:hover:not(:disabled){ background:var(--surface-3); color:var(--text-primary); }
+.mpr__x:disabled{ opacity:.35; cursor:default; }
+.mpr__x svg{ width:16px; height:16px; }
+
+.mpr__tarjeta{
+  padding:22px 20px 18px;
+  border:1px solid rgba(168,85,247,.32);
+  border-radius:14px;
+  background:
+    radial-gradient(120% 70% at 0% 0%, rgba(168,85,247,.26), transparent 60%),
+    var(--surface);
+}
+.mpr__marca{
+  display:flex; align-items:center; gap:9px;
+  font-size:24px; font-weight:700; letter-spacing:-.02em;
+  color:var(--text-primary);
+}
+.mpr__rombo{ display:grid; color:#c084fc; }
+.mpr__rombo svg{ width:22px; height:22px; }
+
+.mpr__precio{ display:flex; align-items:baseline; gap:6px; margin-top:18px; }
+.mpr__precio b{ font-size:30px; font-weight:800; letter-spacing:-.03em; color:var(--text-primary); }
+.mpr__precio span{ font-size:var(--t2); color:var(--text-secondary); }
+.mpr__lema{ margin:4px 0 0; font-size:var(--t2); color:#c084fc; }
+
+.mpr__prueba{
+  margin:14px 0 0; padding:9px 11px;
+  border-radius:10px;
+  background:rgba(168,85,247,.12);
+  font-size:12.5px; line-height:1.5; color:var(--text-secondary);
+}
+
+.mpr__l{
+  list-style:none; margin:18px 0 0; padding:0;
+  display:grid; gap:8px;
+  font-size:13px; line-height:1.4; color:var(--text-primary);
+}
+.mpr__l li{ display:grid; grid-template-columns:14px minmax(0,1fr); gap:9px; align-items:start; }
+.mpr__l svg{ width:14px; height:14px; margin-top:2px; color:#c084fc; }
+
+.mpr__acc{ display:grid; gap:10px; margin-top:22px; }
+.mpr__btn{ width:100%; padding:12px; justify-content:center; text-align:center; }
+/* El de comprar, morado: es la única acción de la ventana y tiene que
+   leerse como tal. El blanco de siempre se confundía con «cerrar». */
+.mpr__btn.btn--primary{
+  background:linear-gradient(180deg, #a855f7, #7c3aed);
+  border-color:transparent;
+  color:#fff;
+}
+.mpr__btn.btn--primary:hover:not(:disabled){ filter:brightness(1.08); }
+
+.mpr__nota,
+.mpr__ok,
+.mpr__fallo{ margin:10px 0 0; font-size:12.5px; line-height:1.5; text-align:center; }
+.mpr__nota{ color:var(--text-muted); }
+.mpr__ok{ color:var(--text-secondary); }
+.mpr__fallo{ color:var(--dnd, #f85149); }

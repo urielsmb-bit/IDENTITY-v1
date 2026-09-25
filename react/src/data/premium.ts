@@ -124,3 +124,31 @@ export const CUENTA_FUENTES = {
   libres: FONTS.length - IDS_DECO.size,
   pro: IDS_DECO.size,
 };
+
+/**
+ * El precio de Premium, tal y como se enseña. Pago único, para siempre.
+ *
+ * Tiene que coincidir con el del paquete en Tebex, que es el que se cobra:
+ * este es solo el que se lee. Si se cambia allí, se cambia aquí.
+ */
+export const PRECIO_PREMIUM = '$4.99';
+
+/**
+ * Lo que trae Premium, en una sola lista para los dos sitios que la
+ * enseñan —la ventana de comprar y la página de planes—. Dos listas acaban
+ * diciendo cosas distintas, y la que miente es la que lee quien paga.
+ *
+ * Exactamente lo que bloquea `CONTROLES_PRO`, ni una línea más.
+ */
+export const LO_QUE_TRAE_PREMIUM: readonly string[] = [
+  'La insignia del diamante',
+  'Rejilla libre: coloca cada pieza donde quieras, arrastrándola',
+  `${CUENTA_FUENTES.pro} tipografías decorativas`,
+  'Resplandor en el nombre, el @usuario, las insignias, las redes y el avatar',
+  'Barrido de luz y degradado en el nombre',
+  'Animación de entrada del perfil',
+  'Partículas de fondo',
+  'Fondo de vídeo',
+  'Tu propia imagen de cursor, con estela',
+  'Inclinación 3D de la tarjeta',
+];

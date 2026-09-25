@@ -51,6 +51,9 @@ import { PublicarPlantilla } from '@/components/dashboard/PublicarPlantilla';
 import { useInsignias } from '@/hooks/useInsignias';
 import { diasDePrueba, tienePlan } from '@/lib/insignias';
 import { sinPlanNoEntra } from '@/lib/candadoPro';
+import { BADGES } from '@/data/badges';
+import { useUIStore } from '@/stores/uiStore';
+import { MejorarPremium, EnlacePremium } from '@/components/premium/MejorarPremium';
 import { DIBUJOS } from '@/components/dashboard/dibujos';
 import { BLOQUE_POR_ID, type DefBloque, BLOQUES_APAGADOS_POR_DEFECTO } from '@/data/bloques';
 import { APARIENCIA_APAGADA, BASE_PERSONALIZADA } from '@/data/plantillasBase';
@@ -345,6 +348,15 @@ export default function DashboardPage() {
   const [searchParams] = useSearchParams();
   const claimParam = searchParams.get('claim');
   const { toast } = useToast();
+
+  /* La vuelta del pago de Tebex (en el movil abre en otra pestaña y, al
+     terminar, trae aqui). El diamante lo pone la base al llegar el aviso
+     firmado, asi que se dice que se esta activando, no que ya esta. */
+  const vueltaDelPago = searchParams.get('premium') === 'gracias';
+  const abrirPremium = useUIStore((s) => s.abrirPremium);
+  useEffect(() => {
+    if (vueltaDelPago) toast('¡Gracias! Tu Premium de por vida se activa en unos segundos.');
+  }, [vueltaDelPago, toast]);
 
   // Se observa el nombre (string), no el objeto perfil: dependiendo del objeto,
   // cada autoguardado reiniciaba el editor entero.
@@ -1179,6 +1191,9 @@ export default function DashboardPage() {
         onPublicar={() => void publicarYVer()}
         onSalir={() => { window.location.href = '/dashboard'; }}
       />
+      {/* La ventana de Premium, en los DOS editores: los candados de las
+          opciones de pago la abren igual en el teléfono. */}
+      <MejorarPremium />
       </>
     );
   }
@@ -1268,6 +1283,21 @@ export default function DashboardPage() {
                 <span>{sec.name}</span>
               </button>
             ))}
+            {/* Premium no es una sección más: abre la ventana encima, como
+                en guns.lol, y al cerrarla sigues donde estabas. */}
+            <button
+              type="button"
+              className="btn btn--sm btn--quiet dash__premium"
+              style={{ justifyContent: 'flex-start', textAlign: 'left', gap: '10px' }}
+              onClick={abrirPremium}
+            >
+              <span
+                className="dash__ico"
+                aria-hidden="true"
+                dangerouslySetInnerHTML={{ __html: BADGES.premium!.icon }}
+              />
+              <span>Premium</span>
+            </button>
           </nav>
         </div>
 
@@ -1298,11 +1328,8 @@ export default function DashboardPage() {
                     dos dias» sin mas da miedo de mas: lo que se pierde es
                     poder elegir estas opciones, no la pagina. */}
                 <p>Después seguirás teniendo tu perfil tal como está, pero sin las opciones del plan.</p>
-                {/* `/pricing`, en ingles, que es como esta puesta la ruta. Con
-                    `/precios` esto caia en «este perfil no existe», porque
-                    cualquier cosa que no sea una ruta conocida se lee como un
-                    nombre de usuario. */}
-                <Link to="/pricing">Ver el plan</Link>
+                {/* Abre la ventana de Premium encima, sin salir del editor. */}
+                <EnlacePremium>Conservarlo para siempre</EnlacePremium>
               </div>
             </div>
           )}
@@ -2369,6 +2396,8 @@ export default function DashboardPage() {
           Vista previa
         </button>
       </div>
+
+      <MejorarPremium />
     </div>
   );
 }

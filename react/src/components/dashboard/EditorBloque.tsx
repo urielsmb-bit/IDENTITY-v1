@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { RecorteMusica } from './RecorteMusica';
-import { Link } from 'react-router-dom';
+import { EnlacePremium } from '@/components/premium/MejorarPremium';
 import type { Profile, BlockStyle } from '@/types';
 import type { ControlId, DefBloque, GrupoControles } from '@/data/bloques';
 import {
@@ -225,18 +225,17 @@ function EfectosDelNombre({
 
               /* Bloqueado es un ENLACE, no un botón apagado. Un botón que no
                  hace nada al pulsarlo deja a uno pensando que la página está
-                 rota; un enlace a los precios contesta la pregunta que acaba
+                 rota; un enlace que abre Premium contesta la pregunta que acaba
                  de hacerse. Y se ve FUNCIONANDO: esconder lo que se vende es
                  la peor manera de venderlo. */
               return bloqueado ? (
-                <Link
+                <EnlacePremium
                   key={e.id}
                   className="fx__b fx__b--pro"
-                  to="/pricing"
                   title={`${e.nombre} — lo trae el plan`}
                 >
                   {demo}
-                </Link>
+                </EnlacePremium>
               ) : (
                 <button
                   key={e.id}
@@ -259,7 +258,7 @@ function EfectosDelNombre({
       {def && (
         <p className="fx__pie">
           {def.desc}
-          {def.pro && !premium && <> <Link to="/pricing">Este lo trae el plan.</Link></>}
+          {def.pro && !premium && <> <EnlacePremium>Este lo trae el plan.</EnlacePremium></>}
         </p>
       )}
 

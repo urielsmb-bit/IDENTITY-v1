@@ -104,6 +104,8 @@ jobs:
           VIMEO: ${{ secrets.VITE_VIMEO }}
           FN_VISTAS: ${{ secrets.VITE_FN_VISTAS }}
           R2: ${{ secrets.VITE_R2 }}
+          TEBEX_TOKEN: ${{ secrets.VITE_TEBEX_TOKEN }}
+          TEBEX_PAQUETE: ${{ secrets.VITE_TEBEX_PAQUETE }}
         run: |
           if [ -z "$URL" ] || [ -z "$KEY" ]; then
             echo "Faltan VITE_SUPABASE_URL o VITE_SUPABASE_KEY en los secretos."
@@ -143,6 +145,14 @@ jobs:
             printf 'VITE_R2=%s\n' "$R2" >> .env.local
           else
             echo "Aviso: sin VITE_R2. Los videos nuevos seguiran yendo a Vimeo."
+          fi
+          # Y la tienda de Tebex. El token es el PUBLICO —viaja dentro de la
+          # pagina por diseño— y el paquete es un numero. Sin los dos, la
+          # pagina de planes dice «todavia no esta a la venta».
+          if [ -n "$TEBEX_TOKEN" ] && [ -n "$TEBEX_PAQUETE" ]; then
+            printf 'VITE_TEBEX_TOKEN=%s\nVITE_TEBEX_PAQUETE=%s\n' "$TEBEX_TOKEN" "$TEBEX_PAQUETE" >> .env.local
+          else
+            echo "Aviso: sin VITE_TEBEX_TOKEN o VITE_TEBEX_PAQUETE. Premium no se podra comprar."
           fi
 
       - name: Compilar

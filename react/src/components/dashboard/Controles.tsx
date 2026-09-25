@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { EnlacePremium } from '@/components/premium/MejorarPremium';
 import { acotarCanal, hexARgb, rgbAHex, type Rgb } from '@/lib/color';
 import { FONTS } from '@/data/themes';
 import { fuenteEsPro } from '@/data/premium';
@@ -37,10 +37,10 @@ export function Pro({ bloqueado, children }: { bloqueado: boolean; children: Rea
   if (!bloqueado) return <>{children}</>;
   return (
     <div className="pro">
-      <Link className="pro__eti" to="/pricing" title="Esto lo trae el plan">
+      <EnlacePremium className="pro__eti" title="Esto lo trae el plan">
         <span className="pro__ic">{ROMBO}</span>
         Premium
-      </Link>
+      </EnlacePremium>
       {/* `fieldset disabled` apaga todo lo de dentro de una vez y ademas lo
           saca del recorrido del teclado. Hacerlo mando a mando seria pasar
           una prop por veinte componentes y olvidarla en el proximo. */}
@@ -284,9 +284,9 @@ export function SelectorFuente({
       <span className="fnts__g">
         Decorativas
         {!premium && (
-          <Link className="fnts__pro" to="/pricing">
+          <EnlacePremium className="fnts__pro">
             {deco.length} con Premium
-          </Link>
+          </EnlacePremium>
         )}
       </span>
       {deco.map((f) => opcion(f.id, f.name, f.stack))}

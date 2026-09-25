@@ -9,6 +9,7 @@ import {
 } from '@/data/plantillasBase';
 import { aplicarBase, coincideBase } from '@/lib/plantillaBase';
 import { Modal } from '@/components/ui/Modal';
+import { useUIStore } from '@/stores/uiStore';
 import { DIBUJOS } from './dibujos';
 
 interface Props {
@@ -53,6 +54,7 @@ export function ElegirPlantilla({
   premium = true,
 }: Props) {
   const [porConfirmar, setPorConfirmar] = useState<PlantillaBase | null>(null);
+  const abrirPremium = useUIStore((s) => s.abrirPremium);
 
   const elegida = profile.base || '';
   const activa = PLANTILLA_BASE_POR_ID[elegida] ?? null;
@@ -157,9 +159,14 @@ export function ElegirPlantilla({
             }`}
             onClick={(e: React.MouseEvent) => {
               /* Con plan es un boton: se queda aqui y suelta las piezas.
-                 Sin plan es un enlace de verdad y lleva a los planes. */
-              if (!premium) return;
+                 Sin plan abre la ventana de Premium encima, sin salir del
+                 editor. Abrirlo en otra pestaña sigue llevando a los planes. */
+              if (!premium && (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0)) return;
               e.preventDefault();
+              if (!premium) {
+                abrirPremium();
+                return;
+              }
               if (!libre) alLienzoLibre();
             }}
           >

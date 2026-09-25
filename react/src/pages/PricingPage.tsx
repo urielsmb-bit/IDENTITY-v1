@@ -1,7 +1,10 @@
 import '@/styles/panels.css';
 import { Link } from 'react-router-dom';
 import { useTitulo } from '@/hooks/useTitulo';
-import { CUENTA_FUENTES } from '@/data/premium';
+import { CUENTA_FUENTES, LO_QUE_TRAE_PREMIUM, PRECIO_PREMIUM } from '@/data/premium';
+import { hayTienda } from '@/lib/tebex';
+import { useUIStore } from '@/stores/uiStore';
+import { MejorarPremium } from '@/components/premium/MejorarPremium';
 
 /**
  * Los planes.
@@ -22,6 +25,9 @@ import { CUENTA_FUENTES } from '@/data/premium';
  * Vender lo que no se entrega no es un descuido de copia: es lo primero que
  * mira quien paga y no recibe. Ahora esta lista es exactamente lo que
  * `data/premium.ts` bloquea, ni una linea mas.
+ *
+ * Aqui NO se compra: el boton abre la misma ventana que el editor. Un solo
+ * sitio donde se paga, con un solo camino que probar.
  */
 interface Plan {
   id: string;
@@ -61,7 +67,7 @@ const PLANS: Plan[] = [
   {
     id: 'pro',
     name: 'Premium',
-    price: '$4.99',
+    price: PRECIO_PREMIUM,
     period: 'pago único, para siempre',
     desc: 'Para que tu perfil no se parezca al de nadie.',
     features: [
@@ -72,16 +78,8 @@ const PLANS: Plan[] = [
          regalar una semana y que no se entere nadie. */
       'Una semana gratis al crear tu perfil, sin poner una tarjeta',
       'Todo lo del plan Gratis',
-      'La insignia del diamante',
-      'Rejilla libre: coloca cada pieza donde quieras, arrastrándola',
-      `${CUENTA_FUENTES.pro} tipografías decorativas`,
-      'Resplandor en el nombre, el @usuario, las insignias, las redes y el avatar',
-      'Barrido de luz y degradado en el nombre',
-      'Animación de entrada del perfil',
-      'Partículas de fondo',
-      'Fondo de vídeo',
-      'Tu propia imagen de cursor, con estela',
-      'Inclinación 3D de la tarjeta',
+      /* La misma lista que la ventana de comprar, de `data/premium.ts`. */
+      ...LO_QUE_TRAE_PREMIUM,
     ],
     cta: 'Conseguir Premium',
     /* Debajo del boton, para que se lea justo antes de decidir. */
@@ -92,6 +90,7 @@ const PLANS: Plan[] = [
 
 export default function PricingPage() {
   useTitulo('Planes · sharee');
+  const abrirPremium = useUIStore((s) => s.abrirPremium);
   return (
     <div className="pricing-page wrap" style={{ paddingTop: '40px', paddingBottom: '80px' }}>
       <header style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 48px' }}>
@@ -101,8 +100,8 @@ export default function PricingPage() {
         </p>
       </header>
 
-      {/* Plans Grid */}
-      <p
+      {/* Solo mientras no haya tienda: con Tebex conectado, ya se puede. */}
+      {!hayTienda() && <p
         style={{
           margin: '0 auto 28px',
           maxWidth: '58ch',
@@ -119,7 +118,7 @@ export default function PricingPage() {
         Todavía no hay forma de pagar esto. El diamante lo concede el equipo
         a mano, así que <strong>por ahora Premium no se puede comprar</strong>:
         la lista de la derecha es lo que traerá cuando se abra.
-      </p>
+      </p>}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', alignItems: 'stretch' }}>
         {PLANS.map((plan) => (
@@ -192,16 +191,16 @@ export default function PricingPage() {
                 {plan.cta}
               </Link>
             ) : (
-              /* No hay cobro conectado. Antes este boton decia «Obtener Pro»
-                 y llevaba al panel: quien lo pulsaba se quedaba esperando
-                 una pantalla de pago que no existe. */
+              /* Aquí no se compra: se abre la misma ventana que en el
+                 editor. Sin tienda conectada no hay nada que abrir. */
               <button
                 type="button"
-                className="btn btn--quiet"
-                disabled
+                className={hayTienda() ? 'btn btn--primary' : 'btn btn--quiet'}
+                onClick={abrirPremium}
+                disabled={!hayTienda()}
                 style={{ width: '100%', padding: '12px' }}
               >
-                Todavía no está a la venta
+                {hayTienda() ? plan.cta : 'Todavía no está a la venta'}
               </button>
             )}
 
@@ -223,6 +222,8 @@ export default function PricingPage() {
           </div>
         ))}
       </div>
+
+      <MejorarPremium />
     </div>
   );
 }

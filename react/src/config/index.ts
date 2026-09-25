@@ -55,6 +55,21 @@ export const CONFIG = {
    */
   R2: (env.VITE_R2 ?? '') !== '',
 
+  /**
+   * La tienda de Tebex, que cobra el Premium de por vida.
+   *
+   * `TEBEX_TOKEN` es el token PÚBLICO de la tienda (empieza por cuatro
+   * letras y un guion). Viaja al navegador por diseño: con él solo se puede
+   * crear una cesta, no ver ventas ni tocar nada. La clave privada y el
+   * secreto de los avisos NO van aquí: viven en Supabase, en la función
+   * `tebex-webhook`.
+   *
+   * `TEBEX_PAQUETE` es el número del paquete de Premium. Sin los dos, la
+   * página de planes dice que todavía no está a la venta.
+   */
+  TEBEX_TOKEN: env.VITE_TEBEX_TOKEN ?? '',
+  TEBEX_PAQUETE: env.VITE_TEBEX_PAQUETE ?? '',
+
   /** Cubo de Storage. Se crea en Storage → New bucket. */
   BUCKET_MEDIA: env.VITE_BUCKET_MEDIA ?? 'media',
 
@@ -63,7 +78,7 @@ export const CONFIG = {
    * Al cambiar los términos se sube este número y se puede
    * distinguir quién aceptó qué.
    */
-  VERSION_LEGAL: env.VITE_VERSION_LEGAL ?? '2026-09-16',
+  VERSION_LEGAL: env.VITE_VERSION_LEGAL ?? '2026-09-25',
 
   /** ¿Hay backend, o seguimos en el modo de siempre? */
   hayBackend(): boolean {
