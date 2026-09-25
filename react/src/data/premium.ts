@@ -131,7 +131,7 @@ export const CUENTA_FUENTES = {
  * Tiene que coincidir con el del paquete en Tebex, que es el que se cobra:
  * este es solo el que se lee. Si se cambia allí, se cambia aquí.
  */
-export const PRECIO_PREMIUM = '$4.99';
+export const PRECIO_PREMIUM = '$2.99';
 
 /**
  * Lo que trae Premium, en una sola lista para los dos sitios que la
