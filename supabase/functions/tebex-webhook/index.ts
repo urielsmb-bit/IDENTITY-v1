@@ -87,9 +87,7 @@ Deno.serve(async (req: Request) => {
 
   const cuerpo = await req.text();
   const firma = req.headers.get('x-signature') ?? '';
-  if (!firma || !(await firmaValida(cuerpo, firma, secreto))) {
-    return json({ error: 'firma no valida' }, 401);
-  }
+  const firmado = !!firma && (await firmaValida(cuerpo, firma, secreto));
 
   let aviso: Record<string, any>;
   try {
@@ -101,8 +99,22 @@ Deno.serve(async (req: Request) => {
   const tipo = String(aviso?.type ?? '');
 
   /* La prueba de Tebex al dar de alta la direccion: hay que devolverle su
-     propio id. Hasta que no se contesta bien, no manda nada mas. */
-  if (tipo === 'validation.webhook') return json({ id: aviso.id });
+     propio id. Hasta que no se contesta bien, no manda nada mas —y sin
+     webhook validado, Tebex no deja crear un paquete sin entregables—.
+
+     Se contesta AUNQUE la firma no cuadre. Este aviso no trae ningun pago
+     y contestarlo no da ni quita nada: solo devuelve el id que ya venia.
+     Tebex no documenta si lo firma, y exigirlo aqui dejaba la direccion
+     sin validar sin decir por que. Si la firma falla se apunta en el
+     registro: es la pista de que el secreto guardado no es el de Tebex, y
+     los avisos de pago, que SI exigen firma, fallarian igual. */
+  if (tipo === 'validation.webhook') {
+    if (!firmado) console.warn('[tebex-webhook] validacion sin firma valida: revisa TEBEX_WEBHOOK_SECRET');
+    return json({ id: aviso.id });
+  }
+
+  /* Todo lo demas, con firma o nada. */
+  if (!firmado) return json({ error: 'firma no valida' }, 401);
 
   /* Premium es pago unico: los avisos de suscripciones no aplican. */
   if (!tipo.startsWith('payment.')) return json({ ok: true, ignorado: tipo });
