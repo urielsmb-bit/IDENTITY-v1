@@ -215,7 +215,22 @@ export async function cargarMio() {
     .maybeSingle();
 
   if (error) throw traducir(error);
-  return aPerfil(data);
+  const perfil = aPerfil(data);
+
+  /* El check junto al nombre no es del perfil: lo decide la base, y solo
+     sale en `perfiles_publicos` (APLICAR_0030). La tabla trae lo que haya
+     escrito el dueño en ese campo, que ya no cuenta, asi que se pregunta a
+     la vista. Sin esto, quien estuviera verificado no veria su check en la
+     vista previa de su propio editor. */
+  if (perfil && data?.id) {
+    const { data: pub } = await supabase
+      .from('perfiles_publicos')
+      .select('verified:apariencia->verified')
+      .eq('id', data.id)
+      .maybeSingle();
+    perfil.verified = (pub as { verified?: unknown } | null)?.verified === true;
+  }
+  return perfil;
 }
 
 export async function nombreDisponible(nombre: string) {

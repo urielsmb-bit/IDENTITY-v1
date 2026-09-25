@@ -13,14 +13,11 @@ Salen de tus propias cifras, sin que nadie tenga que dártelas. En el panel, en 
 - **Popular** — quinientas visitas distintas.
 - **Aclamado** — diez valoraciones con una media de 4 o más.
 
-## La que se calcula
-
-- **Verificado** — se gana al tener una cuenta enlazada que no sea correo y contraseña: Discord, Google. No se pide; aparece.
-
 ## Las que damos nosotros
 
 Estas las concede el equipo a mano, y quedan anotadas con quién las dio y por qué:
 
+- **Verificado** — comprobamos que el perfil es de quien dice ser. Es la única que además pone el check azul junto al nombre. No se consigue enlazando una cuenta ni se puede poner uno mismo; si eres una persona o una marca conocida y quieres que lo comprobemos, escríbenos a **hello@sharee.fun**. Quien la tenía antes del 25 de septiembre de 2026 por tener Discord o Google enlazado, la conserva.
 - **Staff** — miembro del equipo.
 - **Helper** — ayudar en la comunidad de forma constante.
 - **Estrella** — perfil destacado por el equipo.
